@@ -59,7 +59,7 @@ public class OntologyTest extends TestAncestor {
         Set<RelationTO<String>> relations = this.getAnatEntityRelationTOs();
 
         Ontology<AnatEntity, String> ontology = new Ontology<>(1,
-                elements, relations, ALL_RELATIONS, serviceFactory, AnatEntity.class);
+                elements, relations, ALL_RELATIONS, AnatEntity.class);
         
         Set<AnatEntity> ancestors = ontology.getAncestors(ae3);
         Set<AnatEntity> expAncestors = new HashSet<>(Arrays.asList(ae1, ae2, ae2p));
@@ -133,7 +133,7 @@ public class OntologyTest extends TestAncestor {
         MultiSpeciesOntology<AnatEntity, String> ontology = new MultiSpeciesOntology<>(
                 Arrays.asList(1, 2, 3), elements, relations,
                 taxonConstraint, relationTaxonConstraint, ALL_RELATIONS, 
-                mockFact, AnatEntity.class);
+                AnatEntity.class);
 
         List<Integer> speciesIds = Arrays.asList(1);
         Set<AnatEntity> ancestors = ontology.getAncestors(ae3, ALL_RELATIONS, false, speciesIds);
@@ -186,7 +186,7 @@ public class OntologyTest extends TestAncestor {
         // UBERON:0003 ------------------
 
         OntologyBase<AnatEntity, String> ontology = new Ontology<>(1, elements, 
-                relations, ALL_RELATIONS, mockFact, AnatEntity.class);
+                relations, ALL_RELATIONS, AnatEntity.class);
         
         assertEquals("Incorrects descendants", new HashSet<>(Arrays.asList(ae2, ae2p, ae3)),
             ontology.getDescendants(ae1));
@@ -251,7 +251,7 @@ public class OntologyTest extends TestAncestor {
                 new RelationTO<>(6, "stage3p", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
 
         MultiSpeciesOntology<DevStage, String> ontology = new MultiSpeciesOntology<>(speciesIds,
-                elements, relations, taxonConstraint, null, ALL_RELATIONS, mockFact, DevStage.class);
+                elements, relations, taxonConstraint, null, ALL_RELATIONS, DevStage.class);
 
         Set<DevStage> descendants = ontology.getDescendants(ds1, ISA_RELATIONS);
         Set<DevStage> expDescendants = new HashSet<>(Arrays.asList(ds2, ds3, ds3p));
@@ -308,7 +308,7 @@ public class OntologyTest extends TestAncestor {
 
         ServiceFactory mockFact = mock(ServiceFactory.class);
         OntologyBase<AnatEntity, String> ontology = new Ontology<>(1, elements,
-                relations, ALL_RELATIONS, mockFact, AnatEntity.class);
+                relations, ALL_RELATIONS, AnatEntity.class);
         
         assertEquals("Incorrect element", ae1, ontology.getElement("UBERON:0001"));
         assertEquals("Incorrect element", ae2, ontology.getElement("UBERON:0002"));
@@ -350,7 +350,7 @@ public class OntologyTest extends TestAncestor {
 
         MultiSpeciesOntology<AnatEntity,String> ontology = new MultiSpeciesOntology<>(speciesIds,
                 elements, relations, taxonConstraints, relationTaxonConstraint, ALL_RELATIONS, 
-                mockFact, AnatEntity.class);
+                AnatEntity.class);
 
         HashSet<AnatEntity> expectedAE = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         assertEquals("Incorrect element", expectedAE, ontology.getElements());
@@ -413,7 +413,7 @@ public class OntologyTest extends TestAncestor {
             new RelationTO<>(9, "stage5", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
 
         MultiSpeciesOntology<DevStage,String> ontology = new MultiSpeciesOntology<>(speciesIds,
-                elements, relations, null, null, ALL_RELATIONS, mockFact, DevStage.class);
+                elements, relations, null, null, ALL_RELATIONS, DevStage.class);
 
         List<RelationTO<String>> actualOrderedRels = ontology.getOrderedRelations(ds4);
         
@@ -458,7 +458,7 @@ public class OntologyTest extends TestAncestor {
         Set<RelationTO<Integer>> relations = new HashSet<>(Arrays.asList(rel1, rel1b, rel2, rel2b, rel3, rel4));
 
         MultiSpeciesOntology<Taxon, Integer> ontology = new MultiSpeciesOntology<>(speciesIds,
-                elements, relations, null, null, ALL_RELATIONS, mockFact, Taxon.class);
+                elements, relations, null, null, ALL_RELATIONS, Taxon.class);
         assertEquals("Incorrect ordered ancestors",
             Arrays.asList(tax10, tax100), ontology.getOrderedAncestors(tax1));
         
@@ -507,7 +507,7 @@ public class OntologyTest extends TestAncestor {
         Set<RelationTO<Integer>> relations = new HashSet<>(Arrays.asList(rel1, rel1b, rel2, rel2b, rel3, rel4));
 
         MultiSpeciesOntology<Taxon, Integer> ontology = new MultiSpeciesOntology<>(speciesIds,
-                elements, relations, null, null, ALL_RELATIONS, mockFact, Taxon.class);
+                elements, relations, null, null, ALL_RELATIONS, Taxon.class);
         assertEquals("Incorrect descendants",
             new HashSet<>(), ontology.getDescendantsUntilSubLevel(tax1, 1));
         assertEquals("Incorrect descendants",
@@ -553,7 +553,7 @@ public class OntologyTest extends TestAncestor {
                 RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
 
         Ontology<AnatEntity, String> ontology = new Ontology<>(1,
-                elements, relations, ALL_RELATIONS, serviceFactory, AnatEntity.class);
+                elements, relations, ALL_RELATIONS, AnatEntity.class);
 
         assertEquals(new HashSet<>(Arrays.asList(ae2, ae2p)), ontology.getLeastCommonAncestors(
                 Arrays.asList(ae3, ae4), EnumSet.of(RelationType.ISA_PARTOF)));
@@ -574,7 +574,7 @@ public class OntologyTest extends TestAncestor {
                         RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
 
         Ontology<AnatEntity, String> ontology = new Ontology<>(1,
-                elements, relations, ALL_RELATIONS, serviceFactory, AnatEntity.class);
+                elements, relations, ALL_RELATIONS, AnatEntity.class);
 
         assertEquals(new HashSet<>(Arrays.asList(ae1, ae3)), ontology.getAncestorsAmongElements(
                 Arrays.asList(ae1, ae2, ae3), EnumSet.of(RelationType.ISA_PARTOF)));

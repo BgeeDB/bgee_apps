@@ -70,35 +70,10 @@ public class JsonFactory extends ViewFactory {
     }
 
     @Override
-    public GeneralDisplay getGeneralDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-    }
-
-    @Override
     public DownloadDisplay getDownloadDisplay() throws IllegalArgumentException, IOException {
         log.traceEntry();
         return log.traceExit(new JsonDownloadDisplay(this.response, this.requestParameters, this.prop,
                 this.jsonHelper, this));
-    }
-
-    @Override
-    public DocumentationDisplay getDocumentationDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-    }
-
-    @Override
-    public AboutDisplay getAboutDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-    }
-
-    @Override
-    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-    }
-
-    @Override
-    public CollaborationDisplay getCollaborationDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 
     @Override
@@ -117,8 +92,10 @@ public class JsonFactory extends ViewFactory {
     }
 
     @Override
-    public RawDataDisplay getRawCallDisplay() throws IOException {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    public DataDisplay getDataDisplay() throws IOException {
+        log.traceEntry();
+        return log.traceExit(new JsonDataDisplay(this.response, this.requestParameters, this.prop,
+                this.jsonHelper, this));
     }
 
     @Override
@@ -132,10 +109,6 @@ public class JsonFactory extends ViewFactory {
         log.traceEntry();
         return log.traceExit(new JsonSearchDisplay(this.response, this.requestParameters,
             this.prop, this.jsonHelper, this));
-    }
-    @Override
-    public SparqlDisplay getSparqlDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
     @Override
     public SourceDisplay getSourceDisplay() throws IllegalArgumentException, IOException {
@@ -162,24 +135,10 @@ public class JsonFactory extends ViewFactory {
     }
 
     @Override
-    public FaqDisplay getFaqDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-    }
-
-    @Override
-    public ResourcesDisplay getResourceDisplay() throws IOException {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-    }
-
-    @Override
     public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay()
             throws IllegalArgumentException, IOException {
         log.traceEntry();
         return log.traceExit(new JsonAnatomicalSimilarityDisplay(this.response, this.requestParameters,
                 this.prop, this.jsonHelper, this));
-    }
-    @Override
-    public PublicationDisplay getPublicationDisplay() throws IOException {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 }

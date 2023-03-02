@@ -28,6 +28,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * <li>{@code STARTSTAGEID}: corresponds to {@link AnatEntityTO#getStartStageId()}.
      * <li>{@code ENDSTAGEID}: corresponds to {@link AnatEntityTO#getEndStageId()}.
      * <li>{@code NONINFORMATIVE}: corresponds to {@link AnatEntityTO#isNonInformative()}.
+     * <li>{@code IS_CELL_TYPE}: corresponds to {@link AnatEntityTO#isCellType()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -36,7 +37,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID("id"), NAME("name"), DESCRIPTION("description"), 
         START_STAGE_ID("startStageId"), END_STAGE_ID("endStageId"), 
-        NON_INFORMATIVE("nonInformative");
+        NON_INFORMATIVE("nonInformative")/*, CELL_TYPE("cellType")*/;
 
         /**
          * A {@code String} that is the corresponding field name in {@code AnatEntityTO} class.
@@ -220,6 +221,12 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
          * terms not directly useful for analysis"'.
          */
         private final Boolean nonInformative;
+        /**
+         * A {@code Boolean} defining whether this anatomical entity is a cell type, or not.
+         * It is a cell type if it has the term with ID ConditionDAO.CELL_TYPE_ROOT_ID
+         * as an ancestor by is_a or part_of relation.
+         */
+        private final Boolean cellType;
 
         /**
          * Constructor providing the ID, the name, the description, the start stage, and the end 
@@ -237,13 +244,16 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
          *                          anatomical entity.
          * @param nonInformative    A {@code Boolean} defining whether this anatomical entity is 
          *                          part of a non-informative subset in the used ontology.
+         * @param cellType          A {@code Boolean} defining whether this anatomical entity is
+         *                          a cell type.
          */
         public AnatEntityTO(String id, String name, String description, String startStageId,
-                String endStageId, Boolean nonInformative) {
+                String endStageId, Boolean nonInformative, Boolean cellType) {
             super(id, name, description);
             this.startStageId = startStageId;
             this.endStageId = endStageId;
             this.nonInformative = nonInformative;
+            this.cellType = cellType;
         }
 
         /**
@@ -269,12 +279,29 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
         public Boolean isNonInformative() {
             return this.nonInformative;
         }
+        /**
+         * @return  the {@code Boolean} defining whether this anatomical entity is
+         *          a cell type. It is a cell type if it has the term with ID
+         *          {@code ConditionDAO.CELL_TYPE_ROOT_ID} as an ancestor by
+         *          is_a or part_of relation.
+         */
+        public Boolean isCellType() {
+            return this.cellType;
+        }
 
         @Override
         public String toString() {
-            return " ID: " + this.getId() + " - Name: " + this.getName() +
-            " - Description: " + this.getDescription() + " - Start stage Id: " +  startStageId + 
-            " - End stage Id: " + endStageId + " - Non-informative: " + nonInformative;
+            StringBuilder builder = new StringBuilder();
+            builder.append("AnatEntityTO [")
+                   .append("getId()=").append(getId())
+                   .append(", getName()=").append(getName())
+                   .append(", getDescription()=").append(getDescription())
+                   .append(", startStageId=").append(startStageId)
+                   .append(", endStageId=").append(endStageId)
+                   .append(", nonInformative=").append(nonInformative)
+                   .append(", cellType=").append(cellType)
+                   .append("]");
+            return builder.toString();
         }
     }
 }

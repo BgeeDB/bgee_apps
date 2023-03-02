@@ -3,7 +3,7 @@ package org.bgee.model.expressiondata.baseelements;
 import java.math.BigDecimal;
 import java.util.Collection;
 
-import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.call.Condition;
 
 /**
  * Store a FDR corrected p-value, produced by retrieving all p-values
@@ -40,7 +40,7 @@ public class FDRPValueCondition extends FDRPValue {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("FDRPValueCondition [fdrPValue=").append(getFDRPValue())
+        builder.append("FDRPValueCondition [fdrPValue=").append(getPValue())
         .append(", condition=").append(getCondition())
         .append(", dataTypes=").append(getDataTypes())
         .append("]");

@@ -6,13 +6,18 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.RequestParameters;
+import org.bgee.controller.CommandData.ExpressionCallResponse;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
+import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
-import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
+import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
-import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.ontology.Ontology;
+import org.bgee.model.search.SearchMatch;
+import org.bgee.model.search.SearchMatchResult;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -38,12 +43,14 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
      */
 //    private final RequestParameters requestParameters;
     private final Supplier<RequestParameters> rpSupplier;
+    private final TypeAdaptersUtils utils;
 
     public BgeeTypeAdapterFactory(Function<String, String> urlEncodeFunction,
-            Supplier<RequestParameters> rpSupplier) {
+            Supplier<RequestParameters> rpSupplier, TypeAdaptersUtils utils) {
         this.urlEncodeFunction = urlEncodeFunction;
 //        this.requestParameters = requestParameters;
         this.rpSupplier = rpSupplier;
+        this.utils = utils;
     }
 
     @Override
@@ -60,34 +67,61 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
             TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
             return log.traceExit(result);
         }
-        if (GeneMatch.class.isAssignableFrom(rawClass) ) {
+        if (Ontology.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new GeneMatchTypeAdapter(gson);
+            TypeAdapter<T> result = (TypeAdapter<T>) new OntologyTypeAdapter<>(gson);
+            return log.traceExit(result);
+        }
+        if (SearchMatchResult.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new SearchMatchResultTypeAdapter(gson);
+            return log.traceExit(result);
+        }
+        if (SearchMatch.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new SearchMatchTypeAdapter<>(gson);
             return log.traceExit(result);
         }
         if (GeneHomologs.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new GeneHomologsTypeAdapter(gson, this.rpSupplier);
+            TypeAdapter<T> result = (TypeAdapter<T>) new GeneHomologsTypeAdapter(gson, this.rpSupplier,
+                    this.utils);
             return log.traceExit(result);
         }
         if (Gene.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new GeneTypeAdapter(gson, urlEncodeFunction);
+            TypeAdapter<T> result = (TypeAdapter<T>) new GeneTypeAdapter(gson, urlEncodeFunction,
+                    this.utils);
             return log.traceExit(result);
         }
         if (GeneExpressionResponse.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new GeneExpressionResponseTypeAdapter();
+            TypeAdapter<T> result = (TypeAdapter<T>) new GeneExpressionResponseTypeAdapter(this.utils);
             return log.traceExit(result);
         }
         if (MultiGeneExprAnalysis.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new MultiGeneExprAnalysisTypeAdapter();
+            TypeAdapter<T> result = (TypeAdapter<T>) new MultiGeneExprAnalysisTypeAdapter(this.utils);
             return log.traceExit(result);
         }
         if (AnatEntitySimilarityAnalysis.class.isAssignableFrom(rawClass)) {
             @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new AnatEntitySimilarityAnalysisTypeAdapter(gson);
+            TypeAdapter<T> result = (TypeAdapter<T>) new AnatEntitySimilarityAnalysisTypeAdapter(gson, this.utils);
+            return log.traceExit(result);
+        }
+        if (AffymetrixChip.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new AffymetrixChipTypeAdapter(gson, this.utils);
+            return log.traceExit(result);
+        }
+        if (AffymetrixProbeset.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new AffymetrixProbesetTypeAdapter(gson);
+            return log.traceExit(result);
+        }
+        if (ExpressionCallResponse.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new ExpressionCallResponseTypeAdapter(gson, this.utils);
             return log.traceExit(result);
         }
 

@@ -59,20 +59,12 @@ public abstract class ViewFactory {
      */
     public ViewFactory(HttpServletResponse response, RequestParameters requestParameters,
             BgeeProperties prop) {
-        log.entry(response, requestParameters, prop);
+        log.traceEntry("{}, {}, {}", response, requestParameters, prop);
         this.response = response;
         this.requestParameters = requestParameters;
         this.prop = prop;
         log.traceExit();
     }
-
-    /**                             
-     * @return A {@code GeneralDisplay} instance that is the view to be used
-     * 
-     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
-     *                      response output.
-     */
-    public abstract GeneralDisplay getGeneralDisplay() throws IOException;
     
     /**                             
      * @return  An {@code ErrorDisplay} used to display error messages when a request 
@@ -91,69 +83,6 @@ public abstract class ViewFactory {
      *                      response output.
      */
     public abstract DownloadDisplay getDownloadDisplay() throws IOException;
-    
-    /**
-     *                              
-     * @return A {@code ResourceDisplay} instance that is the view to be used
-     * 
-     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
-     *                      response output.
-     */
-    public abstract ResourcesDisplay getResourceDisplay() throws IOException;
-    
-    /**
-     *                              
-     * @return A {@code SparqlDisplay} instance that is the view to be used
-     * 
-     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
-     *                      response output.
-     */
-    public abstract SparqlDisplay getSparqlDisplay() throws IOException;
-
-    /**
-     *                              
-     * @return A {@code DocumentationDisplay} instance that is the view to be used.
-     * 
-     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
-     *                      response output.
-     */
-    public abstract DocumentationDisplay getDocumentationDisplay() throws IOException;
-
-    /**
-     *                              
-     * @return A {@code AboutDisplay} instance that is the view to be used
-     * 
-     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
-     *                      response output.
-     */
-    public abstract AboutDisplay getAboutDisplay() throws IOException;
-    
-    /**
-     *                              
-     * @return A {@code PublicationDisplay} instance that is the view to be used
-     * 
-     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
-     *                      response output.
-     */
-    public abstract PublicationDisplay getPublicationDisplay() throws IOException;
-    
-    /**
-     *
-     * @return A {@code PrivacyPolicyDisplay} instance that is the view to be used
-     *
-     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
-     *                      response output.
-     */
-    public abstract PrivacyPolicyDisplay getPrivacyPolicyDisplay() throws IOException;
-
-    /**
-     *
-     * @return A {@code CollaborationDisplay} instance that is the view to be used
-     *
-     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
-     *                      response output.
-     */
-    public abstract CollaborationDisplay getCollaborationDisplay() throws IOException;
 
     /**
      *                              
@@ -182,12 +111,12 @@ public abstract class ViewFactory {
 
     /**
      *
-     * @return A {@code RawDataDisplay} instance of the appropriate display type.
+     * @return A {@code DataDisplay} instance of the appropriate display type.
      *
      * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
      *                      response output.
      */
-    public abstract RawDataDisplay getRawCallDisplay() throws IOException;
+    public abstract DataDisplay getDataDisplay() throws IOException;
 
     /**
      *                              
@@ -239,14 +168,6 @@ public abstract class ViewFactory {
      *                      response output.
      */
     public abstract RPackageDisplay getRPackageDisplay() throws IOException;
-
-    /**
-     * @return A {@code FaqDisplay} instance of the appropriate display type.
-     *
-     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
-     *                      response output.
-     */
-    public abstract FaqDisplay getFaqDisplay() throws IOException;
 
     /**
      *

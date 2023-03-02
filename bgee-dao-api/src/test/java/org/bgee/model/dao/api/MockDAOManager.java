@@ -3,22 +3,34 @@ package org.bgee.model.dao.api;
 import java.util.Properties;
 
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+import org.bgee.model.dao.api.anatdev.SexDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -175,8 +187,8 @@ public class MockDAOManager extends DAOManager {
         return this.instanceMockManager.getInSituSpotDAO();
     }
     @Override
-    protected RNASeqResultDAO getNewRNASeqResultDAO() {
-        return this.instanceMockManager.getNewRNASeqResultDAO();
+    protected RNASeqResultAnnotatedSampleDAO getNewRNASeqResultAnnotatedSampleDAO() {
+        return this.instanceMockManager.getNewRNASeqResultAnnotatedSampleDAO();
     }
     @Override
     protected CIOStatementDAO getNewCIOStatementDAO() {
@@ -237,6 +249,66 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected SamplePValueDAO getNewSamplePValueDAO() {
         return this.instanceMockManager.getNewSamplePValueDAO();
+    }
+
+    @Override
+    protected AffymetrixChipDAO getNewAffymetrixChipDAO() {
+        return this.instanceMockManager.getNewAffymetrixChipDAO();
+    }
+
+    @Override
+    protected MicroarrayExperimentDAO getNewMicroarrayExperimentDAO() {
+        return this.instanceMockManager.getNewMicroarrayExperimentDAO();
+    }
+
+    @Override
+    protected RNASeqExperimentDAO getNewRnaSeqExperimentDAO() {
+        return this.instanceMockManager.getNewRnaSeqExperimentDAO();
+    }
+
+    @Override
+    protected RNASeqLibraryAnnotatedSampleDAO getNewRnaSeqLibraryAnnotatedSampleDAO() {
+        return this.instanceMockManager.getNewRnaSeqLibraryAnnotatedSampleDAO();
+    }
+
+    @Override
+    protected RNASeqLibraryDAO getNewRnaSeqLibraryDAO() {
+        return this.instanceMockManager.getNewRnaSeqLibraryDAO();
+    }
+
+    @Override
+    protected SexDAO getNewSexDAO() {
+        return this.instanceMockManager.getNewSexDAO();
+    }
+
+    @Override
+    protected RawDataCountDAO getNewRawDataCountDAO() {
+        return this.instanceMockManager.getRawDataCountDAO();
+    }
+
+    @Override
+    protected AffymetrixChipTypeDAO getNewAffymetrixChipTypeDAO() {
+        return this.instanceMockManager.getAffymetrixChipTypeDAO();
+    }
+
+    @Override
+    protected ESTLibraryDAO getNewESTLibraryDAO() {
+        return this.instanceMockManager.getESTLibraryDAO();
+    }
+
+    @Override
+    protected ESTDAO getNewESTDAO() {
+        return this.instanceMockManager.getESTDAO();
+    }
+
+    @Override
+    protected InSituExperimentDAO getNewInSituExperimentDAO() {
+        return this.instanceMockManager.getInSituExperimentDAO();
+   }
+
+    @Override
+    protected InSituEvidenceDAO getNewInSituEvidenceDAO() {
+        return this.instanceMockManager.getInSituEvidenceDAO();
     }
 	
 }

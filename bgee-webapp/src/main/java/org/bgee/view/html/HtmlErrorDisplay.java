@@ -78,7 +78,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayControllerException(InvalidFormatException e) {
-        log.entry(e);
+        log.traceEntry("{}",e);
 
         this.sendBadRequestHeaders();
 
@@ -93,7 +93,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayControllerException(InvalidRequestException e) {
-        log.entry(e);
+        log.traceEntry("{}",e);
 
         this.sendBadRequestHeaders();
 
@@ -107,7 +107,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayControllerException(MultipleValuesNotAllowedException e) {
-        log.entry(e);
+        log.traceEntry("{}",e);
 
         this.sendBadRequestHeaders();
 
@@ -123,7 +123,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayControllerException(RequestSizeExceededException e) {
-        log.entry(e);
+        log.traceEntry("{}",e);
 
         this.sendBadRequestHeaders();
 
@@ -137,7 +137,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayControllerException(ValueSizeExceededException e) {
-        log.entry(e);
+        log.traceEntry("{}",e);
 
         this.sendBadRequestHeaders();
 
@@ -153,7 +153,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayControllerException(PageNotFoundException e) {
-        log.entry(e);
+        log.traceEntry("{}",e);
         
         this.sendPageNotFoundHeaders();
         this.startDisplay("404 not found");
@@ -166,7 +166,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayControllerException(RequestParametersNotFoundException e) {
-        log.entry(e);
+        log.traceEntry("{}",e);
         
         this.sendBadRequestHeaders();
         this.startDisplay("Invalid request!");
@@ -183,7 +183,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayControllerException(RequestParametersNotStorableException e) {
-        log.entry(e);
+        log.traceEntry("{}",e);
         
         this.sendInternalErrorHeaders();
         this.startDisplay("500 internal server error");
@@ -211,7 +211,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayControllerException(TooManyJobsException e) {
-        log.entry(e);
+        log.traceEntry("{}",e);
 
         this.sendTooManyRequeststHeaders();
 

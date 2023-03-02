@@ -4,7 +4,7 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 
 /**
  * This class loads the properties for Bgee webapp and extends {@link BgeeProperties} from
@@ -240,192 +240,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public final static String BGEE_ROOT_DOMAIN_DEFAULT = null;
     
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the FTP server root directory. 
-     * 
-     * @see #FTP_ROOT_DIRECTORY_DEFAULT
-     * @see #getFTPRootDirectory()
-     */
-    public final static String FTP_ROOT_DIRECTORY_KEY = "org.bgee.webapp.ftpRootDirectory";
-    /**
-     * A {@code String} that is the default value of the FTP server root directory. 
-     * 
-     * @see #FTP_ROOT_DIRECTORY_KEY
-     * @see #getFTPRootDirectory()
-     */
-    public final static String FTP_ROOT_DIRECTORY_DEFAULT = "ftp/";
-
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the download root directory. 
-     * 
-     * @see #DOWNLOAD_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadRootDirectory()
-     */
-    public final static String DOWNLOAD_ROOT_DIRECTORY_KEY = "org.bgee.webapp.downloadRootDirectory";
-    /**
-     * A {@code String} that is the default value of the download root directory. 
-     * 
-     * @see #DOWNLOAD_ROOT_DIRECTORY_KEY
-     * @see #getDownloadRootDirectory()
-     */
-    public final static String DOWNLOAD_ROOT_DIRECTORY_DEFAULT = "download/";
-
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the expression download files root directory. 
-     * 
-     * @see #DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadExprFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadExprFilesRootDirectory";
-    /**
-     * A {@code String} that is the default value of the expression download file root directory. 
-     * 
-     * @see #DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadExprFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT = "expressionFiles/";
-
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the differential expression download files
-     * root directory. 
-     * 
-     * @see #DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadDiffExprFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadDiffExprFilesRootDirectory";
-    /**
-     * A {@code String} that is the default value of the differential expression download files
-     * root directory. 
-     * 
-     * @see #DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadDiffExprFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT = 
-            "diffExpressionFiles/";
     
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the multi-species differential expression 
-     * download files root directory. 
-     * 
-     * @see #DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadMultiDiffExprFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadMultiDiffExprFilesRootDirectory";
-    /**
-     * A {@code String} that is the default value of the multi-species differential expression
-     * download file root directory. 
-     * 
-     * @see #DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadMultiDiffExprFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT = 
-            "multiDiffExpressionFiles/";
-
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the ortholog download files root directory. 
-     * 
-     * @see #DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadOrthologFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadOrthologFilesRootDirectory";
-    /**
-     * A {@code String} that is the default value of the ortholog download files root directory. 
-     * 
-     * @see #DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadOrthologFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT = 
-            "orthologFiles/";
-    
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the Affymetrix processed expression value 
-     * download files root directory. 
-     * 
-     * @see #DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadAffyProcExprValueFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadAffyProcExprValueFilesRootDirectory";
-    /**
-     * A {@code String} that is the default value of the Affymetrix processed expression value
-     * download files root directory. 
-     * 
-     * @see #DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadAffyProcExprValueFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
-            "processed_expr_values/affymetrix/";
-    
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the RNA-Seq processed expression value 
-     * download files root directory. 
-     * 
-     * @see #DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory";
-    /**
-     * A {@code String} that is the default value of the RNA-Seq processed expression value
-     * download files root directory. 
-     * 
-     * @see #DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
-            "processed_expr_values/rna_seq/";
-    
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the single cell RNA-Seq full length 
-     * processed expression value download files root directory. 
-     * 
-     * @see #DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory";
-    /**
-     * A {@code String} that is the default value of the single cell RNA-Seq full length processed 
-     * expression value download files root directory. 
-     * 
-     * @see #DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
-            "processed_expr_values/single_cell_rna_seq_full_length/";
-    
-    /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the single cell RNA-Seq target based 
-     * processed expression value download files root directory. 
-     * 
-     * @see #DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory";
-    /**
-     * A {@code String} that is the default value of the single cell RNA-Seq target based processed 
-     * expression value download files root directory. 
-     * 
-     * @see #DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
-            "processed_expr_values/single_cell_rna_seq_target_based/";
     
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -711,6 +526,21 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
             ExpressionCall.DEFAULT_DISTANCE_THRESHOLD; 
 
     /**
+     * A {@code String} that is the key to access to the property containing 
+     * the {@code boolean} defining whether caches stored in {@code CommandData}
+     * should be initialized on webapp startup.
+     * 
+     * @see #INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_DEFAULT
+     * @see #isInitializeCommandDataCachesOnStartup()
+     */
+    public final static String INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_KEY =
+            "org.bgee.webapp.initializeCommandDataCaches";
+    /**
+     * The default {@code boolean} value for the property {@link #INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_KEY}.
+     */
+    public final static boolean INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_DEFAULT = false;
+
+    /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties
      *          or the properties file present in the classpath or the default properties if 
      *          nothing else is available. The method will create an instance only once for 
@@ -811,66 +641,6 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * for instance, ".bgee.org".
      */
     private final String bgeeRootDomain;
-
-    /**
-     * A {@code String} that defines the root directory where is the FTP server, 
-     * to be added to the {@code bgeeRootDirectory} to generate URL of the FTP server.
-     */
-    private final String ftpRootDirectory;
-
-    /**
-     * A {@code String} that defines the root directory where are located files available for download, 
-     * to be added to the {@code bgeeRootDirectory} to generate URL to download files.
-     */
-    private final String downloadRootDirectory;
-
-    /**
-     * A {@code String} that defines the expression download file directory where are located 
-     * expression files available for download.
-     */
-    private final String downloadExprFilesRootDirectory;
-    
-    /**
-     * A {@code String} that defines the differential expression download file directory where are 
-     * located differential expression files available for download.
-     */
-    private final String downloadDiffExprFilesRootDirectory;
-    
-    /**
-     * A {@code String} that defines the Affymetrix processed expression value download file
-     * directory where  are located processed expression value files available for download.
-     */
-    private final String downloadAffyProcExprValueFilesRootDirectory;
-    /**
-     * A {@code String} that defines the RNA-Seq processed expression value download file
-     * directory where  are located processed expression value files available for download.
-     */
-    private final String downloadRNASeqProcExprValueFilesRootDirectory;
-    /**
-     * A {@code String} that defines the RNA-Seq processed expression value download file
-     * directory where  are located processed expression value files available for download.
-     */
-    private final String downloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory;
-    /**
-     * A {@code String} that defines the RNA-Seq processed expression value download file
-     * directory where  are located processed expression value files available for download.
-     */
-    private final String downloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory;
-    
-    /**
-     * A {@code String} that defines the multi-species differential expression download file 
-     * directory where are located multi-species differential expression files available for 
-     * download, to be added to the {@code bgeeRootDirectory} to generate URL to multi-species 
-     * differential expression download files.
-     */
-    private final String downloadMultiDiffExprFilesRootDirectory;
-    
-    /**
-     * A {@code String} that defines the ortholog download file directory where are located 
-     * ortholog files available for download, to be added to the {@code bgeeRootDirectory} to 
-     * generate URL to ortholog download files.
-     */
-    private final String downloadOrthologFilesRootDirectory;
     
     /**
      * A {@code String} that defines the root directory where are located javascript files, 
@@ -952,7 +722,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see org.bgee.model.BgeeProperties#topAnatResultsWritingDirectory
      * @see org.bgee.model.BgeeProperties#topAnatRWorkingDirectory
      */
-    private final String topAnatResultsUrlDirectory; 
+    private final String topAnatResultsUrlDirectory;
     
     /**
      * @see #getMailUri()
@@ -980,6 +750,11 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getGeneScoreClusteringThreshold()
      */
     private final Double geneScoreClusteringThreshold;
+
+    /**
+     * @see isInitializeCommandDataCachesOnStartup()
+     */
+    private final boolean initializeCommandDataCachesOnStartup;
 
     /**
      * Private constructor, can be only called through the use of one of the
@@ -1024,33 +799,6 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 SPARQL_STABLE_GRAPH_KEY, SPARQL_STABLE_GRAPH_DEFAULT);
         bgeeRootDomain = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 BGEE_ROOT_DOMAIN_KEY, BGEE_ROOT_DOMAIN_DEFAULT);
-        ftpRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
-                FTP_ROOT_DIRECTORY_KEY, FTP_ROOT_DIRECTORY_DEFAULT);
-        downloadRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
-                DOWNLOAD_ROOT_DIRECTORY_KEY, DOWNLOAD_ROOT_DIRECTORY_DEFAULT);
-        downloadExprFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
-                DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadDiffExprFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
-                DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
-                DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadMultiDiffExprFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
-                DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
-                DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadOrthologFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
-                DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, 
-                DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadAffyProcExprValueFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
-                DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
-                DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadRNASeqProcExprValueFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
-                DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
-                DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory = getStringOption(prop, 
-                SYS_PROPS, FILE_PROPS, DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
-                DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory = getStringOption(prop, 
-                SYS_PROPS, FILE_PROPS, DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
-                DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptVersionExtension = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
@@ -1084,6 +832,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 GENE_SCORE_CLUSTERING_METHOD_KEY, GENE_SCORE_CLUSTERING_METHOD_DEFAULT);
         geneScoreClusteringThreshold = getDoubleOption(prop, SYS_PROPS, FILE_PROPS, 
                 GENE_SCORE_CLUSTERING_THRESHOLD_KEY, GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT);
+        initializeCommandDataCachesOnStartup = getBooleanOption(prop, SYS_PROPS, FILE_PROPS,
+                INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_KEY, INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_DEFAULT);
         log.debug("Initialization done.");
         log.traceExit();
     }
@@ -1197,105 +947,6 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         return bgeeRootDomain;
     }
 
-    /**
-     * @return  A {@code String} that defines the FTP root directory, to be added to the 
-     *          {@code bgeeRootDirectory} to generate URL of FTP server.
-     */
-    public String getFTPRootDirectory() {
-        return ftpRootDirectory;
-    }
-
-    /**
-     * @return  A {@code String} that defines the download files root directory where are located 
-     *          data files available for download, to be added to the {@code bgeeRootDirectory} to 
-     *          generate URL to download files
-     */
-    public String getDownloadRootDirectory() {
-        return downloadRootDirectory;
-    }
-
-    /**
-     * @return  A {@code String} that defines the absolute root directory where are located 
-     *          expression files available for download, to generate URL to download files.
-     * @see #DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
-     */
-    public String getDownloadExprFilesRootDirectory() {
-        return downloadExprFilesRootDirectory;
-    }
-    
-    /**
-     * @return  A {@code String} that defines the absolute root directory where are located 
-     *          differential expression files available for download, to generate URL 
-     *          to download files.
-     * @see #DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
-     */
-    public String getDownloadDiffExprFilesRootDirectory() {
-        return downloadDiffExprFilesRootDirectory;
-    }
-    
-    /**
-     * @return  A {@code String} that defines the absolute root directory where are located 
-     *          Affymetrix processed expression value files available for download, to generate URL 
-     *          to download files.
-     * @see #DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
-     */
-    public String getDownloadAffyProcExprValueFilesRootDirectory() {
-        return downloadAffyProcExprValueFilesRootDirectory;
-    }
-    /**
-     * @return  A {@code String} that defines the absolute root directory where are located 
-     *          RNA-Seq processed expression value files available for download, to generate URL 
-     *          to download files.
-     * @see #DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
-     */
-    public String getDownloadRNASeqProcExprValueFilesRootDirectory() {
-        return downloadRNASeqProcExprValueFilesRootDirectory;
-    }
-    /**
-     * @return  A {@code String} that defines the absolute root directory where are located 
-     *          single cell RNA-Seq full length processed expression value files available 
-     *          for download, to generate URL to download files.
-     * @see #DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
-     */
-    public String getDownloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory() {
-        return downloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory;
-    }
-    /**
-     * @return  A {@code String} that defines the absolute root directory where are located 
-     *          single cell RNA-Seq target based processed expression value files available 
-     *          for download, to generate URL to download files.
-     * @see #DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
-     */
-    public String getDownloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory() {
-        return downloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory;
-    }
-    
-    /**
-     * @return  A {@code String} that defines the absolute root directory where are located 
-     *          multi-species differential expression files available for download, to generate URL 
-     *          to download files.
-     * @see #DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
-     */
-    public String getDownloadMultiDiffExprFilesRootDirectory() {
-        return downloadMultiDiffExprFilesRootDirectory;
-    }
-    
-    /**
-     * @return  A {@code String} that defines the absolute root directory where are located 
-     *          ortholog files available for download, to generate URL to download files.
-     * @see #DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT
-     */
-    public String getDownloadOrthologFilesRootDirectory() {
-        return downloadOrthologFilesRootDirectory;
-    }
     /**
      * @return  A {@code String} that defines the root directory where are located javascript 
      *          files, to be added to the {@code bgeeRootDirectory} to generate URL to obtain 
@@ -1439,7 +1090,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     /**
      * @return  A {@code String} corresponding to the name of the clustering method to use 
      *          to cluster {@code ExpressionCall}s based on their mean rank score. 
-     *          See {@code org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod} 
+     *          See {@code org.bgee.model.expressiondata.call.Call.ExpressionCall.ClusteringMethod} 
      *          for list of valid method names. 
      * @see #GENE_SCORE_CLUSTERING_METHOD_KEY
      * @see #GENE_SCORE_CLUSTERING_METHOD_DEFAULT
@@ -1450,7 +1101,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     /**
      * @return  A {@code Double} corresponding to the distance threshold used by methods 
      *          for clustering {@code ExpressionCall}s, based on their mean rank score. 
-     *          See {@code org.bgee.model.expressiondata.Call.ExpressionCall
+     *          See {@code org.bgee.model.expressiondata.call.Call.ExpressionCall
      *          .generateMeanRankScoreClustering(Collection, ClusteringMethod, double)}. 
      * @see #GENE_SCORE_CLUSTERING_THRESHOLD_KEY
      * @see #GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT
@@ -1458,5 +1109,14 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public Double getGeneScoreClusteringThreshold() {
         return geneScoreClusteringThreshold;
+    }
+
+    /**
+     * @return  A {@code boolean} defining, when {@code true}, that internal caches
+     *          used by the controller {@code CommandData} should be initialized
+     *          on webapp startup.
+     */
+    public boolean isInitializeCommandDataCachesOnStartup() {
+        return initializeCommandDataCachesOnStartup;
     }
 }

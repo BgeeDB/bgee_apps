@@ -536,9 +536,9 @@ public class BgeeDBUtilsTest extends TestAncestor {
     public void shouldGetAnatEntityNamesByIds() {
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<AnatEntityTO> returnedAnatEntityTOs = Arrays.asList(
-                    new AnatEntityTO("1", "anatEntity A", null, null, null, null), 
-                    new AnatEntityTO("2", "anatEntity B", null, null, null, null), 
-                    new AnatEntityTO("3", "anatEntity C", null, null, null, null));
+                    new AnatEntityTO("1", "anatEntity A", null, null, null, null, null), 
+                    new AnatEntityTO("2", "anatEntity B", null, null, null, null, null), 
+                    new AnatEntityTO("3", "anatEntity C", null, null, null, null, null));
             
             AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
@@ -562,8 +562,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
         
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<AnatEntityTO> returnedAnatEntityTOs = Arrays.asList(
-                    new AnatEntityTO(null, null, null, null, null, null), 
-                    new AnatEntityTO("1", "anatEntity B", null, null, null, null));
+                    new AnatEntityTO(null, null, null, null, null, null, null), 
+                    new AnatEntityTO("1", "anatEntity B", null, null, null, null, null));
             
             AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
@@ -587,8 +587,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
         
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<AnatEntityTO> returnedAnatEntityTOs = Arrays.asList(
-                    new AnatEntityTO("1", "anatEntity A", null, null, null, null), 
-                    new AnatEntityTO("1", "anatEntity B", null, null, null, null));
+                    new AnatEntityTO("1", "anatEntity A", null, null, null, null, null), 
+                    new AnatEntityTO("1", "anatEntity B", null, null, null, null, null));
             
             AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);

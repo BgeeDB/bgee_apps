@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyElement;
 import org.bgee.model.species.Species;

@@ -28,6 +28,8 @@ import com.google.gson.stream.JsonWriter;
  * per data source in the display.
  */
 public final class GeneTypeAdapter extends TypeAdapter<Gene> {
+    private static final Logger log = LogManager.getLogger(GeneTypeAdapter.class.getName());
+
     //TODO: refactor with comparator in HtmlGeneDisplay
     private final static Comparator<XRef> X_REF_COMPARATOR = Comparator
             .<XRef, Integer>comparing(x -> x.getSource().getDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
@@ -36,11 +38,13 @@ public final class GeneTypeAdapter extends TypeAdapter<Gene> {
 
     private final Function<String, String> urlEncodeFunction;
     private final Gson gson;
-    private static final Logger log = LogManager.getLogger(GeneTypeAdapter.class.getName());
+    private final TypeAdaptersUtils utils;
 
-    protected GeneTypeAdapter(Gson gson, Function<String, String> urlEncodeFunction) {
+    protected GeneTypeAdapter(Gson gson, Function<String, String> urlEncodeFunction,
+            TypeAdaptersUtils utils) {
         this.gson = gson;
         this.urlEncodeFunction = urlEncodeFunction;
+        this.utils = utils;
     }
 
     @Override
@@ -91,14 +95,14 @@ public final class GeneTypeAdapter extends TypeAdapter<Gene> {
 
             out.name("source");
             out.beginObject();
-            TypeAdaptersUtils.writeSimplifiedSource(out, e.getKey());
+            this.utils.writeSimplifiedSource(out, e.getKey());
             out.endObject();
 
             out.name("xRefs");
             out.beginArray();
             for (XRef xRef: e.getValue()) {
                 out.beginObject();
-                TypeAdaptersUtils.writeSimplifiedXRef(out, xRef, urlEncodeFunction);
+                this.utils.writeSimplifiedXRef(out, xRef, urlEncodeFunction);
                 out.endObject();
             }
             out.endArray();

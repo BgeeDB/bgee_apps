@@ -29,43 +29,51 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, DATA_SOURCE_ID;
+        ID("microarrayExperimentId"), NAME("microarrayExperimentName"),
+        DESCRIPTION("microarrayExperimentDescription"), DATA_SOURCE_ID("dataSourceId");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code MicroarrayExperimentTO}
+         * class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
 
-	/**
-	 * Retrieve from a data source a {@code MicroarrayExperimentTO}, corresponding to 
-	 * an Affymetrix experiment with the ID {@code expId}, or {@code null} 
-	 * if no corresponding experiment could be found.  
-	 * 
-	 * @param expId            A {@code String} representing the ID of the Affymetrix experiment to retrieve
-	 *                         from the data source.
-     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information
-     *                         to retrieve from the data source.
-	 * @return	               A {@code AffymetrixExpTO}, encapsulating all the data related to
-	 *                         the Affymetrix experiment, {@code null} if none could be found.
-     * @throws DAOException    If an error occurred when accessing the data source. 
-	 */
-	public MicroarrayExperimentTO getExperimentById(String expId, Collection<Attribute> attributes)
-	        throws DAOException;
-
-	/**
-	 * Allows to retrieve {@code MicroarrayExperimentTO}s according to the provided filters,
-	 * ordered by microarray experiment ID.
+    /**
+     * Allows to retrieve {@code MicroarrayExperimentTO}s according to the provided filters.
      * <p>
-     * The {@code MicroarrayExperimentTO}s are retrieved and returned as a {@code MicroarrayExperimentTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
-     * are retrieved.
-	 *
-	 * @param filters          A {@code Collection} of {@code DAORawDataFilter}s allowing to specify
-	 *                         which experiments to retrieve.
-	 * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information to retrieve
-	 *                         from the data source.
-	 * @return                 A {@code MicroarrayExperimentTOResultSet} allowing to retrieve the targeted
-	 *                         {@code MicroarrayExperimentTO}s.
-	 * @throws DAOException    If an error occurred while accessing the data source.
-	 */
-    public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> filters,
-            Collection<Attribute> attributes) throws DAOException;
+     * The {@code MicroarrayExperimentTO}s are retrieved and returned as a
+     * {@code MicroarrayExperimentTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter experiments to retrieve. The query uses AND between
+     *                          elements of a same filter and uses OR between filters.
+     * @param offset            A {@code Long} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row. If
+     *                          not null, a limit should be also provided.
+     *                          {@code Long} because sometimes the number of potential results
+     *                          can be very large.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
+     *                          to retrieve from the data source.
+     * @return                  A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the
+     *                          targeted {@code AffymetrixProbesetTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
+     */
+    public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
+            Long offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
 	/**
      * {@code DAOResultSet} for {@code MicroarrayExperimentTO}s
@@ -91,7 +99,8 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
         /**
 	     * Default constructor. 
 	     */
-	    public MicroarrayExperimentTO(String id, String name, String description, Integer dataSourceId) {
+	    public MicroarrayExperimentTO(String id, String name, String description,
+	            Integer dataSourceId) {
 	        super(id, name, description, dataSourceId);
 	    }
 	}

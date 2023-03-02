@@ -6,9 +6,8 @@ import java.util.EnumSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.file.DownloadFile;
-import org.bgee.view.JsonHelper;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
@@ -26,12 +25,12 @@ import com.google.gson.stream.JsonWriter;
  * {@code TypeAdapter}, whose streaming API is more efficient than this interface's tree API. "
  */
 public final class DownloadFileTypeAdapter extends TypeAdapter<DownloadFile> {
+    private static final Logger log = LogManager.getLogger(DownloadFileTypeAdapter.class.getName());
+
     /**
      * The {@code BgeeProperties} to retrieve parameters from.
      */
     private final BgeeProperties props;
-
-    private static final Logger log = LogManager.getLogger(JsonHelper.class.getName());
 
     /**
      * @param props The {@code BgeeProperties} to retrieve parameters from.

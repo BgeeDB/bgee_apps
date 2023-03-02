@@ -74,7 +74,7 @@ import org.bgee.view.ViewFactory;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct 2016
+ * @version Bgee 15.0, Feb. 2023
  * @since   Bgee 13
  */
 public class CommandTopAnat extends CommandParent {
@@ -142,9 +142,9 @@ public class CommandTopAnat extends CommandParent {
                 JobService jobService, User user, long jobId, String jobTitle, String jobCreationDate, 
                 String sendToAddress, BgeeProperties props, MailSender mailSender, 
                 Supplier<ServiceFactory> serviceFactoryProvider) {
-            log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}",topAnatParams, resultUrl,
-                    jobService, jobId, jobTitle, jobCreationDate, sendToAddress, props,
-                    mailSender, serviceFactoryProvider);
+            log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}", topAnatParams, resultUrl,
+                    jobService, user, jobId, jobTitle, jobCreationDate,
+                    sendToAddress, props, mailSender, serviceFactoryProvider);
             this.topAnatParams = topAnatParams;
             
             this.resultUrl = resultUrl;
@@ -476,7 +476,11 @@ public class CommandTopAnat extends CommandParent {
             JobStatus status = JobStatus.RUNNING;
             long jobId = 0;
             final TopAnatController controller = this.loadTopAnatController();
-            
+
+            //We need a data hash in most cases for TopAnat to work properly,
+            //getDataKey() is used in various places of this class
+            this.requestParameters.generateKeyAndStore();
+
             if (controller.areAnalysesDone()) {
                 log.debug("Results already exist.");
                 status = JobStatus.UNDEFINED;
@@ -491,8 +495,10 @@ public class CommandTopAnat extends CommandParent {
                 message = "The results already exist.";
             }
             LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+
             data.put(JOB_RESPONSE_LABEL, new JobResponse(
                     jobId, status.name(), this.requestParameters.getDataKey()));
+
             display.sendTrackingJobResponse(data, message);
             
 
@@ -501,8 +507,10 @@ public class CommandTopAnat extends CommandParent {
             //TODO: use the more detailed information provided by the Job. 
             //Maybe we can even actually provide the Job in JSON?
             // Get params
-            Integer jobId = this.requestParameters.getJobId(); 
-            String keyParam = this.requestParameters.getDataKey(); 
+            Integer jobId = this.requestParameters.getJobId();
+            //We couldn't track a job without a data key, no need to try to generate one
+            String keyParam = this.requestParameters.getDataKey();
+            assert StringUtils.isNotBlank(keyParam);
             
             if (jobId == null || jobId < 1) {
                 throw log.throwing(new InvalidRequestException("A job ID must be provided"));
@@ -555,8 +563,7 @@ public class CommandTopAnat extends CommandParent {
 
         // Home page, empty
         } else if (this.requestParameters.getAction() == null) {
-            display.displayTopAnatHomePage();
-            
+            throw log.throwing(new InvalidRequestException("an action should be provided"));
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " 
                 + this.requestParameters.getUrlParametersInstance().getParamAction() 
@@ -584,8 +591,11 @@ public class CommandTopAnat extends CommandParent {
         
         log.debug("Results don't exist, launching job");
         
-        //generate result URL, for sending it to the user
-        //XXX does it worth creating a FrontendRequestParameters ?
+        //Generate result URL, for sending it to the user.
+        //The data key is generated before calling this method
+        //XXX does it worth creating a FrontendRequestParameters?
+        //TODO previously we were sending the stable URL with version number,
+        //we should also do it with the React Frontend
         final String resultUrl = this.prop.getFrontendUrl() + "/analysis/top-anat/" +
                 this.requestParameters.getDataKey();
         
@@ -653,6 +663,7 @@ public class CommandTopAnat extends CommandParent {
         if (StringUtils.isNotBlank(jobTitle)) {
             globalFileName += jobTitle.replace(' ', '_') + "_";
         }
+        assert StringUtils.isNotBlank(this.requestParameters.getDataKey());
         globalFileName += this.requestParameters.getDataKey() + ".zip";
         
         //If several results are requested, then we will generate a zip of the result zips, 
@@ -755,7 +766,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private GeneListResponse getGeneResponse(List<String> geneList, String paramName)
             throws InvalidRequestException {
-        log.traceEntry("{$, {}", geneList, paramName);
+        log.traceEntry("{}, {}", geneList, paramName);
         
         if (geneList.isEmpty()) {
             throw log.throwing(new AssertionError("Code supposed to be unreachable."));
@@ -1052,7 +1063,6 @@ public class CommandTopAnat extends CommandParent {
         assert cleanFgIds != null && !cleanFgIds.isEmpty();
         assert devStageIds != null && !devStageIds.isEmpty();
         assert speciesId != null && speciesId >= 1;
-        assert callTypes == null || callTypes.isEmpty();
 
         // One TopAnat analyze has one call type and one dev. stage
         List<TopAnatParams> allTopAnatParams = new ArrayList<TopAnatParams>();

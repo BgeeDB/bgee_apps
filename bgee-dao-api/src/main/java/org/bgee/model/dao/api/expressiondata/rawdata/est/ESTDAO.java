@@ -1,10 +1,15 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.est;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 
@@ -28,12 +33,56 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
      * <li>{@code BGEE_GENE_ID}: corresponds to {@link ESTTO#getBgeeGeneId()}.
      * <li>{@code UNIGENE_CLUSTER_ID}: corresponds to {@link ESTTO#getUniGeneClusterId()}.
      * <li>{@code EXPRESSION_ID}: corresponds to {@link ESTTO#getExpressionId()}.
+     * <li>{@code PVALUE}: corresponds to {@link ESTTO#getPValue()}.
      * <li>{@code EST_DATA}: corresponds to {@link ESTTO#getExpressionConfidence()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        EST_ID, EST_ID2, EST_LIBRARY_ID, BGEE_GENE_ID, UNIGENE_CLUSTER_ID, EXPRESSION_ID, EST_DATA;
+        EST_ID("estId"), EST_ID2("estId2"), EST_LIBRARY_ID("estLibraryId"),
+        BGEE_GENE_ID("bgeeGeneId"), UNIGENE_CLUSTER_ID("UniGeneClusterId"),
+        EXPRESSION_ID("expressionId"), PVALUE("pValue"), EST_DATA("estData");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code ESTTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
+
+    /**
+     * Allows to retrieve {@code ESTTO}s according to the provided filters.
+     * <p>
+     * The {@code ESTTO}s are retrieved and returned as a {@code ESTTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter ESTs to retrieve. The query uses AND between elements
+     *                          of a same filter and uses OR between filters.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row.
+     * @param limit             A {@code Long} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
+     *                          {@code Long} because sometimes the number of potential results
+     *                          can be very large.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
+     *                          to retrieve from the data source.
+     * @return                  A {@code ESTTOResultSet} allowing to retrieve the
+     *                          targeted {@code ESTTOResultSet}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
+     */
+    public ESTTOResultSet getESTs(Collection<DAORawDataFilter> rawDataFilters,
+            Long offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
+
+    public interface ESTTOResultSet extends DAOResultSet<ESTTO> {}
 
     /**
      * An {@code EntityTO} representing an EST, as stored in the Bgee database.
@@ -65,12 +114,12 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
         private final CallSourceDataTO callSourceDataTO;
 
         public ESTTO(String estId, String estId2, String estLibraryId, String uniGeneClusterId, Integer bgeeGeneId,
-                DataState expressionConfidence, Long expressionId) {
+                DataState expressionConfidence, BigDecimal pValue, Long expressionId) {
             super(estId);
             this.estId2 = estId2;
             this.uniGeneClusterId = uniGeneClusterId;
             this.estLibraryId = estLibraryId;
-            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, DetectionFlag.PRESENT,
+            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, pValue,
                     expressionConfidence, ExclusionReason.NOT_EXCLUDED, expressionId);
         }
 

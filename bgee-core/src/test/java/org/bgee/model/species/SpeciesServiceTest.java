@@ -64,9 +64,9 @@ public class SpeciesServiceTest extends TestAncestor {
 		// mock behavior
         List<SpeciesTO> speciesTos = Arrays.asList(
                 new SpeciesTO(9606, "human", "Homo", "sapiens", 1, 4312, "3241",
-                        "version1", "assemblyXRef1", 1, 321), 
+                        "version1", 1, 321), 
                 new SpeciesTO(1234, "name", "genus", "someSpecies", 2, 1123, "3432241",
-                        "versionA", "assemblyXRefA", 1, 1321));
+                        "versionA", 1, 1321));
         // ResultSet cannot be reused. As we have 2 tests, we need 2 ResultSet
         SpeciesTOResultSet speciesRS = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
         SpeciesTOResultSet speciesRS2 = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
@@ -114,9 +114,9 @@ public class SpeciesServiceTest extends TestAncestor {
     public void prepareMockObjects() {
         List<SpeciesTO> speciesTos = Arrays.asList(
                 new SpeciesTO(9606, "human", "Homo", "sapiens", 1, 4312, "3241",
-                        "version1", "assemblyXRef1", 1, 321), 
+                        "version1", 1, 321), 
                 new SpeciesTO(1234, "name", "genus", "someSpecies", 2, 1123, "3432241",
-                        "versionA", "assemblyXRefA", 1, 1321));
+                        "versionA", 1, 1321));
         // ResultSet cannot be reused. As we have 2 tests, we need 2 ResultSet
         SpeciesTOResultSet speciesRS = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
         SpeciesTOResultSet speciesRS2 = getMockResultSet(SpeciesTOResultSet.class, speciesTos);

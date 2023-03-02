@@ -69,9 +69,9 @@ public class GeneServiceTest extends TestAncestor {
         when(managerMock.getSpeciesDAO()).thenReturn(speciesDAO);
         SpeciesTOResultSet mockSpeciesRs = getMockResultSet(SpeciesTOResultSet.class,
                 Arrays.asList(
-                        new SpeciesTO(11, null, null, null, null, null, null, null, null, 1, null),
-                        new SpeciesTO(22, null, null, null, null, null, null, null, null, 1, null),
-                        new SpeciesTO(44, null, null, null, null, null, null, null, null, 1, null)));
+                        new SpeciesTO(11, null, null, null, null, null, null, null, 1, null),
+                        new SpeciesTO(22, null, null, null, null, null, null, null, 1, null),
+                        new SpeciesTO(44, null, null, null, null, null, null, null, 1, null)));
         when(speciesDAO.getSpeciesByIds(filtersToMap.keySet(), null)).thenReturn(mockSpeciesRs);
 
         // Mock GeneDAO

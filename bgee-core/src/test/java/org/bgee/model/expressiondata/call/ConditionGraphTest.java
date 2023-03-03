@@ -8,12 +8,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +21,6 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
@@ -48,7 +45,7 @@ public class ConditionGraphTest extends TestAncestor {
     
     private ConditionGraph conditionGraph;
     private List<Condition> conditions;
-    
+
     /**
      * @param fromService   A {@code boolean} {@code true} if the {@code ConditionGraph} 
      *                      should be loaded from the {@code ServiceFactory}, 
@@ -56,9 +53,9 @@ public class ConditionGraphTest extends TestAncestor {
      */
     private void loadConditionGraph(boolean fromService) {
         //            anat1
-        //           /  \  \
-        //      anat2  anat3\
-        //                \  \
+        //           /  \
+        //      anat2  MISSING (test graph reconnection for deleted conditions)
+        //                \
         //                anat4
         //
         //            stage1
@@ -70,8 +67,6 @@ public class ConditionGraphTest extends TestAncestor {
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
         String anatEntityId2 = "anat2";
         AnatEntity anatEntity2 = new AnatEntity(anatEntityId2);
-        String anatEntityId3 = "anat3";
-        AnatEntity anatEntity3 = new AnatEntity(anatEntityId3);
         String anatEntityId4 = "anat4";
         AnatEntity anatEntity4 = new AnatEntity(anatEntityId4);
         String devStageId1 = "stage1";
@@ -86,17 +81,15 @@ public class ConditionGraphTest extends TestAncestor {
         Species sp = new Species(9606);
         Condition cond1 = new Condition(anatEntity1, devStage1, null, null, null, sp);
         Condition cond2 = new Condition(anatEntity2, devStage2, null, null, null, sp);
-        Condition cond3 = new Condition(anatEntity3, devStage3, null, null, null, sp);
         Condition cond4 = new Condition(anatEntity2, devStage1, null, null, null, sp);
         Condition cond5 = new Condition(anatEntity1, devStage3, null, null, null, sp);
         Condition cond6 = new Condition(anatEntity2, devStage3, null, null, null, sp);
-        Condition cond7 = new Condition(anatEntity3, devStage2, null, null, null, sp);
         Condition cond8 = new Condition(anatEntity4, devStage4, null, null, null, sp);
         Condition cond1_anatOnly = new Condition(anatEntity1, null, null, null, null, sp);
         Condition cond2_anatOnly = new Condition(anatEntity2, null, null, null, null, sp);
         Condition cond1_stageOnly = new Condition(null, devStage1, null, null, null, sp);
         Condition cond3_stageOnly = new Condition(null, devStage3, null, null, null, sp);
-        this.conditions = Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, cond8, 
+        this.conditions = Arrays.asList(cond1, cond2, cond4, cond5, cond6, cond8,
                 cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly);
         
         ServiceFactory mockFact = mock(ServiceFactory.class);
@@ -114,7 +107,7 @@ public class ConditionGraphTest extends TestAncestor {
         Ontology<DevStage, String> devStageOnt = mock(Ontology.class);
         
         when(ontService.getAnatEntityOntology(9606, new HashSet<>(Arrays.asList(
-                anatEntityId1, anatEntityId2, anatEntityId3, anatEntityId4)), 
+                anatEntityId1, anatEntityId2, anatEntityId4)),
                 EnumSet.of(RelationType.ISA_PARTOF), false, false))
         .thenReturn(anatEntityOnt);
         when(ontService.getDevStageOntology(9606, new HashSet<>(Arrays.asList(
@@ -122,10 +115,9 @@ public class ConditionGraphTest extends TestAncestor {
         .thenReturn(devStageOnt);
         
         when(anatEntityOnt.getElements()).thenReturn(
-                new HashSet<>(Arrays.asList(anatEntity1, anatEntity2, anatEntity3, anatEntity4)));
+                new HashSet<>(Arrays.asList(anatEntity1, anatEntity2, anatEntity4)));
         when(anatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
         when(anatEntityOnt.getElement(anatEntityId2)).thenReturn(anatEntity2);
-        when(anatEntityOnt.getElement(anatEntityId3)).thenReturn(anatEntity3);
         when(anatEntityOnt.getElement(anatEntityId4)).thenReturn(anatEntity4);
         when(devStageOnt.getElements()).thenReturn(
                 new HashSet<>(Arrays.asList(devStage1, devStage2, devStage3, devStage4)));
@@ -136,8 +128,7 @@ public class ConditionGraphTest extends TestAncestor {
         
         when(anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>());
         when(anatEntityOnt.getAncestors(anatEntity2)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(anatEntityOnt.getAncestors(anatEntity3)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(anatEntityOnt.getAncestors(anatEntity4)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity3)));
+        when(anatEntityOnt.getAncestors(anatEntity4)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
         when(devStageOnt.getAncestors(devStage1)).thenReturn(new HashSet<>());
         when(devStageOnt.getAncestors(devStage2)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         when(devStageOnt.getAncestors(devStage3)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
@@ -145,15 +136,14 @@ public class ConditionGraphTest extends TestAncestor {
 
         when(anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>());
         when(anatEntityOnt.getAncestors(anatEntity2, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(anatEntityOnt.getAncestors(anatEntity3, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(anatEntityOnt.getAncestors(anatEntity4, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity3)));
+        when(anatEntityOnt.getAncestors(anatEntity4, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
         when(devStageOnt.getAncestors(devStage1, false)).thenReturn(new HashSet<>());
         when(devStageOnt.getAncestors(devStage2, false)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         when(devStageOnt.getAncestors(devStage3, false)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         when(devStageOnt.getAncestors(devStage4, false)).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage3)));
         
         when(anatEntityOnt.getDescendants(anatEntity1, false)).thenReturn(
-                new HashSet<>(Arrays.asList(anatEntity2, anatEntity3, anatEntity4)));
+                new HashSet<>(Arrays.asList(anatEntity2, anatEntity4)));
         // We should not propagate to dev. stages child conditions
         when(devStageOnt.getDescendants(devStage1, false)).thenReturn(new HashSet<>());
 
@@ -182,32 +172,26 @@ public class ConditionGraphTest extends TestAncestor {
         assertTrue("Incorrect determination of precision for more precise condition", 
                 this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(9)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(6), this.conditions.get(7)));
         assertFalse("Incorrect determination of precision for less precise condition", 
                 this.conditionGraph.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(0)));
         assertFalse("Incorrect determination of precision for less precise condition", 
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(7), this.conditions.get(6)));
+        assertTrue("Incorrect determination of precision for more precise condition", 
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(9)));
+        assertFalse("Incorrect determination of precision for less precise condition", 
                 this.conditionGraph.isConditionMorePrecise(this.conditions.get(9), this.conditions.get(8)));
-        assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(2)));
-        assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(10), this.conditions.get(11)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(2), this.conditions.get(0)));
-        assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(11), this.conditions.get(10)));
-        assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(11)));
-        assertFalse("Incorrect determination of precision for as precise conditions", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(2)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(6), this.conditions.get(9)));
 
         assertFalse("Incorrect determination of precision for condition with anat. entity as precise", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(5), this.conditions.get(1)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(4), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for condition with anat. entity as precise", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(4)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(3)));
         assertFalse("Incorrect determination of precision for condition with dev. stage as precise", 
                 this.conditionGraph.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for condition with dev. stage as precise", 
-                this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(3)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(2)));
         
         AnatEntity anatEntity1 = new AnatEntity(this.conditions.get(0).getAnatEntityId());
         assertEquals("Incorrect AnatEntity retrieved", anatEntity1, this.conditionGraph.getAnatEntityOntology().getElement(
@@ -242,29 +226,25 @@ public class ConditionGraphTest extends TestAncestor {
      * Test the method {@link ConditionGraph#getDescendantConditions(Condition)}.
      */
     private void shouldGetDescendantConditions() {
-        Set<Condition> expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(3)));
+        Set<Condition> expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(2)));
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionGraph.getDescendantConditions(this.conditions.get(0)));
         
         expectedDescendants = new HashSet<>();
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
+                this.conditionGraph.getDescendantConditions(this.conditions.get(2)));
+        
+        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(4)));
+        assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionGraph.getDescendantConditions(this.conditions.get(3)));
         
-        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(2), this.conditions.get(5)));
-        assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionGraph.getDescendantConditions(this.conditions.get(4)));
-        
-        expectedDescendants = new HashSet<>();
+        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(7)));
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionGraph.getDescendantConditions(this.conditions.get(6)));
         
-        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(9)));
-        assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionGraph.getDescendantConditions(this.conditions.get(8)));
-        
         expectedDescendants = new HashSet<>();
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionGraph.getDescendantConditions(this.conditions.get(10)));
+                this.conditionGraph.getDescendantConditions(this.conditions.get(8)));
     }
 
     /**
@@ -283,61 +263,21 @@ public class ConditionGraphTest extends TestAncestor {
     private void shouldGetAncestorConditions() {
         Set<Condition> expectedAncestors = new HashSet<>(Arrays.asList(this.conditions.get(0)));
         assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
-                this.conditionGraph.getAncestorConditions(this.conditions.get(6), false));
-        
-        expectedAncestors = new HashSet<>(Arrays.asList(this.conditions.get(0)));
-        assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
-                this.conditionGraph.getAncestorConditions(this.conditions.get(3), false));
+                this.conditionGraph.getAncestorConditions(this.conditions.get(2), false));
 
         expectedAncestors = new HashSet<>();
         assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
                 this.conditionGraph.getAncestorConditions(this.conditions.get(0), false));
         
         expectedAncestors = new HashSet<>(Arrays.asList(
-                this.conditions.get(0), this.conditions.get(2), this.conditions.get(4)));
+                this.conditions.get(0), this.conditions.get(3)));
         assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
-                this.conditionGraph.getAncestorConditions(this.conditions.get(7), false));
-    }
+                this.conditionGraph.getAncestorConditions(this.conditions.get(5), false));
 
-    @Test
-    public void shouldPerformRealTest() {
-        ConditionGraphService condGraphService = new ConditionGraphService(new ServiceFactory());
-        ConditionGraph conditionGraph = condGraphService.loadConditionGraphFromSpeciesIds(
-                Collections.singleton(9606),
-                Collections.singleton(new ConditionFilter(
-                        null,
-                        Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID),
-                        null,
-                        Collections.singleton(ConditionDAO.SEX_ROOT_ID),
-                        Collections.singleton(ConditionDAO.STRAIN_ROOT_ID),
-                        null)),
-                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.CELL_TYPE_ID));
-        Condition cond = conditionGraph.getConditions().stream()
-                .filter(c -> c.getAnatEntityId().equals("UBERON:0000996"))
-                .findAny().get();
-        log.info("Selected condition: {}", cond);
-        Set<Condition> directParents = conditionGraph.getAncestorConditions(cond, true);
-        log.info("Direct parents: {}", directParents);
-        Set<Condition> allParents = conditionGraph.getAncestorConditions(cond, false);
-        log.info("All parents: {}", allParents);
-
-        Set<Condition> conditionsWithNoDirectAncestors = conditionGraph.getConditions().stream()
-                .filter(c -> conditionGraph.getAncestorConditions(c, true).isEmpty())
-                .collect(Collectors.toSet());
-        log.info("{} conditions with no direct parents: {}",
-                conditionsWithNoDirectAncestors.size(), conditionsWithNoDirectAncestors);
-
-        Condition rootCondition = conditionGraph.getConditions().stream()
-                .filter(c -> c.getAnatEntityId().equals("BGEE:0000000") && c.getCellTypeId().equals("GO:0005575"))
-                .findAny().get();
-        log.info("Root: {} - empty parents? {}", rootCondition, conditionGraph.getAncestorConditions(rootCondition, true).isEmpty());
-
-
-        Condition parentCond = conditionGraph.getConditions().stream()
-                .filter(c -> c.getAnatEntityId().equals("UBERON:0000993"))
-                .findAny().get();
-        Set<Condition> directChildren = conditionGraph.getDescendantConditions(parentCond, true);
-        log.info("Direct descendants: {}", directChildren);
+        //Test graph reconnection for deleted conditions
+        expectedAncestors = new HashSet<>(Arrays.asList(
+                this.conditions.get(3)));
+        assertEquals("Incorrect ancestors retrieved", expectedAncestors,
+                this.conditionGraph.getAncestorConditions(this.conditions.get(5), true));
     }
 }

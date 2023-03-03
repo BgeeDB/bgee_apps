@@ -32,6 +32,10 @@ public class Species extends NamedEntity<Integer> {
     
     /** @see #getGenomeVersion() */
     private final String genomeVersion;
+
+    /** @see #getSpeciesFullNameWithoutSpace() */
+    private final String speciesFullNameWithoutSpace;
+
     /**
      * @see #getGenomeSource()
      */
@@ -96,6 +100,8 @@ public class Species extends NamedEntity<Integer> {
         super(id, name, description);
         this.genus = genus;
         this.speciesName = speciesName;
+        this.speciesFullNameWithoutSpace = (new StringBuilder()).append(this.genus)
+                .append("_").append(this.speciesName).toString().replace(" ", "_");
         this.genomeVersion = genomeVersion;
         this.genomeSource = genomeSource;
         //In the data source, '0' means that we used the correct genome
@@ -142,6 +148,17 @@ public class Species extends NamedEntity<Integer> {
      */
     public String getSpeciesName() {
     	return this.speciesName;
+    }
+
+    /**
+     * @return  A {@code String} representing the concatenation of genus
+     *          and species name of this {@code Species}. The concatenation is
+     *          done using an underscore and spaces in the resulting {@code String} are
+     *          replaced by underscore too (e.g., "Homo_sapiens" for human,
+     *          Canis_lupus_familiaris for dog).
+     */
+    public String getSpeciesFullNameWithoutSpace() {
+        return this.speciesFullNameWithoutSpace;
     }
     
     /**
@@ -246,6 +263,7 @@ public class Species extends NamedEntity<Integer> {
         StringBuilder builder = new StringBuilder();
         builder.append("Species [").append(super.toString()).append(", genus=").append(genus)
                 .append(", speciesName=").append(speciesName)
+                .append(", speciesFullNameWithoutSpace=").append(speciesFullNameWithoutSpace)
                 .append(", genomeVersion=").append(genomeVersion)
                 .append(", genomeSource=").append(genomeSource)
                 .append(", genomeSpeciesId=").append(genomeSpeciesId)

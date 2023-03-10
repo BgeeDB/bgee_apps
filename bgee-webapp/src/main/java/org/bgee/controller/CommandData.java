@@ -1207,9 +1207,11 @@ public class CommandData extends CommandParent {
     private RawDataFilter loadRawDataFilter(boolean consideringFilters) {
         log.traceEntry("{}", consideringFilters);
 
-        Collection<String> expOrAssayIds = this.requestParameters.getExpAssayId();
-        String experimentId = this.requestParameters.getExperimentId();
-        Set<String> experimentIds = experimentId != null? Collections.singleton(experimentId): null;
+        Integer speciesId = this.requestParameters.getSpeciesId();
+
+        Integer filterSpeciesId = !consideringFilters? null:
+            this.requestParameters.getFirstValue(
+                    this.requestParameters.getUrlParametersInstance().getParamFilterSpeciesId());
         List<String> filterExperimentIds = !consideringFilters? null:
             this.requestParameters.getValues(
                     this.requestParameters.getUrlParametersInstance().getParamFilterExperimentId());
@@ -1232,10 +1234,6 @@ public class CommandData extends CommandParent {
             this.requestParameters.getValues(
                 this.requestParameters.getUrlParametersInstance().getParamFilterStrain());
 
-        Integer speciesId = this.requestParameters.getSpeciesId();
-
-        GeneFilter geneFilter = speciesId == null? null:
-            new GeneFilter(speciesId, this.requestParameters.getGeneIds());
 
         List<String> sexes = this.requestParameters.getSex();
         if (sexes != null && (sexes.contains(RequestParameters.ALL_VALUE) ||
@@ -1249,8 +1247,9 @@ public class CommandData extends CommandParent {
 
         RawDataConditionFilter condFilter = null;
         try {
-            condFilter = new RawDataConditionFilter(speciesId,
+            condFilter = new RawDataConditionFilter(
                     //Filters override the related parameter from the form
+                    filterSpeciesId != null? filterSpeciesId: speciesId,
                     filterAnatEntityIds != null && !filterAnatEntityIds.isEmpty()?
                             filterAnatEntityIds: this.requestParameters.getAnatEntity(),
                     filterDevStageIds != null && !filterDevStageIds.isEmpty()?
@@ -1287,6 +1286,14 @@ public class CommandData extends CommandParent {
             //a condition filter
             log.catching(e);
         }
+
+
+        Collection<String> expOrAssayIds = this.requestParameters.getExpAssayId();
+        String experimentId = this.requestParameters.getExperimentId();
+        Set<String> experimentIds = experimentId != null? Collections.singleton(experimentId): null;
+        GeneFilter geneFilter = speciesId == null && filterSpeciesId == null? null:
+            new GeneFilter(filterSpeciesId != null? filterSpeciesId: speciesId,
+                    this.requestParameters.getGeneIds());
 
         return log.traceExit(new RawDataFilter(
                 geneFilter != null? Collections.singleton(geneFilter): null,

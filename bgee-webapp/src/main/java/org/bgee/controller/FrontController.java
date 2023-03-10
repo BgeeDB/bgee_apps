@@ -20,12 +20,14 @@ import org.bgee.controller.exception.ValueSizeExceededException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.controller.user.User;
 import org.bgee.controller.user.UserService;
+import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
@@ -69,6 +71,11 @@ public class FrontController extends HttpServlet {
      */
     private final JobService jobService;
     /**
+     * The {@code BgeeCacheService} instance allowing to manage caches between threads 
+     * across the entire webapp. 
+     */
+    protected final BgeeCacheService cacheService;
+    /**
      * The {@link UserService} instance allowing to create {@code User} objects to identify 
      * and track users in the webapp.
      */
@@ -108,7 +115,7 @@ public class FrontController extends HttpServlet {
      *              {@code BgeeProperties}
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null, null);
     }
 
     /**
@@ -136,10 +143,10 @@ public class FrontController extends HttpServlet {
      * @param mailSender                A {@code MailSender} instance used to send mails to users.
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
-            JobService jobService, UserService userService,
+            JobService jobService, BgeeCacheService cacheService, UserService userService,
             Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
             MailSender mailSender) {
-        log.entry(prop, urlParameters, jobService, userService, 
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}",prop, urlParameters, jobService, userService, 
                 serviceFactoryProvider, viewFactoryProvider, mailSender);
 
         // If the URLParameters object is null, just use a new instance
@@ -150,9 +157,10 @@ public class FrontController extends HttpServlet {
 
         //If serviceFactoryProvider is null, use default constructor of ServiceFactory
         this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 
-            ServiceFactory::new;
+            () -> new ServiceFactory(this.prop);
         
         this.jobService  = jobService != null? jobService: new JobService(this.prop);
+        this.cacheService = cacheService != null? cacheService: new BgeeCacheService();
         this.userService = userService != null? userService: new UserService();
         
         // If the viewFactoryProvider object is null, just use a new instance, 
@@ -192,10 +200,10 @@ public class FrontController extends HttpServlet {
      */
     public void doRequest(final HttpServletRequest request, final HttpServletResponse response,
             final boolean postData) {
-        log.entry(request, response, postData);
+        log.traceEntry("{}, {}, {}", request, response, postData);
         
         //default display type in case of error before we can do anything.
-        DisplayType displayType = DisplayType.HTML;
+        DisplayType displayType = DisplayType.JSON;
         //default RequestParameters in case of errors
         RequestParameters requestParameters = new RequestParameters(this.urlParameters,
                 this.prop, true, "&");
@@ -210,7 +218,13 @@ public class FrontController extends HttpServlet {
             request.setCharacterEncoding(RequestParameters.CHAR_ENCODING); 
             requestParameters = new RequestParameters(request, this.urlParameters,
                     this.prop, true, "&");
-            log.debug("Analyzed URL: {} - POST data? {}", requestParameters.getRequestURL(), postData);
+            //calling requestParameters.getRequestURL() can produce an error,
+            //since we don't want to produce one in production just for logging,
+            //we add a isDebugEnabled check
+            if (log.isDebugEnabled()) {
+                log.debug("Analyzed URL: {} - POST data? {}",
+                        requestParameters.getRequestURL(), postData);
+            }
             
             //Load a User instance to track users between requests
             User user = this.userService.createNewUser(request, requestParameters);
@@ -241,24 +255,9 @@ public class FrontController extends HttpServlet {
             if (requestParameters.isPostFormSubmit()) {
                 controller = new CommandRedirect(response, requestParameters, this.prop, factory, serviceFactory);
 
-            } else if (requestParameters.isTheHomePage()) {
-                controller = new CommandHome(response, requestParameters, this.prop, factory, serviceFactory);
-                
             } else if (requestParameters.isADownloadPageCategory()) {
                 controller = new CommandDownload(response, requestParameters, this.prop, factory, serviceFactory);
                 
-            } else if (requestParameters.isADocumentationPageCategory()) {
-                controller = new CommandDocumentation(response, requestParameters, this.prop, factory);
-                
-            } else if (requestParameters.isAnAboutPageCategory()) {
-                controller = new CommandAbout(response, requestParameters, this.prop, factory);
-
-            } else if (requestParameters.isAPrivatePolicyPageCategory()) {
-                controller = new CommandPrivacyPolicy(response, requestParameters, this.prop, factory);
-
-            } else if (requestParameters.isAcollaborationsPageCategory()) {
-                controller = new CommandCollaborations(response, requestParameters, this.prop, factory);
-
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user, this.getServletContext(), this.mailSender);
@@ -274,8 +273,9 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isAExprComparisonPageCategory()){
                 controller = new CommandExpressionComparison(response, requestParameters, this.prop, factory, serviceFactory);
 
-            } else if (requestParameters.isARawDataPageCategory()){
-                controller = new CommandRawData(response, requestParameters, this.prop, factory, serviceFactory);
+            } else if (requestParameters.isADataPageCategory()){
+                controller = new CommandData(response, requestParameters, this.prop, factory, serviceFactory,
+                        this.jobService, this.cacheService, user);
 
             } else if (requestParameters.isASourcePageCategory()){
                 controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);
@@ -286,29 +286,9 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isASearchPageCategory()) {
             		controller = new CommandSearch(response, requestParameters, this.prop, factory,
                             serviceFactory);
-//            } else if (requestParameters.isADAOPageCategory()) {
-//                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
-//                        serviceFactory, this.jobService, user);
-            } else if (requestParameters.isAPublicationPageCategory()) {
-                controller = new CommandPublication(response, requestParameters, this.prop, factory);
-                
             } else if (requestParameters.isARPackagePageCategory()) {
                 controller = new CommandRPackage(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
-                
-            } else if (requestParameters.isASparqlPageCategory()) {
-                controller = new CommandSparql(response, requestParameters, this.prop, factory, serviceFactory);
-                
-            } else if (requestParameters.isAResourcesPageCategory()) {
-                controller = new CommandResources(response, requestParameters, this.prop, factory, serviceFactory);
-                
-            } else if (requestParameters.isAStatsPageCategory()) {
-                //no specific controllers for this for now. 
-                //We simply respond with a 'success no content' so that the client get no errors, 
-                //and so that we get correct information stored in our Apache logs.
-                //TODO: In the future, this should call our Google Monitoring implementation
-                factory.getGeneralDisplay().respondSuccessNoContent();
-                setCookie = false;
                 
             } else if (requestParameters.isAAnatSimilarityPageCategory()) {
                 controller = new CommandAnatomicalSimilarity(
@@ -330,7 +310,7 @@ public class FrontController extends HttpServlet {
                     .ifPresent(c -> response.addCookie(c));
                 } catch (IllegalArgumentException e) {
                     //we are not going to make the query fail for a cookie issue
-                    log.catching(Level.WARN, e);
+                    log.catching(Level.DEBUG, e);
                 }
             }
             
@@ -346,18 +326,6 @@ public class FrontController extends HttpServlet {
                     realException instanceof TooManyJobsException) {
                 logLevel = Level.DEBUG;
             }
-            log.catching(logLevel, realException);
-            //to know the URL of the error
-            //Retrieve the URL in a try-catch to make sure it cannot create any more problems.
-            //We still use the method 'catching' on the previous line, so that the exception is caught
-            //with the proper log4j2 Marker "CATCHING".
-            try {
-                String url = requestParameters.getRequestURL();
-                log.log(logLevel, "URL requested {} for Exception {}", url, e.getStackTrace());
-            } catch (Exception eUrl) {
-                //We'll just do nothing in that case
-                log.catching(eUrl);
-            }
             
             //get an ErrorDisplay of the appropriate display type. 
             //We don't acquire the ErrorDisplay before any Exception is thrown, 
@@ -369,14 +337,35 @@ public class FrontController extends HttpServlet {
             try {
                 errorDisplay = this.viewFactoryProvider.getFactory(response, displayType, requestParameters)
                         .getErrorDisplay();
-            } catch (IOException e1) {
-                e1.initCause(realException);
+            } catch (Throwable e1) {
                 realException = e1;
+                logLevel = Level.ERROR;
             }
+
+            //to know the URL of the error
+            //Retrieve the URL in a try-catch to make sure it cannot create any more problems.
+            //We still use the method 'catching' on the previous line, so that the exception is caught
+            //with the proper log4j2 Marker "CATCHING".
+            try {
+                String url = requestParameters.getRequestURL();
+                log.log(logLevel, "URL requested for Exception: {}", url);
+            } catch (Exception eUrl) {
+                realException = eUrl;
+                logLevel = Level.ERROR;
+            }
+            log.catching(logLevel, realException);
+
             if (errorDisplay == null) {
-                log.error("Could not display error message to caller: {}", realException);
-                log.traceExit();
-                return;
+                //In that case we directly send to user an error response from here,
+                //just text as we can't have a view from the proper requested format
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                try {
+                    response.getWriter().print("Internal server error");
+                } catch (IOException e1) {
+                    //we just swallow the exception here
+                }
+                log.error("Could not display error message to caller with the correct ErrorDisplay");
+                log.traceExit(); return;
             }
             
             if (realException instanceof InvalidFormatException) {
@@ -399,6 +388,8 @@ public class FrontController extends HttpServlet {
                 errorDisplay.displayUnsupportedOperationException();
             } else if (realException instanceof TooManyJobsException) {
                 errorDisplay.displayControllerException((TooManyJobsException) realException);
+            } else if (realException instanceof GeneNotFoundException) {
+                errorDisplay.displayControllerException(new InvalidRequestException(e.getMessage()));
             } else {
                 errorDisplay.displayUnexpectedError();
             } 
@@ -409,16 +400,31 @@ public class FrontController extends HttpServlet {
 
     @Override
     public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
-        log.entry(request, response);
+        log.traceEntry("{}, {}", request, response);
         doRequest(request, response, false);
         log.traceExit();
     }
 
     @Override
     public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
-        log.entry(request, response);
+        log.traceEntry("{}, {}", request, response);
         doRequest(request, response, true);
         log.traceExit();
+    }
+
+    public void initializeCaches(long sleepBetweenComputeMs) throws InterruptedException {
+        log.traceEntry("{}", sleepBetweenComputeMs);
+
+        CommandData commandData = this.getPartialCommandData();
+        commandData.initializeCaches(sleepBetweenComputeMs);
+
+        log.traceExit();
+    }
+    public CommandData getPartialCommandData() {
+        log.traceEntry();
+        return log.traceExit(new CommandData(null, null, this.prop, null,
+                this.serviceFactoryProvider.get(),
+                null, this.cacheService, null));
     }
 
     /**
@@ -433,7 +439,7 @@ public class FrontController extends HttpServlet {
      * @throws InvalidRequestException  If several display types were requested. 
      */
     private DisplayType getRequestedDisplayType(HttpServletRequest request) throws InvalidRequestException {
-        log.entry(request);
+        log.traceEntry("{}", request);
         
         String[] paramValues = request.getParameterValues(
                 this.urlParameters.getParamDisplayType().getName());
@@ -458,10 +464,10 @@ public class FrontController extends HttpServlet {
                 return log.traceExit(DisplayType.TSV);
             } else if (fakeParams.isCsvDisplayType()) {
                 return log.traceExit(DisplayType.CSV);
-            } else if (fakeParams.isJsonDisplayType()) {
-                return log.traceExit(DisplayType.JSON);
-            } else {
+            } else if (fakeParams.isHtmlDisplayType()) {
                 return log.traceExit(DisplayType.HTML);
+            } else {
+                return log.traceExit(DisplayType.JSON);
             }
         } catch (MultipleValuesNotAllowedException | RequestParametersNotFoundException e) {
             throw log.throwing(new AssertionError("Error, code block supposed to be unreachable", e));

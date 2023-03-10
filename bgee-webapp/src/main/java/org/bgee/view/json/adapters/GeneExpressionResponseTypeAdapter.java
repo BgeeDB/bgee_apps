@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 
@@ -26,8 +26,11 @@ import com.google.gson.stream.JsonWriter;
 public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExpressionResponse> {
     private static final Logger log = LogManager.getLogger(GeneExpressionResponseTypeAdapter.class.getName());
 
+    private final TypeAdaptersUtils utils;
 
-    protected GeneExpressionResponseTypeAdapter() {}
+    protected GeneExpressionResponseTypeAdapter(TypeAdaptersUtils utils) {
+        this.utils = utils;
+    }
 
     @Override
     public void write(JsonWriter out, GeneExpressionResponse value) throws IOException {
@@ -67,7 +70,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
                     (dataTypes.contains(DataType.AFFYMETRIX) ||
                     dataTypes.contains(DataType.RNA_SEQ) ||
-                    dataTypes.contains(DataType.FULL_LENGTH) ||
+                    dataTypes.contains(DataType.SC_RNA_SEQ) ||
                     call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
                 highQualScore = true;
             }
@@ -75,7 +78,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             out.beginObject();
 
             out.name("condition");
-            TypeAdaptersUtils.writeSimplifiedCondition(out, call.getCondition(), condParams);
+            this.utils.writeSimplifiedCondition(out, call.getCondition(), condParams);
 
             out.name("expressionScore");
             out.beginObject();
@@ -89,7 +92,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             out.endObject();
 
             String fdr = call.getPValueWithEqualDataTypes(value.getDataTypes())
-                    .getFormatedFDRPValue();
+                    .getFormattedPValue();
             out.name("fdr").value(fdr);
 
             out.name("dataTypesWithData");
@@ -116,7 +119,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
         if (!value.getCalls().isEmpty()) {
             assert !dataTypesWithData.isEmpty();
             out.name("gene");
-            TypeAdaptersUtils.writeSimplifiedGene(out, value.getCalls().iterator().next().getGene(),
+            this.utils.writeSimplifiedGene(out, value.getCalls().iterator().next().getGene(),
                     true, dataTypesWithData);
         }
 

@@ -3,6 +3,7 @@ package org.bgee.model.gene;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -15,7 +16,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 15, Sep. 2022
  * @since   Bgee 13, Oct. 2015
  */
 public class GeneFilter implements Predicate<Gene> {
@@ -27,7 +28,7 @@ public class GeneFilter implements Predicate<Gene> {
     /**
      * @see #getSpeciesId()
      */
-    private final Integer speciesId;
+    private final int speciesId;
     
     /**
      * Constructor allowing to set a {@code GeneFilter} for a given species ID.
@@ -102,45 +103,24 @@ public class GeneFilter implements Predicate<Gene> {
         if (gene == null) {
             throw log.throwing(new IllegalArgumentException("Cannot test null"));
         }
-        return log.traceExit(speciesId.equals(gene.getSpecies().getId()) &&
+        return log.traceExit(gene.getSpecies().getId().equals(speciesId) &&
                 (geneIds == null || geneIds.isEmpty() || geneIds.contains(gene.getGeneId())));
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
-        result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
-        return result;
+        return Objects.hash(geneIds, speciesId);
     }
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         GeneFilter other = (GeneFilter) obj;
-        if (geneIds == null) {
-            if (other.geneIds != null) {
-                return false;
-            }
-        } else if (!geneIds.equals(other.geneIds)) {
-            return false;
-        }
-        if (speciesId == null) {
-            if (other.speciesId != null) {
-                return false;
-            }
-        } else if (!speciesId.equals(other.speciesId)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(geneIds, other.geneIds) && speciesId == other.speciesId;
     }
 
     @Override

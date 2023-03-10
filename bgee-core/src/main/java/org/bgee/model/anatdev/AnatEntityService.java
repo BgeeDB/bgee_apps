@@ -33,10 +33,11 @@ public class AnatEntityService extends Service {
      * <li>{@code ID}: corresponds to {@link AnatEntity#getId()}.
      * <li>{@code NAME}: corresponds to {@link AnatEntity#getName()}.
      * <li>{@code DESCRIPTION}: corresponds to {@link AnatEntity#getDescription()}.
+     * <li>{@code CELL_TYPE}: corresponds to {@link AnatEntity#getIsCellType()}.
      * </ul>
      */
     public static enum Attribute implements Service.Attribute {
-        ID, NAME, DESCRIPTION;
+        ID, NAME, DESCRIPTION/*, CELL_TYPE*/;
     }
 
     /**
@@ -178,7 +179,7 @@ public class AnatEntityService extends Service {
     private static AnatEntity mapFromTO(AnatEntityDAO.AnatEntityTO anatEntityTO) {
         log.traceEntry("{}", anatEntityTO);
         return log.traceExit(new AnatEntity(anatEntityTO.getId(), anatEntityTO.getName(), 
-                anatEntityTO.getDescription()));
+                anatEntityTO.getDescription(), anatEntityTO.isCellType()));
     }
 
     private static Set<AnatEntityDAO.Attribute> convertAttrsToDAOAttrs(Collection<Attribute> attrs) {
@@ -195,6 +196,8 @@ public class AnatEntityService extends Service {
                             return AnatEntityDAO.Attribute.NAME;
                         case DESCRIPTION:
                             return AnatEntityDAO.Attribute.DESCRIPTION;
+//                        case CELL_TYPE:
+//                            return AnatEntityDAO.Attribute.CELL_TYPE;
                         default:
                             throw log.throwing(new UnsupportedOperationException(
                                 "Anatomical entity parameter not supported: " + a));

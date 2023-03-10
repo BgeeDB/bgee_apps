@@ -190,33 +190,33 @@ public class InsertUberonTest extends TestAncestor {
         //to verify the calls made to the DAOs
         Set<AnatEntityTO> expectedAnatEntityTOs = new HashSet<AnatEntityTO>();
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:1", "name cls 1", "Def. cls 1", 
-                "UBERON:0000104", "UBERON:0000104", true));
+                "UBERON:0000104", "UBERON:0000104", true, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:6", "name cls 6", "Def. cls 6", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:7", "name cls 7", "Def. cls 7", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:8", "name cls 8", "Def. cls 8", 
-                "UBERON:0000104", "UBERON:0000104", true));
+                "UBERON:0000104", "UBERON:0000104", true, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:9", "name cls 9", "Def. cls 9", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:10", "name cls 10", null, 
-                "UBERON:0000104", "UBERON:0000104", true));
+                "UBERON:0000104", "UBERON:0000104", true, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:11", "name cls 11", "Def. cls 11", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:12", "name cls 12", "Def. cls 12", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:13", "name cls 13", "Def. cls 13", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:14", "name cls 14", "Def. cls 14", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:15", "name cls 15", "Def. cls 15", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:16", "name cls 16", "Def. cls 16", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:17", "name cls 17", "Def. cls 17", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:18", "name cls 18", "Def. cls 18", 
-                "UBERON:0000104", "UBERON:0000104", false));
+                "UBERON:0000104", "UBERON:0000104", false, false));
         ArgumentCaptor<Set> anatEntityTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockAnatEntityDAO).insertAnatEntities(anatEntityTOsArg.capture());
         if (!TOComparator.areTOCollectionsEqual(

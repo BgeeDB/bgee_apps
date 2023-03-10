@@ -35,11 +35,11 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
@@ -843,7 +843,7 @@ public class GenerateRankFile {
                 dataTypeToStatus.get(DataType.EST), 
                 dataTypeToStatus.get(DataType.IN_SITU), 
                 dataTypeToStatus.get(DataType.RNA_SEQ),
-                dataTypeToStatus.get(DataType.FULL_LENGTH), 
+                dataTypeToStatus.get(DataType.SC_RNA_SEQ), 
                 /*redundantCalls.contains(c)*/ false, 
                 this.getBTOXRefs(c));
         }));

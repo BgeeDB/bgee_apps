@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
 import org.bgee.model.gene.Gene;
 
 import com.google.gson.TypeAdapter;
@@ -34,7 +34,11 @@ import com.google.gson.stream.JsonWriter;
 public final class MultiGeneExprAnalysisTypeAdapter extends TypeAdapter<MultiGeneExprAnalysis<?>> {
     private static final Logger log = LogManager.getLogger(MultiGeneExprAnalysisTypeAdapter.class.getName());
 
-    protected MultiGeneExprAnalysisTypeAdapter() {}
+    private final TypeAdaptersUtils utils;
+
+    protected MultiGeneExprAnalysisTypeAdapter(TypeAdaptersUtils utils) {
+        this.utils = utils;
+    }
 
     @Override
     public void write(JsonWriter out, MultiGeneExprAnalysis<?> value) throws IOException {
@@ -61,7 +65,7 @@ public final class MultiGeneExprAnalysisTypeAdapter extends TypeAdapter<MultiGen
                 "No custom JSON reader for MultiGeneExprAnalysis."));
     }
 
-    private static void writeCondToCounts(JsonWriter out,
+    private void writeCondToCounts(JsonWriter out,
             Entry<?, MultiGeneExprAnalysis.MultiGeneExprCounts> condToCounts) throws IOException {
         log.traceEntry("{}, {}", out, condToCounts);
         out.beginObject();
@@ -70,11 +74,11 @@ public final class MultiGeneExprAnalysisTypeAdapter extends TypeAdapter<MultiGen
         Object cond = condToCounts.getKey();
         if (cond instanceof MultiSpeciesCondition) {
             out.name("multiSpeciesCondition");
-            TypeAdaptersUtils.writeSimplifiedMultiSpeciesCondition(out, (MultiSpeciesCondition) cond);
+            this.utils.writeSimplifiedMultiSpeciesCondition(out, (MultiSpeciesCondition) cond);
         } else if (cond instanceof Condition) {
             out.name("condition");
             //For now, we only use anat. entity and cell type for comparison
-            TypeAdaptersUtils.writeSimplifiedCondition(out, (Condition) cond, EnumSet.of(
+            this.utils.writeSimplifiedCondition(out, (Condition) cond, EnumSet.of(
                     CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID));
         } else {
             throw log.throwing(new IllegalStateException("Unrecognized class: "
@@ -118,7 +122,7 @@ public final class MultiGeneExprAnalysisTypeAdapter extends TypeAdapter<MultiGen
         log.traceExit();
     }
 
-    private static void writeGenes(JsonWriter out, Set<Gene> genes) throws IOException {
+    private void writeGenes(JsonWriter out, Set<Gene> genes) throws IOException {
         log.traceEntry("{}, {}", out, genes);
 
         out.beginArray();
@@ -126,7 +130,7 @@ public final class MultiGeneExprAnalysisTypeAdapter extends TypeAdapter<MultiGen
             List<Gene> sortedGenes = genes.stream().sorted(Comparator.comparing(Gene::getGeneId))
                     .collect(Collectors.toList());
             for (Gene gene: sortedGenes) {
-                TypeAdaptersUtils.writeSimplifiedGene(out, gene, false, null);
+                this.utils.writeSimplifiedGene(out, gene, false, null);
             }
         }
         out.endArray();

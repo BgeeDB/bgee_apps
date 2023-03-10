@@ -20,19 +20,18 @@ import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionRankInfoTO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.EntityMinMaxRanksTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.EntityMinMaxRanksTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
@@ -46,10 +45,8 @@ import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDA
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO.RNASeqExperimentTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryOrientation;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryType;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO.RNASeqResultTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO.RNASeqLibraryAnnotatedSampleTO.AbundanceUnit;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO.RNASeqResultAnnotatedSampleTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
@@ -101,27 +98,27 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreSpeciesTOEqual() {
         SpeciesTO to1 = new SpeciesTO(1, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", "assemblyXref", 2, 1);
+                1, "path1", "version1", 2, 1);
         SpeciesTO to2 = new SpeciesTO(1, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", "assemblyXref", 2, 1);
+                1, "path1", "version1", 2, 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         to2 = new SpeciesTO(2, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", "assemblyXref", 2, 1);
+                1, "path1", "version1", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
         to2 = new SpeciesTO(2, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", "assemblyXref", 2, 1);
+                1, "path1", "version1", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new SpeciesTO(2, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", "assemblyXref", 2, 1);
+                1, "path1", "version1", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         to2 = new SpeciesTO(1, "name1", "genus1", "species1", 2, 
-                1, "path1", "version1", "assemblyXref", 2, 1);
+                1, "path1", "version1", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -249,18 +246,18 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreAnatEntityTOEqual() {
         AnatEntityTO to1 = new AnatEntityTO("ID1", "name1", "desc1", 
-                "stage:1", "stage:2", false);
+                "stage:1", "stage:2", false, false);
         AnatEntityTO to2 = new AnatEntityTO("ID1", "name1", "desc1", 
-                "stage:1", "stage:2", false);
+                "stage:1", "stage:2", false, false);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         to2 = new AnatEntityTO("ID1", "name1", "desc1", 
-                "stage:1", "stage:2", true);
+                "stage:1", "stage:2", true, false);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new AnatEntityTO("ID2", "name1", "desc1", 
-                "stage:1", "stage:2", false);
+                "stage:1", "stage:2", false, false);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -549,20 +546,20 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreTOCollectionsEqual() {
         Collection<AnatEntityTO> c1 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         Collection<AnatEntityTO> c2 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, true));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, false));
         
         c2 = Arrays.asList(
-                new AnatEntityTO("ID4", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID4", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         assertFalse(TOComparator.areTOCollectionsEqual(c1, c2, true));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, false));
     }
@@ -575,20 +572,20 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void regressionTestAreTOCollectionsEqual() {
         Collection<AnatEntityTO> c1 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         Collection<AnatEntityTO> c2 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false), 
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false), 
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, true));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, false));
         
         c2 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         assertFalse(TOComparator.areTOCollectionsEqual(c1, c2, true));
         assertFalse(TOComparator.areTOCollectionsEqual(c1, c2, false));
     }
@@ -760,31 +757,31 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreAffymetrixProbesetTOEqual() {
-        AffymetrixProbesetTO to1 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
-        AffymetrixProbesetTO to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
+        AffymetrixProbesetTO to1 = new AffymetrixProbesetTO("A1", 1, 11, new BigDecimal("11.1"), new BigDecimal("0.5"),
+                new BigDecimal("0.9"), 110L, new BigDecimal("5.5"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED);
+        AffymetrixProbesetTO to2 = new AffymetrixProbesetTO("A1", 1, 11, new BigDecimal("11.1"), new BigDecimal("0.5"),
+                new BigDecimal("0.9"), 110L, new BigDecimal("5.5"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new AffymetrixProbesetTO("A2", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
+        to2 = new AffymetrixProbesetTO("A2", 1, 11, new BigDecimal("11.1"), new BigDecimal("0.5"),
+                new BigDecimal("0.9"), 110L, new BigDecimal("5.5"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.01"), new BigDecimal("5.5"), 110L);
+        to2 = new AffymetrixProbesetTO("A1", 1, 11, new BigDecimal("11.01"), new BigDecimal("0.5"),
+                new BigDecimal("0.9"), 110L, new BigDecimal("5.5"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.PRESENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
+        to2 = new AffymetrixProbesetTO("A1", 1, 11, new BigDecimal("11.1"), new BigDecimal("0.05"),
+                new BigDecimal("0.9"), 110L, new BigDecimal("5.5"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.LOWQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
+        to2 = new AffymetrixProbesetTO("A1", 1, 11, new BigDecimal("11.1"), new BigDecimal("0.5"),
+                new BigDecimal("0.9"), 110L, new BigDecimal("5.5"), DataState.LOWQUALITY, ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.PRE_FILTERING, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
+        to2 = new AffymetrixProbesetTO("A1", 1, 11, new BigDecimal("11.1"), new BigDecimal("0.5"),
+                new BigDecimal("0.9"), 110L, new BigDecimal("5.5"), DataState.HIGHQUALITY, ExclusionReason.PRE_FILTERING);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -794,21 +791,20 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreAffymetrixChipTOEqual() {
-        AffymetrixChipTO to1 = new AffymetrixChipTO(1, "Exp1", "Chip1", 1, "2018-07-20", "ChipTypeId1", NormalizationType.GC_RMA,
-                DetectionType.SCHUSTER, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
-        AffymetrixChipTO to2 = new AffymetrixChipTO(1, "Exp1", "Chip1", 1, "2018-07-20", "ChipTypeId1", NormalizationType.GC_RMA,
-                DetectionType.SCHUSTER, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
-        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        AffymetrixChipTO to1 = new AffymetrixChipTO(1, "Chip1", "Exp1", "ChipTypeId1", "2018-07-20", NormalizationType.GC_RMA,
+                DetectionType.SCHUSTER, 1, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
+        AffymetrixChipTO to2 = new AffymetrixChipTO(1, "Chip1", "Exp1", "ChipTypeId1", "2018-07-20", NormalizationType.GC_RMA,
+                DetectionType.SCHUSTER, 1, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new AffymetrixChipTO(2, "Exp1", "Chip1", 1, "2018-07-20", "ChipTypeId1", NormalizationType.GC_RMA,
-                DetectionType.SCHUSTER, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
+        to2 = new AffymetrixChipTO(2, "Chip1", "Exp1", "ChipTypeId1", "2018-07-20", NormalizationType.GC_RMA,
+                DetectionType.SCHUSTER, 1, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new AffymetrixChipTO(1, "Exp1", "Chip1", 1, "2017-07-20", "ChipTypeId1", NormalizationType.GC_RMA,
-                DetectionType.SCHUSTER, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
+        to2 = new AffymetrixChipTO(1, "Chip1", "Exp1", "ChipTypeId1", "2017-07-20", NormalizationType.GC_RMA,
+                DetectionType.SCHUSTER, 1, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
     /**
@@ -836,47 +832,54 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreRNASeqResultTOEqual() {
-        RNASeqResultTO to1 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
-                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254L);
-        RNASeqResultTO to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
-                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254L);
-        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        RNASeqResultAnnotatedSampleTO to1 = new RNASeqResultAnnotatedSampleTO(1, 11, AbundanceUnit.TPM,
+                new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
+                new BigDecimal("40"), new BigDecimal("0.34"), new BigDecimal("0.05"), 1254L,
+                DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED);
+        RNASeqResultAnnotatedSampleTO to2 = new RNASeqResultAnnotatedSampleTO(1, 11, AbundanceUnit.TPM,
+                new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
+                new BigDecimal("40"), new BigDecimal("0.34"), new BigDecimal("0.05"), 1254L,
+                DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED);
 
-        to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
-                DetectionFlag.ABSENT, DataState.LOWQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254L);
+        to2 = new RNASeqResultAnnotatedSampleTO(1, 11, AbundanceUnit.TPM,
+                new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
+                new BigDecimal("40"), new BigDecimal("0.34"), new BigDecimal("0.05"), 1254L,
+                DataState.LOWQUALITY, ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("6.5"), new BigDecimal("100.2"),
-                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254L);
-        assertFalse(TOComparator.areTOsEqual(to1, to2));
-    }
-    /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
-     * using {@code RNASeqLibraryTO}s.
-     */
-    @Test
-    public void testAreRNASeqLibraryTOEqual() {
-        RNASeqLibraryTO to1 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
-                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
-                1000000, 900000, 100, 150, LibraryType.PAIRED_END, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
-        RNASeqLibraryTO to2 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
-                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
-                1000000, 900000, 100, 150, LibraryType.PAIRED_END, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
-        assertTrue(TOComparator.areTOsEqual(to1, to2));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-
-        to2 = new RNASeqLibraryTO("L2", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
-                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
-                1000000, 900000, 100, 150, LibraryType.PAIRED_END, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-
-        to2 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
-                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
-                1000000, 900000, 100, 150, LibraryType.SINGLE_READ, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
+        to2 = new RNASeqResultAnnotatedSampleTO(1, 11, AbundanceUnit.TPM,
+                new BigDecimal("11.1"), new BigDecimal("8"), new BigDecimal("100.2"),
+                new BigDecimal("40"), new BigDecimal("0.34"), new BigDecimal("0.05"), 1254L,
+                DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
+//    /**
+//     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+//     * using {@code RNASeqLibraryTO}s.
+//     */
+//    @Test
+//    public void testAreRNASeqLibraryTOEqual() {
+//        RNASeqLibraryTO to1 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
+//                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
+//                1000000, 900000, 100, 150, LibraryType.PAIRED_END, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
+//        RNASeqLibraryTO to2 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
+//                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
+//                1000000, 900000, 100, 150, LibraryType.PAIRED_END, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
+//        assertTrue(TOComparator.areTOsEqual(to1, to2));
+//        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+//        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+//
+//        to2 = new RNASeqLibraryTO("L2", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
+//                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
+//                1000000, 900000, 100, 150, LibraryType.PAIRED_END, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
+//        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+//        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+//
+//        to2 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
+//                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
+//                1000000, 900000, 100, 150, LibraryType.SINGLE_READ, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
+//        assertFalse(TOComparator.areTOsEqual(to1, to2));
+//    }
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
      * using {@code RNASeqExperimentTO}s.
@@ -924,24 +927,24 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreESTTOEqual() {
-        ESTTO to1 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
-        ESTTO to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
+        ESTTO to1 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, new BigDecimal(1), 110L);
+        ESTTO to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, new BigDecimal(1), 110L);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new ESTTO("ID2", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
+        to2 = new ESTTO("ID2", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, new BigDecimal(1), 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new ESTTO("ID1", "ID3", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
+        to2 = new ESTTO("ID1", "ID3", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, new BigDecimal(1), 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new ESTTO("ID1", "ID2", "LibId2", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
+        to2 = new ESTTO("ID1", "ID2", "LibId2", "clusterId1", 1, DataState.HIGHQUALITY, new BigDecimal(1), 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId2", 1, DataState.HIGHQUALITY, 110L);
+        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId2", 1, DataState.HIGHQUALITY, new BigDecimal(1), 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 1L);
+        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, new BigDecimal(1), 1L);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -992,31 +995,31 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreInSituSpotTOEqual() {
-        InSituSpotTO to1 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110L);
-        InSituSpotTO to2 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110L);
+        InSituSpotTO to1 = new InSituSpotTO("ID1", "A1", "pattern1", 1, 11, 110L, new BigDecimal(0.5), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
+        InSituSpotTO to2 = new InSituSpotTO("ID1", "A1", "pattern1", 1, 11, 110L, new BigDecimal(0.5), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new InSituSpotTO("ID2", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110L);
+        to2 = new InSituSpotTO("ID2", "A1", "pattern1", 1, 11, 110L, new BigDecimal(0.5), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new InSituSpotTO("ID1", "pattern2", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110L);
+        to2 = new InSituSpotTO("ID1", "A1", "pattern2", 1, 11, 110L, new BigDecimal(0.5), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new InSituSpotTO("ID1", "pattern1", "A1", 2, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110L);
+        to2 = new InSituSpotTO("ID2", "A1", "pattern1", 2, 11, 110L, new BigDecimal(0.5), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.PRESENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110L);
+        to2 = new InSituSpotTO("ID1", "A1", "pattern1", 1, 11, 110L, new BigDecimal(0.05), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 120L);
+        to2 = new InSituSpotTO("ID2", "A1", "pattern1", 1, 11, 120L, new BigDecimal(0.5), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }

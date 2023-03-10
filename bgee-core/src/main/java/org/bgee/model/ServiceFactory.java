@@ -12,22 +12,22 @@ import org.bgee.model.anatdev.TaxonConstraintService;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
 import org.bgee.model.dao.api.DAOManager;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.ConditionGraphService;
-import org.bgee.model.expressiondata.ConditionService;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesCallService;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.ConditionGraphService;
+import org.bgee.model.expressiondata.call.ConditionService;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCallService;
 import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.gene.GeneHomologsService;
-import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.TaxonService;
-import org.sphx.api.SphinxClient;
 
 /**
  * Factory allowing to obtain {@link Service}s. 
@@ -77,6 +77,7 @@ public class ServiceFactory implements AutoCloseable {
      * @see #getDAOManager()
      */
     private final DAOManager daoManager;
+    private final BgeeProperties bgeeProperties;
     
     /**
      * 0-arg constructor that will cause this {@code ServiceFactory} to use 
@@ -104,10 +105,33 @@ public class ServiceFactory implements AutoCloseable {
      * @throws IllegalArgumentException If {@code daoManager} is {@code null} or closed.
      */
     public ServiceFactory(DAOManager daoManager) throws IllegalArgumentException {
-        log.traceEntry("{}", daoManager);
+        this(BgeeProperties.getBgeeProperties(), daoManager);
+    }
+    /**
+     * @param bgeeProperties    The {@code BgeeProperties} to be used by this {@code ServiceFactory},  
+     *                          to be provided to {@code Service}s it instantiates. 
+     * @throws IllegalArgumentException If {@code bgeeProperties} is {@code null}.
+     */
+    public ServiceFactory(BgeeProperties bgeeProperties) throws IllegalArgumentException {
+        this(bgeeProperties, DAOManager.getDAOManager());
+    }
+    /**
+     * @param bgeeProperties    The {@code BgeeProperties} to be used by this {@code ServiceFactory},  
+     *                          to be provided to {@code Service}s it instantiates. 
+     * @param daoManager        The {@code DAOManager} to be used by this {@code ServiceFactory},  
+     *                          to be provided to {@code Service}s it instantiates. 
+     * @throws IllegalArgumentException If {@code bgeeProperties} is {@code null},
+     *                                  or {@code daoManager} is {@code null} or closed.
+     */
+    public ServiceFactory(BgeeProperties bgeeProperties, DAOManager daoManager) throws IllegalArgumentException {
+        log.traceEntry("{}, {}", bgeeProperties, daoManager);
+        if (bgeeProperties == null) {
+            throw log.throwing(new IllegalArgumentException("BgeeProperties cannot be null"));
+        }
         if (daoManager == null || daoManager.isClosed()) {
             throw log.throwing(new IllegalArgumentException("Invalid DAOManager"));
         }
+        this.bgeeProperties = bgeeProperties;
         this.daoManager = daoManager;
         log.traceExit();
     }
@@ -142,6 +166,14 @@ public class ServiceFactory implements AutoCloseable {
     public RawDataService getRawDataService() {
         log.traceEntry();
         return log.traceExit(new RawDataService(this));
+    }
+
+    /**
+     * @return  A newly instantiated {@code ExpressionCallService}
+     */
+    public ExpressionCallService getExpressionCallService() {
+        log.traceEntry();
+        return log.traceExit(new ExpressionCallService(this));
     }
 
     /**
@@ -284,9 +316,9 @@ public class ServiceFactory implements AutoCloseable {
     //Maybe the ServiceFactory could store BgeeProperties after a call to BgeeProperties.getBgeeProperties(prop),
     //If it was mandatory to provide properties at instantiation?
     //XXX: Need to think about whether the use of this GeneMatchResultService in ServiceFactory is correct
-    public GeneMatchResultService getGeneMatchResultService(BgeeProperties props) {
+    public SearchMatchResultService getSearchMatchResultService(BgeeProperties props) {
         log.traceEntry("{}", props);
-        return log.traceExit(new GeneMatchResultService(props, this));
+        return log.traceExit(new SearchMatchResultService(props, this));
     }
 
     /**
@@ -294,6 +326,12 @@ public class ServiceFactory implements AutoCloseable {
      */
     public DAOManager getDAOManager() {
         return this.daoManager;
+    }
+    /**
+     * @return  The {@code BgeeProperties} used by this {@code ServiceFactory} to instantiate services.
+     */
+    public BgeeProperties getBgeeProperties() {
+        return this.bgeeProperties;
     }
     
     /**

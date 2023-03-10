@@ -24,11 +24,14 @@ import com.google.gson.stream.JsonWriter;
  * of the complexity of the object and because we want to fine tune the response.
  */
 public final class AnatEntitySimilarityAnalysisTypeAdapter extends TypeAdapter<AnatEntitySimilarityAnalysis> {
-    private final Gson gson;
     private static final Logger log = LogManager.getLogger(AnatEntitySimilarityAnalysisTypeAdapter.class.getName());
 
-    protected AnatEntitySimilarityAnalysisTypeAdapter(Gson gson) {
+    private final Gson gson;
+    private final TypeAdaptersUtils utils;
+
+    protected AnatEntitySimilarityAnalysisTypeAdapter(Gson gson, TypeAdaptersUtils utils) {
         this.gson = gson;
+        this.utils = utils;
     }
 
     @Override
@@ -53,7 +56,7 @@ public final class AnatEntitySimilarityAnalysisTypeAdapter extends TypeAdapter<A
                 .collect(Collectors.toList());
         out.beginArray();
         for (AnatEntity anatEntity: noSimAnatEntities) {
-            TypeAdaptersUtils.writeSimplifiedNamedEntity(out, anatEntity);
+            this.utils.writeSimplifiedNamedEntity(out, anatEntity);
         }
         out.endArray();
 
@@ -93,7 +96,7 @@ public final class AnatEntitySimilarityAnalysisTypeAdapter extends TypeAdapter<A
                 .collect(Collectors.toList());
         out.beginArray();
         for (Species sp: species) {
-            TypeAdaptersUtils.writeSimplifiedSpecies(out, sp, false, null);
+            this.utils.writeSimplifiedSpecies(out, sp, false, null);
         }
         out.endArray();
 
@@ -103,7 +106,7 @@ public final class AnatEntitySimilarityAnalysisTypeAdapter extends TypeAdapter<A
                 .collect(Collectors.toList());
         out.beginArray();
         for (AnatEntity anatEntity: anatEntities) {
-            TypeAdaptersUtils.writeSimplifiedNamedEntity(out, anatEntity);
+            this.utils.writeSimplifiedNamedEntity(out, anatEntity);
         }
         out.endArray();
 

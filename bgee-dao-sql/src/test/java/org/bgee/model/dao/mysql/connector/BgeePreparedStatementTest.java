@@ -12,7 +12,7 @@ import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.ConfidenceLevel;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.mysql.TestAncestor;
@@ -326,14 +326,14 @@ public class BgeePreparedStatementTest extends TestAncestor
         BgeeConnection con = mock(BgeeConnection.class);
         BgeePreparedStatement stmt = new BgeePreparedStatement(con, 
                 MockDriver.getMockStatement());
-        stmt.setLongs(2, Arrays.asList(10L));
+        stmt.setLongs(2, Arrays.asList(10L), true);
         
         verify(MockDriver.getMockStatement()).setLong(2, 10L);
         
         MockDriver.initialize();
         con = mock(BgeeConnection.class);
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
-        stmt.setLongs(2, Arrays.asList(null, 10L, 14L, 17L));
+        stmt.setLongs(2, Arrays.asList(null, 10L, 14L, 17L), true);
         
         verify(MockDriver.getMockStatement()).setNull(2, Types.BIGINT);
         verify(MockDriver.getMockStatement()).setLong(3, 10L);

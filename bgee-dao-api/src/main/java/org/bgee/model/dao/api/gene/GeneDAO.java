@@ -41,8 +41,25 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, GENE_ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID,
-        ENSEMBL_GENE, GENE_MAPPED_TO_SAME_GENE_ID_COUNT;
+        ID("bgeeGeneId"), GENE_ID("geneId"), NAME("geneName"), DESCRIPTION("geneDescription"),
+        SPECIES_ID("speciesId"), GENE_BIO_TYPE_ID("geneBiotypeId"),
+        OMA_PARENT_NODE_ID("OMAParentNodeId"), ENSEMBL_GENE("ensemblGene"),
+        GENE_MAPPED_TO_SAME_GENE_ID_COUNT("geneMappedToGeneIdCount");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code AffymetrixChipTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
     
     /**

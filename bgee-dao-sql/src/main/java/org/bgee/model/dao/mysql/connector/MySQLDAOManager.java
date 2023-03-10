@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.connector;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -25,11 +26,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.anatdev.SexDAO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
-import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneHomologsDAO;
@@ -37,21 +49,33 @@ import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
+import org.bgee.model.dao.mysql.anatdev.MySQLSexDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLConditionDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLSamplePValueDAO;
+import org.bgee.model.dao.mysql.expressiondata.call.MySQLConditionDAO;
+import org.bgee.model.dao.mysql.expressiondata.call.MySQLDiffExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.call.MySQLGlobalExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLSamplePValueDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MysqlRawDataCountDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTLibraryDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituEvidenceDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituExperimentDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipTypeDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqExperimentDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
 import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
@@ -436,7 +460,7 @@ public class MySQLDAOManager extends DAOManager {
                     //shutdown.
                     log.debug("Trying to register JDBC Driver with class name {}", 
                             driverName);
-                    Driver driver = (Driver) Class.forName(driverName).newInstance();
+                    Driver driver = (Driver) Class.forName(driverName).getDeclaredConstructor().newInstance();
                     DriverManager.registerDriver(driver);
 
                     if (registeredDrivers.putIfAbsent(driverName, driver) != null) {
@@ -456,7 +480,8 @@ public class MySQLDAOManager extends DAOManager {
                     }
 
                 } catch (InstantiationException | IllegalAccessException
-                        | ClassNotFoundException | SQLException e) {
+                        | ClassNotFoundException | SQLException
+                        | InvocationTargetException | NoSuchMethodException e) {
                     log.catching(e);
                     throw log.throwing(new IllegalStateException("The JDBC Driver name " +
                             "provided (" + driverName + ") did not allow " +
@@ -496,7 +521,7 @@ public class MySQLDAOManager extends DAOManager {
      */
     protected void connectionClosed(String connectionId)
     {
-        log.entry(connectionId);
+        log.traceEntry("{}", connectionId);
         log.debug("Releasing BgeeConnection with ID {}", connectionId);
         this.removeFromConnections(connectionId);
         log.traceExit();
@@ -786,7 +811,7 @@ public class MySQLDAOManager extends DAOManager {
      */
     @Override
     public void setParameters(Properties props) throws IllegalArgumentException {
-        log.entry(props);
+        log.traceEntry("{}", props);
 
         if (props == null) {
             log.traceExit(); return;
@@ -1074,14 +1099,24 @@ public class MySQLDAOManager extends DAOManager {
         return log.traceExit(new MySQLAffymetrixProbesetDAO(this));
     }
     @Override
+    protected InSituEvidenceDAO getNewInSituEvidenceDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLInSituEvidenceDAO(this));
+    }
+    @Override
+    protected InSituExperimentDAO getNewInSituExperimentDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLInSituExperimentDAO(this));
+    }
+    @Override
     protected MySQLInSituSpotDAO getNewInSituSpotDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLInSituSpotDAO(this));
     }
     @Override
-    protected MySQLRNASeqResultDAO getNewRNASeqResultDAO() {
+    protected MySQLRNASeqResultAnnotatedSampleDAO getNewRNASeqResultAnnotatedSampleDAO() {
         log.traceEntry();
-        return log.traceExit(new MySQLRNASeqResultDAO(this));
+        return log.traceExit(new MySQLRNASeqResultAnnotatedSampleDAO(this));
     }
     @Override
     protected MySQLCIOStatementDAO getNewCIOStatementDAO() {
@@ -1149,5 +1184,62 @@ public class MySQLDAOManager extends DAOManager {
     protected SamplePValueDAO getNewSamplePValueDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLSamplePValueDAO(this));
+    }
+
+    @Override
+    protected AffymetrixChipDAO getNewAffymetrixChipDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLAffymetrixChipDAO(this));
+    }
+
+    @Override
+    protected MicroarrayExperimentDAO getNewMicroarrayExperimentDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLMicroarrayExperimentDAO(this));
+    }
+
+    @Override
+    protected RNASeqExperimentDAO getNewRnaSeqExperimentDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLRNASeqExperimentDAO(this));
+    }
+
+    @Override
+    protected RNASeqLibraryAnnotatedSampleDAO getNewRnaSeqLibraryAnnotatedSampleDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLRNASeqLibraryAnnotatedSampleDAO(this));
+    }
+
+    @Override
+    protected RNASeqLibraryDAO getNewRnaSeqLibraryDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLRNASeqLibraryDAO(this));
+    }
+    @Override
+    protected ESTLibraryDAO getNewESTLibraryDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLESTLibraryDAO(this));
+    }
+    @Override
+    protected ESTDAO getNewESTDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLESTDAO(this));
+    }
+    @Override
+    protected SexDAO getNewSexDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLSexDAO(this));
+    }
+
+    @Override
+    protected MysqlRawDataCountDAO getNewRawDataCountDAO() {
+        log.traceEntry();
+        return log.traceExit(new MysqlRawDataCountDAO(this));
+    }
+
+    @Override
+    protected AffymetrixChipTypeDAO getNewAffymetrixChipTypeDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLAffymetrixChipTypeDAO(this));
     }
 }

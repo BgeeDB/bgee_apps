@@ -3,7 +3,7 @@ package org.bgee.model.dao.mysql.file;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 import org.bgee.model.dao.mysql.MySQLDAO;

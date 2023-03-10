@@ -37,7 +37,7 @@
     </logger>
 -->
 <!--
-    <logger name="org.bgee.model.expressiondata.ConditionUtils" level="trace" additivity="false">
+    <logger name="org.bgee.model.expressiondata.call.ConditionUtils" level="trace" additivity="false">
       <MarkerFilter marker="FLOW" onMatch="DENY" onMismatch="NEUTRAL"/>
       <appender-ref ref="Console"/>
     </logger>

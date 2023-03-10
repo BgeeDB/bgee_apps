@@ -8,7 +8,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.CallService;
 
 /**
  * A file (available for download), providing information such as size, category.
@@ -56,8 +56,8 @@ public class DownloadFile {
         AFFY_DATA("affy_data", false, true),
         RNASEQ_ANNOT("rnaseq_annot", false, true),
         RNASEQ_DATA("rnaseq_data", false, true),
-        FULL_LENGTH_ANNOT("full_length_annot", false, true),
-        FULL_LENGTH_DATA("full_length_data", false, true);
+        SC_RNA_SEQ_ANNOT("full_length_annot", false, true),
+        SC_RNA_SEQ_DATA("full_length_data", false, true);
 
         /**
          * A {@code String} that is the string representation.

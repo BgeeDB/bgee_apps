@@ -48,37 +48,38 @@ import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionToRawConditionTO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.DAOFDRPValue;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
-import org.bgee.model.dao.api.expressiondata.SamplePValueDAO.SamplePValueTO;
+import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValue;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO.RawExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO.SamplePValueTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO.DAORawDataSex;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionGraph;
-import org.bgee.model.expressiondata.ConditionGraphService;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.CallServiceUtils;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionGraph;
+import org.bgee.model.expressiondata.call.ConditionGraphService;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.FDRPValue;
 import org.bgee.model.expressiondata.baseelements.FDRPValueCondition;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
-import org.bgee.model.expressiondata.rawdata.RawDataCondition;
-import org.bgee.model.expressiondata.rawdata.RawDataCondition.RawDataSex;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.species.Species;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
@@ -1222,7 +1223,7 @@ public class InsertPropagatedCalls extends CallService {
             log.traceExit();
         }
 
-        private static void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
+        private void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
             Map<Condition, Integer> condMap, GlobalExpressionCallDAO dao) {
             log.traceEntry("{}, {}, {}", propagatedCalls, condMap, dao);
         
@@ -1285,7 +1286,7 @@ public class InsertPropagatedCalls extends CallService {
             log.traceExit();
         }
 
-        private static GlobalExpressionCallTO convertPipelineCallToGlobalExprCallTO(long exprId, 
+        private GlobalExpressionCallTO convertPipelineCallToGlobalExprCallTO(long exprId, 
                 Map<Condition, Integer> condMap, PipelineCall pipelineCall) {
             log.traceEntry("{}, {}, {}", exprId, condMap, pipelineCall);
             
@@ -1303,7 +1304,7 @@ public class InsertPropagatedCalls extends CallService {
         private static <F extends FDRPValue> Set<DAOFDRPValue> convertFDRPValuesToDAOFDRPValues(
                 Set<F> pValues, Map<Condition, Integer> condMap) {
             log.traceEntry("{}", pValues);
-            return log.traceExit(pValues.stream().map( p -> new DAOFDRPValue(p.getFDRPValue(),
+            return log.traceExit(pValues.stream().map( p -> new DAOFDRPValue(p.getPValue(),
                     (p instanceof FDRPValueCondition)?
                             condMap.get(((FDRPValueCondition) p).getCondition()): null,
                     p.getDataTypes().stream().map( dt -> { 
@@ -1316,7 +1317,7 @@ public class InsertPropagatedCalls extends CallService {
                             return DAODataType.RNA_SEQ;
                         case IN_SITU:
                             return DAODataType.IN_SITU;
-                        case FULL_LENGTH:
+                        case SC_RNA_SEQ:
                             return DAODataType.FULL_LENGTH;
                         default:
                             throw log.throwing(new IllegalStateException(
@@ -1327,7 +1328,7 @@ public class InsertPropagatedCalls extends CallService {
 
         }
         
-        private static Set<GlobalExpressionCallDataTO> convertPipelineCallToExpressionCallDataTOs(
+        private Set<GlobalExpressionCallDataTO> convertPipelineCallToExpressionCallDataTOs(
                 PipelineCall pipelineCall) {
             log.traceEntry("{}", pipelineCall);
 
@@ -1342,7 +1343,8 @@ public class InsertPropagatedCalls extends CallService {
                         
                         return new GlobalExpressionCallDataTO(
                                 //data type
-                                convertDataTypeToDAODataType(Collections.singleton(cd.getDataType())).iterator().next(),
+                                this.callPropagator.utils.convertDataTypeToDAODataType(
+                                        Collections.singleton(cd.getDataType())).iterator().next(),
                                 //self p-value observation counts
                                 cd.getDataPropagation().getSelfObservationCounts().entrySet().stream()
                                 .collect(Collectors.toMap(
@@ -1774,11 +1776,16 @@ public class InsertPropagatedCalls extends CallService {
     //Note: actually as of Bgee 14.2 we do not propagate absent calls to substructures anymore
     private final ConcurrentMap<Condition, Set<Condition>> condToDescendants;
 
-
     public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
             Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount,
             boolean computeAndInsertGlobalCond) {
-        super(serviceFactorySupplier.get());
+        this(serviceFactorySupplier, condParams, speciesId, geneOffset, geneRowCount,
+                computeAndInsertGlobalCond, new CallServiceUtils());
+    }
+    public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
+            Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount,
+            boolean computeAndInsertGlobalCond, CallServiceUtils utils) {
+        super(serviceFactorySupplier.get(), utils);
         if (condParams == null || condParams.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
         }
@@ -2129,7 +2136,10 @@ public class InsertPropagatedCalls extends CallService {
         }
 
         RawDataConditionTOResultSet rs = this.getDaoManager().getRawDataConditionDAO()
-                .getRawDataConditionsBySpeciesIds(speMap.keySet(), null);
+                .getRawDataConditionsFromRawConditionFilters(
+                        Set.of(new DAORawDataConditionFilter(speMap.keySet(),
+                                null, null, null, null, null)),
+                        null);
 
         while (rs.next()) {
             RawDataConditionTO condTO = rs.getTO();
@@ -2428,9 +2438,9 @@ public class InsertPropagatedCalls extends CallService {
                             if (bestMatchComb != null) {
                                 FDRPValue existingPVal = pValuePerDataTypeComb.get(bestMatchComb);
                                 FDRPValueCondition newPVal = new FDRPValueCondition(
-                                        existingPVal.getFDRPValue(), comb, descendantCall.getCondition());
+                                        existingPVal.getPValue(), comb, descendantCall.getCondition());
                                 bestPValuePerDataTypeComb.merge(comb, newPVal,
-                                        (p1, p2) -> p1.getFDRPValue().compareTo(p2.getFDRPValue()) == -1?
+                                        (p1, p2) -> p1.getPValue().compareTo(p2.getPValue()) == -1?
                                             p1: p2);
                             }
                         }
@@ -2532,7 +2542,7 @@ public class InsertPropagatedCalls extends CallService {
                     map.put(dt, dao.getRNASeqPValuesOrderedByGeneIdAndExprId(geneIds).stream()
                             .map(p -> p));
                     break;
-                case FULL_LENGTH:
+                case SC_RNA_SEQ:
                     map.put(dt, dao.getscRNASeqFullLengthPValuesOrderedByGeneIdAndExprId(geneIds)
                             .stream().map(p -> p));
                     break;
@@ -2801,7 +2811,7 @@ public class InsertPropagatedCalls extends CallService {
                 case EST:
                 case IN_SITU:
                 case RNA_SEQ:
-                case FULL_LENGTH:
+                case SC_RNA_SEQ:
                     //We know the generic types depending on the data types
                     @SuppressWarnings("unchecked")
                     Set<SamplePValueTO<String, String>> localPValues = pipelineData
@@ -2999,7 +3009,7 @@ public class InsertPropagatedCalls extends CallService {
                        return null;
                    }
                    return new FDRPValue(pValuePerDataTypeComb.get(mostMatchedDataTypesCombination)
-                           .getFDRPValue(), otherDTComb);
+                           .getPValue(), otherDTComb);
                })
                //If we couldn't find any overlap with a computed combination, the previous mapping
                //returned null, we filter that out.
@@ -3206,7 +3216,7 @@ public class InsertPropagatedCalls extends CallService {
 //                case EST:
 //                case IN_SITU:
 //                case RNA_SEQ:
-//                case FULL_LENGTH:
+//                case SC_RNA_SEQ:
 //                    //The cast of the generic types of SamplePValueTOs can be determined by the data type
 //                    @SuppressWarnings("unchecked")
 //                    PipelineCallData<String, String> pipelineCallData = new PipelineCallData<>(
@@ -3447,54 +3457,11 @@ public class InsertPropagatedCalls extends CallService {
 //                .values()));
 //    }
 
-    private static RawDataSex mapDAORawDataSexToRawDataSex(DAORawDataSex daoRawDataSex) {
-        log.traceEntry("{}", daoRawDataSex);
-        if (daoRawDataSex == null) {
-            log.traceExit(); return null;
-        }
-        switch(daoRawDataSex) {
-        case NOT_ANNOTATED:
-            return log.traceExit(RawDataSex.NOT_ANNOTATED);
-        case MIXED:
-            return log.traceExit(RawDataSex.MIXED);
-        case NA:
-            return log.traceExit(RawDataSex.NA);
-        case HERMAPHRODITE:
-            return log.traceExit(RawDataSex.HERMAPHRODITE);
-        case FEMALE:
-            return log.traceExit(RawDataSex.FEMALE);
-        case MALE:
-            return log.traceExit(RawDataSex.MALE);
-        default:
-            throw log.throwing(new IllegalStateException("Unrecognized DAORawDataSex: " + daoRawDataSex));
-        }
-    }
     private static String mapDAORawDataStrainToRawDataStrain(String daoStrain) {
         log.traceEntry("{}", daoStrain);
         if (StringUtils.isBlank(daoStrain)) {
             return log.traceExit((String) null);
         }
         return log.traceExit(daoStrain);
-    }
-
-    private static Sex mapRawDataSexToSex(RawDataSex daoRawDataSex) {
-        log.traceEntry("{}", daoRawDataSex);
-        if (daoRawDataSex == null) {
-            log.traceExit(); return null;
-        }
-        switch(daoRawDataSex) {
-        case NOT_ANNOTATED:
-        case MIXED:
-        case NA:
-            return log.traceExit(new Sex(SexEnum.ANY.getStringRepresentation()));
-        case HERMAPHRODITE:
-            return log.traceExit(new Sex(SexEnum.HERMAPHRODITE.getStringRepresentation()));
-        case FEMALE:
-            return log.traceExit(new Sex(SexEnum.FEMALE.getStringRepresentation()));
-        case MALE:
-            return log.traceExit(new Sex(SexEnum.MALE.getStringRepresentation()));
-        default:
-            throw log.throwing(new IllegalStateException("Unrecognized DAORawDataSex: " + daoRawDataSex));
-        }
     }
 }

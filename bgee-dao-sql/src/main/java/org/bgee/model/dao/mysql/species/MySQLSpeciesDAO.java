@@ -44,7 +44,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
         COL_TO_ATTR_MAP.put("taxonId", SpeciesDAO.Attribute.PARENT_TAXON_ID);
         COL_TO_ATTR_MAP.put("genomeFilePath", SpeciesDAO.Attribute.GENOME_FILE_PATH);
         COL_TO_ATTR_MAP.put("genomeVersion", SpeciesDAO.Attribute.GENOME_VERSION);
-        COL_TO_ATTR_MAP.put("genomeAssemblyXRef", SpeciesDAO.Attribute.GENOME_ASSEMBLY_XREF);
         COL_TO_ATTR_MAP.put("dataSourceId", SpeciesDAO.Attribute.DATA_SOURCE_ID);
         COL_TO_ATTR_MAP.put("genomeSpeciesId", SpeciesDAO.Attribute.GENOME_SPECIES_ID);
         COL_TO_ATTR_MAP.put("speciesDisplayOrder", SpeciesDAO.Attribute.DISPLAY_ORDER);
@@ -61,28 +60,28 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
     
     @Override
     public SpeciesTOResultSet getAllSpecies(Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}", attributes);
+        log.entry(attributes);
         return log.traceExit(this.getSpeciesByIds(null, attributes));
     }
     
     @Override
     public SpeciesTOResultSet getSpeciesByIds(Collection<Integer> speciesIds,
             Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}", speciesIds, attributes);
+        log.entry(speciesIds, attributes);
         return log.traceExit(this.getSpeciesByIdsAndTaxonIds(speciesIds, null, attributes));
     }
 
     @Override
     public SpeciesTOResultSet getSpeciesByTaxonIds(Collection<Integer> taxonIds,
             Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}", taxonIds, attributes);
+        log.entry(taxonIds, attributes);
         return log.traceExit(this.getSpeciesByIdsAndTaxonIds(null, taxonIds, attributes));
     }
 
     private SpeciesTOResultSet getSpeciesByIdsAndTaxonIds(Collection<Integer> speciesIds,
             Collection<Integer> taxonIds, Collection<SpeciesDAO.Attribute> attributes)
                     throws DAOException {
-        log.traceEntry("{}, {}, {}",speciesIds, taxonIds, attributes);
+        log.entry(speciesIds, taxonIds, attributes);
 
         Set<SpeciesDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(
                 attributes == null? new HashSet<>(): new HashSet<>(attributes));
@@ -147,7 +146,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
     @Override
     public SpeciesTOResultSet getSpeciesFromDataGroups(Collection<SpeciesDAO.Attribute> attributes)
             throws DAOException {
-        log.traceEntry("{}", attributes);
+        log.entry(attributes);
 
         Set<SpeciesDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(
                 attributes == null? new HashSet<>(): new HashSet<>(attributes));
@@ -183,17 +182,17 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
      *                          do not expose these kind of implementation details).
      */
     public int insertSpecies(Collection<SpeciesTO> specieTOs) throws DAOException {
-        log.traceEntry("{}", specieTOs);
+        log.entry(specieTOs);
         
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO species " +  
                    "(speciesId, genus, species, speciesCommonName, speciesDisplayOrder, taxonId, " +
-                   "genomeFilePath, genomeVersion, genomeAssemblyXRef, dataSourceId, genomeSpeciesId) values ");
+                   "genomeFilePath, genomeVersion, dataSourceId, genomeSpeciesId) values ");
         for (int i = 0; i < specieTOs.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
-            sql.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
+            sql.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
         }
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
@@ -214,8 +213,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
                 stmt.setString(paramIndex, speciesTO.getGenomeFilePath());
                 paramIndex++;
                 stmt.setString(paramIndex, speciesTO.getGenomeVersion());
-                paramIndex++;
-                stmt.setString(paramIndex, speciesTO.getGenomeAssemblyXRef());
                 paramIndex++;
                 stmt.setInt(paramIndex, speciesTO.getDataSourceId());
                 paramIndex++;
@@ -265,7 +262,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
             Integer speciesId = null, taxonId = null, genomeSpeciesId = null, displayOrder = null, 
                     dataSourceId = null;
             String genus = null, species = null, speciesCommonName = null, 
-                   genomeFilePath = null, genomeVersion = null, genomeAssemblyXRef = null;
+                   genomeFilePath = null, genomeVersion = null;
             // Get results
             try {
                 for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -297,9 +294,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
                     case GENOME_VERSION:
                         genomeVersion = this.getCurrentResultSet().getString(columnIndex);
                         break;
-                    case GENOME_ASSEMBLY_XREF:
-                        genomeAssemblyXRef = this.getCurrentResultSet().getString(columnIndex);
-                        break;
                     case DATA_SOURCE_ID:
                         dataSourceId = this.getCurrentResultSet().getInt(columnIndex);
                         break;
@@ -315,8 +309,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
             }
             //Set SpeciesTO
             return log.traceExit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
-                    displayOrder, taxonId, genomeFilePath, genomeVersion, genomeAssemblyXRef,
-                    dataSourceId, genomeSpeciesId));
+                    displayOrder, taxonId, genomeFilePath, genomeVersion, dataSourceId, 
+                    genomeSpeciesId));
         }
     }
 }

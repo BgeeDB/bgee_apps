@@ -19,9 +19,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall.ClusteringMethod;
+import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -29,10 +29,9 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneHomologsService;
-import org.bgee.model.gene.GeneMatchResult;
-import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneService;
+import org.bgee.model.search.SearchMatchResult;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -43,12 +42,23 @@ import org.bgee.view.ViewFactory;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 15.0, Dec. 2021
+ * @version Bgee 15.0, Jan. 2023
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
 
     private final static Logger log = LogManager.getLogger(CommandGene.class.getName());
+
+    /**
+     * An {@code int} that is the maximum allowed number of results
+     * to retrieve in one request. Value: 10,000.
+     */
+    private final static int LIMIT_MAX = 10000;
+    /**
+     * An {@code int} that is the default number of results
+     * to retrieve in one request. Value: 100.
+     */
+    private final static int DEFAULT_LIMIT = 100;
 
     public static class GeneExpressionResponse {
         //Deactivated as long as we don't retrieve the Gene when there is no expression data
@@ -206,13 +216,18 @@ public class CommandGene extends CommandParent {
         CallService callService = serviceFactory.getCallService();
 
         if (StringUtils.isNotBlank(search)) {
-            GeneMatchResult result = serviceFactory.getGeneMatchResultService(this.prop)
-                    .searchByTerm(search, null, 0, GeneMatchResultService.SPHINX_MAX_RESULTS);
+            int limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
+                this.requestParameters.getLimit();
+            if (limit > LIMIT_MAX) {
+                throw log.throwing(new InvalidRequestException("It is not possible to request more than "
+                        + LIMIT_MAX + " results."));
+            }
+            SearchMatchResult<Gene> result = serviceFactory.getSearchMatchResultService(this.prop)
+                    .searchGenesByTerm(search, speciesId == null? null : Set.of(speciesId), 0, limit);
             display.displayGeneSearchResult(search, result);
             log.traceExit(); return;
         } else if (geneId == null) {
-            display.displayGeneHomePage();
-            log.traceExit(); return;
+            throw log.throwing(new InvalidRequestException("At least one gene ID should be provided."));
         } else if (RequestParameters.ACTION_GENE_GENERAL_INFO.equals(action)) {
             this.processGeneralInfoRequest(geneService, display);
             log.traceExit(); return;
@@ -524,7 +539,9 @@ public class CommandGene extends CommandParent {
 
             return log.traceExit(new GeneExpressionResponse(calls, callType, condParamAttrs, dataTypes,
                     true, clustering));
-            
+        //FIXME: actually catching IllegalArgumentException leads to masking real errors.
+        //I think it was done because a missing gene can lead to an IllegalArgumentException.
+        //To deactivate catching of IllegalArgumentException and to check!
         } catch (IllegalArgumentException | GeneNotFoundException e) {
             log.catching(e);
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId

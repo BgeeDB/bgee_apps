@@ -63,9 +63,9 @@ public abstract class BaseCondition<T extends BaseCondition<?>> {
      */
     protected BaseCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType,
             Species species) throws IllegalArgumentException {
-        if (species == null) {
-            throw log.throwing(new IllegalArgumentException("The species cannot be null."));
-        }
+//        if (species == null) {
+//            throw log.throwing(new IllegalArgumentException("The species cannot be null."));
+//        }
         this.anatEntity         = anatEntity;
         this.devStage           = devStage;
         this.cellType           = cellType;

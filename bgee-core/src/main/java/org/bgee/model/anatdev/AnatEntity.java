@@ -11,6 +11,8 @@ import org.bgee.model.ontology.OntologyElement;
  *
  */
 public class AnatEntity extends NamedEntity<String> implements OntologyElement<AnatEntity, String> {
+    private final Boolean isCellType;
+
     /**
      * Constructor providing the ID of this {@code AnatEntity}. 
      * {@code id} cannot be blank, otherwise an {@code IllegalArgumentException} is thrown. 
@@ -31,6 +33,24 @@ public class AnatEntity extends NamedEntity<String> implements OntologyElement<A
      * @throws IllegalArgumentException     if {@code id} is blank. 
      */
     public AnatEntity(String id, String name, String description) {
+        this(id, name, description, null);
+    }
+    /**
+     * Constructor providing the ID, name, and description corresponding to this {@code AnatEntity}. 
+     * {@code id} cannot be blank, otherwise an {@code IllegalArgumentException} is thrown. 
+     * 
+     * @param id            A {@code String} representing the ID of this {@code AnatEntity}.
+     * @param name          A {@code String} representing the name of this {@code AnatEntity}.
+     * @param description   A {@code String} representing the description of this {@code AnatEntity}.
+     * @param description   A {@code Boolean} indicating whether this {@code AnatEntity} is a cell type.
+     * @throws IllegalArgumentException     if {@code id} is blank. 
+     */
+    public AnatEntity(String id, String name, String description, Boolean isCellType) {
         super(id, name, description);
+        this.isCellType = isCellType;
+    }
+
+    public Boolean getIsCellType() {
+        return isCellType;
     }
 }

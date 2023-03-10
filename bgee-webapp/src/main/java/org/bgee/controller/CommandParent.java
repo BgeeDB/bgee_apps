@@ -18,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.user.User;
+import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.Service;
@@ -62,6 +63,11 @@ abstract class CommandParent {
      * across the entire webapp. 
      */
     protected final JobService jobService;
+    /**
+     * The {@code BgeeCacheService} instance allowing to manage caches between threads 
+     * across the entire webapp. 
+     */
+    protected final BgeeCacheService cacheService;
     /**
      * The {@code User} who is making the query to the webapp. 
      */
@@ -123,6 +129,14 @@ abstract class CommandParent {
                          BgeeProperties prop, ViewFactory viewFactory) {
         this(response, requestParameters, prop, viewFactory, null);
     }
+    public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
+            JobService jobService,
+            User user, ServletContext context, MailSender mailSender) {
+        this(response, requestParameters, prop, viewFactory, serviceFactory,
+            jobService, null, 
+            user, context, mailSender);
+    }
 
     /**
      * Constructor
@@ -138,6 +152,8 @@ abstract class CommandParent {
      *                                  (might be null)
      * @param jobService                A {@code JobService} instance allowing to manage jobs
      *                                  between threads across the entire webapp.
+     * @param cacheService              A {@code BgeeCacheService} instance allowing to manage jobs
+     *                                  between threads across the entire webapp.
      * @param user                      The {@code User} who is making the query to the webapp
      *                                  (might be null).
      * @param context                   The {@code ServletContext} of the servlet using this object. 
@@ -146,7 +162,7 @@ abstract class CommandParent {
      */
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
-                         JobService jobService,
+                         JobService jobService, BgeeCacheService cacheService,
                          User user, ServletContext context, MailSender mailSender) {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}", response, requestParameters, prop,
                 viewFactory, serviceFactory, jobService, user, context, mailSender);
@@ -157,6 +173,7 @@ abstract class CommandParent {
         this.viewFactory = viewFactory;
         this.serviceFactory = serviceFactory;
         this.jobService = jobService;
+        this.cacheService = cacheService;
         this.user = user;
         this.mailSender = mailSender;
         this.serverRoot = prop.getBgeeRootDirectory();

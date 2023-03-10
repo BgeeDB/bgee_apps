@@ -18,7 +18,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
-import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -133,11 +132,6 @@ public class InsertTaxa extends MySQLDAOUser {
      */
     public static final String SPECIES_GENOME_DATA_SOURCE_ID_KEY= "dataSourceId";
     /**
-     * A {@code String} that is the key to retrieve the genome assembly URL for a species,
-     * from the {@code Map}s returned by {@link #addGenomeAssemblyXRef(Collection)}.
-     */
-    public static final String SPECIES_GENOME_ASSEMBLY_XREF_KEY= "genomeAssemblyXRef";
-    /**
      * A {@code String} that is the key to retrieve the ID of the species whose the genome 
      * was used for a species used in Bgee, from the {@code Map}s returned by 
      * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
@@ -169,20 +163,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * separated by a separator {@link org.bgee.pipeline.annotations.AnnotationCommon#ENTITY_SEPARATORS}.
      */
     public static final String SPECIES_COMMENT_KEY= "comment";
-    /**
-     * An {@code Integer} that is the internal data source identifier of Ensembl in the database
-     */
-    private static final Integer DATASOURCE_ENSEMBL_ID = 2;
-    /**
-     * An {@code Integer} that is the internal data source identifier of Ensembl Metazoa in the
-     * database
-     */
-    private static final Integer DATASOURCE_ENSEMBL_METAZOA_ID = 24;
-    /**
-     * An {@code Integer} that is the internal data source identifier of RefSeq in the database
-     */
-    private static final Integer DATASOURCE_REFSEQ_ID = 37;
-
+    
     /**
      * A {@code OWLGraphWrapper} wrapping the NCBI taxonomy {@code OWLOntology}.
      */
@@ -300,112 +281,28 @@ public class InsertTaxa extends MySQLDAOUser {
             String ncbiOntFile) throws FileNotFoundException, IOException, 
             OWLOntologyCreationException, OBOFormatParserException, 
             IllegalArgumentException, DAOException {
-        log.traceEntry("{}, {}, {}", speciesFile, taxonFile, ncbiOntFile);
-
-        Collection<Map<String, Object>> allSpeciesWithoutGenomeAssemblyXRef =
-                this.getSpeciesFromFile(speciesFile);
-        Collection<Map<String, Object>> allSpecies =
-                this.addGenomeAssemblyXRef(allSpeciesWithoutGenomeAssemblyXRef);
-
-        this.insertSpeciesAndTaxa(allSpecies, AnnotationCommon.getTaxonIds(taxonFile),
+        log.entry(speciesFile, taxonFile, ncbiOntFile);
+        
+        this.insertSpeciesAndTaxa(this.getSpeciesFromFile(speciesFile), 
+                AnnotationCommon.getTaxonIds(taxonFile), 
                 OntologyUtils.loadOntology(ncbiOntFile));
-
+        
         log.traceExit();
-    }
-    /**
-     *
-     * Add genome assembly XRef to the {@code Collection} of {@code Map}s retrieved from the species
-     * file. The genome assembly XRef is added to each species map as a value associated to the key
-     * {@link SPECIES_GENOME_ASSEMBLY_XREF_KEY}.
-     *
-     * @param speciesFromFile   A {@code Collection} of {@code Map}s where each {@code Map}
-     *                          represents a species, with information about it mapped to
-     *                          the keys {@link #SPECIES_ID_KEY}, {@link #SPECIES_GENUS_KEY},
-     *                          {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY},
-     *                          {@link #SPECIES_DISPLAY_ORDER_KEY}, {@link #SPECIES_GENOME_FILE_KEY},
-     *                          {@link SPECIES_GENOME_VERSION_KEY}, {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY},
-     *                          {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY},
-     *                          {@link #SPECIES_KEYWORDS_KEY}, {@link #SPECIES_COMMENT_KEY}.
-     *                          The values associated to {@link #SPECIES_ID_KEY} and
-     *                          {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY} are
-     *                          an {@code Integer}, other values are {@code String}s.
-     * @return                  A {@code Collection} of {@code Map}s where each {@code Map}
-     *                          represents a species, with information about it mapped to
-     *                          the keys {@link #SPECIES_ID_KEY}, {@link #SPECIES_GENUS_KEY},
-     *                          {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY},
-     *                          {@link #SPECIES_DISPLAY_ORDER_KEY}, {@link #SPECIES_GENOME_FILE_KEY},
-     *                          {@link SPECIES_GENOME_VERSION_KEY}, {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY},
-     *                          {@link SPECIES_GENOME_ASSEMBLY_XREF_KEY},
-     *                          {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY},
-     *                          {@link #SPECIES_KEYWORDS_KEY}, {@link #SPECIES_COMMENT_KEY}.
-     *                          The values associated to {@link #SPECIES_ID_KEY} and
-     *                          {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY} are
-     *                          an {@code Integer}, other values are {@code String}s.
-     */
-    private Collection<Map<String, Object>> addGenomeAssemblyXRef(
-            Collection<Map<String, Object>> speciesFromFile) {
-        //retrieve distinct data source IDs
-        Set<Integer> dataSourceIds = speciesFromFile.stream()
-                .map(s -> s.get(SPECIES_GENOME_DATA_SOURCE_ID_KEY))
-                .distinct()
-                .map(o -> (Integer) o)
-                .collect(Collectors.toSet());
-        List<SourceTO> dataSources = this.getManager().getSourceDAO()
-                .getDataSourceByIds(dataSourceIds, null)
-                .getAllTOs();
-        //generate genome assembly xref depending on the data source ID
-        Collection<Map<String, Object>> speciesWithGenomeAssemblyXRef = speciesFromFile
-                .stream().map(m -> {
-            Integer dataSourceId = (Integer) m.get(SPECIES_GENOME_DATA_SOURCE_ID_KEY);
-            if (dataSourceId == DATASOURCE_ENSEMBL_ID ||
-                    dataSourceId == DATASOURCE_ENSEMBL_METAZOA_ID) {
-                String baseURL = "";
-                if (dataSourceId == DATASOURCE_ENSEMBL_ID) {
-                    baseURL = dataSources.stream()
-                            .filter(ds -> ds.getId() == DATASOURCE_ENSEMBL_ID)
-                            .map(ds -> ds.getBaseUrl()).findFirst().get();
-                } else {
-                    baseURL = dataSources.stream()
-                            .filter(ds -> ds.getId() == DATASOURCE_ENSEMBL_METAZOA_ID)
-                            .map(ds -> ds.getBaseUrl()).findFirst().get();
-                }
-                String genus = (String) m.get(SPECIES_GENUS_KEY);
-                String species = (String) m.get(SPECIES_NAME_KEY);
-                m.put(SPECIES_GENOME_ASSEMBLY_XREF_KEY,
-                        new StringBuilder(baseURL).append(genus).append("_")
-                        .append(species).toString());
-            } else if (dataSourceId == DATASOURCE_REFSEQ_ID) {
-                String baseURL = "https://www.ncbi.nlm.nih.gov/assembly/?term=";
-                String genomeVersion = (String) m.get(SPECIES_GENOME_VERSION_KEY);
-                m.put(SPECIES_GENOME_ASSEMBLY_XREF_KEY,
-                        new StringBuilder(baseURL).append(genomeVersion).toString());
-            } else {
-                String unrecognizedDataSourceId = "the dataSource ID used for species " +
-                        m.get(SPECIES_ID_KEY).toString() + " was not recognized when "
-                                + "generating the genome assembly XRef. Please check that this "
-                                + "data source ID is correct. If the ID is correct it means "
-                                + "data source IDs have been updated or a new genome datasource "
-                                + "have been added to Bgee.";
-                throw log.throwing(new IllegalArgumentException(unrecognizedDataSourceId));
-            }
-            return m;
-        }).collect(Collectors.toSet());
-        return speciesWithGenomeAssemblyXRef;
     }
     
     /**
      * Extract the information about the species to include in Bgee from the provided 
      * TSV file. The first line of this file should be a header line, 
-     * defining 12 columns, named exactly as: {@link #SPECIES_ID_KEY},
-     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY},
-     * {@link #SPECIES_DISPLAY_ORDER_KEY}, {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
-     * {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY},
-     * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY},
-     * {@link #SPECIES_KEYWORDS_KEY}, {@link #SPECIES_COMMENT_KEY} (in whatever order).
-     * This method returns a {@code Collection} where each
-     * species is represented by a {@code Map}, containing information mapped
-     * to the keys listed above. In these {@code Map}s, the value associated to
-     * {@link #SPECIES_ID_KEY} will be an {@code Integer}, other values will be
+     * defining 12 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
+     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
+     * {@link #SPECIES_DISPLAY_ORDER_KEY}, {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY}, 
+     * {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY}, 
+     * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY}, 
+     * {@link #SPECIES_KEYWORDS_KEY}, {@link #SPECIES_COMMENT_KEY} (in whatever order). 
+     * This method returns a {@code Collection} where each 
+     * species is represented by a {@code Map}, containing information mapped 
+     * to the keys listed above. In these {@code Map}s, the value associated to 
+     * {@link #SPECIES_ID_KEY} will be an {@code Integer}, other values will be 
      * {@code String}s.
      * 
      * @param speciesFile   A {@code String} that is the path to the TSV file 
@@ -488,14 +385,9 @@ public class InsertTaxa extends MySQLDAOUser {
      * Inserts species and taxa into the Bgee database. The arguments are: 
      * <ul>
      * <li>A {@code Collection} of {@code Map}s where each {@code Map} represents 
-     * a species, with information about it mapped to the keys {@link #SPECIES_ID_KEY},
-     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY},
-     * {@link #SPECIES_COMMON_NAME_KEY}, {@link #SPECIES_DISPLAY_ORDER_KEY},
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_VERSION_KEY}, 
-     * {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY}, {@link #SPECIES_GENOME_ASSEMBLY_XREF_KEY},
-     * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY}, 
-     * {@link #SPECIES_KEYWORDS_KEY}, {@link #SPECIES_COMMENT_KEY}
-     * Each {@code Map} should contain exactly these 13 entries, with no {@code null} 
+     * a species, with information about it mapped to the keys {@link #SPECIES_ID_KEY}, 
+     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}.
+     * Each {@code Map} should contain exactly these 4 entries, with no {@code null} 
      * values permitted. Value associated to {@link #SPECIES_ID_KEY} should be 
      * an {@code Integer} (the NCBI taxonomy ID, for instance, 9606 for human), 
      * other values should be {@code String}s.
@@ -623,7 +515,7 @@ public class InsertTaxa extends MySQLDAOUser {
      */
     private Set<SpeciesTO> getSpeciesTOs(Collection<Map<String, Object>> allSpecies) 
             throws IllegalStateException {
-        log.traceEntry("{}", allSpecies);
+        log.entry(allSpecies);
         
         Set<SpeciesTO> speciesTOs = new HashSet<SpeciesTO>();
         for (Map<String, Object> species: allSpecies) {
@@ -669,7 +561,7 @@ public class InsertTaxa extends MySQLDAOUser {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect display order: " + displayOrder));
             }
-
+            
             String genomeFilePath = (String) species.get(SPECIES_GENOME_FILE_KEY);
             if (StringUtils.isBlank(genomeFilePath)) {
                 throw log.throwing(new IllegalArgumentException(
@@ -680,18 +572,12 @@ public class InsertTaxa extends MySQLDAOUser {
                 throw log.throwing(new IllegalArgumentException(
                         "Missing path to genome version for species: " + commonName));
             }
-            String genomeAssemblyXRef = (String) species.get(SPECIES_GENOME_ASSEMBLY_XREF_KEY);
-            if (StringUtils.isBlank(genomeAssemblyXRef)) {
-                throw log.throwing(new IllegalArgumentException(
-                        "Missing XRef to genome assembly for species: " + commonName));
-            }
             Integer dataSourceId = (Integer) species.get(SPECIES_GENOME_DATA_SOURCE_ID_KEY);
-
+            
             Integer genomeSpeciesId = (Integer) species.get(SPECIES_GENOME_ID_KEY);
-
+            
             speciesTOs.add(new SpeciesTO(speciesId, commonName, genus, speciesName, displayOrder,
-                    parentTaxonId, genomeFilePath, genomeVersion, genomeAssemblyXRef, dataSourceId,
-                    genomeSpeciesId));
+                    parentTaxonId, genomeFilePath, genomeVersion, dataSourceId, genomeSpeciesId));
         }
         if (speciesTOs.size() != allSpecies.size()) {
             throw log.throwing(new IllegalStateException("The taxonomy ontology " +

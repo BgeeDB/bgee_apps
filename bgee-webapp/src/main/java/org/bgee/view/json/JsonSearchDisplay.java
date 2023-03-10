@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.search.SearchMatchResult;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.SearchDisplay;
 
@@ -47,6 +48,18 @@ public class JsonSearchDisplay extends JsonParentDisplay implements SearchDispla
         }
         this.sendResponse("Gene autocompletion request", resultHashMap);
 
+        log.traceExit();
+    }
+
+    @Override
+    public void displayDefaultSphinxSearchResult(String searchTerm,
+            SearchMatchResult<?> result) {
+        log.traceEntry("{}. {}", searchTerm, result);
+        LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
+        resultHashMap.put("query", searchTerm);
+        resultHashMap.put("result", result);
+        this.sendResponse("Search result",
+                resultHashMap);
         log.traceExit();
     }
 }

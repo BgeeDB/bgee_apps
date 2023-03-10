@@ -3,7 +3,6 @@ package org.bgee.model.ontology;
 import java.util.Collection;
 
 import org.bgee.model.NamedEntity;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
 /**
@@ -38,14 +37,13 @@ public class Ontology<T extends NamedEntity<U> & OntologyElement<T, U>, U extend
      *                          the relations between elements of the ontology.
      * @param relationTypes     A {@code Collection} of {@code RelationType}s that were
      *                          considered to build this ontology or sub-graph.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
      * @param type              A {@code Class<T>} that is the type of {@code elements} 
      *                          to be store by this {@code Ontology}.
      */
     public Ontology(Integer speciesId, Collection<T> elements,
             Collection<RelationTO<U>> relations, Collection<RelationType> relationTypes,
-            ServiceFactory serviceFactory, Class<T> type) {
-        super(elements, relations, relationTypes, serviceFactory, type);
+            Class<T> type) {
+        super(elements, relations, relationTypes, type);
         this.speciesId = speciesId;
     }
     

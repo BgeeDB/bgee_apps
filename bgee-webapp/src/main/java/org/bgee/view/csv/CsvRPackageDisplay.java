@@ -19,7 +19,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyElement;
@@ -194,7 +194,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
                         break;
                     case CommandRPackage.SPECIES_FULL_LENGTH_PARAM:
                         if (species.getDataTypesByDataSourcesForData().values().stream().flatMap(dt -> dt.stream())
-                                .filter(dt -> dt.equals(DataType.FULL_LENGTH)).collect(Collectors.toSet()).size() > 0) {
+                                .filter(dt -> dt.equals(DataType.SC_RNA_SEQ)).collect(Collectors.toSet()).size() > 0) {
                             speMap.put(header[columnNumber], "T");
                             columnNumber++;
                             break;

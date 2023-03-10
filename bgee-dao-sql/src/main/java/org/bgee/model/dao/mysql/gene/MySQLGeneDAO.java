@@ -38,7 +38,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
      */
     private final static Logger log = LogManager.getLogger(MySQLGeneDAO.class.getName());
 
-    private static final String GENE_TABLE_NAME = "gene";
+    public static final String TABLE_NAME = "gene";
     /**
      * A {@code String} that is the field name for Bgee internal gene IDs.
      */
@@ -180,9 +180,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                         () -> new LinkedHashMap<>()));
         Set<Integer> clonedBgeeGeneIds = bgeeGeneIds == null? new HashSet<>(): new HashSet<>(bgeeGeneIds);
 
-        String sql = generateSelectClause(GENE_TABLE_NAME, columnToAttributesMap, true, this.getAttributes());
+        String sql = generateSelectClause(TABLE_NAME, columnToAttributesMap, true, this.getAttributes());
 
-        sql += " FROM " + GENE_TABLE_NAME;
+        sql += " FROM " + TABLE_NAME;
 
         if (!clonedSpeciesIdToGeneIds.isEmpty() || !clonedBgeeGeneIds.isEmpty() ||
                 Boolean.TRUE.equals(withExprData)) {
@@ -195,20 +195,20 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                         //a null species ID key is allowed for methods such as getGenesbyIds,
                         //but it should be the only entry in the Map then.
                         if (e.getKey() != null) {
-                            where += GENE_TABLE_NAME + ".speciesId = ?";
+                            where += TABLE_NAME + ".speciesId = ?";
                             if (!e.getValue().isEmpty()) {
                                 where += " AND ";
                             }
                         }
                         if (!e.getValue().isEmpty()) {
-                            where += GENE_TABLE_NAME + ".geneId IN ("
+                            where += TABLE_NAME + ".geneId IN ("
                                      + BgeePreparedStatement.generateParameterizedQueryString(
                                             e.getValue().size()) + ")";
                         }
                         return where;
                     }).collect(Collectors.joining(" OR ", "(", ") "));
         } else if (!clonedSpeciesIdToGeneIds.isEmpty()) {
-            sql += GENE_TABLE_NAME + ".speciesId IN ("
+            sql += TABLE_NAME + ".speciesId IN ("
                    + BgeePreparedStatement.generateParameterizedQueryString(
                            clonedSpeciesIdToGeneIds.size())
                    + ") ";
@@ -218,7 +218,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             if (!clonedSpeciesIdToGeneIds.isEmpty()) {
                 sql += " AND ";
             }
-            sql += GENE_TABLE_NAME + ".bgeeGeneId IN ("
+            sql += TABLE_NAME + ".bgeeGeneId IN ("
                    + BgeePreparedStatement.generateParameterizedQueryString(clonedBgeeGeneIds.size())
                    + ")";
         }
@@ -227,10 +227,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                 sql += " AND ";
             }
             sql += "EXISTS (SELECT 1 FROM expression WHERE expression.bgeeGeneId = "
-                   + GENE_TABLE_NAME + ".bgeeGeneId)";
+                   + TABLE_NAME + ".bgeeGeneId)";
         }
         if (orderedByBgeeGeneId) {
-            sql += " ORDER BY " + GENE_TABLE_NAME + ".bgeeGeneId";
+            sql += " ORDER BY " + TABLE_NAME + ".bgeeGeneId";
         }
         if (geneCount > 0) {
             sql += " LIMIT ";

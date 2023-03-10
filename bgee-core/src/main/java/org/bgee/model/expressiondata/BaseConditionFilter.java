@@ -3,9 +3,12 @@ package org.bgee.model.expressiondata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,17 +47,16 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities describing cell types that this 
      *                              {@code ConditionFilter} will specify to use.
-     * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs are provided. 
      */
     public BaseConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds, 
             Collection<String> cellTypeIds)
             throws IllegalArgumentException {
-        this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds == null ? 
-                new HashSet<>(): new HashSet<>(anatEntityIds));
-        this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 
-                new HashSet<>(): new HashSet<>(devStageIds));
-        this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds == null? 
-                new HashSet<>(): new HashSet<>(cellTypeIds));
+        this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds == null? new HashSet<>():
+            anatEntityIds.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toSet()));
+        this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds == null? new HashSet<>():
+            cellTypeIds.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toSet()));
+        this.devStageIds = Collections.unmodifiableSet(devStageIds == null? new HashSet<>():
+            devStageIds.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toSet()));
     }
 
 
@@ -80,44 +82,7 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
         return cellTypeIds;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
-        result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
-        result = prime * result + ((cellTypeIds == null) ? 0 : cellTypeIds.hashCode());
-        return result;
-    }
-
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        BaseConditionFilter<?> other = (BaseConditionFilter<?>) obj;
-        if (anatEntityIds == null) {
-            if (other.anatEntityIds != null)
-                return false;
-        } else if (!anatEntityIds.equals(other.anatEntityIds))
-            return false;
-        if (devStageIds == null) {
-            if (other.devStageIds != null)
-                return false;
-        } else if (!devStageIds.equals(other.devStageIds))
-            return false;
-        if (cellTypeIds == null) {
-            if (other.cellTypeIds != null)
-                return false;
-        } else if (!cellTypeIds.equals(other.cellTypeIds))
-            return false;
-        return true;
-    }
-
+    public abstract boolean areAllCondParamFiltersEmpty();
 
     /**
      * Evaluates this {@code BaseConditionFilter} on the given {@code BaseCondition}.
@@ -157,5 +122,23 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
         }
         
         return log.traceExit(true);
+    }
+
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(anatEntityIds, cellTypeIds, devStageIds);
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        BaseConditionFilter<?> other = (BaseConditionFilter<?>) obj;
+        return Objects.equals(anatEntityIds, other.anatEntityIds) && Objects.equals(cellTypeIds, other.cellTypeIds)
+                && Objects.equals(devStageIds, other.devStageIds);
     }
 }

@@ -1,11 +1,12 @@
 package org.bgee.model.expressiondata.rawdata.microarray;
 
+import java.math.BigDecimal;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Entity;
-import org.bgee.model.expressiondata.rawdata.RawCall;
-import org.bgee.model.expressiondata.rawdata.RawCallSource;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCallSource;
 
 public class AffymetrixProbeset implements RawCallSource<AffymetrixChip> {
     private final static Logger log = LogManager.getLogger(AffymetrixProbeset.class.getName());
@@ -13,20 +14,24 @@ public class AffymetrixProbeset implements RawCallSource<AffymetrixChip> {
     private final String id;
     private final AffymetrixChip assay;
     private final RawCall rawCall;
+    private final BigDecimal normalizedSignalIntensity;
+    private final BigDecimal qValue;
+    private final BigDecimal rank;
 
-    public AffymetrixProbeset(String id, AffymetrixChip assay, RawCall rawCall) {
+    public AffymetrixProbeset(String id, AffymetrixChip assay, RawCall rawCall,
+            BigDecimal normalizedSignalIntensity, BigDecimal qValue, BigDecimal rank) {
         if (StringUtils.isBlank(id)) {
             throw log.throwing(new IllegalArgumentException("ID cannot be blank"));
         }
         this.id = id;
-        if (assay == null) {
-            throw log.throwing(new IllegalArgumentException("AffymetrixChip cannot be null"));
-        }
-        this.assay = assay;
         if (rawCall == null) {
             throw log.throwing(new IllegalArgumentException("RawCall cannot be null"));
         }
         this.rawCall = rawCall;
+        this.assay = assay;
+        this.normalizedSignalIntensity = normalizedSignalIntensity;
+        this.qValue = qValue;
+        this.rank = rank;
     }
 
     public String getId() {
@@ -39,6 +44,15 @@ public class AffymetrixProbeset implements RawCallSource<AffymetrixChip> {
     @Override
     public RawCall getRawCall() {
         return this.rawCall;
+    }
+    public BigDecimal getNormalizedSignalIntensity() {
+        return normalizedSignalIntensity;
+    }
+    public BigDecimal getqValue() {
+        return qValue;
+    }
+    public BigDecimal getRank() {
+        return rank;
     }
 
     //AffymetrixProbeset IDs are not unique, they are unique inside a given AffymetrixChip.
@@ -72,4 +86,13 @@ public class AffymetrixProbeset implements RawCallSource<AffymetrixChip> {
             return false;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "AffymetrixProbeset [id=" + id + ", assay=" + assay + ", rawCall=" + rawCall
+                + ", normalizedSignalIntensity=" + normalizedSignalIntensity + ", qValue=" + qValue + ", rank=" + rank
+                + "]";
+    }
+    
+    
 }

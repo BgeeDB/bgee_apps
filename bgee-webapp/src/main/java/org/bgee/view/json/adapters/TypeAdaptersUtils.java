@@ -19,11 +19,12 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
@@ -34,7 +35,40 @@ public class TypeAdaptersUtils {
 
     private static final Logger log = LogManager.getLogger(TypeAdaptersUtils.class.getName());
 
-    protected static void writeSimplifiedCondition(JsonWriter out, Condition cond,
+    public void writeSimplifiedRawDataCondition(JsonWriter out, RawDataCondition cond)
+            throws IOException {
+        log.traceEntry("{}, {}}", out, cond);
+        if (cond == null) {
+            out.nullValue();
+            log.traceExit(); return;
+        }
+        out.beginObject();
+
+        out.name("anatEntity");
+        writeSimplifiedNamedEntity(out, cond.getAnatEntity());
+
+        out.name("cellType");
+        if (cond.getCellType() == null) {
+            out.value("NA");
+        } else {
+            writeSimplifiedNamedEntity(out, cond.getCellType());
+        }
+
+        out.name("devStage");
+        writeSimplifiedNamedEntity(out, cond.getDevStage());
+
+        out.name("sex").value(cond.getSex().getStringRepresentation());
+
+        out.name("strain").value(cond.getStrain());
+
+        out.name("species");
+        writeSimplifiedSpecies(out, cond.getSpecies(), false, null);
+
+        out.endObject();
+        log.traceExit();
+    }
+
+    public void writeSimplifiedCondition(JsonWriter out, Condition cond,
             EnumSet<CallService.Attribute> condParams) throws IOException {
         log.traceEntry("{}, {}, {}", out, cond, condParams);
         out.beginObject();
@@ -92,7 +126,7 @@ public class TypeAdaptersUtils {
         log.traceExit();
     }
 
-    protected static void writeSimplifiedMultiSpeciesCondition(JsonWriter out, MultiSpeciesCondition cond)
+    public void writeSimplifiedMultiSpeciesCondition(JsonWriter out, MultiSpeciesCondition cond)
             throws IOException {
         log.traceEntry("{}, {}", out, cond);
         out.beginObject();
@@ -119,14 +153,18 @@ public class TypeAdaptersUtils {
         log.traceExit();
     }
 
-    protected static void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
+    public void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
         log.traceEntry("{}, {}", out, source);
+        if (source == null) {
+            out.nullValue();
+            log.traceExit(); return;
+        }
         out.name("name").value(source.getName());
         out.name("description").value(source.getDescription());
         out.name("baseUrl").value(source.getBaseUrl());
         log.traceExit();
     }
-    protected static void writeSimplifiedXRef(JsonWriter out, XRef xRef,
+    public void writeSimplifiedXRef(JsonWriter out, XRef xRef,
             Function<String, String> urlEncodeFunction) throws IOException {
         log.traceEntry("{}, {}", out, xRef, urlEncodeFunction);
         out.name("xRefId").value(xRef.getXRefId());
@@ -134,23 +172,33 @@ public class TypeAdaptersUtils {
         out.name("xRefURL").value(xRef.getXRefUrl(false, urlEncodeFunction));
         log.traceExit();
     }
-    protected static void writeSimplifiedGene(JsonWriter out, Gene gene, boolean withSpeciesDataSource,
+    public void writeSimplifiedGene(JsonWriter out, Gene gene, boolean withSpeciesDataSource,
             EnumSet<DataType> allowedDataTypes)
             throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, gene, withSpeciesDataSource, allowedDataTypes);
+        this.writeSimplifiedGene(out, gene, true, withSpeciesDataSource, allowedDataTypes);
+        log.traceExit();
+    }
+    public void writeSimplifiedGene(JsonWriter out, Gene gene, boolean withSpeciesInfo,
+            boolean withSpeciesDataSource, EnumSet<DataType> allowedDataTypes) throws IOException {
+
+        log.traceEntry("{}, {}, {}, {}, {}", out, gene, withSpeciesInfo, withSpeciesDataSource,
+                allowedDataTypes);
         out.beginObject();
         out.name("geneId").value(gene.getGeneId());
         out.name("name").value(gene.getName());
 
         //Simplified display of Species
-        out.name("species");
-        writeSimplifiedSpecies(out, gene.getSpecies(), withSpeciesDataSource, allowedDataTypes);
+        if (withSpeciesInfo) {
+            out.name("species");
+            writeSimplifiedSpecies(out, gene.getSpecies(), withSpeciesDataSource, allowedDataTypes);
+        }
 
         out.name("geneMappedToSameGeneIdCount").value(gene.getGeneMappedToSameGeneIdCount());
         out.endObject();
         log.traceExit();
     }
-    protected static void writeSimplifiedSpecies(JsonWriter out, Species species,
+    public void writeSimplifiedSpecies(JsonWriter out, Species species,
             boolean withSpeciesDataSource, EnumSet<DataType> allowedDataTypes) throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, species, withSpeciesDataSource, allowedDataTypes);
         out.beginObject();
@@ -170,7 +218,7 @@ public class TypeAdaptersUtils {
         out.endObject();
         log.traceExit();
     }
-    protected static void writeSourcesPerDataType(JsonWriter out, Map<DataType, Set<Source>> map,
+    public void writeSourcesPerDataType(JsonWriter out, Map<DataType, Set<Source>> map,
             EnumSet<DataType> allowedDataTypes) throws IOException {
         log.traceEntry("{}, {}, {}", out, map, allowedDataTypes);
         // We order the Map by DataType and Source alphabetical name order
@@ -200,7 +248,7 @@ public class TypeAdaptersUtils {
         out.endArray(); // end Map
         log.traceExit();
     }
-    protected static void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<String> namedEntity)
+    public void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<?> namedEntity)
             throws IOException {
         log.traceEntry("{}, {}", out, namedEntity);
         if (namedEntity == null) {
@@ -208,10 +256,9 @@ public class TypeAdaptersUtils {
             log.traceExit(); return;
         }
         out.beginObject();
-        out.name("id").value(namedEntity.getId());
+        out.name("id").value(namedEntity.getId().toString());
         out.name("name").value(namedEntity.getName());
         out.endObject();
         log.traceExit();
     }
-
 }

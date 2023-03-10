@@ -402,19 +402,20 @@ public class BgeePreparedStatement implements AutoCloseable {
      * @param startIndex        An {@code int} that is the first index of the parameter to set.
      *                          If these are the first parameters set for this
      *                          {@code BgeePreparedStatement}, the first parameter is 1.
-     * @param values            A {@code List} of {@code Long}s that are values to be used
+     * @param values            A {@code Collection} of {@code Long}s that are values to be used
      *                          to set the parameters.
+     * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
+     *                          based on their natural ordering, to improve chances of cache hit. 
+     *                          {@code values} will not be modified.
      * @throws SQLException     If {@code parameterIndex} does not correspond to a parameter marker
      *                          in the SQL statement; if a database access error occurs or this
      *                          method is called on a closed {@code PreparedStatement}.
      */
     //TODO: adapt to new system in 'develop' branch
-    public void setLongs(int startIndex, List<Long> values) throws SQLException {
-        log.entry(startIndex, values);
-        for (Long value: values) {
-            this.setLong(startIndex, value);
-            startIndex++;
-        }
+    public void setLongs(int startIndex, Collection<Long> values, boolean toOrder) throws SQLException {
+        log.traceEntry("{}, {}, {}", startIndex, values, toOrder);
+        this.setValues(startIndex, values, (e, f) -> this.setLong(e, f), toOrder);
+        log.traceExit();
     }
     /**
      * Delegated to {@link java.sql.PreparedStatement#setBoolean(int, boolean)}.

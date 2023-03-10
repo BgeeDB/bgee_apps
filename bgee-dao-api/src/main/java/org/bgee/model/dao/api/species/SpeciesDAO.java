@@ -28,7 +28,6 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * <li>{@code PARENT_TAXON_ID}: corresponds to {@link SpeciesTO#getParentTaxonId()}.
      * <li>{@code GENOME_FILE_PATH}: corresponds to {@link SpeciesTO#getGenomeFilePath()}.
      * <li>{@code GENOME_VERSION}: corresponds to {@link SpeciesTO#getGenomeVersion()}.
-     * <li>{@code GENOME_ASSEMBLY_XREF}: corresponds to {@link SpeciesTO#getGenomeAssemblyXRef}.
      * <li>{@code DATA_SOURCE_ID}: corresponds to {@link SpeciesTO#getDataSourceId()}.
      * <li>{@code GENOME_SPECIES_ID}: corresponds to {@link SpeciesTO#getGenomeSpeciesId()}.
      * <li>{@code DISPLAY_ORDER}: corresponds to {@link SpeciesTO#getDisplayOrder()}.
@@ -38,11 +37,10 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID("id"), COMMON_NAME("name"), GENUS("genus"), SPECIES_NAME("speciesName"),
+        ID("speciesId"), COMMON_NAME("name"), GENUS("genus"), SPECIES_NAME("speciesName"),
         PARENT_TAXON_ID("parentTaxonId"), GENOME_FILE_PATH("genomeFilePath"),
-        GENOME_VERSION("genomeVersion"), GENOME_ASSEMBLY_XREF("getGenomeAssemblyXRef"),
-        DATA_SOURCE_ID("dataSourceId"), GENOME_SPECIES_ID("genomeSpeciesId"),
-        DISPLAY_ORDER("speciesDisplayOrder");
+        GENOME_VERSION("genomeVersion"), DATA_SOURCE_ID("dataSourceId"),
+        GENOME_SPECIES_ID("genomeSpeciesId"), DISPLAY_ORDER("speciesDisplayOrder");
 
         /**
          * A {@code String} that is the corresponding field name in {@code RelationTO} class.
@@ -175,20 +173,13 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * of another species (for instance, chimp genome for bonobo species).
          */
         private final String genomeFilePath;
-
+        
         /**
          * A {@code String} that is the genome version we use for this species.
          * For instance, for human, this attribute would contain: {@code Homo_sapiens.GRCh37}.
          */
         private final String genomeVersion;
-
-        /**
-         * A {@code String} that is the genome assembly XRef we use for this species.
-         * For instance, for human, this attribute would contain:
-         * {@code https://nov2020.archive.ensembl.org//Homo_sapiens/}.
-         */
-        private final String genomeAssemblyXRef;
-
+        
         /**
          * @see #getDataSourceId()
          */
@@ -231,7 +222,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          */
         public SpeciesTO(Integer id, String commonName, String genus, String speciesName, 
                 Integer displayOrder, Integer parentTaxonId, String genomeFilePath, String genomeVersion, 
-                String genomeAssemblyXRef, Integer dataSourceId, Integer genomeSpeciesId) {
+                Integer dataSourceId, Integer genomeSpeciesId) {
             super(id, commonName);
             
             this.genus = genus;
@@ -240,7 +231,6 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             this.parentTaxonId = parentTaxonId;
             this.genomeFilePath = genomeFilePath;
             this.genomeVersion = genomeVersion;
-            this.genomeAssemblyXRef = genomeAssemblyXRef;
             this.dataSourceId = dataSourceId;
             this.genomeSpeciesId = genomeSpeciesId;
         }
@@ -304,13 +294,6 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         public String getGenomeVersion() {
             return genomeVersion;
         }
-
-        /**
-         * @return  {@code String} that is the genome assembly XRef we use for this species.
-         */
-        public String getGenomeAssemblyXRef() {
-            return genomeAssemblyXRef;
-        }
         
         /**
          * @return  An {@code Integer} that is the ID in the Bgee database of the data source 
@@ -335,8 +318,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
                     " - Genus: " + this.getGenus() + " - Species name: " + this.getSpeciesName() + 
                     " - Parent taxon ID: " + this.getParentTaxonId() + " - Description: " + 
                     this.getDescription() + " - Genome file path: " + this.getGenomeFilePath() +
-                    " - Genome version: " + this.getGenomeFilePath() +
-                    " - Genome assembly XRef: " + this.getGenomeAssemblyXRef() +
+                    " - Genome version: " + this.getGenomeFilePath() + 
                     " - Data source ID: " + this.getDataSourceId() + " - Genome species ID: " + 
                     this.getGenomeSpeciesId();
         }

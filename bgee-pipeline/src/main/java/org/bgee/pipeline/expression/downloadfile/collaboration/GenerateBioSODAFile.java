@@ -25,7 +25,7 @@ import org.bgee.model.ElementGroupFromListSpliterator;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.expressiondata.multispecies.SimilarityExpressionCall;
+import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;

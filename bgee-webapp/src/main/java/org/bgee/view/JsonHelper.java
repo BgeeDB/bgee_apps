@@ -6,17 +6,34 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.XRef;
+import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.est.ESTCountContainer;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.file.DownloadFile;
-import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.job.Job;
 import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.json.adapters.BgeeTypeAdapterFactory;
+import org.bgee.view.json.adapters.Condition2TypeAdapter;
+import org.bgee.view.json.adapters.ConditionParameterTypeAdapter;
 import org.bgee.view.json.adapters.DownloadFileTypeAdapter;
-import org.bgee.view.json.adapters.GeneXRefTypeAdapter;
+import org.bgee.view.json.adapters.ESTCountContainerTypeAdapter;
+import org.bgee.view.json.adapters.ExperimentAssayTypeAdapter;
+import org.bgee.view.json.adapters.ExpressionCallPostFilterTypeAdapter;
+import org.bgee.view.json.adapters.XRefTypeAdapter;
 import org.bgee.view.json.adapters.JobTypeAdapter;
+import org.bgee.view.json.adapters.RawCallTypeAdapter;
+import org.bgee.view.json.adapters.RawDataAnnotationTypeAdapter;
+import org.bgee.view.json.adapters.RawDataPostFilterTypeAdapter;
 import org.bgee.view.json.adapters.RequestParameterTypeAdapter;
 import org.bgee.view.json.adapters.TopAnatResultsTypeAdapter;
+import org.bgee.view.json.adapters.TypeAdaptersUtils;
 
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
@@ -83,6 +100,8 @@ public class JsonHelper {
      * A {@code String} defining the character encoding for encoding query strings.
      */
     private final String charEncoding;
+
+    private final TypeAdaptersUtils utils;
     
     /**
      * Default constructor delegating to {@link #JsonHelper(BgeeProperties)} with null arguments.
@@ -90,21 +109,25 @@ public class JsonHelper {
      * @see #JsonHelper(BgeeProperties)
      */
     public JsonHelper() {
-        this(null, null);
+        this(null, null, null);
     }
     /**
      * @param props The {@code BgeeProperties} to retrieve parameters from. If {@code null}, 
      *              the value returned by {@link BgeeProperties#getBgeeProperties()} is used.
      */
     public JsonHelper(BgeeProperties props) {
-        this(props, null);
+        this(props, null, null);
+    }
+    public JsonHelper(BgeeProperties props, RequestParameters requestParameters) {
+        this(props, requestParameters, null);
     }
     /**
      * @param props             The {@code BgeeProperties} to retrieve parameters from. 
      *                          If {@code null}, the value returned by {@link BgeeProperties#getBgeeProperties()} is used.
      * @param requestParameters The {@code RequestParameters} corresponding to the current request to the webapp.
      */
-    public JsonHelper(BgeeProperties props, RequestParameters requestParameters) {
+    public JsonHelper(BgeeProperties props, RequestParameters requestParameters,
+            TypeAdaptersUtils utils) {
         if (props == null) {
             this.props = BgeeProperties.getBgeeProperties();
         } else {
@@ -117,6 +140,11 @@ public class JsonHelper {
             this.requestParameters = requestParameters.cloneWithAllParameters();
             this.charEncoding = this.requestParameters.getCharacterEncoding();
         }
+        if (utils == null) {
+            this.utils = new TypeAdaptersUtils();
+        } else {
+            this.utils = utils;
+        }
         
         //we do not allow the Gson object to be injected, so that signatures of this class 
         //are not dependent of a specific JSON library. 
@@ -126,9 +154,21 @@ public class JsonHelper {
                 .registerTypeAdapter(RequestParameters.class, new RequestParameterTypeAdapter())
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())
-                .registerTypeAdapter(GeneXRef.class, new GeneXRefTypeAdapter(s -> this.urlEncode(s)))
+                .registerTypeAdapter(XRef.class,
+                        new XRefTypeAdapter(s -> this.urlEncode(s), this.utils))
+                .registerTypeAdapter(RawDataAnnotation.class, new RawDataAnnotationTypeAdapter(this.utils))
+                .registerTypeAdapter(RawCall.class, new RawCallTypeAdapter(this.utils))
+                .registerTypeAdapter(RawDataPostFilter.class, new RawDataPostFilterTypeAdapter(
+                        this.utils, this.requestParameters.getUrlParametersInstance()))
+                .registerTypeAdapter(ExpressionCallPostFilter.class, new ExpressionCallPostFilterTypeAdapter(
+                        this.utils, this.requestParameters.getUrlParametersInstance()))
+                .registerTypeAdapter(ExperimentAssay.class, new ExperimentAssayTypeAdapter(
+                        this.utils))
+                .registerTypeAdapter(ESTCountContainer.class, new ESTCountContainerTypeAdapter())
+                .registerTypeAdapter(Condition2.class, new Condition2TypeAdapter(this.utils))
+                .registerTypeAdapter(ConditionParameter.class, new ConditionParameterTypeAdapter())
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),
-                        () -> getNewRequestParameters()))
+                        () -> getNewRequestParameters(), this.utils))
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
                 .create();

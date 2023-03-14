@@ -594,9 +594,7 @@ public class CommandTopAnat extends CommandParent {
         //Generate result URL, for sending it to the user.
         //The data key is generated before calling this method
         //XXX does it worth creating a FrontendRequestParameters?
-        //TODO previously we were sending the stable URL with version number,
-        //we should also do it with the React Frontend
-        final String resultUrl = this.prop.getFrontendUrl() + "/analysis/top-anat/" +
+        final String resultUrl = this.prop.getStableFrontendUrl() + "/analysis/top-anat/" +
                 this.requestParameters.getDataKey();
         
         //OK, we need to launch the analyses. 

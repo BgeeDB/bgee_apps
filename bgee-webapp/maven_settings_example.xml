@@ -62,6 +62,7 @@
       <filter.org.bgee.webapp.bgeeRootDirectory>http://test.com/api/</filter.org.bgee.webapp.bgeeRootDirectory>
       <filter.org.bgee.webapp.bgeeStableRootDirectory>http://test.com/test14/api/</filter.org.bgee.webapp.bgeeStableRootDirectory>
       <filter.org.bgee.webapp.bgeeCurrentUrl>http://test.com/api/</filter.org.bgee.webapp.bgeeCurrentUrl>
+      <filter.org.bgee.webapp.stableFrontendUrl>http://test.com/test14</filter.org.bgee.webapp.stableFrontendUrl>
       <filter.org.bgee.webapp.frontendUrl>http://test.com/</filter.org.bgee.webapp.frontendUrl>
       <filter.org.bgee.webapp.bgeeRootDomain>.test.com</filter.org.bgee.webapp.bgeeRootDomain>
       <filter.org.bgee.webapp.sparqlCurrentUrl>http://test.com/sparql/</filter.org.bgee.webapp.sparqlCurrentUrl>

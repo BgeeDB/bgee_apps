@@ -33,6 +33,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         System.setProperty(BgeeProperties.WARNING_MESSAGE_KEY, "/test.warning");
         System.setProperty(BgeeProperties.ARCHIVE_KEY, "true");
         System.setProperty(BgeeProperties.BGEE_CURRENT_URL_KEY, "/test.currenturl");
+        System.setProperty(BgeeProperties.FRONTEND_URL_KEY, "/test.frontendurl");
+        System.setProperty(BgeeProperties.STABLE_FRONTEND_URL_KEY, "/test.stablefrontendurl");
         System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, "/test.properties");
         //BGEE_ROOT_DIRECTORY_KEY is not set in System properties, it should be retrieve 
         //from the file. 
@@ -73,6 +75,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", "/test.warning", bgeeProp.getWarningMessage());
         assertEquals("Wrong property value retrieved", true, bgeeProp.isArchive());
         assertEquals("Wrong property value retrieved", "/test.currenturl", bgeeProp.getBgeeCurrentUrl());
+        assertEquals("Wrong property value retrieved", "/test.frontendurl", bgeeProp.getFrontendUrl());
+        assertEquals("Wrong property value retrieved", "/test.stablefrontendurl", bgeeProp.getStableFrontendUrl());
         assertEquals("Wrong property value retrieved", "/file", bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved", 30, bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved",

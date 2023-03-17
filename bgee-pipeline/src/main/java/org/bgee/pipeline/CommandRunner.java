@@ -15,7 +15,6 @@ import org.bgee.pipeline.easybgee.BgeeToEasyBgee;
 import org.bgee.pipeline.expression.GenoFishProject;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
-import org.bgee.pipeline.expression.downloadfile.GenerateInsertGeneStats;
 import org.bgee.pipeline.expression.downloadfile.GenerateXRefsFilesWithExprInfo;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateBioSODAFile;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateOncoMXFile;
@@ -303,9 +302,6 @@ public class CommandRunner {
         //---------- Generate XRefs Files -----------
         case "GenerateXRefs":
             GenerateXRefsFilesWithExprInfo.main(newArgs);
-            break;
-        case "GenerateInsertGeneStats":
-            GenerateInsertGeneStats.main(newArgs);
             break;
 
         //---------- Other collaborations -----------

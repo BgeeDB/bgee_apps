@@ -21,9 +21,6 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
-import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
@@ -520,24 +517,6 @@ public class TOComparatorTest extends TestAncestor {
                 RawDataConditionTO.DAORawDataSex.FEMALE, false, "strain1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-    }
-
-    /**
-     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
-     * using {@code ExperimentExpressionTO}s.
-     */
-    @Test
-    public void testAreExperimentExpressionTOEqual() {
-        ExperimentExpressionTO to1 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 5,
-            CallQuality.HIGH, CallDirection.ABSENT);
-        ExperimentExpressionTO to2 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 5,
-            CallQuality.HIGH, CallDirection.ABSENT);
-        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-        
-        to2 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 999, CallQuality.HIGH, CallDirection.ABSENT);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
 
     /**

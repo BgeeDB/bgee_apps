@@ -53,8 +53,6 @@ import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValue;
-import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTO;
@@ -278,11 +276,6 @@ public class InsertPropagatedCalls extends CallService {
         //TODO: javadoc: not final for lazy loading
         private Iterator<RawExpressionCallTO> itCallTOs;
         private RawExpressionCallTO lastCallTO;
-        final private Map<DataType, Stream<ExperimentExpressionTO>> expExprTOsByDataType;
-        //TODO: javadoc: this map is NOT immutable (but reference is final)
-        final private Map<DataType, Iterator<ExperimentExpressionTO>> mapDataTypeToExpExprTOIt;
-        //TODO: javadoc: this map is NOT immutable (but reference is final)
-        final private Map<DataType, ExperimentExpressionTO> mapDataTypeToLastExpExprTO;
         final private Map<DataType, Stream<SamplePValueTO<?, ?>>> samplePValueTOsByDataType;
         //TODO: javadoc: this map is NOT immutable (but reference is final)
         final private Map<DataType, Iterator<SamplePValueTO<?, ?>>> mapDataTypeToSamplePValueTOIt;
@@ -296,13 +289,12 @@ public class InsertPropagatedCalls extends CallService {
          * Default constructor.
          * 
          * @param callTOs                       A {@code Stream} of {@code T}s that is the stream of calls.
-         * @param experimentExprTOsByDataType   A {@code Map} where keys are {@code DataType}s 
+         * @param samplePValueTOsByDataType     A {@code Map} where keys are {@code DataType}s 
          *                                      defining data types, the associated value being a 
-         *                                      {@code Stream} of {@code ExperimentExpressionTO}s 
-         *                                      defining experiment expression.
+         *                                      {@code Stream} of {@code SamplePValueTO}s 
+         *                                      storing expression p-values associated with each call.
          */
-        public CallSpliterator(Stream<RawExpressionCallTO> callTOs, 
-                Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType,
+        public CallSpliterator(Stream<RawExpressionCallTO> callTOs,
                 Map<DataType, Stream<SamplePValueTO<?, ?>>> samplePValueTOsByDataType) {
             super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE 
                     | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED);
@@ -320,13 +312,9 @@ public class InsertPropagatedCalls extends CallService {
             this.callTOs = callTOs;
             this.itCallTOs = null;
             this.lastCallTO = null;
-            this.expExprTOsByDataType = Collections.unmodifiableMap(
-                    experimentExprTOsByDataType == null? new HashMap<>(): experimentExprTOsByDataType);
             this.samplePValueTOsByDataType = Collections.unmodifiableMap(samplePValueTOsByDataType);
             this.isInitiated = false;
             this.isClosed = false;
-            this.mapDataTypeToLastExpExprTO = new HashMap<>();
-            this.mapDataTypeToExpExprTOIt = new HashMap<>();
             this.mapDataTypeToLastSamplePValueTO = new HashMap<>();
             this.mapDataTypeToSamplePValueTOIt = new HashMap<>();
         }
@@ -356,22 +344,6 @@ public class InsertPropagatedCalls extends CallService {
                 } catch (NoSuchElementException e) {
                     log.catching(Level.DEBUG, e);
                     return log.traceExit(false);
-                }
-                
-                for (Entry<DataType, Stream<ExperimentExpressionTO>> entry: this.expExprTOsByDataType.entrySet()) {
-                    Iterator<ExperimentExpressionTO> it = entry.getValue().iterator();
-                    try {
-                        this.mapDataTypeToLastExpExprTO.put(entry.getKey(), it.next());
-                        //don't store the iterator if there is no element (catch clause)
-                        this.mapDataTypeToExpExprTOIt.put(entry.getKey(), it);
-                    } catch (NoSuchElementException e) {
-                        //it's OK to have no element for a given data type
-                        log.catching(Level.TRACE, e);
-                    }
-                }
-                //We should have at least one data type with supporting data
-                if (!this.expExprTOsByDataType.isEmpty() && this.mapDataTypeToExpExprTOIt.isEmpty()) {
-                    throw log.throwing(new IllegalStateException("Missing supporting data"));
                 }
 
                 for (Entry<DataType, Stream<SamplePValueTO<?, ?>>> entry:
@@ -419,7 +391,6 @@ public class InsertPropagatedCalls extends CallService {
                 assert data.stream().noneMatch(rawData -> rawData.getRawExpressionCallTO().getId()
                         .equals(this.lastCallTO.getId()));                       
                 data.add(new RawExpressionCallData(this.lastCallTO,
-                        this.getExpExprs(this.lastCallTO.getId()),
                         this.getPValues(this.lastCallTO.getId())));
                 
                 RawExpressionCallTO currentCallTO = null;
@@ -459,68 +430,7 @@ public class InsertPropagatedCalls extends CallService {
             }
             return log.traceExit(false);
         }
-                
-        /**
-         * Get {@code ExperimentExpressionTO}s grouped by {@code DataType}s
-         * corresponding to the provided expression ID.  
-         * <p>
-         * Related {@code Iterator}s are modified.
-         * 
-         * @param expressionId  An {@code Integer} that is the ID of the expression.
-         * @return              A {@code Map} where keys are {@code DataType}s, the associated values
-         *                      are {@code Set}s of {@code ExperimentExpressionTO}s.
-         */
-        private Map<DataType, Set<ExperimentExpressionTO>> getExpExprs(Long expressionId) {
-            log.traceEntry("{}", expressionId);
-            
-            Map<DataType, Set<ExperimentExpressionTO>> expExprTosByDataType = new HashMap<>();
-            for (Entry<DataType, Iterator<ExperimentExpressionTO>> entry: mapDataTypeToExpExprTOIt.entrySet()) {
-                DataType currentDataType = entry.getKey();
-                Iterator<ExperimentExpressionTO> it = entry.getValue();
-                ExperimentExpressionTO currentTO = mapDataTypeToLastExpExprTO.get(currentDataType);
-                Set<ExperimentExpressionTO> exprExprTOs = new HashSet<>();
-                while (currentTO != null && expressionId.equals(currentTO.getExpressionId())) {
-                    // We should not have 2 identical TOs
-                    assert expExprTosByDataType.get(currentDataType) == null ||
-                        !expExprTosByDataType.get(currentDataType).contains(currentTO);
-                    
-                    //if it is the first iteration for this datatype and expressionId,
-                    //we store the associated ExperimentExpressionTO Set.
-                    if (exprExprTOs.isEmpty()) {
-                        expExprTosByDataType.put(currentDataType, exprExprTOs);
-                    }
-                    
-                    exprExprTOs.add(currentTO);
-                    
-                    //try-catch to avoid calling both next and hasNext
-                    try {
-                        ExperimentExpressionTO nextTO = it.next();
-                        //the TOs are supposed to be ordered by ascending expression ID
-                        //for a specific data type and a specific gene
-                        //Note: actually, we can't do this check, because we can't know
-                        //with this implementation whether there was a switch of gene,
-                        //in which case it would be valid to have a smaller expression ID
-//                        if (EXP_EXPR_TO_COMPARATOR.compare(currentTO, nextTO) > 0) {
-//                            throw log.throwing(new IllegalStateException("The expression calls "
-//                                + "were not retrieved in correct order, which is mandatory "
-//                                + "for proper generation of data: previous TO: "
-//                                + currentTO + ", next TO: " + nextTO));
-//                        }
-                        log.trace("Previous TO={}, Current TO={}", currentTO, nextTO);
-                        currentTO = nextTO;
-                    } catch (NoSuchElementException e) {
-                        currentTO = null;
-                    }
-                }
-                mapDataTypeToLastExpExprTO.put(currentDataType, currentTO);
-            }
-            if (!this.expExprTOsByDataType.isEmpty() && expExprTosByDataType.isEmpty()) {
-                throw log.throwing(new IllegalStateException("No supporting data for expression ID " 
-                        + expressionId));
-            }
 
-            return log.traceExit(expExprTosByDataType);
-        }
         /**
          * Get {@code SamplePValueTO}s grouped by {@code DataType}s
          * corresponding to the provided expression ID.  
@@ -615,7 +525,6 @@ public class InsertPropagatedCalls extends CallService {
             if (!isClosed){
                 try {
                     callTOs.close();
-                    expExprTOsByDataType.values().stream().forEach(s -> s.close());
                     samplePValueTOsByDataType.values().stream().forEach(s -> s.close());
                 } finally {
                     this.isClosed = true;
@@ -886,22 +795,16 @@ public class InsertPropagatedCalls extends CallService {
      */
     private static class RawExpressionCallData {
         private final RawExpressionCallTO rawExpressionCallTO;
-        private final Map<DataType, Set<ExperimentExpressionTO>> expExprTOsPerDataType;
         private final Map<DataType, Set<SamplePValueTO<?, ?>>> samplePValueTOsPerDataType;
 
         public RawExpressionCallData(RawExpressionCallTO rawExpressionCallTO,
-                Map<DataType, Set<ExperimentExpressionTO>> expExprTOsPerDataType,
                 Map<DataType, Set<SamplePValueTO<?, ?>>> samplePValueTOsPerDataType) {
             this.rawExpressionCallTO = rawExpressionCallTO;
-            this.expExprTOsPerDataType = expExprTOsPerDataType;
             this.samplePValueTOsPerDataType = samplePValueTOsPerDataType;
         }
 
         public RawExpressionCallTO getRawExpressionCallTO() {
             return rawExpressionCallTO;
-        }
-        public Map<DataType, Set<ExperimentExpressionTO>> getExpExprTOsPerDataType() {
-            return expExprTOsPerDataType;
         }
         public Map<DataType, Set<SamplePValueTO<?, ?>>> getSamplePValueTOsPerDataType() {
             return samplePValueTOsPerDataType;
@@ -1496,11 +1399,11 @@ public class InsertPropagatedCalls extends CallService {
             
             //we also need to set the max condition ID and max expression ID
             ConditionDAO condDAO = commonManager.getConditionDAO();
-            GlobalExpressionCallDAO exprDAO = commonManager.getGlobalExpressionCallDAO();
+//            GlobalExpressionCallDAO exprDAO = commonManager.getGlobalExpressionCallDAO();
             COND_ID_COUNTER.set(condDAO.getMaxGlobalConditionId());
 //            EXPR_ID_COUNTER.set(exprDAO.getMaxGlobalExprId());
             condDAO = null;
-            exprDAO = null;
+//            exprDAO = null;
             
             //close connection immediately, but do not close the manager because of
             //the try-with-resource clause.
@@ -1774,7 +1677,7 @@ public class InsertPropagatedCalls extends CallService {
     //Seems complicated and might not worth it in all situations.
     //But it seems to result in a 30% speed increase in this class.
     //Note: actually as of Bgee 14.2 we do not propagate absent calls to substructures anymore
-    private final ConcurrentMap<Condition, Set<Condition>> condToDescendants;
+//    private final ConcurrentMap<Condition, Set<Condition>> condToDescendants;
 
     public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
             Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount,
@@ -1813,7 +1716,7 @@ public class InsertPropagatedCalls extends CallService {
         this.jobCompleted = false;
         
         this.condToAncestors = new ConcurrentHashMap<>();
-        this.condToDescendants = new ConcurrentHashMap<>();
+//        this.condToDescendants = new ConcurrentHashMap<>();
     }
 
     private void insertGlobalConditionsForOneSpecies() throws Exception {
@@ -2000,17 +1903,13 @@ public class InsertPropagatedCalls extends CallService {
                     
                     log.debug("Processing {} genes...", subsetGeneIds.size());
                     final RawExpressionCallDAO rawCallDAO = threadDAOManager.getRawExpressionCallDAO();
-                    //As of Bgee 15.0 we don't use ExperimentExpressionTOs anymore but we keep the possibility
-                    //to revert this change
-                    //final ExperimentExpressionDAO expExprDAO = threadDAOManager.getExperimentExpressionDAO();
-                    final ExperimentExpressionDAO expExprDAO = null;
                     final SamplePValueDAO samplePValueDAO = threadDAOManager.getSamplePValueDAO();
                     
                     // We propagate calls. Each Map contains all propagated calls for one gene
                     final Stream<Set<PipelineCall>> propagatedCalls =
                             this.generatePropagatedCalls(
                                     new HashSet<>(subsetGeneIds), rawCondMap, conditionGraph,
-                                    rawCallDAO, expExprDAO, samplePValueDAO);
+                                    rawCallDAO, samplePValueDAO);
                     
                     //Provide the calls to insert to the Thread managing the insertions
                     //through the dedicated BlockingQueue
@@ -2243,8 +2142,8 @@ public class InsertPropagatedCalls extends CallService {
      *                              to the requested condition parameters.
      * @param rawCallDAO            The {@code RawExpressionCallDAO} to use to retrieve
      *                              {@code RawExpressionCallTO}s from data source.
-     * @param expExprDAO            The {@code ExperimentExpressionDAO} to use to retrieve
-     *                              {@code ExperimentExpressionTO}s from data source.
+     * @param samplePValueDAO       The {@code SamplePValueDAO} allowing to retrieve p-values
+     *                              of expression associated with each raw call, from data source.
      * @return                      A {@code Stream} of {@code Map}s where keys are {@code Set} of
      *                              {@code ConditionDAO.Attribute}s representing combinations of
      *                              condition parameters, the associated value being a {@code Set}
@@ -2253,10 +2152,9 @@ public class InsertPropagatedCalls extends CallService {
      */
     private Stream<Set<PipelineCall>> generatePropagatedCalls(
             Set<Integer> geneIds, Map<Integer, RawDataCondition> condMap, ConditionGraph conditionGraph,
-            RawExpressionCallDAO rawCallDAO, ExperimentExpressionDAO expExprDAO,
-            SamplePValueDAO samplePValueDAO) {
+            RawExpressionCallDAO rawCallDAO, SamplePValueDAO samplePValueDAO) {
         log.traceEntry("{}, {}, {}, {}, {}, {}", geneIds, condMap, conditionGraph,
-                rawCallDAO, expExprDAO, samplePValueDAO);
+                rawCallDAO, samplePValueDAO);
         
         log.trace(COMPUTE_MARKER, "Creating Splitereator with DAO queries...");
         this.checkErrorOccurred();
@@ -2264,16 +2162,11 @@ public class InsertPropagatedCalls extends CallService {
             this.performsRawExpressionCallTOQuery(geneIds, rawCallDAO);
 
         this.checkErrorOccurred();
-        final Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType =
-            //As of Bgee 15.0 we don't use ExperimentExpressionTOs anymore but we keep the possibility
-            //to revert this change
-            expExprDAO == null? null: performsExperimentExpressionQuery(geneIds, expExprDAO);
         final Map<DataType, Stream<SamplePValueTO<?, ?>>> samplePValueTOsByDataType =
                 performsSamplePValueQuery(geneIds, samplePValueDAO);
         
         final CallSpliterator<Set<RawExpressionCallData>> spliterator =
-                new CallSpliterator<>(streamRawCallTOs, experimentExprTOsByDataType,
-                    samplePValueTOsByDataType);
+                new CallSpliterator<>(streamRawCallTOs, samplePValueTOsByDataType);
         final Stream<Set<RawExpressionCallData>> callTOsByGeneStream =
             StreamSupport.stream(spliterator, false).onClose(() -> spliterator.close());
         
@@ -2289,7 +2182,6 @@ public class InsertPropagatedCalls extends CallService {
                                 condMap.get(rawExprCallData.getRawExpressionCallTO().getConditionId()),
                                 this.condParams),
                         rawExprCallData -> mapExpExprTOsToPipelineCallData(
-                                rawExprCallData.getExpExprTOsPerDataType(),
                                 rawExprCallData.getSamplePValueTOsPerDataType(),
                                 this.condParams))))
 
@@ -2482,43 +2374,6 @@ public class InsertPropagatedCalls extends CallService {
         return log.traceExit(expr);
     }
 
-    /**
-     * Perform queries to retrieve experiment expressions without the post-processing of
-     * the results returned by {@code DAO}s.
-     * 
-     * @param geneIds       A {@code Collection} of {@code Integer}s that are the Bgee IDs of the genes 
-     *                      for which to return the {@code ExperimentExpressionTO}s.
-     * @param dao           The {@code ExperimentExpressionDAO} to retrieve the data.
-     * @return              The {@code Map} where keys are {@code DataType}s defining data types.
-     *                      the associated value being a {@code Stream} of
-     *                      {@code ExperimentExpressionTO}s defining experiment expression.
-     */
-    private Map<DataType, Stream<ExperimentExpressionTO>> performsExperimentExpressionQuery(
-            Set<Integer> geneIds, ExperimentExpressionDAO dao) throws IllegalArgumentException {
-        log.traceEntry("{}, {}", geneIds, dao);
-
-        Map<DataType, Stream<ExperimentExpressionTO>> map = new HashMap<>();
-        for (DataType dt: DataType.values()) {
-            switch (dt) {
-                case AFFYMETRIX:
-                    map.put(dt, dao.getAffymetrixExpExprsOrderedByGeneIdAndExprId(geneIds).stream());
-                    break;
-                case EST:
-                    map.put(dt, dao.getESTExpExprsOrderedByGeneIdAndExprId(geneIds).stream());
-                    break;
-                case IN_SITU:
-                    map.put(dt, dao.getInSituExpExprsOrderedByGeneIdAndExprId(geneIds).stream());
-                    break;
-                case RNA_SEQ:
-                    map.put(dt, dao.getRNASeqExpExprsOrderedByGeneIdAndExprId(geneIds).stream());
-                    break;
-                default: 
-                    throw log.throwing(new IllegalStateException("Unsupported DataType: " + dt));
-            }
-        }
-
-        return log.traceExit(map);
-    }
     private Map<DataType, Stream<SamplePValueTO<?, ?>>> performsSamplePValueQuery(
             Set<Integer> geneIds, SamplePValueDAO dao) throws IllegalArgumentException {
         log.traceEntry("{}, {}", geneIds, dao);
@@ -3193,14 +3048,10 @@ public class InsertPropagatedCalls extends CallService {
     //*************************************************************************
 
     private static Set<PipelineCallData<?, ?>> mapExpExprTOsToPipelineCallData(
-        Map<DataType, Set<ExperimentExpressionTO>> expExprsByDataTypes,
         Map<DataType, Set<SamplePValueTO<?, ?>>> pValuesByDataTypes,
         Set<ConditionDAO.Attribute> condParams) {
-        log.traceEntry("{}, {}, {}", expExprsByDataTypes, pValuesByDataTypes, condParams);
+        log.traceEntry("{}, {}, {}", pValuesByDataTypes, condParams);
         EnumSet<DataType> dataTypes = EnumSet.noneOf(DataType.class);
-        if (expExprsByDataTypes != null) {
-            dataTypes.addAll(expExprsByDataTypes.keySet());
-        }
         dataTypes.addAll(pValuesByDataTypes.keySet());
         return log.traceExit(dataTypes.stream()
             .map(dt -> {

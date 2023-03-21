@@ -48,7 +48,7 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
         private AnatEntityCondParam() {
             super(AnatEntity.class, AnatEntity.class, (o) -> o.getId(), (o) -> o.getId(),
                     "anatEntity", "Anat. entity and cell type", "anat_entity",
-                    "anat_entity_id", "filter_anat_entity_id");
+                    "anat_entity_id", "filter_anat_entity_id", true);
         }
     }
     public static class DevStageCondParam extends ConditionParameter<DevStage, DevStage> {
@@ -56,21 +56,21 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
             super(DevStage.class, DevStage.class,
                     (o) -> o.getId(), (o) -> o.getId(),
                     "devStage", "Developmental and life stage", "dev_stage",
-                    "stage_id", "filter_stage_id");
+                    "stage_id", "filter_stage_id", true);
         }
     }
     public static class SexCondParam extends ConditionParameter<Sex, RawDataSex> {
         private SexCondParam() {
             super(Sex.class, RawDataSex.class,
                     (o) -> o.getId(), (o) -> o.getStringRepresentation(),
-                    "sex", "Sex", "sex", "sex", "filter_sex");
+                    "sex", "Sex", "sex", "sex", "filter_sex", false);
         }
     }
     public static class StrainCondParam extends ConditionParameter<Strain, String> {
         private StrainCondParam() {
             super(Strain.class, String.class,
                     (o) -> o.getId(), (o) -> o,
-                    "strain", "Strain", "strain", "strain", "filter_strain");
+                    "strain", "Strain", "strain", "strain", "filter_strain", false);
         }
     }
 
@@ -201,11 +201,13 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
     private final String parameterName;
     private final String requestParameterName;
     private final String requestFilterParameterName;
+    private final boolean informativeId;
 
     private ConditionParameter(Class<T> condValueType, Class<U> rawDataCondValueType,
             Function<T, String> condValueIdFun, Function<U, String> rawDataCondValueIdFun,
             String attributeName, String displayName, String parameterName,
-            String requestParameterName, String requestFilterParameterName) {
+            String requestParameterName, String requestFilterParameterName,
+            boolean informativeId) {
         this.condValueType = condValueType;
         this.rawDataCondValueType = rawDataCondValueType;
         this.condValueIdFun = condValueIdFun;
@@ -215,6 +217,7 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
         this.parameterName = parameterName;
         this.requestParameterName = requestParameterName;
         this.requestFilterParameterName = requestFilterParameterName;
+        this.informativeId = informativeId;
     }
 
     public Class<T> getCondValueType() {
@@ -243,6 +246,9 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
     }
     public String getRequestFilterParameterName() {
         return requestFilterParameterName;
+    }
+    public boolean isInformativeId() {
+        return informativeId;
     }
     @Override
     public String toString() {

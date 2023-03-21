@@ -35,7 +35,9 @@ public class ExpressionCallPostFilterTypeAdapter extends PostFilterTypeAdapter<E
             if (!values.isEmpty()) {
                 out.name(condParam.getAttributeName());
                 this.writePostFilterNamedEntityParameter(out, condParam.getDisplayName(),
-                        condParam.getRequestFilterParameterName(), values);
+                        condParam.getRequestFilterParameterName(), values,
+                        condParam.isInformativeId(),
+                        true);
             }
         }
 

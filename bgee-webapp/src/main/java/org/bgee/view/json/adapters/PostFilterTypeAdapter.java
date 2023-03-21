@@ -26,8 +26,16 @@ public abstract class PostFilterTypeAdapter<T> extends TypeAdapter<T> {
     protected void writePostFilterNamedEntityParameter(JsonWriter out, String filterName,
             String urlParameterName, Collection<? extends NamedEntity<?>> values) throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, filterName, urlParameterName, values);
+        this.writePostFilterNamedEntityParameter(out, filterName, urlParameterName, values, true, true);
+        log.traceExit();
+    }
+    protected void writePostFilterNamedEntityParameter(JsonWriter out, String filterName,
+            String urlParameterName, Collection<? extends NamedEntity<?>> values,
+                    boolean informativeId, boolean informativeName) throws IOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", out, filterName, urlParameterName, values,
+                informativeId, informativeName);
 
-        startWritePostFilterParameter(out, filterName, urlParameterName, true, true);
+        startWritePostFilterParameter(out, filterName, urlParameterName, informativeId, informativeName);
         for (NamedEntity<?> value: values) {
             this.utils.writeSimplifiedNamedEntity(out, value);
         }

@@ -1275,12 +1275,12 @@ public class CommandData extends CommandParent {
                                     .getParamCellTypeDescendant())),
                     //we don't really have an ontology of sexes, only one root with one level down
                     //for sub-terms. Selecting the root should mean "select all terms", so we include
-                    //sub-terms by default.
-                    true,
+                    //sub-terms by default, unless it comes from a filter.
+                    filterSexIds != null && !filterSexIds.isEmpty()? false: true,
                     //we don't really have an ontology of strains, only one root with one level down
                     //for sub-terms. Selecting the root should mean "select all terms", so we include
-                    //sub-terms by default.
-                    true);
+                    //sub-terms by default, unless it comes from a filter.
+                    filterStrains != null && !filterStrains.isEmpty()? false: true);
         } catch (IllegalArgumentException e) {
             //nothing to do, we just did not have the appropriate parameters to create
             //a condition filter

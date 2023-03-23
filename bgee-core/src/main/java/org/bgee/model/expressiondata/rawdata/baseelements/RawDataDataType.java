@@ -1,6 +1,8 @@
 package org.bgee.model.expressiondata.rawdata.baseelements;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 
@@ -44,6 +46,14 @@ public abstract class RawDataDataType<T extends RawDataContainer<?, ?>, U extend
     public final static ESTDataType EST = new ESTDataType();
     public final static InSituDataType IN_SITU = new InSituDataType();
 
+    private final static LinkedHashSet<RawDataDataType<?, ?>> ALL_OF =
+            new LinkedHashSet<>(Arrays.asList(
+                    AFFYMETRIX,
+                    BULK_RNA_SEQ,
+                    SC_RNA_SEQ,
+                    EST,
+                    IN_SITU));
+
     private final static Map<DataType, RawDataDataType<?, ?>> DATA_TYPE_TO_RAW_DATA_DATA_TYPE =
             Collections.unmodifiableMap(Map.ofEntries(
                     Map.entry(AFFYMETRIX.getDataType(), AFFYMETRIX),
@@ -74,6 +84,15 @@ public abstract class RawDataDataType<T extends RawDataContainer<?, ?>, U extend
     getRawDataDataTypeWithExperiment(DataType dataType) {
         log.traceEntry("{}", dataType);
         return log.traceExit(DATA_TYPE_TO_RAW_DATA_DATA_TYPE_WITH_EXPERIMENT.get(dataType));
+    }
+
+    /**
+     * @return  The returned {@code LinkedHashSet} can be safely modified.
+     */
+    public static final LinkedHashSet<RawDataDataType<?, ?>> allOf() {
+        log.traceEntry();
+        //defensive copying, we don't want to return an unmodifiable Set
+        return log.traceExit(new LinkedHashSet<>(ALL_OF));
     }
 
     private final DataType dataType;

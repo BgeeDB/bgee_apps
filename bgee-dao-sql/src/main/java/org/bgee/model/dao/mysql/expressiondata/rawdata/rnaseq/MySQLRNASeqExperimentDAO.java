@@ -26,7 +26,7 @@ public final class MySQLRNASeqExperimentDAO extends MySQLRawDataDAO<RNASeqExperi
 implements RNASeqExperimentDAO{
 
     private final static Logger log = LogManager.getLogger(MySQLRNASeqExperimentDAO.class.getName());
-    public final static String TABLE_NAME = "rnaSeqExperimentDev";
+    public final static String TABLE_NAME = "rnaSeqExperiment";
 
     public MySQLRNASeqExperimentDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);

@@ -31,7 +31,7 @@ implements RNASeqLibraryAnnotatedSampleDAO{
 
     private final static Logger log = LogManager.getLogger(
             MySQLRNASeqLibraryAnnotatedSampleDAO.class.getName());
-    public final static String TABLE_NAME = "rnaSeqLibraryAnnotatedSampleDev";
+    public final static String TABLE_NAME = "rnaSeqLibraryAnnotatedSample";
 
     public MySQLRNASeqLibraryAnnotatedSampleDAO(MySQLDAOManager manager) 
             throws IllegalArgumentException {

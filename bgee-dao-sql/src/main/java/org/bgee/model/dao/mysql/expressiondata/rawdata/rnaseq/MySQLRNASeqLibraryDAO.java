@@ -32,7 +32,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         implements RNASeqLibraryDAO{
 
     private final static Logger log = LogManager.getLogger(MySQLRNASeqLibraryDAO.class.getName());
-    public final static String TABLE_NAME = "rnaSeqLibraryDev";
+    public final static String TABLE_NAME = "rnaSeqLibrary";
 
     public MySQLRNASeqLibraryDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);

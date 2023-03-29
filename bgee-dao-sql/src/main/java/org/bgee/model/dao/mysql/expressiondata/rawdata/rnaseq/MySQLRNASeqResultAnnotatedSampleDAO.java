@@ -39,7 +39,7 @@ implements RNASeqResultAnnotatedSampleDAO {
      */
     private final static Logger log = 
             LogManager.getLogger(MySQLRNASeqResultAnnotatedSampleDAO.class.getName());
-    public final static String TABLE_NAME = "rnaSeqLibraryAnnotatedSampleGeneResultDev";
+    public final static String TABLE_NAME = "rnaSeqLibraryAnnotatedSampleGeneResult";
 
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 

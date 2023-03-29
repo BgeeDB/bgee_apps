@@ -12,6 +12,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,6 +47,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
@@ -60,7 +62,10 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO.SamplePValueTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO.DAORawDataSex;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
@@ -648,7 +653,7 @@ public class InsertPropagatedCalls extends CallService {
      * @version Bgee 15.0, Mar. 2021
      * @since   Bgee 14, Jan. 2017
      */
-    private static class PipelineCallData<T, U> {
+    private static class PipelineCallData<T extends Comparable<T>, U extends Comparable<U>> {
 
         final private DataType dataType;
 
@@ -821,12 +826,16 @@ public class InsertPropagatedCalls extends CallService {
      * @version Bgee 15.0, Mar 2021
      * @since   Bgee 15.0, Mar 2021
      */
-    public static class PipelineSamplePValueTO<T, U> extends SamplePValueTO<T, U> {
+    public static class PipelineSamplePValueTO<T extends Comparable<T>, U extends Comparable<U>>
+    extends SamplePValueTO<T, U> {
         private static final long serialVersionUID = 6552984802761656993L;
 
         public PipelineSamplePValueTO(SamplePValueTO<T, U> samplePValueTO) {
             super(samplePValueTO.getExpressionId(), samplePValueTO.getExperimentId(),
                     samplePValueTO.getSampleId(), samplePValueTO.getpValue());
+        }
+        public PipelineSamplePValueTO(CallSourceTO<U> callSourceTO) {
+            super(callSourceTO.getExpressionId(), null, callSourceTO.getAssayId(), callSourceTO.getPValue());
         }
 
         @Override
@@ -1902,14 +1911,11 @@ public class InsertPropagatedCalls extends CallService {
                     this.daoManagers.add(threadDAOManager);
                     
                     log.debug("Processing {} genes...", subsetGeneIds.size());
-                    final RawExpressionCallDAO rawCallDAO = threadDAOManager.getRawExpressionCallDAO();
-                    final SamplePValueDAO samplePValueDAO = threadDAOManager.getSamplePValueDAO();
-                    
                     // We propagate calls. Each Map contains all propagated calls for one gene
                     final Stream<Set<PipelineCall>> propagatedCalls =
                             this.generatePropagatedCalls(
                                     new HashSet<>(subsetGeneIds), rawCondMap, conditionGraph,
-                                    rawCallDAO, samplePValueDAO);
+                                    threadDAOManager);
                     
                     //Provide the calls to insert to the Thread managing the insertions
                     //through the dedicated BlockingQueue
@@ -2140,10 +2146,8 @@ public class InsertPropagatedCalls extends CallService {
      * @param conditionGraph        A {@code ConditionGraph} containing the {@code Condition}s
      *                              and relations considering attributes according
      *                              to the requested condition parameters.
-     * @param rawCallDAO            The {@code RawExpressionCallDAO} to use to retrieve
-     *                              {@code RawExpressionCallTO}s from data source.
-     * @param samplePValueDAO       The {@code SamplePValueDAO} allowing to retrieve p-values
-     *                              of expression associated with each raw call, from data source.
+     * @param daoManager            The {@code DAOManager} to use to retrieve
+     *                              {@code DAO}s to perform queries to the data source.
      * @return                      A {@code Stream} of {@code Map}s where keys are {@code Set} of
      *                              {@code ConditionDAO.Attribute}s representing combinations of
      *                              condition parameters, the associated value being a {@code Set}
@@ -2152,18 +2156,18 @@ public class InsertPropagatedCalls extends CallService {
      */
     private Stream<Set<PipelineCall>> generatePropagatedCalls(
             Set<Integer> geneIds, Map<Integer, RawDataCondition> condMap, ConditionGraph conditionGraph,
-            RawExpressionCallDAO rawCallDAO, SamplePValueDAO samplePValueDAO) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", geneIds, condMap, conditionGraph,
-                rawCallDAO, samplePValueDAO);
-        
+            DAOManager daoManager) {
+        log.traceEntry("{}, {}, {}, {}", geneIds, condMap, conditionGraph, daoManager);
+
         log.trace(COMPUTE_MARKER, "Creating Splitereator with DAO queries...");
         this.checkErrorOccurred();
+        final RawExpressionCallDAO rawCallDAO = daoManager.getRawExpressionCallDAO();
         final Stream<RawExpressionCallTO> streamRawCallTOs = 
             this.performsRawExpressionCallTOQuery(geneIds, rawCallDAO);
 
         this.checkErrorOccurred();
         final Map<DataType, Stream<SamplePValueTO<?, ?>>> samplePValueTOsByDataType =
-                performsSamplePValueQuery(geneIds, samplePValueDAO);
+                performsSamplePValueQuery(geneIds, daoManager);
         
         final CallSpliterator<Set<RawExpressionCallData>> spliterator =
                 new CallSpliterator<>(streamRawCallTOs, samplePValueTOsByDataType);
@@ -2375,31 +2379,67 @@ public class InsertPropagatedCalls extends CallService {
     }
 
     private Map<DataType, Stream<SamplePValueTO<?, ?>>> performsSamplePValueQuery(
-            Set<Integer> geneIds, SamplePValueDAO dao) throws IllegalArgumentException {
-        log.traceEntry("{}, {}", geneIds, dao);
+            Set<Integer> geneIds, DAOManager daoManager) throws IllegalArgumentException {
+        log.traceEntry("{}, {}", geneIds, daoManager);
+
+        //TODO: Former DAO to access these data, we still use it for all data but RNA-Seq and scRNA-Seq,
+        //to update to use the new system for all data types.
+        //Of note, SamplePValueDAO could be completely deleted,
+        //and SamplePValueTO replaced with PipelineSamplePValueTO defined in this class.
+        //PipelineSamplePValueTO would not have to extend SamplePValueTO,
+        //but would implement the same attributes
+        SamplePValueDAO samplePValueDAO = daoManager.getSamplePValueDAO();
+
+        //New system to access this information
+        Set<DAORawDataFilter> rawDataFilters = Set.of(new DAORawDataFilter(geneIds, null));
+        // ************ RNA-Seq and scRNA-Seq ************
+        RNASeqResultAnnotatedSampleDAO rnaSeqResultDAO = daoManager.getRnaSeqResultAnnotatedSampleDAO();
+        EnumSet<RNASeqResultAnnotatedSampleDAO.Attribute> rnaSeqAttrs = EnumSet.of(
+                RNASeqResultAnnotatedSampleDAO.Attribute.BGEE_GENE_ID,
+                RNASeqResultAnnotatedSampleDAO.Attribute.LIBRARY_ANNOTATED_SAMPLE_ID,
+                RNASeqResultAnnotatedSampleDAO.Attribute.EXPRESSION_ID,
+                RNASeqResultAnnotatedSampleDAO.Attribute.PVALUE);
+        LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> rnaSeqOrderingAttrs =
+                new LinkedHashMap<>();
+        rnaSeqOrderingAttrs.put(
+                RNASeqResultAnnotatedSampleDAO.OrderingAttribute.BGEE_GENE_ID,
+                DAO.Direction.ASC);
+        rnaSeqOrderingAttrs.put(
+                RNASeqResultAnnotatedSampleDAO.OrderingAttribute.EXPRESSION_ID,
+                DAO.Direction.ASC);
 
         Map<DataType, Stream<SamplePValueTO<?, ?>>> map = new HashMap<>();
         for (DataType dt: DataType.values()) {
             switch (dt) {
                 case AFFYMETRIX:
-                    map.put(dt, dao.getAffymetrixPValuesOrderedByGeneIdAndExprId(geneIds).stream()
+                    map.put(dt, samplePValueDAO.getAffymetrixPValuesOrderedByGeneIdAndExprId(geneIds).stream()
                             .map(p -> p));
                     break;
                 case EST:
-                    map.put(dt, dao.getESTPValuesOrderedByGeneIdAndExprId(geneIds).stream()
+                    map.put(dt, samplePValueDAO.getESTPValuesOrderedByGeneIdAndExprId(geneIds).stream()
                             .map(p -> p));
                     break;
                 case IN_SITU:
-                    map.put(dt, dao.getInSituPValuesOrderedByGeneIdAndExprId(geneIds).stream()
+                    map.put(dt, samplePValueDAO.getInSituPValuesOrderedByGeneIdAndExprId(geneIds).stream()
                             .map(p -> p));
                     break;
                 case RNA_SEQ:
-                    map.put(dt, dao.getRNASeqPValuesOrderedByGeneIdAndExprId(geneIds).stream()
-                            .map(p -> p));
+                    map.put(dt, rnaSeqResultDAO.getResultAnnotatedSamples(rawDataFilters, false, null, null,
+                            rnaSeqAttrs, rnaSeqOrderingAttrs).stream()
+                            //We don't have experimentId in the returned TOs,
+                            //but annotatedSampleIds are unique in RNA-Seq data.
+                            //We arbitrarily defined the experimentId type
+                            //needed by PipelineSamplePValueTO as String
+                            .map(to -> new PipelineSamplePValueTO<String, Integer>(to)));
                     break;
                 case SC_RNA_SEQ:
-                    map.put(dt, dao.getscRNASeqFullLengthPValuesOrderedByGeneIdAndExprId(geneIds)
-                            .stream().map(p -> p));
+                    map.put(dt, rnaSeqResultDAO.getResultAnnotatedSamples(rawDataFilters, true, null, null,
+                            rnaSeqAttrs, rnaSeqOrderingAttrs).stream()
+                            //We don't have experimentId in the returned TOs,
+                            //but annotatedSampleIds are unique in RNA-Seq data.
+                            //We arbitrarily defined the experimentId type
+                            //needed by PipelineSamplePValueTO as String
+                            .map(to -> new PipelineSamplePValueTO<String, Integer>(to)));
                     break;
                 default: 
                     throw log.throwing(new IllegalStateException("Unsupported DataType: " + dt));

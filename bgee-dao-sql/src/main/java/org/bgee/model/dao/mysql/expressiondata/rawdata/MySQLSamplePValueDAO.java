@@ -294,7 +294,7 @@ implements SamplePValueDAO  {
      * @version Bgee 15.0 Mar. 2021
      * @since Bgee 15.0 Mar. 2021
      */
-    class MySQLSamplePValueTOResultSet <T,U>
+    class MySQLSamplePValueTOResultSet <T extends Comparable<T>, U extends Comparable<U>>
             extends MySQLDAOResultSet<SamplePValueDAO.SamplePValueTO<T, U>>
             implements SamplePValueTOResultSet<T, U> {
         

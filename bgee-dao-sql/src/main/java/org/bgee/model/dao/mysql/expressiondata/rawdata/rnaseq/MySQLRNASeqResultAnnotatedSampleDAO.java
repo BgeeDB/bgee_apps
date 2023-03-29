@@ -6,12 +6,14 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
@@ -55,8 +57,11 @@ implements RNASeqResultAnnotatedSampleDAO {
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
             Long offset, Integer limit,
-            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attributes);
+            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes,
+            LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
+                    throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
+                attributes, orderingAttributes);
         checkOffsetAndLimit(offset, limit);
 
         //It is very ugly, but for performance reasons, we use two queries:
@@ -89,6 +94,8 @@ implements RNASeqResultAnnotatedSampleDAO {
         final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes));
+        final LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs =
+                orderingAttributes == null? new LinkedHashMap<>(): new LinkedHashMap<>(orderingAttributes);
 
         StringBuilder sb = new StringBuilder();
 
@@ -116,11 +123,24 @@ implements RNASeqResultAnnotatedSampleDAO {
         }
 
         // generate ORDER BY
-        sb.append(" ORDER BY ")
-        .append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.Attribute
-                .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName())
-        .append(", ").append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.Attribute
-                .BGEE_GENE_ID.getTOFieldName());
+        sb.append(" ORDER BY ");
+        //Default ordering, ordered by primary key for faster results
+        if (clonedOrderingAttrs.isEmpty()) {
+            sb.append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.OrderingAttribute
+                  .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName())
+              .append(", ")
+              .append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.OrderingAttribute
+                  .BGEE_GENE_ID.getTOFieldName());
+        } else {
+            sb.append(clonedOrderingAttrs.entrySet().stream()
+                    .map(e -> {
+                        StringBuilder sb2 = new StringBuilder();
+                        sb2.append(TABLE_NAME).append(".").append(e.getKey().getTOFieldName())
+                           .append(" ").append(e.getValue().getSqlString());
+                        return sb2.toString();
+                    })
+                    .collect(Collectors.joining(", ")));
+        }
 
         //generate offset and limit
         if (limit != null) {

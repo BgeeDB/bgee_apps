@@ -815,7 +815,7 @@ public class RawDataLoader extends CommonService {
         Set<Integer> bgeeGeneIds = new HashSet<>();
         if (infoType == InformationType.CALL) {
             RNASeqResultAnnotatedSampleTOResultSet callTORS = this.rnaSeqCallDAO.getResultAnnotatedSamples(
-                    daoRawDataFilters, isSingleCell, offset, limit, null);
+                    daoRawDataFilters, isSingleCell, offset, limit, null, null);
             while (callTORS.next()) {
                 RNASeqResultAnnotatedSampleTO callTO = callTORS.getTO();
                 bgeeAnnotatedSampleIds.add(callTO.getAssayId());

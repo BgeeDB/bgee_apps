@@ -2,6 +2,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -31,7 +32,7 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      * {@code Enum} used to define the attributes to populate in the {@code RNASeqResultTO}s 
      * obtained from this {@code RNASeqResultDAO}.
      * <ul>
-     * <li>{@code RNA_SEQ_LIBRARY_ANNOTATED_ID}: corresponds to {@link RNASeqResultTO#getAssayId()}.
+     * <li>{@code LIBRARY_ANNOTATED_SAMPLE_ID}: corresponds to {@link RNASeqResultTO#getAssayId()}.
      * <li>{@code BGEE_GENE_ID}: corresponds to {@link RNASeqResultTO#getBgeeGeneId()}.
      * <li>{@code ABUNDANCE_UNIT}: corresponds to {@link RNASeqResultTO#getAbundanceUnit()}.
      * <li>{@code ABUNDANCE}: corresponds to {@link RNASeqResultTO#getAbundance()}.
@@ -70,6 +71,29 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
     }
 
     /**
+     * The attributes available to order retrieved {@code RNASeqResultAnnotatedSampleTO}s
+     * <ul>
+     * <li>{@code LIBRARY_ANNOTATED_SAMPLE_ID}: corresponds to {@link RNASeqResultTO#getAssayId()}.
+     * <li>{@code BGEE_GENE_ID}: corresponds to {@link RNASeqResultAnnotatedSampleTO#getBgeeGeneId()}.
+     * <li>{@code EXPRESSION_ID}: corresponds to {@link RNASeqResultTO#getExpressionId()}.
+     * </ul>
+     */
+    public enum OrderingAttribute implements DAO.OrderingAttribute {
+        LIBRARY_ANNOTATED_SAMPLE_ID("rnaSeqLibraryAnnotatedSampleId"),
+        BGEE_GENE_ID("bgeeGeneId"), EXPRESSION_ID("expressionId");
+
+        private final String fieldName;
+
+        private OrderingAttribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
+    }
+
+    /**
      * Allows to retrieve {@code RNASeqResultAnnotatedSampleTO}s according to the provided filters.
      * <p>
      * The {@code RNASeqResultAnnotatedSampleTO}s are retrieved and returned as a
@@ -92,13 +116,22 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
      *                          to retrieve from the data source.
+     * @param orderingAttributes    A {@code LinkedHashMap} where keys are
+     *                              {@code RNASeqResultAnnotatedSampleDAO.OrderingAttribute}s defining
+     *                              the attributes used to order the returned {@code RNASeqResultAnnotatedSampleTO}s,
+     *                              the associated value being a {@code DAO.Direction}
+     *                              defining whether the ordering should be ascendant or descendant.
+     *                              If {@code null} or empty, the default ordering is
+     *                              {@code OrderingAttribute.LIBRARY_ANNOTATED_SAMPLE_ID} {@code ASC},
+     *                              {@code OrderingAttribute.BGEE_GENE_ID} {@code ASC}.
      * @return                  A {@code RNASeqResultAnnotatedSampleTOResultSet} allowing to retrieve the
-     *                          targeted {@code RNASeqResultAnnotatedSampleTOResultSet}s.
+     *                          targeted {@code RNASeqResultAnnotatedSampleTO}s.
      * @throws DAOException     If an error occurred while accessing the data source.
      */
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Long offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
+            Long offset, Integer limit, Collection<Attribute> attributes,
+            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s

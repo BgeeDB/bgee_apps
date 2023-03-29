@@ -122,7 +122,11 @@ implements SamplePValueDAO  {
                     .append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.P_VALUE, colToAttrMap))
                 .append(" FROM ").append(sampleTableName)
                 .append(getWhere(sampleTableName, geneIds))
-                .append(" GROUP BY ").append(MySQLGeneDAO.BGEE_GENE_ID).append(", bgeeAffymetrixChipId ")
+                .append(" GROUP BY ")
+                .append(MySQLGeneDAO.BGEE_GENE_ID)
+                .append(", bgeeAffymetrixChipId ")
+                .append(", ")
+                .append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.EXPRESSION_ID, colToAttrMap))
                 .append(getOrderBy(sampleTableName));
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());

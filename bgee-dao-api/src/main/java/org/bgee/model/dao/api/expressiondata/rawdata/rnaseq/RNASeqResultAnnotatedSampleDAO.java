@@ -79,17 +79,23 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      * </ul>
      */
     public enum OrderingAttribute implements DAO.OrderingAttribute {
-        LIBRARY_ANNOTATED_SAMPLE_ID("rnaSeqLibraryAnnotatedSampleId"),
-        BGEE_GENE_ID("bgeeGeneId"), EXPRESSION_ID("expressionId");
+        LIBRARY_ANNOTATED_SAMPLE_ID("rnaSeqLibraryAnnotatedSampleId", Attribute.LIBRARY_ANNOTATED_SAMPLE_ID),
+        BGEE_GENE_ID("bgeeGeneId", Attribute.BGEE_GENE_ID),
+        EXPRESSION_ID("expressionId", Attribute.EXPRESSION_ID);
 
         private final String fieldName;
+        private final Attribute correspondingAttribute;
 
-        private OrderingAttribute(String fieldName) {
+        private OrderingAttribute(String fieldName, Attribute correspondingAttribute) {
             this.fieldName = fieldName;
+            this.correspondingAttribute = correspondingAttribute;
         }
 
         public String getTOFieldName() {
             return this.fieldName;
+        }
+        public Attribute getCorrespondingAttribute() {
+            return this.correspondingAttribute;
         }
     }
 

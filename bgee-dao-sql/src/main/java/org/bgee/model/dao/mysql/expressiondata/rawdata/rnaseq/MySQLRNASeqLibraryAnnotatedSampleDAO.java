@@ -84,10 +84,13 @@ implements RNASeqLibraryAnnotatedSampleDAO{
 
         final DAOProcessedRawDataFilter<Integer> processedFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);
-        final Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
-                .unmodifiableSet(attrs == null || attrs.isEmpty()?
+        final Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> clonedAttrs =
+                attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(RNASeqLibraryAnnotatedSampleDAO.Attribute.class):
-                    EnumSet.copyOf(attrs));
+                    EnumSet.copyOf(attrs);
+        //We need to add any attributes that will be requested for ordering,
+        //otherwise it produces a SQL exception
+        clonedAttrs.add(RNASeqLibraryAnnotatedSampleDAO.Attribute.RNASEQ_LIBRARY_ID);
 
         StringBuilder sb = new StringBuilder();
 

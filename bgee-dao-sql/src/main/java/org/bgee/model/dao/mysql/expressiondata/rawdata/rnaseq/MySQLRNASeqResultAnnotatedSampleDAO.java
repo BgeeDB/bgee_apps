@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
@@ -91,11 +90,16 @@ implements RNASeqResultAnnotatedSampleDAO {
             }
         }
 
-        final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
-                .unmodifiableSet(attributes == null || attributes.isEmpty()?
-                EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes));
         final LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs =
                 orderingAttributes == null? new LinkedHashMap<>(): new LinkedHashMap<>(orderingAttributes);
+        final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs =
+                attributes == null || attributes.isEmpty()?
+                EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes);
+        //We need to add any attributes that were requested for ordering,
+        //otherwise it produces a SQL exception
+        clonedAttrs.addAll(clonedOrderingAttrs.keySet().stream()
+                .map(oa -> oa.getCorrespondingAttribute())
+                .collect(Collectors.toSet()));
 
         StringBuilder sb = new StringBuilder();
 

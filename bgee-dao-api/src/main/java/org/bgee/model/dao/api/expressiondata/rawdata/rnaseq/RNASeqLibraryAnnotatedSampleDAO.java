@@ -62,8 +62,8 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         PVALUE_THRESHOLD("pValueThreshold"), ALL_READ_COUNT("allReadsCount"),
         ALL_UMIS_COUNT("allUMIsCount"), MAPPED_READ_COUNT("mappedReadsCount"),
         MAPPED_UMIS_COUNT("mappedUMIsCount"), MIN_READ_LENGTH("minReadLength"),
-        MAX_READ_LENGTH("maxReadLength"), MAX_RANK("libraryMaxRank"),
-        DISTINCT_RANK_COUNT("libraryDistinctRankCount"),
+        MAX_READ_LENGTH("maxReadLength"), MAX_RANK("rnaSeqLibraryAnnotatedSampleMaxRank"),
+        DISTINCT_RANK_COUNT("rnaSeqLibraryAnnotatedSampleDistinctRankCount"),
         MULTIPLE_INDIVIDUAL_SAMPLE("multipleLibraryIndividualSample");
         
         /**

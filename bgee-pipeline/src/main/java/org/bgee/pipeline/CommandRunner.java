@@ -350,6 +350,14 @@ public class CommandRunner {
         return log.traceExit(false);
     }
 
+    public static Integer parseArgumentAsInteger(String arg) {
+        log.traceEntry("{}", arg);
+        if (arg == null || arg.trim().equals(EMPTY_ARG)) {
+            return log.traceExit((Integer) null);
+        }
+        return log.traceExit(Integer.parseInt(arg));
+    }
+
     /**
      * Delegates to {@link #parseListArgument(String, Class)} with {@code Class} argument 
      * being {@code String.class}.

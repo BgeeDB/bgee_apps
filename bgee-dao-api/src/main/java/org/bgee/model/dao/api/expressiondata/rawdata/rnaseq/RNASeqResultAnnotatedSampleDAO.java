@@ -235,11 +235,20 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
 
         @Override
         public String toString() {
-            return "RNASeqResultTO [rnaSeqLibraryAnnotatedSampleId=" + rnaSeqLibraryAnnotatedSampleId
-                    + ", abundanceUnit=" + abundanceUnit + ", abundance=" + abundance + ", readCount=" + readCount
-                    + ", umiCount=" + umiCount + ", zscore=" + zScore + ", callSourceDataTO=" + callSourceDataTO
-                    + ", rank=" + rank + "]";
+            StringBuilder builder = new StringBuilder();
+            builder.append("RNASeqResultAnnotatedSampleTO [")
+                   .append("rnaSeqLibraryAnnotatedSampleId=").append(rnaSeqLibraryAnnotatedSampleId)
+                   .append(", abundanceUnit=").append(abundanceUnit)
+                   .append(", abundance=").append(abundance)
+                   .append(", readCount=").append(readCount)
+                   .append(", umiCount=").append(umiCount)
+                   .append(", zScore=").append(zScore)
+                   .append(", callSourceDataTO=").append(callSourceDataTO)
+                   .append(", rank=").append(rank)
+                   .append("]");
+            return builder.toString();
         }
+
 
     }
 }

@@ -356,6 +356,8 @@ public class InsertPropagatedCalls extends CallService {
                     Iterator<SamplePValueTO<?, ?>> it = entry.getValue().iterator();
                     try {
                         this.mapDataTypeToLastSamplePValueTO.put(entry.getKey(), it.next());
+                        log.trace("mapDataTypeToLastSamplePValueTO: {}",
+                                this.mapDataTypeToLastSamplePValueTO.get(entry.getKey()));
                         //don't store the iterator if there is no element (catch clause)
                         this.mapDataTypeToSamplePValueTOIt.put(entry.getKey(), it);
                     } catch (NoSuchElementException e) {
@@ -392,6 +394,7 @@ public class InsertPropagatedCalls extends CallService {
                     throw log.throwing(new IllegalStateException("Missing attributes in raw call: "
                         + this.lastCallTO));
                 }
+                log.trace("currentGeneIteration, lastCallTO: {}", this.lastCallTO);
                 // We add the previous ExperimentExpressionTOs to the group
                 assert data.stream().noneMatch(rawData -> rawData.getRawExpressionCallTO().getId()
                         .equals(this.lastCallTO.getId()));                       
@@ -452,10 +455,13 @@ public class InsertPropagatedCalls extends CallService {
             Map<DataType, Set<SamplePValueTO<?, ?>>> samplePValueTOsByDataType = new HashMap<>();
             for (Entry<DataType, Iterator<SamplePValueTO<?, ?>>> entry: mapDataTypeToSamplePValueTOIt.entrySet()) {
                 DataType currentDataType = entry.getKey();
+                log.trace("PValues for DataType: {}", currentDataType);
                 Iterator<SamplePValueTO<?, ?>> it = entry.getValue();
                 SamplePValueTO<?, ?> currentTO = mapDataTypeToLastSamplePValueTO.get(currentDataType);
+                log.trace("CurrentTO: {}", currentTO);
                 Set<SamplePValueTO<?, ?>> samplePValueTOs = new HashSet<>();
                 while (currentTO != null && expressionId.equals(currentTO.getExpressionId())) {
+                    log.trace("CurrentTO: {} - expressionId: {}", currentTO, expressionId);
                     // We should not have 2 identical TOs
                     assert samplePValueTOsByDataType.get(currentDataType) == null ||
                         !samplePValueTOsByDataType.get(currentDataType).contains(currentTO);
@@ -486,9 +492,11 @@ public class InsertPropagatedCalls extends CallService {
                         currentTO = nextTO;
                     } catch (NoSuchElementException e) {
                         currentTO = null;
+                        log.catching(Level.TRACE, e);
                     }
                 }
                 mapDataTypeToLastSamplePValueTO.put(currentDataType, currentTO);
+                log.trace("Storing for data type {} last SamplePValuesTO: {}", currentDataType, currentTO);
             }
             if (samplePValueTOsByDataType.isEmpty()) {
                 throw log.throwing(new IllegalStateException("No supporting data for expression ID " 

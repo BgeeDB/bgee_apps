@@ -187,6 +187,7 @@ implements RNASeqResultAnnotatedSampleDAO {
                 for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                     if (column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName())) {
+                        //LIBRARY_ANNOTATED_SAMPLE_ID cannot be null
                         rnaSeqLibraryAnnotatedSampleId = currentResultSet.getInt(column.getKey());
                     } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .ABUNDANCE.getTOFieldName())) {
@@ -196,10 +197,14 @@ implements RNASeqResultAnnotatedSampleDAO {
                         abundanceUnit = currentResultSet.getString(column.getKey());
                     } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .BGEE_GENE_ID.getTOFieldName())) {
+                        //BGEE_GENE_ID cannot be null
                         bgeeGeneId = currentResultSet.getInt(column.getKey());
                     } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .EXPRESSION_ID.getTOFieldName())) {
                         expressionId = currentResultSet.getLong(column.getKey());
+                        if (currentResultSet.wasNull()) {
+                            expressionId = null;
+                        }
                     } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .PVALUE.getTOFieldName())) {
                         pValue = currentResultSet.getBigDecimal(column.getKey());

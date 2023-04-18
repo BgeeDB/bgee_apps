@@ -2445,6 +2445,7 @@ public class InsertPropagatedCalls extends CallService {
                 case SC_RNA_SEQ:
                     map.put(dt, rnaSeqResultDAO.getResultAnnotatedSamples(rawDataFilters, true, null, null,
                             rnaSeqAttrs, rnaSeqOrderingAttrs).stream()
+                            .filter(to -> to.getExpressionId() != null)
                             //We don't have experimentId in the returned TOs,
                             //but annotatedSampleIds are unique in RNA-Seq data.
                             //We arbitrarily defined the experimentId type

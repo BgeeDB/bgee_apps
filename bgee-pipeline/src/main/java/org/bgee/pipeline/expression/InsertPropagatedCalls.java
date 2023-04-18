@@ -451,17 +451,18 @@ public class InsertPropagatedCalls extends CallService {
          */
         private Map<DataType, Set<SamplePValueTO<?, ?>>> getPValues(Long expressionId) {
             log.traceEntry("{}", expressionId);
-            
+
+            log.debug(COMPUTE_MARKER, "Retrieve pvalues for expressionId: {}", expressionId);
             Map<DataType, Set<SamplePValueTO<?, ?>>> samplePValueTOsByDataType = new HashMap<>();
             for (Entry<DataType, Iterator<SamplePValueTO<?, ?>>> entry: mapDataTypeToSamplePValueTOIt.entrySet()) {
                 DataType currentDataType = entry.getKey();
-                log.trace("PValues for DataType: {}", currentDataType);
+                log.debug(COMPUTE_MARKER, "PValues for DataType: {}", currentDataType);
                 Iterator<SamplePValueTO<?, ?>> it = entry.getValue();
                 SamplePValueTO<?, ?> currentTO = mapDataTypeToLastSamplePValueTO.get(currentDataType);
-                log.trace("CurrentTO: {}", currentTO);
+                log.debug(COMPUTE_MARKER, "CurrentTO: {}", currentTO);
                 Set<SamplePValueTO<?, ?>> samplePValueTOs = new HashSet<>();
                 while (currentTO != null && expressionId.equals(currentTO.getExpressionId())) {
-                    log.trace("CurrentTO: {} - expressionId: {}", currentTO, expressionId);
+                    log.debug(COMPUTE_MARKER, "CurrentTO: {} - expressionId: {}", currentTO, expressionId);
                     // We should not have 2 identical TOs
                     assert samplePValueTOsByDataType.get(currentDataType) == null ||
                         !samplePValueTOsByDataType.get(currentDataType).contains(currentTO);
@@ -488,7 +489,7 @@ public class InsertPropagatedCalls extends CallService {
 //                                + "for proper generation of data: previous TO: "
 //                                + currentTO + ", next TO: " + nextTO));
 //                        }
-                        log.trace("Previous TO={}, Current TO={}", currentTO, nextTO);
+                        log.debug(COMPUTE_MARKER, "Previous TO={}, Current TO={}", currentTO, nextTO);
                         currentTO = nextTO;
                     } catch (NoSuchElementException e) {
                         currentTO = null;
@@ -496,7 +497,7 @@ public class InsertPropagatedCalls extends CallService {
                     }
                 }
                 mapDataTypeToLastSamplePValueTO.put(currentDataType, currentTO);
-                log.trace("Storing for data type {} last SamplePValuesTO: {}", currentDataType, currentTO);
+                log.debug(COMPUTE_MARKER, "Storing for data type {} last SamplePValuesTO: {}", currentDataType, currentTO);
             }
             if (samplePValueTOsByDataType.isEmpty()) {
                 throw log.throwing(new IllegalStateException("No supporting data for expression ID " 

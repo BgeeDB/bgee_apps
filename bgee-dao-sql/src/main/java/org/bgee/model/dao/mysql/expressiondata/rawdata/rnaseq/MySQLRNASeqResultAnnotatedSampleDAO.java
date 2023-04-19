@@ -61,6 +61,19 @@ implements RNASeqResultAnnotatedSampleDAO {
                     throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
                 attributes, orderingAttributes);
+        return log.traceExit(this.getResultAnnotatedSamples(rawDataFilters, isSingleCell, false,
+                offset, limit, attributes, orderingAttributes));
+    }
+
+    @Override
+    public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
+            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
+            boolean notNullExpressionId, Long offset, Integer limit,
+            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes,
+            LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
+                    throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, notNullExpressionId,
+                offset, limit, attributes, orderingAttributes);
         checkOffsetAndLimit(offset, limit);
 
         //It is very ugly, but for performance reasons, we use two queries:
@@ -116,6 +129,7 @@ implements RNASeqResultAnnotatedSampleDAO {
                 Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
+        boolean whereClause = false;
         if (!processedFilters.getRawDataFilters().isEmpty() ||
                 !processedFilters.getFilterToCallTableAssayIds().isEmpty()) {
             sb.append(" WHERE ")
@@ -124,6 +138,13 @@ implements RNASeqResultAnnotatedSampleDAO {
                     //isSingleCell: at this point, it was already considered in the assay IDs
                     //obtained through processFilterForCallTableAssayIds
                     null));
+            whereClause = true;
+        }
+        if (notNullExpressionId) {
+            sb.append(whereClause ? " AND ": " WHERE ");
+            sb.append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.Attribute
+                    .EXPRESSION_ID.getTOFieldName())
+                    .append(" IS NOT NULL");
         }
 
         // generate ORDER BY

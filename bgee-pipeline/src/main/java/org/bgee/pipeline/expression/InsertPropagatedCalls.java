@@ -2433,9 +2433,8 @@ public class InsertPropagatedCalls extends CallService {
                             .map(p -> p));
                     break;
                 case RNA_SEQ:
-                    map.put(dt, rnaSeqResultDAO.getResultAnnotatedSamples(rawDataFilters, false, null, null,
+                    map.put(dt, rnaSeqResultDAO.getResultAnnotatedSamples(rawDataFilters, false, true, null, null,
                             rnaSeqAttrs, rnaSeqOrderingAttrs).stream()
-                            .filter(to -> to.getExpressionId() != null)
                             //We don't have experimentId in the returned TOs,
                             //but annotatedSampleIds are unique in RNA-Seq data.
                             //We arbitrarily defined the experimentId type
@@ -2443,9 +2442,8 @@ public class InsertPropagatedCalls extends CallService {
                             .map(to -> new PipelineSamplePValueTO<String, Integer>(to)));
                     break;
                 case SC_RNA_SEQ:
-                    map.put(dt, rnaSeqResultDAO.getResultAnnotatedSamples(rawDataFilters, true, null, null,
+                    map.put(dt, rnaSeqResultDAO.getResultAnnotatedSamples(rawDataFilters, true, true, null, null,
                             rnaSeqAttrs, rnaSeqOrderingAttrs).stream()
-                            .filter(to -> to.getExpressionId() != null)
                             //We don't have experimentId in the returned TOs,
                             //but annotatedSampleIds are unique in RNA-Seq data.
                             //We arbitrarily defined the experimentId type

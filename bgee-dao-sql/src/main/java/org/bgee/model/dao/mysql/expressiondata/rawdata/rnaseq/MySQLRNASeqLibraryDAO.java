@@ -186,7 +186,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                         technologyName, isSingleCell, sampleMultiplexing, libraryMultiplexing,
                         strandSelection, cellCompartment, seqTranscriptPart,
                         fragmentation, populationCaptureId, genotype, allReadCount, mappedReadCount,
-                        maxReadLength, minReadLength, libType));
+                        minReadLength, maxReadLength, libType));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

@@ -100,6 +100,7 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqDataType;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibrary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSamplePipelineSummary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryPipelineSummary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqTechnology;
@@ -978,7 +979,10 @@ public class RawDataLoader extends CommonService {
                                             to.getLibraryMultiplexing(),
                                             to.getFragmentation(),
                                             to.getLibraryType().getStringRepresentation()),
-
+                                    to.getMappedReadCount() == null || to.getMappedReadCount() == 0? 
+                                            null: new RnaSeqLibraryPipelineSummary(to.getAllReadCount(),
+                                                    to.getMappedReadCount(), to.getMinReadLength(),
+                                                    to.getMaxReadLength()),
                                     Optional.ofNullable(expIdToExp.get(to.getExperimentId()))
                                     .orElseThrow(() -> new IllegalStateException(
                                             "Missing experiment ID " + to.getExperimentId()
@@ -1009,20 +1013,16 @@ public class RawDataLoader extends CommonService {
                                                     + to.getConditionId()
                                                     + " for annotated sample ID " + to.getId())),
                                             null, null, null),
-                                    to.getDistinctRankCount() == null? null: new RnaSeqLibraryPipelineSummary(
+                                    to.getDistinctRankCount() == null? null: new RnaSeqLibraryAnnotatedSamplePipelineSummary(
                                             to.getMeanAbundanceRefIntergenicDistribution(),
                                             to.getSdAbundanceRefIntergenicDistribution(),
                                             to.getpValueThreshold(),
-                                            to.getAllReadCount(),
                                             to.getAllUMIsCount(),
-                                            to.getMappedReadCount(),
                                             to.getMappedUMIsCount(),
-                                            to.getMinReadLength(),
-                                            to.getMaxReadLength(),
+
                                             to.getMaxRank(),
                                             to.getDistinctRankCount()),
-                                    to.getBarcode(),
-                                    to.getGenotype()),
+                                    to.getBarcode()),
 
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));

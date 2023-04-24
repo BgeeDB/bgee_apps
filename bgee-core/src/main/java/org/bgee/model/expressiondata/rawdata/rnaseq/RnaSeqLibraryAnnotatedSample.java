@@ -16,13 +16,12 @@ public class RnaSeqLibraryAnnotatedSample
 
     private final RnaSeqLibrary library;
     private final RawDataAnnotation annotation;
-    private final RnaSeqLibraryPipelineSummary pipelineSummary;
+    private final RnaSeqLibraryAnnotatedSamplePipelineSummary pipelineSummary;
     private final String barcode;
-    private final String genotype;
 
     public RnaSeqLibraryAnnotatedSample (RnaSeqLibrary library,
-            RawDataAnnotation annotation, RnaSeqLibraryPipelineSummary pipelineSummary,
-            String barcode, String genotype) {
+            RawDataAnnotation annotation, RnaSeqLibraryAnnotatedSamplePipelineSummary pipelineSummary,
+            String barcode) {
         //library and the condition in the annotation are the primary key of a sample
         if (library == null) {
             throw log.throwing(new IllegalArgumentException("library can not be null"));
@@ -31,7 +30,6 @@ public class RnaSeqLibraryAnnotatedSample
         this.annotation = annotation;
         this.pipelineSummary = pipelineSummary;
         this.barcode = barcode;
-        this.genotype = genotype;
     }
 
     public RnaSeqLibrary getLibrary() {
@@ -45,14 +43,11 @@ public class RnaSeqLibraryAnnotatedSample
     public RawDataAnnotation getAnnotation() {
         return this.annotation;
     }
-    public RnaSeqLibraryPipelineSummary getPipelineSummary() {
+    public RnaSeqLibraryAnnotatedSamplePipelineSummary getPipelineSummary() {
         return pipelineSummary;
     }
     public String getBarcode() {
         return barcode;
-    }
-    public String getGenotype() {
-        return genotype;
     }
 
     //For now we consider an annotated sample library to be unique for one libraryId
@@ -84,7 +79,6 @@ public class RnaSeqLibraryAnnotatedSample
                .append(", annotation=").append(annotation)
                .append(", pipelineSummary=").append(pipelineSummary)
                .append(", barcode=").append(barcode)
-               .append(", genotype=").append(genotype)
                .append("]");
         return builder.toString();
     }

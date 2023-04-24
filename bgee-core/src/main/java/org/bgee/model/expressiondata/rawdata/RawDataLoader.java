@@ -891,7 +891,7 @@ public class RawDataLoader extends CommonService {
 
         //*********** Libraries ***********
         Set<String> expIds = new HashSet<>();
-        if (!libraryIds.isEmpty()) {
+        if (!libraryIds.isEmpty() && !(infoType == InformationType.EXPERIMENT && !partialInfo)) {
             //we can use a new DAORawDataFilter to retrieve the requested libraries
             DAORawDataFilter libFilter = new DAORawDataFilter(null, libraryIds, null);
             RNASeqLibraryTOResultSet libTORS = this.rnaSeqLibraryDAO.getRnaSeqLibrary(

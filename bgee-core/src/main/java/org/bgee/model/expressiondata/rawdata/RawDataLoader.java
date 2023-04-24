@@ -937,8 +937,9 @@ public class RawDataLoader extends CommonService {
                                   to.getDescription(),
                                   to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
                                   finalExpSpeciesId == null? null:
-                                      getRNASeqExperimentDownloadURL(isSingleCell, finalExpSpeciesId, to.getId()),
-                                  0),
+                                      getRNASeqExperimentDownloadURL(isSingleCell, to.isTargetBase(),
+                                              finalExpSpeciesId, to.getId()),
+                                  0, to.isTargetBase()),
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));
 
@@ -1058,23 +1059,26 @@ public class RawDataLoader extends CommonService {
 
         return log.traceExit(new RnaSeqContainer(experiments, libs, assays, calls));
     }
-    private String getRNASeqExperimentDownloadURL(boolean isSingleCell, int speciesId, String experimentId) {
-        log.traceEntry("{}, {}, {}", isSingleCell, speciesId, experimentId);
+    private String getRNASeqExperimentDownloadURL(boolean isSingleCell, boolean isTargetBase, int speciesId,
+            String experimentId) {
+        log.traceEntry("{}, {}, {}, {}", isSingleCell, isTargetBase, speciesId, experimentId);
         Species species = Optional.ofNullable(this.getRawDataProcessedFilter().getSpeciesMap()
                 .get(speciesId)).orElseThrow(() -> new IllegalStateException(
                         "Missing species for speciesId " + speciesId));
+
         String speciesLinkPart = species.getGenus() + "_" + species.getSpeciesName();
         String urlStart = isSingleCell?
                 this.getServiceFactory().getBgeeProperties()
-                    .getDownloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory():
+                    .getDownloadSingleCellRNASeqProcExprValueFilesRootDirectory():
                 this.getServiceFactory().getBgeeProperties()
                     .getDownloadRNASeqProcExprValueFilesRootDirectory();
         String fileNamePart = isSingleCell?
                 "_Full-Length_SC_RNA-Seq_read_counts_TPM_FPKM_":
                 "_RNA-Seq_read_counts_TPM_FPKM_";
+        String fileExtention = isTargetBase ? ".h5ad" : ".tsv.gz";
         return log.traceExit(urlStart
                 + speciesLinkPart + "/"
-                + speciesLinkPart + fileNamePart + experimentId + ".tsv.gz");
+                + speciesLinkPart + fileNamePart + experimentId + fileExtention);
     }
     private RnaSeqContainer getNoResultRnaSeqContainer(InformationType infoType) {
         log.traceEntry("{}", infoType);

@@ -1073,9 +1073,12 @@ public class RawDataLoader extends CommonService {
                 this.getServiceFactory().getBgeeProperties()
                     .getDownloadRNASeqProcExprValueFilesRootDirectory();
         String fileNamePart = isSingleCell?
+                isTargetBase ? "_SC_RNA-Seq_read_counts_CPM_" :
                 "_Full-Length_SC_RNA-Seq_read_counts_TPM_FPKM_":
                 "_RNA-Seq_read_counts_TPM_FPKM_";
-        String fileExtention = isTargetBase ? ".h5ad" : ".tsv.gz";
+        // we check both as one experiment contains both target-based and bulk
+        //TODO: find a solution to download h5ad and tsv in this case
+        String fileExtention = isSingleCell && isTargetBase ? ".h5ad" : ".tsv.gz";
         return log.traceExit(urlStart
                 + speciesLinkPart + "/"
                 + speciesLinkPart + fileNamePart + experimentId + fileExtention);

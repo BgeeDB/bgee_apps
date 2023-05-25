@@ -865,17 +865,17 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreRNASeqExperimentTOEqual() {
-        RNASeqExperimentTO to1 = new RNASeqExperimentTO("Exp1", "name", "description", 1);
-        RNASeqExperimentTO to2 = new RNASeqExperimentTO("Exp1", "name", "description", 1);
+        RNASeqExperimentTO to1 = new RNASeqExperimentTO("Exp1", "name", "description", 1, true);
+        RNASeqExperimentTO to2 = new RNASeqExperimentTO("Exp1", "name", "description", 1, true);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new RNASeqExperimentTO("Exp2", "name", "description", 1);
+        to2 = new RNASeqExperimentTO("Exp2", "name", "description", 1, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new RNASeqExperimentTO("Exp1", "name", "description", 2);
+        to2 = new RNASeqExperimentTO("Exp1", "name", "description", 2, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
     /**

@@ -100,6 +100,7 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqDataType;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibrary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSamplePipelineSummary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryPipelineSummary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqTechnology;
@@ -937,8 +938,9 @@ public class RawDataLoader extends CommonService {
                                   to.getDescription(),
                                   to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
                                   finalExpSpeciesId == null? null:
-                                      getRNASeqExperimentDownloadURL(isSingleCell, finalExpSpeciesId, to.getId()),
-                                  0),
+                                      getRNASeqExperimentDownloadURL(isSingleCell, to.isTargetBase(),
+                                              finalExpSpeciesId, to.getId()),
+                                  0, to.isTargetBase()),
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));
 
@@ -978,7 +980,10 @@ public class RawDataLoader extends CommonService {
                                             to.getLibraryMultiplexing(),
                                             to.getFragmentation(),
                                             to.getLibraryType().getStringRepresentation()),
-
+                                    to.getMappedReadCount() == null || to.getMappedReadCount() == 0? 
+                                            null: new RnaSeqLibraryPipelineSummary(to.getAllReadCount(),
+                                                    to.getMappedReadCount(), to.getMinReadLength(),
+                                                    to.getMaxReadLength()),
                                     Optional.ofNullable(expIdToExp.get(to.getExperimentId()))
                                     .orElseThrow(() -> new IllegalStateException(
                                             "Missing experiment ID " + to.getExperimentId()
@@ -1009,20 +1014,16 @@ public class RawDataLoader extends CommonService {
                                                     + to.getConditionId()
                                                     + " for annotated sample ID " + to.getId())),
                                             null, null, null),
-                                    to.getDistinctRankCount() == null? null: new RnaSeqLibraryPipelineSummary(
+                                    to.getDistinctRankCount() == null? null: new RnaSeqLibraryAnnotatedSamplePipelineSummary(
                                             to.getMeanAbundanceRefIntergenicDistribution(),
                                             to.getSdAbundanceRefIntergenicDistribution(),
                                             to.getpValueThreshold(),
-                                            to.getAllReadCount(),
                                             to.getAllUMIsCount(),
-                                            to.getMappedReadCount(),
                                             to.getMappedUMIsCount(),
-                                            to.getMinReadLength(),
-                                            to.getMaxReadLength(),
+
                                             to.getMaxRank(),
                                             to.getDistinctRankCount()),
-                                    to.getBarcode(),
-                                    to.getGenotype()),
+                                    to.getBarcode()),
 
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));
@@ -1058,23 +1059,29 @@ public class RawDataLoader extends CommonService {
 
         return log.traceExit(new RnaSeqContainer(experiments, libs, assays, calls));
     }
-    private String getRNASeqExperimentDownloadURL(boolean isSingleCell, int speciesId, String experimentId) {
-        log.traceEntry("{}, {}, {}", isSingleCell, speciesId, experimentId);
+    private String getRNASeqExperimentDownloadURL(boolean isSingleCell, boolean isTargetBase, int speciesId,
+            String experimentId) {
+        log.traceEntry("{}, {}, {}, {}", isSingleCell, isTargetBase, speciesId, experimentId);
         Species species = Optional.ofNullable(this.getRawDataProcessedFilter().getSpeciesMap()
                 .get(speciesId)).orElseThrow(() -> new IllegalStateException(
                         "Missing species for speciesId " + speciesId));
+
         String speciesLinkPart = species.getGenus() + "_" + species.getSpeciesName();
         String urlStart = isSingleCell?
                 this.getServiceFactory().getBgeeProperties()
-                    .getDownloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory():
+                    .getDownloadSingleCellRNASeqProcExprValueFilesRootDirectory():
                 this.getServiceFactory().getBgeeProperties()
                     .getDownloadRNASeqProcExprValueFilesRootDirectory();
         String fileNamePart = isSingleCell?
+                isTargetBase ? "_SC_RNA-Seq_read_counts_CPM_" :
                 "_Full-Length_SC_RNA-Seq_read_counts_TPM_FPKM_":
                 "_RNA-Seq_read_counts_TPM_FPKM_";
+        // we check both as one experiment contains both target-based and bulk
+        //TODO: find a solution to download h5ad and tsv in this case
+        String fileExtention = isSingleCell && isTargetBase ? ".h5ad" : ".tsv.gz";
         return log.traceExit(urlStart
                 + speciesLinkPart + "/"
-                + speciesLinkPart + fileNamePart + experimentId + ".tsv.gz");
+                + speciesLinkPart + fileNamePart + experimentId + fileExtention);
     }
     private RnaSeqContainer getNoResultRnaSeqContainer(InformationType infoType) {
         log.traceEntry("{}", infoType);

@@ -102,9 +102,21 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
     public final class RNASeqExperimentTO extends ExperimentTO<String> {
         private static final long serialVersionUID = 9129478756981348941L;
 
+        private boolean isTargetBase;
+
         public RNASeqExperimentTO(String id, String name, String description,
-                Integer dataSourceId) {
+                Integer dataSourceId, boolean isTargetBase) {
             super(id, name, description, dataSourceId);
+            this.isTargetBase = isTargetBase;
+        }
+        public boolean isTargetBase() {
+            return isTargetBase;
+        }
+        @Override
+        public String toString() {
+            return "RNASeqExperimentTO [isTargetBase=" + isTargetBase + ", getDataSourceId()=" + getDataSourceId()
+                    + ", getName()=" + getName() + ", getDescription()=" + getDescription() + ", getId()=" + getId()
+                    + "]";
         }
     }
 }

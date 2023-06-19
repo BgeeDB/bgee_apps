@@ -743,10 +743,7 @@ public class RawDataLoader extends CommonService {
     }
     private String getAffymetrixExperimentDownloadURL(int speciesId, String experimentId) {
         log.traceEntry("{}, {}", speciesId, experimentId);
-        Species species = Optional.ofNullable(this.getRawDataProcessedFilter().getSpeciesMap()
-                .get(speciesId)).orElseThrow(() -> new IllegalStateException(
-                        "Missing species for speciesId " + speciesId));
-        String speciesLinkPart = species.getGenus() + "_" + species.getSpeciesName();
+        String speciesLinkPart = this.getSpeciesNameWithoutSpace(speciesId);
         return log.traceExit(this.getServiceFactory().getBgeeProperties()
                 .getDownloadAffyProcExprValueFilesRootDirectory()
                 + speciesLinkPart + "/"
@@ -1060,10 +1057,7 @@ public class RawDataLoader extends CommonService {
     }
     private String getRNASeqExperimentDownloadURL(boolean isSingleCell, int speciesId, String experimentId) {
         log.traceEntry("{}, {}, {}", isSingleCell, speciesId, experimentId);
-        Species species = Optional.ofNullable(this.getRawDataProcessedFilter().getSpeciesMap()
-                .get(speciesId)).orElseThrow(() -> new IllegalStateException(
-                        "Missing species for speciesId " + speciesId));
-        String speciesLinkPart = species.getGenus() + "_" + species.getSpeciesName();
+        String speciesLinkPart = this.getSpeciesNameWithoutSpace(speciesId);
         String urlStart = isSingleCell?
                 this.getServiceFactory().getBgeeProperties()
                     .getDownloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory():
@@ -1075,6 +1069,14 @@ public class RawDataLoader extends CommonService {
         return log.traceExit(urlStart
                 + speciesLinkPart + "/"
                 + speciesLinkPart + fileNamePart + experimentId + ".tsv.gz");
+    }
+    private String getSpeciesNameWithoutSpace(int speciesId) {
+        log.traceEntry("{}", speciesId);
+        Species species = Optional.ofNullable(this.getRawDataProcessedFilter().getSpeciesMap()
+                .get(speciesId)).orElseThrow(() -> new IllegalStateException(
+                        "Missing species for speciesId " + speciesId));
+        String speciesLinkPart = species.getGenus() + "_" + species.getSpeciesName();
+        return log.traceExit(speciesLinkPart.replace(" ", "_"));
     }
     private RnaSeqContainer getNoResultRnaSeqContainer(InformationType infoType) {
         log.traceEntry("{}", infoType);

@@ -851,7 +851,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      *                              or set afterwards with {@code setParametersSeparator} is used
      * @param urlStart			 	A {@code String} that is the beginning of the URL 
      * 								to used to query the Bgee web-app, before the search part, 
-     * 								e.g. 'http://bgee.org/bgee_v13/'.  
+     * 								e.g. 'https://www.bgee.org/bgee_v13/'.  
      * 								If this parameter is not provided, by default 
      * 								{@code GLOBAL_PROPS.getWebAppURLStart()} is used.
      * 								It can be used, e.g., to perform a cross-domain query 

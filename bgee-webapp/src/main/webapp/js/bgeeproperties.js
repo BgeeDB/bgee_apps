@@ -77,7 +77,7 @@ function bgeeProperties() {
     //**********************************
     /**
      * @return  A {@code String} that defines the beginning of the URL to used to query 
-     * 			the Bgee web-app, before the search part, e.g. 'http://bgee.org/bgee_v13/'.
+     * 			the Bgee web-app, before the search part, e.g. 'https://www.bgee.org/bgee_v13/'.
      * 			This method is provided for convenience, it simply concatenates 
      * 			{@code 'http://' + getBgeeHost() + getWebAppPath()}.
      * 			For definitions of URL parts, see http://bl.ocks.org/abernier/3070589.
@@ -88,7 +88,7 @@ function bgeeProperties() {
     
     /**
      * @return  A {@code String} that defines the beginning of the URL to used to retrieve 
-     * 			Bgee images, be.g. 'http://bgee.org/bgee/img/'.
+     * 			Bgee images, be.g. 'https://www.bgee.org/bgee/img/'.
      * 			This method is provided for convenience, it simply concatenates 
      * 			{@code 'http://' + getBgeeHost() + getImgPath()}.
      * 			For definitions of URL parts, see http://bl.ocks.org/abernier/3070589.

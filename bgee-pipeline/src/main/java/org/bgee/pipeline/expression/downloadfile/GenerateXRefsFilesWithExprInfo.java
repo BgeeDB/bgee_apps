@@ -336,7 +336,7 @@ public class GenerateXRefsFilesWithExprInfo {
             throw log.throwing(new IllegalArgumentException("majorVersion and minorVersion can not be null. Add"
                     + " VM arguments -Dorg.bgee.core.version.minor and -Dorg.bgee.core.version.major"));
         }
-        String bgeeURL = new StringBuilder("https://bgee.org/bgee").append(majorBgeeVersion)
+        String bgeeURL = new StringBuilder("https://www.bgee.org/bgee").append(majorBgeeVersion)
                 .append("_").append(minorBgeeVersion).append("/gene/").toString();
 
         //retrieve expression information for each xref (unique geneId, speciesId, uniprotId)

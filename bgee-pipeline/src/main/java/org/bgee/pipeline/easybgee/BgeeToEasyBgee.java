@@ -485,13 +485,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
         orderingAttributes.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
 
-        // generate ordering attributes
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
-                new LinkedHashMap<>();
-        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
-
         // We retrieve calls with all attributes that are not condition parameters.
         EnumSet<CallService.Attribute> attributes = EnumSet.of(CallService.Attribute.GENE,
                 CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
@@ -519,8 +512,30 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                     mapWriter.writeHeader(header);
                 }
 
-                idToBgeeGeneIds.keySet().parallelStream().forEach(geneId -> {
-                    final Stream<ExpressionCall> expressedCalls = serviceFactoryProvider
+//                idToBgeeGeneIds.keySet()
+//                .parallelStream().forEach(geneId -> {
+//                    final Stream<ExpressionCall> expressedCalls = serviceFactoryProvider
+//                            .apply(this.daoManagerSupplier.get())
+//                            .getCallService()
+//                            .loadExpressionCalls(new ExpressionCallFilter(summaryCallTypeQualityFilter,
+//                                    Collections.singleton(new GeneFilter(speciesId, geneId)),
+//                                    //TODO could use Set.of instead of Collections.singleton once Java 9 is installed
+//                                    //on all our servers
+//                                    Collections.singleton(new ConditionFilter(null, 
+//                                            null, 
+//                                            Collections.singleton("GO:0005575"), 
+//                                            Collections.singleton("any"),  
+//                                            Collections.singleton("wild-type"), condFilter)),
+//                                    null, null),
+//                                    attributes, orderingAttributes);
+//                    generateGlobalExpressionLines(expressedCalls,
+//                            attributes.stream().filter(a -> a.isConditionParameter())
+//                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
+//                            idToBgeeGeneIds, condToConditionId, header, processors, mapWriter, file);
+//                });
+                
+                Stream<ExpressionCall> calls = idToBgeeGeneIds.keySet()
+                        .parallelStream().map(geneId -> serviceFactoryProvider
                             .apply(this.daoManagerSupplier.get())
                             .getCallService()
                             .loadExpressionCalls(new ExpressionCallFilter(summaryCallTypeQualityFilter,
@@ -533,13 +548,13 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                                             Collections.singleton("any"),  
                                             Collections.singleton("wild-type"), condFilter)),
                                     null, null),
-                                    attributes, orderingAttributes);
-
-                    generateGlobalExpressionLines(expressedCalls,
-                            attributes.stream().filter(a -> a.isConditionParameter())
-                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
-                            idToBgeeGeneIds.get(geneId), condToConditionId, header, processors, mapWriter, file);
-                });
+                                    attributes, orderingAttributes)
+                ).flatMap(Function.identity());
+              generateGlobalExpressionLines(calls,
+              attributes.stream().filter(a -> a.isConditionParameter())
+              .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
+              idToBgeeGeneIds, condToConditionId, header, processors, mapWriter, file);
+                
             }
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
@@ -548,17 +563,16 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     }
 
     private void generateGlobalExpressionLines(Stream<ExpressionCall> expressionCalls,
-            EnumSet<CallService.Attribute> condParamComb, Integer bgeeGeneId,
+            EnumSet<CallService.Attribute> condParamComb, Map<String, Integer> geneToBgeeGeneId,
             Map<Condition, String> condToConditionId, String[] header, CellProcessor[] processors,
             ICsvMapWriter mapWriter, File file) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", expressionCalls, condParamComb, bgeeGeneId,
-                condToConditionId);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", expressionCalls, condParamComb, geneToBgeeGeneId,
+                condToConditionId, header, processors, mapWriter, file);
 
-        List<Map<String, String>> headerToValuePerGene = new ArrayList<>();
-
-        expressionCalls.forEach(call -> {
+        List<Map<String, String>> headerToValuePerGene = expressionCalls.map(call -> {
             Map<String, String> headerToValuePerCall = new HashMap<>();
-            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(), String.valueOf(bgeeGeneId));
+            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
+                    String.valueOf(geneToBgeeGeneId.get(call.getGene().getGeneId())));
             Condition updatedCond = new Condition(new AnatEntity(call.getCondition().getAnatEntityId()),
                 call.getCondition().getDevStageId() == null ?
                         new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID) :
@@ -585,8 +599,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                     call.getDataPropagation(), condParamComb));
             headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
             headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getPValue().toString());
-            headerToValuePerGene.add(headerToValuePerCall);
-        });
+            return headerToValuePerCall;
+        }).collect(Collectors.toList());
         try {
             writeExpressionPerGeneToFile(headerToValuePerGene, header, processors, mapWriter);
         } catch (IOException e) {

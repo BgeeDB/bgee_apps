@@ -512,30 +512,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                     mapWriter.writeHeader(header);
                 }
 
-//                idToBgeeGeneIds.keySet()
-//                .parallelStream().forEach(geneId -> {
-//                    final Stream<ExpressionCall> expressedCalls = serviceFactoryProvider
-//                            .apply(this.daoManagerSupplier.get())
-//                            .getCallService()
-//                            .loadExpressionCalls(new ExpressionCallFilter(summaryCallTypeQualityFilter,
-//                                    Collections.singleton(new GeneFilter(speciesId, geneId)),
-//                                    //TODO could use Set.of instead of Collections.singleton once Java 9 is installed
-//                                    //on all our servers
-//                                    Collections.singleton(new ConditionFilter(null, 
-//                                            null, 
-//                                            Collections.singleton("GO:0005575"), 
-//                                            Collections.singleton("any"),  
-//                                            Collections.singleton("wild-type"), condFilter)),
-//                                    null, null),
-//                                    attributes, orderingAttributes);
-//                    generateGlobalExpressionLines(expressedCalls,
-//                            attributes.stream().filter(a -> a.isConditionParameter())
-//                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
-//                            idToBgeeGeneIds, condToConditionId, header, processors, mapWriter, file);
-//                });
-                
-                Stream<ExpressionCall> calls = idToBgeeGeneIds.keySet()
-                        .parallelStream().map(geneId -> serviceFactoryProvider
+                idToBgeeGeneIds.keySet()
+                .parallelStream().forEach(geneId -> {
+                    final Stream<ExpressionCall> expressedCalls = serviceFactoryProvider
                             .apply(this.daoManagerSupplier.get())
                             .getCallService()
                             .loadExpressionCalls(new ExpressionCallFilter(summaryCallTypeQualityFilter,
@@ -548,12 +527,12 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                                             Collections.singleton("any"),  
                                             Collections.singleton("wild-type"), condFilter)),
                                     null, null),
-                                    attributes, orderingAttributes)
-                ).flatMap(Function.identity());
-              generateGlobalExpressionLines(calls,
-              attributes.stream().filter(a -> a.isConditionParameter())
-              .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
-              idToBgeeGeneIds, condToConditionId, header, processors, mapWriter, file);
+                                    attributes, orderingAttributes);
+                    generateGlobalExpressionLines(expressedCalls,
+                            attributes.stream().filter(a -> a.isConditionParameter())
+                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
+                            idToBgeeGeneIds, condToConditionId, header, processors, mapWriter, file);
+                });
                 
             }
         } catch (IOException e) {

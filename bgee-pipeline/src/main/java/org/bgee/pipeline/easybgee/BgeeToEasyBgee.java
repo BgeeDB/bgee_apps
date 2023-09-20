@@ -626,7 +626,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     private void extractGeneXRefTable(String directory) {
         log.traceEntry("{}", directory);
         log.info("Start extracting gene XRefs");
-        String[] header = TsvFile.GENE_XREF_OUTPUT_FILE.columnName.values().toArray(String[]::new);
+        String[] header = TsvFile.GENE_XREF_OUTPUT_FILE.columnName.keySet().toArray(String[]::new);
 
 
         GeneXRefTOResultSet allGeneXRefsTOs = daoManagerSupplier.get().getGeneXRefDAO()
@@ -637,6 +637,13 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 .getAllGenes().stream().collect(Collectors.toMap(s -> s.getId(), s -> s));
         Map<Integer, SpeciesTO> speciesBySpeciesId = daoManagerSupplier.get().getSpeciesDAO()
                 .getAllSpecies(null).stream().collect(Collectors.toMap(s -> s.getId(), s -> s));
+        // In easybgee we do not insert same info as in the dataSource table of Bgee DB. Then, it is possible
+        // to have duplicated XRef URLs for the same gene. As XRefURLs are part of the primary key it is problematic.
+        // This problem appears when a dataSource has an XRefUrl with the pattern [gene_id] and several
+        // xref_id exist for the same gene and datasource.
+        // In order to solve that issue we check xrefs coming from a datasource with [gene_id] pattern
+        // If one gene already has an xrefUrl associated to it, then the corresponding xref is not inserted again.
+        Map<Integer, Set<String>> manageDuplicatedXrefs = new HashMap<>();
         List<Map<String, String>> allGeneXRefsInformation = allGeneXRefsTOs.stream().map(geneXRef -> {
             Map<String, String> headerToValue = new HashMap<>();
             headerToValue.put(header[0], String.valueOf(geneXRef.getBgeeGeneId()));
@@ -653,6 +660,15 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             if (dataSourceXRefUrl != null && dataSourceXRefUrl.contains("[gene_id]")) {
                 dataSourceXRefUrl = dataSourceXRefUrl.replace("[gene_id]",
                         geneByBgeeGeneId.get(geneXRef.getBgeeGeneId()).getGeneId());
+                if (manageDuplicatedXrefs.get(geneXRef.getBgeeGeneId()) != null &&
+                        manageDuplicatedXrefs.get(geneXRef.getBgeeGeneId()).contains(dataSourceXRefUrl)) {
+                    return null;
+                }
+                Set<String> xrefs = manageDuplicatedXrefs.containsKey(geneXRef.getBgeeGeneId()) ?
+                        manageDuplicatedXrefs.get(geneXRef.getBgeeGeneId()) :
+                        new HashSet<>();
+                xrefs.add(dataSourceXRefUrl);
+                manageDuplicatedXrefs.put(geneXRef.getBgeeGeneId(), xrefs);
             }
             if (dataSourceXRefUrl != null && dataSourceXRefUrl.contains("[xref_id]")) {
                 dataSourceXRefUrl = dataSourceXRefUrl.replace("[xref_id]", geneXRef.getXRefId());
@@ -971,7 +987,10 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                                     throw log.throwing(new IllegalArgumentException(
                                             "For the moment we only take into account VARCHAR and TEXT "
                                                     + "sql data types to transform null column in the TSV file "
-                                                    + "to empty String in the database " + customerMap.toString()));
+                                                    + "to empty String in the database " + customerMap.toString()
+                                                    + " For column " + tsvFile.getColumnName().get(columnId)
+                                                    + " columnId " + columnId + " header " + header.toString() + " processor "
+                                                    + processors.toString() + " columnNumber " + columnNumber));
                                 }
                             } else {
                                 throw log.throwing(new IllegalArgumentException(

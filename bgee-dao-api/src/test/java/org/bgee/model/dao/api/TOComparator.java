@@ -17,7 +17,6 @@ import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
@@ -171,8 +170,6 @@ public class TOComparator {
                     compareId));
         } else if (to1 instanceof GlobalExpressionCallDataTO) {
             return log.traceExit(areTOsEqual((GlobalExpressionCallDataTO) to1, (GlobalExpressionCallDataTO) to2));
-        } else if (to1 instanceof ExperimentExpressionTO) {
-            return log.traceExit(areTOsEqual((ExperimentExpressionTO) to1, (ExperimentExpressionTO) to2));
         } else if (to1 instanceof DiffExpressionCallTO) {
             return log.traceExit(areTOsEqual((DiffExpressionCallTO) to1, (DiffExpressionCallTO) to2, 
                     compareId));
@@ -962,32 +959,6 @@ public class TOComparator {
                 areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
                 areBigDecimalEquals(to1.getRankNorm(), to2.getRankNorm()) &&
                 areBigDecimalEquals(to1.getWeightForMeanRank(), to2.getWeightForMeanRank())) {
-            return log.traceExit(true);
-        }
-        return log.traceExit(false);
-    }
-
-    /**
-     * Method to compare two {@code ExperimentExpressionTO}s, to check for complete equality of each
-     * attribute. 
-     * <p>
-     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
-     * will not be used for comparison.
-     * 
-     * @param to1       An {@code ExperimentExpressionTO} to be compared to {@code to2}.
-     * @param to2       An {@code ExperimentExpressionTO} to be compared to {@code to1}.
-     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
-     */
-    private static boolean areTOsEqual(ExperimentExpressionTO to1, ExperimentExpressionTO to2) {
-        log.entry(to1, to2);
-        if (Objects.equals(to1.getExpressionId(), to2.getExpressionId()) && 
-                Objects.equals(to1.getExperimentId(), to2.getExperimentId()) && 
-                Objects.equals(to1.getPresentHighCount(), to2.getPresentHighCount()) && 
-                Objects.equals(to1.getPresentLowCount(), to2.getPresentLowCount()) && 
-                Objects.equals(to1.getAbsentHighCount(), to2.getAbsentHighCount()) &&
-                Objects.equals(to1.getAbsentLowCount(), to2.getAbsentLowCount()) &&
-                Objects.equals(to1.getCallDirection(), to2.getCallDirection()) &&
-                Objects.equals(to1.getCallQuality(), to2.getCallQuality())) {
             return log.traceExit(true);
         }
         return log.traceExit(false);

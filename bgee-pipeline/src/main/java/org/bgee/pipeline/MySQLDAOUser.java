@@ -15,7 +15,6 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotation
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLDiffExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
@@ -190,12 +189,6 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
         return (MySQLRawExpressionCallDAO) this.manager.getRawExpressionCallDAO();
-    }
-    /**
-     * @return  A {@code MySQLExperimentExpressionDAO}.
-     */
-    protected MySQLExperimentExpressionDAO getExperimentExpressionDAO() {
-        return (MySQLExperimentExpressionDAO) this.manager.getExperimentExpressionDAO();
     }
     /**
      * @return  A {@code MySQLAnatEntityDAO}.

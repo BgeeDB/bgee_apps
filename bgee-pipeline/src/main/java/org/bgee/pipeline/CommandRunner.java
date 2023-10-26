@@ -15,7 +15,6 @@ import org.bgee.pipeline.easybgee.BgeeToEasyBgee;
 import org.bgee.pipeline.expression.GenoFishProject;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
-import org.bgee.pipeline.expression.downloadfile.GenerateInsertGeneStats;
 import org.bgee.pipeline.expression.downloadfile.GenerateXRefsFilesWithExprInfo;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateBioSODAFile;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateOncoMXFile;
@@ -304,9 +303,6 @@ public class CommandRunner {
         case "GenerateXRefs":
             GenerateXRefsFilesWithExprInfo.main(newArgs);
             break;
-        case "GenerateInsertGeneStats":
-            GenerateInsertGeneStats.main(newArgs);
-            break;
 
         //---------- Other collaborations -----------
         case "GenoFishProject":
@@ -352,6 +348,14 @@ public class CommandRunner {
             return log.traceExit(true);
         }
         return log.traceExit(false);
+    }
+
+    public static Integer parseArgumentAsInteger(String arg) {
+        log.traceEntry("{}", arg);
+        if (arg == null || arg.trim().equals(EMPTY_ARG)) {
+            return log.traceExit((Integer) null);
+        }
+        return log.traceExit(Integer.parseInt(arg));
     }
 
     /**

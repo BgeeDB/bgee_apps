@@ -31,7 +31,7 @@ implements RNASeqLibraryAnnotatedSampleDAO{
 
     private final static Logger log = LogManager.getLogger(
             MySQLRNASeqLibraryAnnotatedSampleDAO.class.getName());
-    public final static String TABLE_NAME = "rnaSeqLibraryAnnotatedSampleDev";
+    public final static String TABLE_NAME = "rnaSeqLibraryAnnotatedSample";
 
     public MySQLRNASeqLibraryAnnotatedSampleDAO(MySQLDAOManager manager) 
             throws IllegalArgumentException {
@@ -84,10 +84,13 @@ implements RNASeqLibraryAnnotatedSampleDAO{
 
         final DAOProcessedRawDataFilter<Integer> processedFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);
-        final Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
-                .unmodifiableSet(attrs == null || attrs.isEmpty()?
+        final Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> clonedAttrs =
+                attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(RNASeqLibraryAnnotatedSampleDAO.Attribute.class):
-                    EnumSet.copyOf(attrs));
+                    EnumSet.copyOf(attrs);
+        //We need to add any attributes that will be requested for ordering,
+        //otherwise it produces a SQL exception
+        clonedAttrs.add(RNASeqLibraryAnnotatedSampleDAO.Attribute.RNASEQ_LIBRARY_ID);
 
         StringBuilder sb = new StringBuilder();
 
@@ -142,10 +145,9 @@ implements RNASeqLibraryAnnotatedSampleDAO{
             log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                Integer libraryAnnotatedSampleId = null,  conditionId = null, allReadCount = null,
-                        allUMIsCount = null, mappedReadCount = null, mappedUMIsCount = null,
-                        minReadLength = null, maxReadLength = null, distinctRankCount = null;
-                String libraryId = null, barcode = null, genotype = null;
+                Integer libraryAnnotatedSampleId = null,  conditionId = null,
+                        allUMIsCount = null, mappedUMIsCount = null, distinctRankCount = null;
+                String libraryId = null, barcode = null;
                 BigDecimal meanRefIntergenicDistribution = null, sdRefIntergenicDistribution = null,
                         tmmFactor = null, abundanceThreshold = null, allGenesPercentPresent = null,
                         proteinCodingGenesPercentPresent = null, 
@@ -169,14 +171,8 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                             .ALL_GENES_PERCENT_PRESENT.getTOFieldName())) {
                         allGenesPercentPresent = currentResultSet.getBigDecimal(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
-                            .ALL_READ_COUNT.getTOFieldName())) {
-                        allReadCount = currentResultSet.getInt(column.getKey());
-                    } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .BARCODE.getTOFieldName())) {
                         barcode = currentResultSet.getString(column.getKey());
-                    } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
-                            .GENOTYPE.getTOFieldName())) {
-                        genotype = currentResultSet.getString(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .ALL_UMIS_COUNT.getTOFieldName())) {
                         allUMIsCount = currentResultSet.getInt(column.getKey());
@@ -191,24 +187,15 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                         intergenicRegionsPercentPresent = currentResultSet
                                 .getBigDecimal(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
-                            .MAPPED_READ_COUNT.getTOFieldName())) {
-                        mappedReadCount = currentResultSet.getInt(column.getKey());
-                    } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .MAPPED_UMIS_COUNT.getTOFieldName())) {
                         mappedUMIsCount = currentResultSet.getInt(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .MAX_RANK.getTOFieldName())) {
                         maxRank = currentResultSet.getBigDecimal(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
-                            .MAX_READ_LENGTH.getTOFieldName())) {
-                        maxReadLength = currentResultSet.getInt(column.getKey());
-                    } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .MEAN_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION.getTOFieldName())) {
                         meanRefIntergenicDistribution = currentResultSet
                                 .getBigDecimal(column.getKey());
-                    } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
-                            .MIN_READ_LENGTH.getTOFieldName())) {
-                        minReadLength = currentResultSet.getInt(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .MULTIPLE_INDIVIDUAL_SAMPLE.getTOFieldName())) {
                         multipleLibraryIndividualSample = currentResultSet
@@ -235,12 +222,11 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                     }
                 }
                 return log.traceExit(new RNASeqLibraryAnnotatedSampleTO(libraryAnnotatedSampleId,
-                        libraryId, conditionId, barcode, genotype, unit,
+                        libraryId, conditionId, barcode, unit,
                         meanRefIntergenicDistribution, sdRefIntergenicDistribution, tmmFactor,
                         abundanceThreshold, allGenesPercentPresent, proteinCodingGenesPercentPresent,
-                        intergenicRegionsPercentPresent, pValueThreshold, allReadCount, allUMIsCount,
-                        mappedReadCount, mappedUMIsCount, minReadLength, maxReadLength, 
-                        maxRank, distinctRankCount, multipleLibraryIndividualSample));
+                        intergenicRegionsPercentPresent, pValueThreshold, allUMIsCount,
+                        mappedUMIsCount, maxRank, distinctRankCount, multipleLibraryIndividualSample));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

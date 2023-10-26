@@ -23,14 +23,12 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnotatedSampleDAO.Attribute> {
 
     /**
-     * {@code Enum} used to define the attributes to populate in the {@code RNASeqLibraryTO}s
-     * obtained from this {@code RNASeqLibraryDAO}.
+     * {@code Enum} used to define the attributes to populate in the {@code RNASeqLibraryAnnotatedSampleTO}s
+     * obtained from this {@code RNASeqLibraryAnnotatedSampleDAO}.
      * <ul>
      * <li>{@code LIBRARY_ANNOTATED_ID}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getLibraryAnnotatedSampleId()}.
      * <li>{@code LIBRARY_ID}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getLibraryId()}.
      * <li>{@code CONDITION_ID}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getConditionId()}.
-     * <li>{@code BARCODE}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getBarcode()}.
-     * <li>{@code GENOTYPE}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getGenotype()}.
      * <li>{@code ABUNDANCE_UNIT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getAbundanceUnit()}.
      * <li>{@code MEAN_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMeanRefIntergenicDistribution()}.
      * <li>{@code SD_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getSdRefIntergenicDistribution()}.
@@ -40,31 +38,26 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
      * <li>{@code PROTEIN_CODING_GENES_PERCENT_PRESENT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getProteinCodingGenesPercentPresent()}.
      * <li>{@code INTERGENIC_REGION_PERCENT_PRESENT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getIntergenicRegionsPercentPresent()}.
      * <li>{@code PVALUE_THRESHOLD}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getPValueThreshold()}.
-     * <li>{@code ALL_READ_COUNT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getAllReadCount()}.
      * <li>{@code ALL_UMIS_COUNT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getAllUmisCount()}.
-     * <li>{@code MAPPED_READ_COUNT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMappedReadCount()}.
      * <li>{@code MAPPED_UMIS_COUNT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMappedUmisCount()}.
-     * <li>{@code MIN_READ_LENGTH}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMinReadLength()}.
-     * <li>{@code MAX_READ_LENGTH}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMaxReadLength()}.
      * <li>{@code MAX_RANK}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMaxRank()}.
      * <li>{@code DISTINCT_RANK_COUNT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getDistinctRankCount()}.
      * <li>{@code MULTIPLE_INDIVIDUAL_SAMPLE}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMultipleIndividualSample()}.
+     * <li>{@code BARCODE}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getBarcode()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
         ID("rnaSeqLibraryAnnotatedSampleId"), RNASEQ_LIBRARY_ID("rnaSeqLibraryId"),
-        CONDITION_ID("conditionId"), BARCODE("barcode"), GENOTYPE("genotype"), ABUNDANCE_UNIT("abundanceUnit"),
+        CONDITION_ID("conditionId"), ABUNDANCE_UNIT("abundanceUnit"),
         MEAN_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION("meanAbundanceReferenceIntergenicDistribution"),
         SD_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION("sdAbundanceReferenceIntergenicDistribution"), TMM_FACTOR("tmmFactor"),
         ABUNDANCE_THRESHOLD("abundanceThreshold"), ALL_GENES_PERCENT_PRESENT("allGenesPercentPresent"),
         PROTEIN_CODING_GENES_PERCENT_PRESENT("proteinCodingGenesPercentPresent"),
         INTERGENIC_REGION_PERCENT_PRESENT("intergenicRegionsPercentPresent"),
-        PVALUE_THRESHOLD("pValueThreshold"), ALL_READ_COUNT("allReadsCount"),
-        ALL_UMIS_COUNT("allUMIsCount"), MAPPED_READ_COUNT("mappedReadsCount"),
-        MAPPED_UMIS_COUNT("mappedUMIsCount"), MIN_READ_LENGTH("minReadLength"),
-        MAX_READ_LENGTH("maxReadLength"), MAX_RANK("libraryMaxRank"),
-        DISTINCT_RANK_COUNT("libraryDistinctRankCount"),
-        MULTIPLE_INDIVIDUAL_SAMPLE("multipleLibraryIndividualSample");
+        PVALUE_THRESHOLD("pValueThreshold"), ALL_UMIS_COUNT("allUMIsCount"),
+        MAPPED_UMIS_COUNT("mappedUMIsCount"), MAX_RANK("rnaSeqLibraryAnnotatedSampleMaxRank"),
+        DISTINCT_RANK_COUNT("rnaSeqLibraryAnnotatedSampleDistinctRankCount"),
+        MULTIPLE_INDIVIDUAL_SAMPLE("multipleLibraryIndividualSample"), BARCODE("barcode");
         
         /**
          * A {@code String} that is the corresponding field name in {@code ESTTO} class.
@@ -233,29 +226,13 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
 
         private final BigDecimal pValueThreshold;
         /**
-         * An {@code int} representing the count of reads present in this library.
-         */
-        private final Integer allReadCount;
-        /**
          * An {@code int} representing the count of UMIs present in this library.
          */
         private final Integer allUMIsCount;
         /**
-         * An {@code int} representing the count of reads mapped to anything.
-         */
-        private final Integer mappedReadCount;
-        /**
          * An {@code int} representing the count of UMIs mapped to anything.
          */
         private final Integer mappedUMIsCount;
-        /**
-         * An {@code int} representing the minimum length in bases of reads aligned in this library.
-         */
-        private final Integer minReadLength;
-        /**
-         * An {@code int} representing the maximum length in bases of reads aligned in this library.
-         */
-        private final Integer maxReadLength;
         /**
          * A {@code LibraryType} representing the type of this library.
          */
@@ -263,24 +240,21 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         private final Integer distinctRankCount;
         private final Boolean multipleLibraryIndividualSample;
         private final String barcode;
-        private final String genotype;
 
         /**
          * Default constructor. 
          */
         public RNASeqLibraryAnnotatedSampleTO(Integer libraryAnnotatedSampleId,String libraryId, Integer conditionId,   String barcode,
-                String genotype, AbundanceUnit unit, BigDecimal meanAbundanceRefIntergenicDistribution, 
+                AbundanceUnit unit, BigDecimal meanAbundanceRefIntergenicDistribution,
                 BigDecimal sdAbundanceRefIntergenicDistribution, BigDecimal tmmFactor, BigDecimal abundanceThreshold,
                 BigDecimal allGenesPercentPresent, BigDecimal proteinCodingGenesPercentPresent,
-                BigDecimal intergenicRegionsPercentPresent, BigDecimal  pValueThreshold, Integer allReadCount, 
-                Integer allUMIsCount, Integer mappedReadCount, Integer mappedUMIsCount, Integer minReadLength,
-                Integer maxReadLength, BigDecimal maxRank, 
+                BigDecimal intergenicRegionsPercentPresent, BigDecimal  pValueThreshold,
+                Integer allUMIsCount, Integer mappedUMIsCount, BigDecimal maxRank,
                 Integer distinctRankCount, Boolean multipleLibraryIndividualSample) {
             super(libraryAnnotatedSampleId);
             this.libraryId = libraryId;
             this.conditionId = conditionId;
             this.barcode = barcode;
-            this.genotype = genotype;
             this.abundanceUnit = unit;
             this.meanAbundanceRefIntergenicDistribution = meanAbundanceRefIntergenicDistribution;
             this.sdAbundanceRefIntergenicDistribution = sdAbundanceRefIntergenicDistribution;
@@ -290,12 +264,8 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
             this.proteinCodingGenesPercentPresent = proteinCodingGenesPercentPresent;
             this.intergenicRegionsPercentPresent = intergenicRegionsPercentPresent;
             this.pValueThreshold = pValueThreshold;
-            this.allReadCount = allReadCount;
             this.allUMIsCount = allUMIsCount;
-            this.mappedReadCount = mappedReadCount;
             this.mappedUMIsCount = mappedUMIsCount;
-            this.minReadLength = minReadLength;
-            this.maxReadLength = maxReadLength;
             this.maxRank = maxRank;
             this.distinctRankCount = distinctRankCount;
             this.multipleLibraryIndividualSample = multipleLibraryIndividualSample;
@@ -335,23 +305,11 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         public BigDecimal getpValueThreshold() {
             return pValueThreshold;
         }
-        public Integer getAllReadCount() {
-            return allReadCount;
-        }
         public Integer getAllUMIsCount() {
             return allUMIsCount;
         }
-        public Integer getMappedReadCount() {
-            return mappedReadCount;
-        }
         public Integer getMappedUMIsCount() {
             return mappedUMIsCount;
-        }
-        public Integer getMinReadLength() {
-            return minReadLength;
-        }
-        public Integer getMaxReadLength() {
-            return maxReadLength;
         }
         public BigDecimal getMaxRank() {
             return maxRank;
@@ -365,9 +323,6 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         public String getBarcode() {
             return barcode;
         }
-        public String getGenotype() {
-            return genotype;
-        }
 
         @Override
         public String toString() {
@@ -378,11 +333,11 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
                     + abundanceThreshold + ", allGenesPercentPresent=" + allGenesPercentPresent
                     + ", proteinCodingGenesPercentPresent=" + proteinCodingGenesPercentPresent
                     + ", intergenicRegionsPercentPresent=" + intergenicRegionsPercentPresent + ", pValueThreshold="
-                    + pValueThreshold + ", allReadCount=" + allReadCount + ", allUMIsCount=" + allUMIsCount
-                    + ", mappedReadCount=" + mappedReadCount + ", mappedUMIsCount=" + mappedUMIsCount
-                    + ", minReadLength=" + minReadLength + ", maxReadLength=" + maxReadLength + ", maxRank=" + maxRank
-                    + ", distinctRankCount=" + distinctRankCount + ", multipleLibraryIndividualSample="
-                    + multipleLibraryIndividualSample + ", barcode=" + barcode + ", genotype=" + genotype + "]";
+                    + pValueThreshold + ", allUMIsCount=" + allUMIsCount + ", mappedUMIsCount=" + mappedUMIsCount
+                    + ", maxRank=" + maxRank + ", distinctRankCount=" + distinctRankCount
+                    + ", multipleLibraryIndividualSample=" + multipleLibraryIndividualSample + ", barcode=" + barcode
+                    + "]";
         }
+
     }
 }

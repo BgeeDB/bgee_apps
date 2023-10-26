@@ -4,14 +4,15 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
@@ -37,7 +38,7 @@ implements RNASeqResultAnnotatedSampleDAO {
      */
     private final static Logger log = 
             LogManager.getLogger(MySQLRNASeqResultAnnotatedSampleDAO.class.getName());
-    public final static String TABLE_NAME = "rnaSeqLibraryAnnotatedSampleGeneResultDev";
+    public final static String TABLE_NAME = "rnaSeqLibraryAnnotatedSampleGeneResult";
 
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
@@ -55,8 +56,24 @@ implements RNASeqResultAnnotatedSampleDAO {
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
             Long offset, Integer limit,
-            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attributes);
+            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes,
+            LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
+                    throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
+                attributes, orderingAttributes);
+        return log.traceExit(this.getResultAnnotatedSamples(rawDataFilters, isSingleCell, false,
+                offset, limit, attributes, orderingAttributes));
+    }
+
+    @Override
+    public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
+            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
+            boolean notNullExpressionId, Long offset, Integer limit,
+            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes,
+            LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
+                    throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, notNullExpressionId,
+                offset, limit, attributes, orderingAttributes);
         checkOffsetAndLimit(offset, limit);
 
         //It is very ugly, but for performance reasons, we use two queries:
@@ -86,9 +103,16 @@ implements RNASeqResultAnnotatedSampleDAO {
             }
         }
 
-        final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
-                .unmodifiableSet(attributes == null || attributes.isEmpty()?
-                EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes));
+        final LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs =
+                orderingAttributes == null? new LinkedHashMap<>(): new LinkedHashMap<>(orderingAttributes);
+        final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs =
+                attributes == null || attributes.isEmpty()?
+                EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes);
+        //We need to add any attributes that were requested for ordering,
+        //otherwise it produces a SQL exception
+        clonedAttrs.addAll(clonedOrderingAttrs.keySet().stream()
+                .map(oa -> oa.getCorrespondingAttribute())
+                .collect(Collectors.toSet()));
 
         StringBuilder sb = new StringBuilder();
 
@@ -105,6 +129,7 @@ implements RNASeqResultAnnotatedSampleDAO {
                 Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
+        boolean whereClause = false;
         if (!processedFilters.getRawDataFilters().isEmpty() ||
                 !processedFilters.getFilterToCallTableAssayIds().isEmpty()) {
             sb.append(" WHERE ")
@@ -113,14 +138,34 @@ implements RNASeqResultAnnotatedSampleDAO {
                     //isSingleCell: at this point, it was already considered in the assay IDs
                     //obtained through processFilterForCallTableAssayIds
                     null));
+            whereClause = true;
+        }
+        if (notNullExpressionId) {
+            sb.append(whereClause ? " AND ": " WHERE ");
+            sb.append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.Attribute
+                    .EXPRESSION_ID.getTOFieldName())
+                    .append(" IS NOT NULL");
         }
 
         // generate ORDER BY
-        sb.append(" ORDER BY ")
-        .append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.Attribute
-                .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName())
-        .append(", ").append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.Attribute
-                .BGEE_GENE_ID.getTOFieldName());
+        sb.append(" ORDER BY ");
+        //Default ordering, ordered by primary key for faster results
+        if (clonedOrderingAttrs.isEmpty()) {
+            sb.append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.OrderingAttribute
+                  .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName())
+              .append(", ")
+              .append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.OrderingAttribute
+                  .BGEE_GENE_ID.getTOFieldName());
+        } else {
+            sb.append(clonedOrderingAttrs.entrySet().stream()
+                    .map(e -> {
+                        StringBuilder sb2 = new StringBuilder();
+                        sb2.append(TABLE_NAME).append(".").append(e.getKey().getTOFieldName())
+                           .append(" ").append(e.getValue().getSqlString());
+                        return sb2.toString();
+                    })
+                    .collect(Collectors.joining(", ")));
+        }
 
         //generate offset and limit
         if (limit != null) {
@@ -163,6 +208,7 @@ implements RNASeqResultAnnotatedSampleDAO {
                 for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                     if (column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName())) {
+                        //LIBRARY_ANNOTATED_SAMPLE_ID cannot be null
                         rnaSeqLibraryAnnotatedSampleId = currentResultSet.getInt(column.getKey());
                     } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .ABUNDANCE.getTOFieldName())) {
@@ -172,10 +218,14 @@ implements RNASeqResultAnnotatedSampleDAO {
                         abundanceUnit = currentResultSet.getString(column.getKey());
                     } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .BGEE_GENE_ID.getTOFieldName())) {
+                        //BGEE_GENE_ID cannot be null
                         bgeeGeneId = currentResultSet.getInt(column.getKey());
                     } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .EXPRESSION_ID.getTOFieldName())) {
                         expressionId = currentResultSet.getLong(column.getKey());
+                        if (currentResultSet.wasNull()) {
+                            expressionId = null;
+                        }
                     } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .PVALUE.getTOFieldName())) {
                         pValue = currentResultSet.getBigDecimal(column.getKey());

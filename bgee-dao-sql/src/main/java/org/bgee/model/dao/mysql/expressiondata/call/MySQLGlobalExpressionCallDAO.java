@@ -708,14 +708,10 @@ implements GlobalExpressionCallDAO {
                         }
                         sb.append(".").append(a.getAttribute().getFieldName());
                     }
-                    switch(entry.getValue()) {
-                        case DESC:
-                            sb.append(" desc");
-                            break;
-                        case ASC:
-                            sb.append(" asc");
-                            break;
-                    }
+
+                    // asc/desc
+                    sb.append(" ").append(entry.getValue().getSqlString());
+
                     return sb.toString();
                 })
                 .collect(Collectors.joining(", ", " ORDER BY ", "")));

@@ -133,7 +133,8 @@ public interface SamplePValueDAO extends DAO<SamplePValueDAO.Attribute> {
      * @version Bgee 15.0, Mar. 2021
      * @since   Bgee 15.0, Mar. 2021
      */
-    public interface SamplePValueTOResultSet<T, U> extends DAOResultSet<SamplePValueTO<T, U>> {
+    public interface SamplePValueTOResultSet<T extends Comparable<T>, U extends Comparable<U>>
+    extends DAOResultSet<SamplePValueTO<T, U>> {
     }
 
     /**
@@ -146,7 +147,7 @@ public interface SamplePValueDAO extends DAO<SamplePValueDAO.Attribute> {
      * @version Bgee 15.0, Mar 2021
      * @since   Bgee 15.0, Mar 2021
      */
-    public class SamplePValueTO<T, U> extends TransferObject {
+    public class SamplePValueTO<T extends Comparable<T>, U extends Comparable<U>> extends TransferObject {
         private static final long serialVersionUID = -84474173001782925L;
 
         private final Long expressionId;

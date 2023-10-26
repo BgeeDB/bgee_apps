@@ -27,7 +27,6 @@ import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
@@ -1095,20 +1094,6 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.traceExit(this.getNewGlobalExpressionCallDAO());
     }
-
-    /**
-     * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO ExperimentExpressionDAO}, 
-     * unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code ExperimentExpressionDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO ExperimentExpressionDAO
-     */
-    public ExperimentExpressionDAO getExperimentExpressionDAO() {
-        log.traceEntry();
-        this.checkClosed();
-        return log.traceExit(this.getNewExperimentExpressionDAO());
-    }
     
     /**
      * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO SamplePValueDAO}, 
@@ -1714,14 +1699,6 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code GlobalExpressionCallDAO}
      */
     protected abstract GlobalExpressionCallDAO getNewGlobalExpressionCallDAO();
-    /**
-     * Service provider must return a new 
-     * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO ExperimentExpressionDAO} 
-     * instance when this method is called. 
-     * 
-     * @return  A new {@code ExperimentExpressionDAO}
-     */
-    protected abstract ExperimentExpressionDAO getNewExperimentExpressionDAO();
     /**
      * Service provider must return a new 
      * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO SamplePValueDAO} 

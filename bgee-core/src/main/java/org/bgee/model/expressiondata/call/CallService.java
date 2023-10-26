@@ -3,7 +3,6 @@ package org.bgee.model.expressiondata.call;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -11,7 +10,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -57,7 +55,6 @@ import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.call.CallFilter.DiffExpressionCallFilter;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.call.Condition.ConditionEntities;
 import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -539,303 +536,6 @@ public class CallService extends CallServiceParent {
         return log.traceExit(calls.stream()
                 .filter(c -> !redundantCalls.contains(c))
                 .collect(Collectors.toList()));
-    }
-
-    /**
-     * Retrieve only {@code ExpressionCall}s that have at least a SILVER {@code SummaryQuality} for a given
-     * {@code AnatEntity} AND at least a BRONZE {@code SummaryQuality} for the same calls
-     * taking into account all condition parameters.
-     * These {@code ExpressionCall}s are filtered and ordered by rank using 
-     * {@link ExpressionCall#filterAndOrderCallsByRank(Collection, ConditionGraph)}
-     * 
-     * @param geneFilter    A {@code GeneFilter} targeting a <strong>single gene</strong>
-     *                      for which {@code ExpressionCall}s have to be retrieved
-     * @return              A {@code LinkedHashMap} where keys correspond to the
-     *                      {@code ExpressionCall}s considering only the anat. entity,
-     *                      the associated value being a {@code List} of {@code ExpressionCall}s
-     *                      taking into account all condition parameters,
-     *                      for the same {@code AnatEntity}.
-     * @throws IllegalArgumentException If {@code geneFilter} targets not one and only one gene.
-     */
-    public LinkedHashMap<ExpressionCall, List<ExpressionCall>>
-    loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter geneFilter) throws IllegalArgumentException {
-        log.traceEntry("{}", geneFilter);
-        return log.traceExit(this.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(geneFilter, null));
-    }
-    /**
-     * Same method as {@link #loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter)},
-     * but with an already computed {@code ConditionGraph} provided. This method is used for cases
-     * where computations for several genes will be requested independently, to avoid the need of creating
-     * a {@code ConditionGraph} for each gene. If provided, the {@code Condition}s
-     * in the {@code ConditionGraph} should have the same condition parameters as the {@code Condition}s
-     * in the returned {@code ExpressionCall}s.
-     * 
-     * @param geneFilter    A {@code GeneFilter} targeting a <strong>single gene</strong>
-     *                      for which {@code ExpressionCall}s have to be retrieved.
-     * @param condGraph     A {@code ConditionGraph} for the species the requested gene belongs to,
-     *                      that will be used to order calls and filter redundant calls.
-     *                      Can be {@code null} if the {@code ConditionGraph} needs to be computed
-     *                      by this method.
-     * @return              A {@code LinkedHashMap} where keys correspond to the
-     *                      {@code ExpressionCall}s considering only the anat. entity,
-     *                      the associated value being a {@code List} of {@code ExpressionCall}s
-     *                      taking into account all condition parameters,
-     *                      for the same {@code AnatEntity}.
-     * @throws IllegalArgumentException If {@code geneFilter} targets not one and only one gene.
-     */
-    public LinkedHashMap<ExpressionCall, List<ExpressionCall>>
-    loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter geneFilter, ConditionGraph condGraph)
-            throws IllegalArgumentException {
-        log.traceEntry("{}, {}", geneFilter, condGraph);
-
-        //**************************************************
-        // Sanity checks and prepare arguments
-        //**************************************************
-        if (geneFilter.getGeneIds().size() != 1) {
-            throw log.throwing(new IllegalArgumentException("GeneFilter not targeting only one gene"));
-        }
-
-        EnumSet<CallService.Attribute> baseAttributes = EnumSet.of(
-                CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                CallService.Attribute.CELL_TYPE_ID,
-                CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
-                CallService.Attribute.MEAN_RANK, CallService.Attribute.EXPRESSION_SCORE,
-                //We need the p-value info per data type to know which data types
-                //produced the calls
-                CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE,
-                //We also want to know the global FDR-corrected p-value
-                CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
-
-        //**************************************************
-        // Load silver organ calls
-        //**************************************************
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderByOrgan =
-                new LinkedHashMap<>();
-        orderByOrgan.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
-        orderByOrgan.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
-        orderByOrgan.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
-        
-        List<ExpressionCall> organCalls = this
-                .loadExpressionCalls(
-                        new ExpressionCallFilter(ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
-                                Collections.singleton(geneFilter),
-                                ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT),
-                        baseAttributes,
-                        orderByOrgan)
-                .collect(Collectors.toList());
-        if (organCalls.isEmpty()) {
-            log.debug("No calls for gene {}", geneFilter.getGeneIds().iterator().next());
-            return log.traceExit(new LinkedHashMap<>());
-        }
-
-        //**************************************************
-        // Load bronze calls with all condition Parameters
-        //**************************************************
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderByAllCond =
-                new LinkedHashMap<>();
-        orderByAllCond.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
-        orderByAllCond.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
-        orderByAllCond.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
-        orderByAllCond.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
-        orderByAllCond.put(CallService.OrderingAttribute.SEX_ID, Service.Direction.ASC);
-        orderByAllCond.put(CallService.OrderingAttribute.STRAIN_ID, Service.Direction.ASC);
-        
-        EnumSet<CallService.Attribute> allCondParamAttrs = EnumSet.copyOf(baseAttributes);
-        allCondParamAttrs.addAll(CallService.Attribute.getAllConditionParameters());
-        ConditionEntities condEntities = new ConditionEntities(organCalls.stream()
-                .map(c -> c.getCondition())
-                .collect(Collectors.toSet()));
-
-        final List<ExpressionCall> allCondParamsCalls = this
-                .loadExpressionCalls(
-                        new ExpressionCallFilter(ExpressionCallFilter.BRONZE_PRESENT_ARGUMENT,
-                                Collections.singleton(geneFilter),
-                                Collections.singleton(new ConditionFilter(condEntities, null)),
-                                null, ExpressionCallFilter.ALL_COND_PARAMS_OBSERVED_DATA_ARGUMENT),
-                        allCondParamAttrs,
-                        orderByAllCond)
-                .collect(Collectors.toList());
-        
-        return log.traceExit(this.loadCondCallsBySilverAnatEntityCalls(
-                organCalls, allCondParamsCalls, true, condGraph));
-    }
-
-    /**
-     * Same methods as {@link #loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter)}
-     * but with the {@code ExpressionCall}s already retrieved. This is a helper method
-     * for cases where the {@code ExpressionCall}s have already been retrieved
-     * for other purpose. If {@code callsFiltered} is {@code false}, the calls will be filtered
-     * to keep only the {@code organCalls} with "expressed" calls and quality higher than "bronze",
-     * and only the {@code organStageCalls} with "expressed" calls (with any quality).
-     * <p>
-     * An already computed {@code ConditionGraph} can be provided, for cases where computations
-     * for several genes will be requested independently, to avoid the need of creating
-     * a {@code ConditionGraph} for each gene. A {@code null} {@code ConditionGraph} can be provided
-     * if it is requested to be computed by this method. If provided, the {@code Condition}s
-     * in the {@code ConditionGraph} should have the same condition parameters as the {@code Condition}s
-     * in the {@code ExpressionCall}s in {@code conditionCalls}.
-     *
-     * @param orderedAnatEntityCalls    A {@code List} of {@code ExpressionCall}s with {@code Condition}s
-     *                                  considering only the anat. entity parameters,
-     *                                  ordered by ranks. They must contain information
-     *                                  of expression state, quality, and rank, otherwise an
-     *                                  {@code IllegalArgumentException} is thrown.
-     * @param orderedConditionCalls     A {@code List} of {@code ExpressionCall}s with {@code Condition}s
-     *                                  considering all parameters, ordered by ranks.
-     *                                  They must contain information of expression state,
-     *                                  quality, and rank, otherwise an
-     *                                  {@code IllegalArgumentException} is thrown.
-     * @param callsFiltered     A {@code Boolean} that should be {@code true} if the calls
-     *                          were already filtered for the appropriate expression status
-     *                          and qualities, {@code false} if the calls need to be filtered.
-     * @param condGraph         A {@code ConditionGraph} for the species the requested gene belongs to,
-     *                          that will be used to order condition calls and filter redundant calls.
-     *                          Can be {@code null} if the {@code ConditionGraph} needs to be computed
-     *                          by this method.
-     * @return                  A {@code LinkedHashMap} where keys correspond to the valid
-     *                          {@code ExpressionCall}s in {@code anatEntityCalls}, the associated value
-     *                          being a {@code List} of valid {@code ExpressionCall}s from
-     *                          {@code conditionCalls}, for the same {@code AnatEntity}.
-     * @throws IllegalArgumentException If the {@code ExpressionCall}s do not contain the information
-     *                                  needed when filtering them ({@code callsFiltered} set to {@code false})
-     */
-    public LinkedHashMap<ExpressionCall, List<ExpressionCall>>
-    loadCondCallsBySilverAnatEntityCalls(List<ExpressionCall> orderedAnatEntityCalls,
-            List<ExpressionCall> orderedConditionCalls, boolean callsFiltered, ConditionGraph condGraph)
-                    throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}", orderedAnatEntityCalls, orderedConditionCalls,
-                callsFiltered, condGraph);
-
-        //*****************************************************************
-        // Filtering of calls based on CallType and Quality, if requested
-        //*****************************************************************
-        LinkedHashSet<ExpressionCall> filteredOrderedAnatEntityCalls = new LinkedHashSet<>(orderedAnatEntityCalls);
-        if (!callsFiltered) {
-            filteredOrderedAnatEntityCalls = orderedAnatEntityCalls.stream()
-                .filter(c -> {
-                    if (c.getSummaryCallType() == null) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "The provided calls do not have SummaryCallType"));
-                    }
-                    if (c.getSummaryQuality() == null) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "The provided calls do not have SummaryQuality"));
-                    }
-                    if (c.getMeanRank() == null) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "The provided calls do not have rank info"));
-                    }
-                    return c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED) &&
-                            !c.getSummaryQuality().equals(SummaryQuality.BRONZE);
-                })
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        }
-        List<ExpressionCall> filteredOrderedCondCalls = orderedConditionCalls;
-        if (!callsFiltered) {
-            final Set<Condition> anatEntityConds = filteredOrderedAnatEntityCalls.stream()
-                    .map(c -> c.getCondition())
-                    .collect(Collectors.toSet());
-            assert anatEntityConds.stream()
-            .noneMatch(c -> c.getDevStage() != null || c.getSex() != null || c.getStrain() != null);
-
-            filteredOrderedCondCalls = orderedConditionCalls.stream()
-                    .filter(c -> {
-                        if (c.getSummaryCallType() == null) {
-                            throw log.throwing(new IllegalArgumentException(
-                                    "The provided calls do not have SummaryCallType"));
-                        }
-                        if (c.getMeanRank() == null) {
-                            throw log.throwing(new IllegalArgumentException(
-                                    "The provided calls do not have rank info"));
-                        }
-                        if (!c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED)) {
-                            return false;
-                        }
-                        return anatEntityConds.contains(new Condition(c.getCondition().getAnatEntity(),
-                                null, c.getCondition().getCellType(), null, null, c.getCondition().getSpecies()));
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        //*****************************************************************
-        // Ordering calls and identifying redundant calls
-        //*****************************************************************
-        if (filteredOrderedCondCalls.isEmpty()) {
-            log.debug("No condition calls for gene");
-            return log.traceExit(new LinkedHashMap<>());
-        }
-
-        //we need to make sure that the ExpressionCalls are ordered in exactly the same way
-        //for the display and for the clustering, otherwise the display will be buggy,
-        //notably for calls with equal ranks. And we need to take into account
-        //relations between Conditions for filtering them, which would be difficult to achieve
-        //only by a query to the data source. So, we order them anyway.
-        
-        //Cond calls
-        ConditionGraph conditionGraph = condGraph;
-        if (condGraph == null) {
-            conditionGraph = this.getServiceFactory().getConditionGraphService().loadConditionGraph(
-                    filteredOrderedCondCalls.stream()
-                    .map(c -> c.getCondition())
-                    .collect(Collectors.toSet()));
-        }
-        filteredOrderedCondCalls = ExpressionCall.filterAndOrderCallsByRank(filteredOrderedCondCalls,
-                conditionGraph, false);
-        //REDUNDANT COND CALLS
-        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
-                filteredOrderedCondCalls, conditionGraph);
-        
-        //*********************
-        // Grouping
-        //*********************
-        //filter calls and group calls by anat. entity. We need to preserve the order 
-        //of the keys, as we have already sorted the calls by their rank. 
-        //If filterRedundantCalls is true, we completely discard anat. entities 
-        //that have only redundant calls, but if an anat. entity has some non-redundant calls 
-        //and is not discarded, we preserve all its calls, even the redundant ones.
-
-        //First, build a map partial Condition -> conditionCalls
-        Map<Condition, List<ExpressionCall>> condCallsPerAnatEntity =
-                filteredOrderedCondCalls.stream()
-                .map(c -> new AbstractMap.SimpleEntry<>(new Condition(c.getCondition().getAnatEntity(),
-                            null, c.getCondition().getCellType(), null, null, c.getCondition().getSpecies()),
-                        c))
-                .collect(Collectors.toMap(e -> e.getKey(),
-                        e -> new ArrayList<ExpressionCall>(Arrays.asList(e.getValue())),
-                        (v1, v2) -> {v1.addAll(v2); return v1;}));
-        //Now, group
-        return log.traceExit(filteredOrderedAnatEntityCalls.stream()
-                //discard if all calls of an anat. entity are redundant
-                .filter(c -> {
-                    List<ExpressionCall> relatedCondCalls = condCallsPerAnatEntity.get(
-                            c.getCondition());
-                    if (relatedCondCalls == null) {
-                        log.debug("No BRONZE EXPRESSED condition calls in condition: {}",
-                                c.getCondition());
-                        return true;
-                    }
-                    return !redundantCalls.containsAll(relatedCondCalls);
-                })
-                //reconstruct the LinkedHashMap
-                //Type inference hint needed, this code was compiling fine in Eclipse,
-//              //not with maven... See for instance
-//              //https://stackoverflow.com/questions/48135796/java-8-inferred-type-does-not-conform-to-upper-bounds-on-netbean-ide
-                .collect(Collectors.<ExpressionCall, ExpressionCall,
-                      List<ExpressionCall>, LinkedHashMap<ExpressionCall, List<ExpressionCall>>>toMap(
-                        c -> c,
-                        c -> {
-                            List<ExpressionCall> relatedCondCalls = condCallsPerAnatEntity.get(
-                                    c.getCondition());
-                            if (relatedCondCalls == null) {
-                                return new ArrayList<>();
-                            }
-                            return relatedCondCalls;
-                        },
-                        (l1, l2) -> {
-                            throw log.throwing(new AssertionError("Not possible to have key collision"));
-                        }, 
-                        LinkedHashMap::new))
-                );
     }
 
     //XXX: should the loadSingleSpeciesExprAnalysis methods moved to a new service?
@@ -2284,93 +1984,93 @@ public class CallService extends CallServiceParent {
         }
     }
 
-    private static PropagationState mergePropagationStates(PropagationState state1,
-            PropagationState state2) {
-        log.traceEntry("{}, {}", state1, state2);
-
-        if (state1 != null && !ALLOWED_PROP_STATES.contains(state1)) {
-            throw log.throwing(new IllegalArgumentException("Unsupported PropagationState: "
-                    + state1));
-        }
-        if (state2 != null && !ALLOWED_PROP_STATES.contains(state2)) {
-            throw log.throwing(new IllegalArgumentException("Unsupported PropagationState: "
-                    + state2));
-        }
-
-        if (state1 == null && state2 == null) {
-            return log.traceExit((PropagationState) null);
-        }
-        if (state1 == null) {
-            return log.traceExit(state2);
-        }
-        if (state2 == null) {
-            return log.traceExit(state1);
-        }
-
-        if (state1.equals(state2)) {
-            return log.traceExit(state1);
-        }
-        Set<PropagationState> propStates = EnumSet.of(state1, state2);
-        if (propStates.contains(PropagationState.ALL)) {
-            return log.traceExit(PropagationState.ALL);
-        }
-
-        if (propStates.contains(PropagationState.SELF)) {
-            if (propStates.contains(PropagationState.ANCESTOR)) {
-                return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
-            } else if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
-            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.traceExit(PropagationState.ALL);
-            } else {
-                throw log.throwing(new AssertionError("Case not covered, " + propStates));
-            }
-        } else if (propStates.contains(PropagationState.ANCESTOR)) {
-            if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
-            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.traceExit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
-            } else {
-                throw log.throwing(new AssertionError("Case not covered, " + propStates));
-            }
-        } else if (propStates.contains(PropagationState.DESCENDANT)) {
-            if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.traceExit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
-            } else {
-                throw log.throwing(new AssertionError("Case not covered, " + propStates));
-            }
-        } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-            if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.traceExit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.traceExit(PropagationState.ALL);
-            } else {
-                throw log.throwing(new AssertionError("Case not covered, " + propStates));
-            }
-        } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-            if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.traceExit(PropagationState.ALL);
-            }
-            throw log.throwing(new AssertionError("Case not covered, " + propStates));
-        } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-            //all cases already covered in previous if/else
-            throw log.throwing(new AssertionError("Case not covered, " + propStates));
-        } else {
-            throw log.throwing(new AssertionError("Case not covered, " + propStates));
-        }
-    }
+//    private static PropagationState mergePropagationStates(PropagationState state1,
+//            PropagationState state2) {
+//        log.traceEntry("{}, {}", state1, state2);
+//
+//        if (state1 != null && !ALLOWED_PROP_STATES.contains(state1)) {
+//            throw log.throwing(new IllegalArgumentException("Unsupported PropagationState: "
+//                    + state1));
+//        }
+//        if (state2 != null && !ALLOWED_PROP_STATES.contains(state2)) {
+//            throw log.throwing(new IllegalArgumentException("Unsupported PropagationState: "
+//                    + state2));
+//        }
+//
+//        if (state1 == null && state2 == null) {
+//            return log.traceExit((PropagationState) null);
+//        }
+//        if (state1 == null) {
+//            return log.traceExit(state2);
+//        }
+//        if (state2 == null) {
+//            return log.traceExit(state1);
+//        }
+//
+//        if (state1.equals(state2)) {
+//            return log.traceExit(state1);
+//        }
+//        Set<PropagationState> propStates = EnumSet.of(state1, state2);
+//        if (propStates.contains(PropagationState.ALL)) {
+//            return log.traceExit(PropagationState.ALL);
+//        }
+//
+//        if (propStates.contains(PropagationState.SELF)) {
+//            if (propStates.contains(PropagationState.ANCESTOR)) {
+//                return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
+//            } else if (propStates.contains(PropagationState.DESCENDANT)) {
+//                return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
+//            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
+//                return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
+//            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
+//                return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
+//            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
+//                return log.traceExit(PropagationState.ALL);
+//            } else {
+//                throw log.throwing(new AssertionError("Case not covered, " + propStates));
+//            }
+//        } else if (propStates.contains(PropagationState.ANCESTOR)) {
+//            if (propStates.contains(PropagationState.DESCENDANT)) {
+//                return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
+//            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
+//                return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
+//            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
+//                return log.traceExit(PropagationState.ALL);
+//            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
+//                return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
+//            } else {
+//                throw log.throwing(new AssertionError("Case not covered, " + propStates));
+//            }
+//        } else if (propStates.contains(PropagationState.DESCENDANT)) {
+//            if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
+//                return log.traceExit(PropagationState.ALL);
+//            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
+//                return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
+//            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
+//                return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
+//            } else {
+//                throw log.throwing(new AssertionError("Case not covered, " + propStates));
+//            }
+//        } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
+//            if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
+//                return log.traceExit(PropagationState.ALL);
+//            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
+//                return log.traceExit(PropagationState.ALL);
+//            } else {
+//                throw log.throwing(new AssertionError("Case not covered, " + propStates));
+//            }
+//        } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
+//            if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
+//                return log.traceExit(PropagationState.ALL);
+//            }
+//            throw log.throwing(new AssertionError("Case not covered, " + propStates));
+//        } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
+//            //all cases already covered in previous if/else
+//            throw log.throwing(new AssertionError("Case not covered, " + propStates));
+//        } else {
+//            throw log.throwing(new AssertionError("Case not covered, " + propStates));
+//        }
+//    }
     /**
      * Infer call type summary from {@code callData}.
      * 

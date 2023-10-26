@@ -1259,8 +1259,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 // manage post composition of anat entity and cell type.
                 // use an intersect symbol to separate the 2 values
                 if(!cellTypeId.equals(ConditionDAO.CELL_TYPE_ROOT_ID)) {
-                    anatEntityId += " \u2229 " + cellTypeId;
-                    anatEntityName += " in" + cellTypeName;
+                    anatEntityId = cellTypeId + " \u2229 " + anatEntityId;
+                    anatEntityName = cellTypeName + " in " + anatEntityName;
                 }
                 String sex = call.getCondition().getSexId();
                 String strain = call.getCondition().getStrainId();

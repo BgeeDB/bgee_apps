@@ -304,7 +304,7 @@ public class RawDataCallSourceDAO {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("CallSourceTO [bgeeGeneId=").append(bgeeGeneId)
+            builder.append("CallSourceDataTO [bgeeGeneId=").append(bgeeGeneId)
                     .append(", pValue=").append(pValue).append(", expressionConfidence=")
                     .append(expressionConfidence).append(", exclusionReason=").append(exclusionReason)
                     .append(", expressionId=").append(expressionId).append("]");

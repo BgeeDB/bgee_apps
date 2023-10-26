@@ -32,7 +32,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         implements RNASeqLibraryDAO{
 
     private final static Logger log = LogManager.getLogger(MySQLRNASeqLibraryDAO.class.getName());
-    public final static String TABLE_NAME = "rnaSeqLibraryDev";
+    public final static String TABLE_NAME = "rnaSeqLibrary";
 
     public MySQLRNASeqLibraryDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
@@ -109,12 +109,13 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                 Boolean sampleMultiplexing = null, libraryMultiplexing = null,
                         isSingleCell = null;
                 String id = null, experimentId = null, sequencerName= null,
-                        technologyName = null, populationCaptureId = null;
+                        technologyName = null, populationCaptureId = null, genotype = null;
                 StrandSelection strandSelection = null;
                 CellCompartment cellCompartment = null;
                 SequencedTrancriptPart seqTranscriptPart = null;
                 LibraryType libType = null;
-                Integer fragmentation = null;
+                Integer fragmentation = null, allReadCount = null, mappedReadCount = null,
+                        maxReadLength = null, minReadLength = null;
 
                 for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                     if (column.getValue().equals(RNASeqLibraryDAO.Attribute.ID.getTOFieldName())) {
@@ -159,6 +160,21 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                                 .convertToStrandSelection(currentResultSet
                                         .getString(column.getKey()));
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .GENOTYPE.getTOFieldName())) {
+                        genotype = currentResultSet.getString(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .ALL_READ_COUNT.getTOFieldName())) {
+                        allReadCount = currentResultSet.getInt(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .MAPPED_READ_COUNT.getTOFieldName())) {
+                        mappedReadCount = currentResultSet.getInt(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .MAX_READ_LENGTH.getTOFieldName())) {
+                        maxReadLength = currentResultSet.getInt(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .MIN_READ_LENGTH.getTOFieldName())) {
+                        minReadLength = currentResultSet.getInt(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
                             .LIBRARY_TYPE.getTOFieldName())) {
                         libType = LibraryType.convertToLibraryType(currentResultSet
                                 .getString(column.getKey()));
@@ -169,7 +185,8 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                 return log.traceExit(new RNASeqLibraryTO(id, experimentId, sequencerName,
                         technologyName, isSingleCell, sampleMultiplexing, libraryMultiplexing,
                         strandSelection, cellCompartment, seqTranscriptPart,
-                        fragmentation, populationCaptureId, libType));
+                        fragmentation, populationCaptureId, genotype, allReadCount, mappedReadCount,
+                        minReadLength, maxReadLength, libType));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

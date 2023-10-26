@@ -36,6 +36,9 @@ public class Species extends NamedEntity<Integer> {
     /** @see #getSpeciesFullNameWithoutSpace() */
     private final String speciesFullNameWithoutSpace;
 
+    /** @see #getGenomeAssemblyXRef() */
+    private final String genomeAssemblyXRef;
+
     /**
      * @see #getGenomeSource()
      */
@@ -65,37 +68,42 @@ public class Species extends NamedEntity<Integer> {
      * @throws IllegalArgumentException if {@code id} is blank.
      */
     public Species(Integer id) throws IllegalArgumentException {
-        this(id, null, null, null, null, null, null, null, null, null, null, null);
+        this(id, null, null, null, null, null, null, null, null, null, null, null, null);
     }
     /**
      * Constructor of {@code Species}.
      * 
-     * @param id            An {@code Integer} representing the ID of this {@code Species}. 
-     *                      Cannot be blank.
-     * @param name          A {@code String} representing the (common) name of this {@code Species}.
-     * @param description   A {@code String} description of this {@code Species}.
-     * @param genus         A {@code String} representing the genus of this {@code Species} 
-     *                      (e.g., "Homo" for human).
-     * @param speciesName   A {@code String} representing the species name of this 
-     *                      {@code Species} (e.g., "sapiens" for human).
-     * @param genomeVersion A {@code String} representing the genome version used for 
-     *                      this {@code Species}.
+     * @param id                    An {@code Integer} representing the ID of this {@code Species}.
+     *                              Cannot be blank.
+     * @param name                  A {@code String} representing the (common) name of this
+     *                              {@code Species}.
+     * @param description           A {@code String} description of this {@code Species}.
+     * @param genus                 A {@code String} representing the genus of this {@code Species}
+     *                              (e.g., "Homo" for human).
+     * @param speciesName           A {@code String} representing the species name of this
+     *                              {@code Species} (e.g., "sapiens" for human).
+     * @param genomeVersion         A {@code String} representing the genome version used for
+     *                              this {@code Species}.
+     * @param genomeAssemblyXRef    A {@code String} representing the genome version used for
+     *                              this {@code Species}.
      * @param parentTaxonId An {@code Integer} representing the ID of the parent taxon of this species.
-     * @param dataTypesByDataSourcesForData         A {@code Map} where keys are {@code Source}s 
-     *                                              corresponding to data sources, the associated values 
+     * @param dataTypesByDataSourcesForData         A {@code Map} where keys are {@code Source}s
+     *                                              corresponding to data sources, the associated values
      *                                              being a {@code Set} of {@code DataType}s corresponding
      *                                              to data types of raw data of this species.
      * @param dataTypesByDataSourcesForAnnotation   A {@code Map} where keys are {@code Source}s
-     *                                              corresponding to data sources, the associated values 
+     *                                              corresponding to data sources, the associated values
      *                                              being a {@code Set} of {@code DataType}s corresponding
      *                                              to data types of annotation data of this data source.
      * @param preferredDisplayOrder                 An {@code Integer} allowing to sort {@code Species}
-     *                                              in preferred display order.
+     *                                              in preferred display order
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
-            String genomeVersion, Source genomeSource, Integer genomeSpeciesId, Integer parentTaxonId,
-            Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
-            Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation, Integer preferredDisplayOrder)
+            String genomeVersion, String genomeAssemblyXRef, Source genomeSource,
+            Integer genomeSpeciesId, Integer parentTaxonId,
+            Map<Source, Set<DataType>> dataTypesByDataSourcesForData,
+            Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation,
+            Integer preferredDisplayOrder)
                 throws IllegalArgumentException {
         super(id, name, description);
         this.genus = genus;
@@ -103,6 +111,7 @@ public class Species extends NamedEntity<Integer> {
         this.speciesFullNameWithoutSpace = (new StringBuilder()).append(this.genus)
                 .append("_").append(this.speciesName).toString().replace(" ", "_");
         this.genomeVersion = genomeVersion;
+        this.genomeAssemblyXRef = genomeAssemblyXRef;
         this.genomeSource = genomeSource;
         //In the data source, '0' means that we used the correct genome
         if (genomeSpeciesId != null && genomeSpeciesId == 0) {
@@ -166,6 +175,13 @@ public class Species extends NamedEntity<Integer> {
      */
     public String getGenomeVersion() {
         return this.genomeVersion;
+    }
+
+    /**
+     * @return A {@code String} representing the genome assembly XRef used for this {@code Species}
+     */
+    public String getGenomeAssemblyXRef()  {
+        return this.genomeAssemblyXRef;
     }
     /**
      * @return  The {@code Source} for the genome of this species.
@@ -265,6 +281,7 @@ public class Species extends NamedEntity<Integer> {
                 .append(", speciesName=").append(speciesName)
                 .append(", speciesFullNameWithoutSpace=").append(speciesFullNameWithoutSpace)
                 .append(", genomeVersion=").append(genomeVersion)
+                .append(", genomeAssemblyXRef=").append(genomeAssemblyXRef)
                 .append(", genomeSource=").append(genomeSource)
                 .append(", genomeSpeciesId=").append(genomeSpeciesId)
                 .append(", parentTaxonId=").append(parentTaxonId)

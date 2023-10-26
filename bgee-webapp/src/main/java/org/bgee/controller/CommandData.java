@@ -1898,13 +1898,13 @@ public class CommandData extends CommandParent {
                 null, null, true, null, null));
 
         colDescr.add(new ColumnDescription("Total read count",
-                "Total number of reads for the annotated sample.",
-                List.of("result.pipelineSummary.allReadsCount"),
+                "Total number of reads for the library.",
+                List.of("result.library.pipelineSummary.allReadsCount"),
                 ColumnDescription.ColumnType.NUMERIC,
                 null, null, true, null, null));
         colDescr.add(new ColumnDescription("Mapped read count",
                 "Number of reads that could be mapped to the transcriptome.",
-                List.of("result.pipelineSummary.mappedReadsCount"),
+                List.of("result.library.pipelineSummary.mappedReadsCount"),
                 ColumnDescription.ColumnType.NUMERIC,
                 null, null, true, null, null));
         colDescr.add(new ColumnDescription("Total UMI count",

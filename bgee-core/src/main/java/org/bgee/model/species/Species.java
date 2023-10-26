@@ -108,8 +108,9 @@ public class Species extends NamedEntity<Integer> {
         super(id, name, description);
         this.genus = genus;
         this.speciesName = speciesName;
-        this.speciesFullNameWithoutSpace = (new StringBuilder()).append(this.genus)
-                .append("_").append(this.speciesName).toString().replace(" ", "_");
+        this.speciesFullNameWithoutSpace = this.genus == null || this.speciesName == null? null:
+                (new StringBuilder()).append(this.genus).append("_").append(this.speciesName)
+                .toString().replace(" ", "_");
         this.genomeVersion = genomeVersion;
         this.genomeAssemblyXRef = genomeAssemblyXRef;
         this.genomeSource = genomeSource;

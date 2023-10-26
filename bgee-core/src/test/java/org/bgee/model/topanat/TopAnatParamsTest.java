@@ -8,15 +8,15 @@ import java.util.HashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
-import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.call.CallFilter;
+import org.bgee.model.expressiondata.call.ConditionFilter;
 import org.bgee.model.topanat.exception.MissingParameterException;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -82,7 +82,7 @@ public class TopAnatParamsTest extends TestAncestor {
      */
     @Test
     public void testConvertRawParametersToCallFilter(){
-        CallFilter<?, ?> callFilter = this.topAnatParams.convertRawParametersToCallFilter();
+        CallFilter<?, ?, ConditionFilter> callFilter = this.topAnatParams.convertRawParametersToCallFilter();
         assertEquals("ExpressionCallFilter [callObservedData={}, anatEntityObservedData=true,"
                 + " devStageObservedData=null, geneFilters=[GeneFilter [speciesId=999,"
                 + " geneIds=[G1, G2, G3, G4]]], conditionFilters=[ConditionFilter"

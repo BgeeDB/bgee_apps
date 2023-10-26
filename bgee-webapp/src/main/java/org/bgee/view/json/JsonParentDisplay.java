@@ -183,6 +183,9 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
         }
         if (Boolean.TRUE.equals(this.getRequestParameters().getFirstValue(
                 this.getRequestParameters().getUrlParametersInstance().getParamDisplayRequestParams()))) {
+            //We call getRequestURL() method to make sure the data hash is generated
+            //before dumping the object
+            this.getRequestParameters().getRequestURL();
             jsonResponse.put("requestParameters", this.getRequestParameters());
         }
         if (sendStorableParamsQueryString) {

@@ -1,8 +1,8 @@
 package org.bgee.view;
 
 import org.bgee.model.SearchResult;
-import org.bgee.model.expressiondata.SingleSpeciesExprAnalysis;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
+import org.bgee.model.expressiondata.call.SingleSpeciesExprAnalysis;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesExprAnalysis;
 import org.bgee.model.gene.Gene;
 
 /**
@@ -13,11 +13,6 @@ import org.bgee.model.gene.Gene;
  * @since   Bgee 14, May 2019
  */
 public interface ExpressionComparisonDisplay {
-
-    /**
-     * Displays the default expression comparison page (when no arguments are given)
-     */
-    public void displayExpressionComparisonHomePage();
 
     /**
      * Displays information about a search of expression comparison with an error.

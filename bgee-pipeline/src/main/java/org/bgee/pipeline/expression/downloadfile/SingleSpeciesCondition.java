@@ -1,6 +1,6 @@
 package org.bgee.pipeline.expression.downloadfile;
 
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO;
 
 /**
  * Class used by classes that generate single species expression TSV download files 

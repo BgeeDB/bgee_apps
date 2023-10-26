@@ -6,10 +6,10 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.CallService;
 
 import java.util.Collection;
 import java.util.EnumSet;
@@ -108,9 +108,9 @@ public class DownloadFileService extends Service {
             case RNASEQ_DATA:
                 return log.traceExit(DownloadFile.CategoryEnum.RNASEQ_DATA);
             case FULL_LENGTH_ANNOT:
-                return log.traceExit(DownloadFile.CategoryEnum.FULL_LENGTH_ANNOT);
+                return log.traceExit(DownloadFile.CategoryEnum.SC_RNA_SEQ_ANNOT);
             case FULL_LENGTH_DATA:
-                return log.traceExit(DownloadFile.CategoryEnum.FULL_LENGTH_DATA);
+                return log.traceExit(DownloadFile.CategoryEnum.SC_RNA_SEQ_DATA);
             default:
                 throw log.throwing(new IllegalArgumentException("Category not supported: " + daoEnum));
         }
@@ -142,9 +142,9 @@ public class DownloadFileService extends Service {
                 return log.traceExit(DownloadFileTO.CategoryEnum.RNASEQ_ANNOT);
             case RNASEQ_DATA:
                 return log.traceExit(DownloadFileTO.CategoryEnum.RNASEQ_DATA);
-            case FULL_LENGTH_ANNOT:
+            case SC_RNA_SEQ_ANNOT:
                 return log.traceExit(DownloadFileTO.CategoryEnum.FULL_LENGTH_ANNOT);
-            case FULL_LENGTH_DATA:
+            case SC_RNA_SEQ_DATA:
                 return log.traceExit(DownloadFileTO.CategoryEnum.FULL_LENGTH_DATA);
             default:
                 throw log.throwing(new IllegalArgumentException("Category not supported: " + serviceEnum));

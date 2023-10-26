@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.CallService;
 
 /**
  * Defines the source of expression data of a {@code CallData} or {@code Call}, along 
@@ -101,7 +101,7 @@ public class DataPropagation {
      * <p>
      * The "official" "real" count would be associated
      * to the {@code EnumSet} returned by {@link
-     * org.bgee.model.expressiondata.CallService.Attribute#getAllConditionParameters()
+     * org.bgee.model.expressiondata.call.CallService.Attribute#getAllConditionParameters()
      * CallService.Attribute#getAllConditionParameters()}. For instance, if we have
      * two observations of expression data for a gene in:
      * <ul>
@@ -137,7 +137,7 @@ public class DataPropagation {
      * <p>
      * The "official" "real" count would be associated
      * to the {@code EnumSet} returned by {@link
-     * org.bgee.model.expressiondata.CallService.Attribute#getAllConditionParameters()
+     * org.bgee.model.expressiondata.call.CallService.Attribute#getAllConditionParameters()
      * CallService.Attribute#getAllConditionParameters()}. For instance, if we have
      * two observations of expression data for a gene in:
      * <ul>
@@ -177,7 +177,7 @@ public class DataPropagation {
      * <p>
      * The "official" "real" count would be associated
      * to the {@code EnumSet} returned by {@link
-     * org.bgee.model.expressiondata.CallService.Attribute#getAllConditionParameters()
+     * org.bgee.model.expressiondata.call.CallService.Attribute#getAllConditionParameters()
      * CallService.Attribute#getAllConditionParameters()}. For instance, if we have
      * two observations of expression data for a gene in:
      * <ul>
@@ -213,7 +213,7 @@ public class DataPropagation {
      * <p>
      * The "official" "real" count would be associated
      * to the {@code EnumSet} returned by {@link
-     * org.bgee.model.expressiondata.CallService.Attribute#getAllConditionParameters()
+     * org.bgee.model.expressiondata.call.CallService.Attribute#getAllConditionParameters()
      * CallService.Attribute#getAllConditionParameters()}. For instance, if we have
      * two observations of expression data for a gene in:
      * <ul>

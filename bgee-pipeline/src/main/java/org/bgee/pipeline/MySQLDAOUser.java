@@ -13,13 +13,13 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.dao.mysql.expressiondata.MySQLConditionDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.call.MySQLConditionDAO;
+import org.bgee.model.dao.mysql.expressiondata.call.MySQLDiffExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLExperimentExpressionDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
 import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
@@ -230,8 +230,9 @@ public abstract class MySQLDAOUser {
     /**
      * @return  A {@code MySQLRNASeqResultDAO}.
      */
-    protected MySQLRNASeqResultDAO getRNASeqResultDAO() {
-        return (MySQLRNASeqResultDAO) this.manager.getRNASeqResultDAO();
+    protected MySQLRNASeqResultAnnotatedSampleDAO getRNASeqResultAnnotatedSampleDAO() {
+        return (MySQLRNASeqResultAnnotatedSampleDAO) this.manager
+                .getRnaSeqResultAnnotatedSampleDAO();
     }
     /**
      * @return  A {@code MySQLCIOStatementDAO}.

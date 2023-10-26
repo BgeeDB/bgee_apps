@@ -2,6 +2,8 @@ package org.bgee.view;
 
 import java.util.Collection;
 
+import org.bgee.model.search.SearchMatchResult;
+
 /**
  * Interface defining methods to be implemented by views related to {@code Search}s.
  * 
@@ -17,6 +19,8 @@ public interface SearchDisplay {
      * @param searchTerm    A {code String} that is the search term.
      */
     void displayExpasyResult(int count, String searchTerm);
+
+    void displayDefaultSphinxSearchResult(String searchTerm, SearchMatchResult<?> result);
 
     void displayMatchesForGeneCompletion(Collection<String> matches);
 }

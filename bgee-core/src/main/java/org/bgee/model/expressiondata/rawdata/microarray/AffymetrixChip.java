@@ -1,24 +1,32 @@
 package org.bgee.model.expressiondata.rawdata.microarray;
 
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.rawdata.AssayPartOfExp;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 
-public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperiment>, RawDataAnnotated {
+//AffymetrixChip IDs are not unique, they are unique inside a given experiment.
+//This is why this class does not extend Entity.
+public class AffymetrixChip implements AssayPartOfExp<AffymetrixExperiment>, RawDataAnnotated {
     private final static Logger log = LogManager.getLogger(AffymetrixChip.class.getName());
 
     private final String id;
     private final AffymetrixExperiment experiment;
     private final RawDataAnnotation annotation;
+    private final ChipType chipType;
+    private final AffymetrixChipPipelineSummary pipelineSummary;
 
     /**
      * @param id    A {@code String} that is the ID of the {@code AffymetrixChip}
      * @throws IllegalArgumentException If {@code id} is blank, or {@code experiment} is {@code null}.
      */
-    public AffymetrixChip(String id, AffymetrixExperiment experiment, RawDataAnnotation annotation) throws IllegalArgumentException {
+    public AffymetrixChip(String id, AffymetrixExperiment experiment, RawDataAnnotation annotation,
+            ChipType chipType, AffymetrixChipPipelineSummary pipelineSummary)
+                    throws IllegalArgumentException {
         if (StringUtils.isBlank(id)) {
             throw log.throwing(new IllegalArgumentException("ID cannot be blank"));
         }
@@ -27,10 +35,9 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
             throw log.throwing(new IllegalArgumentException("Experiment cannot be null"));
         }
         this.experiment = experiment;
-        if (annotation == null) {
-            throw log.throwing(new IllegalArgumentException("Annotation cannot be null"));
-        }
         this.annotation = annotation;
+        this.chipType = chipType;
+        this.pipelineSummary = pipelineSummary;
     }
 
     public String getId() {
@@ -45,16 +52,19 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
         return this.annotation;
     }
 
+    public ChipType getChipType() {
+        return chipType;
+    }
+
+    public AffymetrixChipPipelineSummary getPipelineSummary() {
+        return pipelineSummary;
+    }
 
     //AffymetrixChip IDs are not unique, they are unique inside a given experiment.
-    //This is why we reimplement hashCode/equals rather than using the 'Entity' implementation.
+    //We use the ID and the experiment as primary key
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((experiment == null) ? 0 : experiment.hashCode());
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        return result;
+        return Objects.hash(experiment, id);
     }
     @Override
     public boolean equals(Object obj) {
@@ -65,16 +75,19 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
         if (getClass() != obj.getClass())
             return false;
         AffymetrixChip other = (AffymetrixChip) obj;
-        if (experiment == null) {
-            if (other.experiment != null)
-                return false;
-        } else if (!experiment.equals(other.experiment))
-            return false;
-        if (id == null) {
-            if (other.id != null)
-                return false;
-        } else if (!id.equals(other.id))
-            return false;
-        return true;
+        return Objects.equals(experiment, other.experiment) && Objects.equals(id, other.id);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("AffymetrixChip [")
+               .append("id=").append(id)
+               .append(", experiment=").append(experiment)
+               .append(", annotation=").append(annotation)
+               .append(", chipType=").append(chipType)
+               .append(", pipelineSummary=").append(pipelineSummary)
+               .append("]");
+        return builder.toString();
     }
 }

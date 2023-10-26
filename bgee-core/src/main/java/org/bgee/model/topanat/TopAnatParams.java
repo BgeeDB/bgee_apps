@@ -14,15 +14,15 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.CallFilter;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.call.CallFilter;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.GeneFilter;
@@ -602,7 +602,7 @@ public class TopAnatParams {
      * 
      * @return A {@code CallFilter} to be used for the analysis
      */
-    public CallFilter<?, ?> convertRawParametersToCallFilter() {
+    public CallFilter<?, ?, ConditionFilter> convertRawParametersToCallFilter() {
         log.traceEntry();
         
         GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);

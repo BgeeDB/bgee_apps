@@ -47,57 +47,7 @@ public class FakeFactory extends ViewFactory {
      * @param prop  A {@code BgeeProperties}
      * @return  {@code null}
      */
-    public GeneralDisplay getGeneralDisplay() {
-        return null;
-    }
-
-    @Override
-    /**
-     * This method should not be called if the code is error free.
-     * @param prop  A {@code BgeeProperties}
-     * @return  {@code null}
-     */
     public ErrorDisplay getErrorDisplay() {
-        return null;
-    }
-
-    @Override
-    public DocumentationDisplay getDocumentationDisplay() throws IOException {
-        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
-                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
-                .getParamTestString()).equals("test")){
-            return new FakeDocumentationDisplay(this.response, this.requestParameters, prop, this);
-        }
-        return null;
-    }
-
-    @Override
-    public AboutDisplay getAboutDisplay() throws IOException {
-        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
-                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
-                .getParamTestString()).equals("test")){
-            return new FakeAboutDisplay(this.response, this.requestParameters, prop, this);
-        }
-        return null;
-    }
-
-    @Override
-    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() throws IOException {
-        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
-                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
-                        .getParamTestString()).equals("test")){
-            return new FakePrivacyPolicyDisplay(this.response, this.requestParameters, prop, this);
-        }
-        return null;
-    }
-
-    @Override
-    public CollaborationDisplay getCollaborationDisplay() throws IOException {
-        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
-                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
-                        .getParamTestString()).equals("test")){
-            return new FakeCollaborationDisplay(this.response, this.requestParameters, prop, this);
-        }
         return null;
     }
 
@@ -122,7 +72,7 @@ public class FakeFactory extends ViewFactory {
     }
 
     @Override
-    public RawDataDisplay getRawCallDisplay() throws IOException {
+    public DataDisplay getDataDisplay() throws IOException {
         return null;
     }
 
@@ -172,32 +122,8 @@ public class FakeFactory extends ViewFactory {
     }
     
     @Override
-    public FaqDisplay getFaqDisplay() throws IOException {
-        return null;
-    }
-
-    @Override
-    public SparqlDisplay getSparqlDisplay() throws IOException {
-        return null;
-    }
-
-    @Override
-    public ResourcesDisplay getResourceDisplay() throws IOException {
-        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
-                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
-                .getParamTestString()).equals("test")){
-            return new FakeResourcesDisplay(this.response, this.requestParameters, prop, this);
-        }
-        return null;
-    }
-
-    @Override
     public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() throws IOException {
         return null;
     }
 
-    @Override
-    public PublicationDisplay getPublicationDisplay() throws IOException {
-        return null;
-   }
 }

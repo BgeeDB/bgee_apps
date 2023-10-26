@@ -13,7 +13,7 @@ import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 
 /**
  * The DAO interface for DownloadFile objects.

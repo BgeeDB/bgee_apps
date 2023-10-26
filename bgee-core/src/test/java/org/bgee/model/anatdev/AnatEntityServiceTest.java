@@ -46,11 +46,11 @@ public class AnatEntityServiceTest extends TestAncestor {
         when(managerMock.getAnatEntityDAO()).thenReturn(dao);
         List<AnatEntityTO> anatEntityTOs = Arrays.asList(
                 new AnatEntityTO("UBERON:0001687", "stapes bone",
-                        "stapes bone description", "Stage_id1", "Stage_id2", false),
+                        "stapes bone description", "Stage_id1", "Stage_id2", false, false),
                 new AnatEntityTO("UBERON:0001853", "utricle of membranous labyrinth", 
-                        "utricle of membranous labyrinth description", "Stage_id1", "Stage_id2", false),
+                        "utricle of membranous labyrinth description", "Stage_id1", "Stage_id2", false, false),
                 new AnatEntityTO("UBERON:0011606", "hyomandibular bone", 
-                        "hyomandibular bone description", "Stage_id1", "Stage_id2", false));
+                        "hyomandibular bone description", "Stage_id1", "Stage_id2", false, false));
 
         // Filter on species IDs is not tested here (tested in AnatEntityDAO)
         // but we need a variable to mock DAO answer
@@ -86,11 +86,11 @@ public class AnatEntityServiceTest extends TestAncestor {
         when(managerMock.getAnatEntityDAO()).thenReturn(dao);
         List<AnatEntityTO> anatEntityTOs = Arrays.asList(
                 new AnatEntityTO("UBERON:0001687", "stapes bone",
-                        "stapes bone description", "Stage_id1", "Stage_id2", false),
+                        "stapes bone description", "Stage_id1", "Stage_id2", false, false),
                 new AnatEntityTO("UBERON:0001853", "utricle of membranous labyrinth", 
-                        "utricle of membranous labyrinth description", "Stage_id1", "Stage_id2", false),
+                        "utricle of membranous labyrinth description", "Stage_id1", "Stage_id2", false, false),
                 new AnatEntityTO("UBERON:0011606", "hyomandibular bone", 
-                        "hyomandibular bone description", "Stage_id1", "Stage_id2", false));
+                        "hyomandibular bone description", "Stage_id1", "Stage_id2", false, false));
 
         // Filter on species IDs is not tested here (tested in AnatEntityDAO)
         // but we need a variable to mock DAO answer
@@ -126,8 +126,8 @@ public class AnatEntityServiceTest extends TestAncestor {
         AnatEntityDAO dao = mock(AnatEntityDAO.class);
         when(managerMock.getAnatEntityDAO()).thenReturn(dao);
         List<AnatEntityTO> anatEntityTOs = Arrays.asList(
-                new AnatEntityTO("UBERON:0001687", null, null, null, null, null),
-                new AnatEntityTO("UBERON:0011606", null, null, null, null, null));
+                new AnatEntityTO("UBERON:0001687", null, null, null, null, null, null),
+                new AnatEntityTO("UBERON:0011606", null, null, null, null, null, null));
 
         // Filter on species IDs is not tested here (tested in AnatEntityDAO)
         // but we need a variable to mock DAO answer

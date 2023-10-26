@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
 import org.bgee.model.species.Species;
@@ -51,8 +52,7 @@ public class CommandAnatomicalSimilarity extends CommandParent {
         AnatomicalSimilarityDisplay display = viewFactory.getAnatomicalSimilarityDisplay();
         
         if (speciesList.isEmpty() && anatEntityList.isEmpty()) {
-            display.displayAnatSimilarityHomePage(allSpecies);
-            return;
+            throw log.throwing(new InvalidRequestException("should provide species or anatomical entities"));
         }
         
         AnatEntitySimilarityAnalysis anatEntitySimilarityAnalysis = serviceFactory

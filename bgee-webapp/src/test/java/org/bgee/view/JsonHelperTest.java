@@ -16,21 +16,20 @@ import org.bgee.TestAncestor;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
+import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
-import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.file.DownloadFile;
-import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatResults;
-import org.bgee.view.JsonHelper;
 import org.junit.Test;
 
 /**

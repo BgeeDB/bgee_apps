@@ -33,13 +33,13 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.CallService.Attribute;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.CallService.Attribute;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -773,13 +773,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         header[i].equals(EST_DATA_COLUMN_NAME) ||
                         header[i].equals(IN_SITU_DATA_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_DATA_COLUMN_NAME) ||
-                        header[i].equals(FULL_LENGTH_DATA_COLUMN_NAME)) {
+                        header[i].equals(SC_RNA_SEQ_DATA_COLUMN_NAME)) {
                     processors[i] = new IsElementOf(expressionSummaries);
                 } else if (header[i].equals(AFFYMETRIX_QUAL_COLUMN_NAME) ||
                         header[i].equals(EST_QUAL_COLUMN_NAME) ||
                         header[i].equals(IN_SITU_QUAL_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_QUAL_COLUMN_NAME) ||
-                        header[i].equals(FULL_LENGTH_QUAL_COLUMN_NAME)) {
+                        header[i].equals(SC_RNA_SEQ_QUAL_COLUMN_NAME)) {
                     processors[i] = new IsElementOf(qualitySummaries);
                 } else if (header[i].equals(AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
                         header[i].equals(AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
@@ -789,8 +789,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         header[i].equals(IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
-                        header[i].equals(FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
-                        header[i].equals(FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(SC_RNA_SEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(SC_RNA_SEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
                         header[i].equals(SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
                         header[i].equals(DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME)) {
                     processors[i] = new LMinMax(0, Long.MAX_VALUE);
@@ -798,7 +798,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         header[i].equals(EST_OBSERVED_DATA_COLUMN_NAME) ||
                         header[i].equals(IN_SITU_OBSERVED_DATA_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_OBSERVED_DATA_COLUMN_NAME) ||
-                        header[i].equals(FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME) ||
+                        header[i].equals(SC_RNA_SEQ_OBSERVED_DATA_COLUMN_NAME) ||
                         header[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME)) {
                     processors[i] = new IsElementOf(originValues);
                 } else if (header[i].equals(AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME) ||
@@ -817,10 +817,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         header[i].equals(RNASEQ_EXPRESSION_RANK_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_WEIGHT_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_FDR_COLUMN_NAME) ||
-                        header[i].equals(FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME) ||
-                        header[i].equals(FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME) ||
-                        header[i].equals(FULL_LENGTH_WEIGHT_COLUMN_NAME) ||
-                        header[i].equals(FULL_LENGTH_FDR_COLUMN_NAME)) {
+                        header[i].equals(SC_RNA_SEQ_EXPRESSION_SCORE_COLUMN_NAME) ||
+                        header[i].equals(SC_RNA_SEQ_EXPRESSION_RANK_COLUMN_NAME) ||
+                        header[i].equals(SC_RNA_SEQ_WEIGHT_COLUMN_NAME) ||
+                        header[i].equals(SC_RNA_SEQ_FDR_COLUMN_NAME)) {
                     // It is a String to be able to write values such as '3.32e4' and NA_VALUE.
                     // It could be a Long if we didn't want exponential values
                     // and if all columns had a score and a rank => not the case
@@ -934,15 +934,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             headers[idx++] = RNASEQ_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME;
             headers[idx++] = RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
-            headers[idx++] = FULL_LENGTH_DATA_COLUMN_NAME;
-            headers[idx++] = FULL_LENGTH_QUAL_COLUMN_NAME;
-            headers[idx++] = FULL_LENGTH_FDR_COLUMN_NAME;
-            headers[idx++] = FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME;
-            headers[idx++] = FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME;
-            headers[idx++] = FULL_LENGTH_WEIGHT_COLUMN_NAME;
-            headers[idx++] = FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME;
-            headers[idx++] = FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME;
-            headers[idx++] = FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
+            headers[idx++] = SC_RNA_SEQ_DATA_COLUMN_NAME;
+            headers[idx++] = SC_RNA_SEQ_QUAL_COLUMN_NAME;
+            headers[idx++] = SC_RNA_SEQ_FDR_COLUMN_NAME;
+            headers[idx++] = SC_RNA_SEQ_EXPRESSION_SCORE_COLUMN_NAME;
+            headers[idx++] = SC_RNA_SEQ_EXPRESSION_RANK_COLUMN_NAME;
+            headers[idx++] = SC_RNA_SEQ_WEIGHT_COLUMN_NAME;
+            headers[idx++] = SC_RNA_SEQ_OBSERVED_DATA_COLUMN_NAME;
+            headers[idx++] = SC_RNA_SEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME;
+            headers[idx++] = SC_RNA_SEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
         }
         return log.traceExit(headers);
     }
@@ -1050,7 +1050,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             //Need this check because the name of full-length includes the name
                             //of RNA-Seq
                             (!dt.equals(DataType.RNA_SEQ) || !header[i].toLowerCase().contains(
-                                    DataType.FULL_LENGTH.getStringRepresentation().toLowerCase()))) {
+                                    DataType.SC_RNA_SEQ.getStringRepresentation().toLowerCase()))) {
                         index = dtIndex;
                         dataType = dt;
                         break;
@@ -1177,15 +1177,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     headers[i].equals(RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
                     headers[i].equals(RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
 
-                    headers[i].equals(FULL_LENGTH_DATA_COLUMN_NAME) ||
-                    headers[i].equals(FULL_LENGTH_QUAL_COLUMN_NAME) ||
-                    headers[i].equals(FULL_LENGTH_FDR_COLUMN_NAME) ||
-                    headers[i].equals(FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME) ||
-                    headers[i].equals(FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME) ||
-                    headers[i].equals(FULL_LENGTH_WEIGHT_COLUMN_NAME) ||
-                    headers[i].equals(FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME) ||
-                    headers[i].equals(FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
-                    headers[i].equals(FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_DATA_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_QUAL_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_FDR_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_EXPRESSION_RANK_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_EXPRESSION_SCORE_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_WEIGHT_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_OBSERVED_DATA_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
 
                     headers[i].equals(SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
                     headers[i].equals(DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
@@ -1271,7 +1271,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 String expressionScore = call.getExpressionScore() == null ? NA_VALUE :
                     call.getFormattedExpressionScore();
                 String fdr = call.getPValueWithEqualDataTypes(Arrays.asList(DataType.values()))
-                        .getFDRPValue().toString();
+                        .getPValue().toString();
                 //For Bgee 15.0 calls files only contain observed calls
                 Boolean includingObservedData = true; //call.getCallData().stream()
 //                        .map(ExpressionCallData::getSelfObservationCount).reduce(0, Integer::sum) > 0 ? true : false;
@@ -1339,7 +1339,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     convertExpressionSummaryToString(callFromDataType.getSummaryCallType()),
                     convertSummaryQualityToString(callFromDataType.getSummaryQuality()),
                     callFromDataType.getFirstPValue() == null ? NA_VALUE : callFromDataType.getFirstPValue()
-                            .getFDRPValue().toString(),
+                            .getPValue().toString(),
                     convertObservedDataToString(true),
                     Long.valueOf(callFromDataType.getDataPropagation()
                             .getSelfObservationCount(condParamCombination)),

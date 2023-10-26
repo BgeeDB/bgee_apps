@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.search.SearchMatchResult;
 import org.bgee.view.SearchDisplay;
 
 /**
@@ -72,4 +73,10 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 
 		log.traceExit();
 	}
+
+    @Override
+    public void displayDefaultSphinxSearchResult(String searchTerm,
+            SearchMatchResult<?> result) {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
 }

@@ -401,7 +401,9 @@ public class InsertUberon extends MySQLDAOUser {
                 this.anatEntityTOs.add(new AnatEntityTO(id, wrapper.getLabel(cls), 
                         wrapper.getDef(cls), 
                         "UBERON:0000104", "UBERON:0000104", 
-                        uberon.isNonInformativeSubsetMember(cls)));
+                        uberon.isNonInformativeSubsetMember(cls),
+                        //XXX: generate here the information about whether it is a cell type?
+                        false));
                 
                 
                 //************************************

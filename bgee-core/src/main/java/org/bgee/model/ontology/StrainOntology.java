@@ -2,7 +2,6 @@ package org.bgee.model.ontology;
 
 import java.util.Collection;
 
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
@@ -18,9 +17,8 @@ public class StrainOntology extends Ontology<Strain, String> {
 
     public StrainOntology(Integer speciesId, Collection<Strain> elements,
             Collection<RelationTO<String>> relations,
-            Collection<RelationType> relationTypes, ServiceFactory serviceFactory,
-            Class<Strain> type) {
-        super(speciesId, elements, relations, relationTypes, serviceFactory, type);
+            Collection<RelationType> relationTypes, Class<Strain> type) {
+        super(speciesId, elements, relations, relationTypes, type);
     }
 
     @Override

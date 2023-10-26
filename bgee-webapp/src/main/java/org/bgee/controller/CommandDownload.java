@@ -77,11 +77,7 @@ public class CommandDownload extends CommandParent {
                 Map<Integer, Set<String>> speciesIdsToTerms = getSpeciesRelatedTerms(groups);
                 display.displayGeneExpressionCallDownloadPage(groups, speciesIdsToTerms);
             }
-        } else if (this.requestParameters.getAction() != null && 
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_DOWNLOAD_DUMPS)) {
-            display.displayDumpsPage();
-        }
-        else {
+        } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 
                 " parameter value."));

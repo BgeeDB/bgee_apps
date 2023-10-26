@@ -16,7 +16,7 @@ import org.bgee.view.xml.XmlFactory;
  * This class provide the appropriate {@code ViewFactory} depending on the {@code DisplayType}
  * 
  * @author Mathieu Seppey
- * @version Bgee 13 Aug 2014
+ * @version Bgee 15.0, Nov. 2022
  * @since   Bgee 13
  */
 public class ViewFactoryProvider {
@@ -24,17 +24,17 @@ public class ViewFactoryProvider {
     private final static Logger log = LogManager.getLogger(ViewFactoryProvider.class.getName());
     
     /**
-     * An {@code enum} of the different display types: {@code HTML}, {@code XML}, 
-     * {@code JSON}, {@code CSV}, {@code TSV}.
+     * An {@code enum} of the different display types: {@code JSON}, {@code HTML}, {@code XML}, 
+     * {@code CSV}, {@code TSV}.
      */
     public static enum DisplayType {
-        HTML, XML, JSON, CSV, TSV;
+        JSON, HTML, XML, CSV, TSV;
     }
     
     /**
      * The {@code DisplayType} used as default
      */
-    public static final DisplayType DEFAULT = DisplayType.HTML;
+    public static final DisplayType DEFAULT = DisplayType.JSON;
     
     /**
      * An instance of {@code BgeeProperties} to provide the all 
@@ -69,7 +69,7 @@ public class ViewFactoryProvider {
      * @see org.bgee.controller.URLParameters#DISPLAY_TYPE
      */
     public ViewFactory getFactory(HttpServletResponse response, RequestParameters requestParameters) {        
-        log.entry(response, requestParameters);
+        log.traceEntry("{}, {}", response, requestParameters);
         DisplayType displayType = DEFAULT;
         
         if (requestParameters.isXmlDisplayType()) {
@@ -103,9 +103,9 @@ public class ViewFactoryProvider {
      */
     public ViewFactory getFactory(HttpServletResponse response, 
             DisplayType displayType, RequestParameters requestParameters) {
-        log.entry(response, displayType, requestParameters);
-        if (displayType == DisplayType.JSON) {
-            return new JsonFactory(response, requestParameters, this.prop);
+        log.traceEntry("{}, {}, {}", response, displayType, requestParameters);
+        if (displayType == DisplayType.HTML) {
+            return new HtmlFactory(response, requestParameters, this.prop);
         }
         if (displayType == DisplayType.XML) {
             return new XmlFactory(response, requestParameters, this.prop);
@@ -116,6 +116,6 @@ public class ViewFactoryProvider {
         if (displayType == DisplayType.TSV) {
             return new CsvFactory(response, requestParameters, this.prop, Delimiter.TAB);
         }
-        return log.traceExit(new HtmlFactory(response, requestParameters, this.prop));
+        return log.traceExit(new JsonFactory(response, requestParameters, this.prop));
     }
 }

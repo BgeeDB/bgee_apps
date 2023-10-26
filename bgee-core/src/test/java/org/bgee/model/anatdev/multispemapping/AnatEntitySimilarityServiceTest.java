@@ -122,7 +122,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                         taxonRelations.get(7), taxonRelations.get(8), taxonRelations.get(9),
                         taxonRelations.get(10), taxonRelations.get(11), taxonRelations.get(12)),
                 EnumSet.of(RelationType.ISA_PARTOF),
-                serviceFactory, Taxon.class);
+                Taxon.class);
         when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(5).getId()),
                 false, true, true))
         .thenReturn(taxOnt);
@@ -137,7 +137,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                         taxonRelations.get(9), taxonRelations.get(10), taxonRelations.get(11),
                         taxonRelations.get(12)),
                 EnumSet.of(RelationType.ISA_PARTOF),
-                serviceFactory, Taxon.class);
+                Taxon.class);
         when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(4).getId()), false, true, true))
         .thenReturn(taxOnt);
         taxonToOnt.put(taxa.get(4), taxOnt);
@@ -148,7 +148,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                         taxonRelations.get(3), taxonRelations.get(8), taxonRelations.get(9),
                         taxonRelations.get(10), taxonRelations.get(11), taxonRelations.get(12)),
                 EnumSet.of(RelationType.ISA_PARTOF),
-                serviceFactory, Taxon.class);
+                Taxon.class);
         when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(6).getId()), false, true, true))
         .thenReturn(taxOnt);
         taxonToOnt.put(taxa.get(6), taxOnt);
@@ -157,7 +157,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 Arrays.asList(taxa.get(0), taxa.get(1), taxa.get(3)),
                 Arrays.asList(taxonRelations.get(13), taxonRelations.get(14)),
                 EnumSet.of(RelationType.ISA_PARTOF),
-                serviceFactory, Taxon.class);
+                Taxon.class);
         when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(3).getId()), false, true, true))
         .thenReturn(taxOnt);
         taxonToOnt.put(taxa.get(3), taxOnt);
@@ -171,7 +171,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                         taxonRelations.get(9), taxonRelations.get(10), taxonRelations.get(11),
                         taxonRelations.get(12)),
                 EnumSet.of(RelationType.ISA_PARTOF),
-                serviceFactory, Taxon.class);
+                Taxon.class);
         when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(2).getId()), false, true, true))
         .thenReturn(taxOnt);
         taxonToOnt.put(taxa.get(2), taxOnt);
@@ -371,7 +371,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                         transfOfAddedTC1), 
                 Arrays.asList(transfOfTC1), 
                 EnumSet.of(RelationType.TRANSFORMATIONOF),
-                this.serviceFactory, AnatEntity.class);
+                AnatEntity.class);
         when(this.ontService.getAnatEntityOntology((Collection<Integer>) null,
                 new HashSet<>(Arrays.asList(mouth.getId(), anus.getId(), lung.getId(),
                         swimBladder.getId(), whatever.getId())),
@@ -383,7 +383,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 Arrays.asList(mouthTC1, mouthTC2, anusTC1, anusTC2, lungTC1, swimBladderTC1), 
                 Arrays.asList(), 
                 EnumSet.of(RelationType.TRANSFORMATIONOF),
-                this.serviceFactory, AnatEntity.class);
+                AnatEntity.class);
         when(this.ontService.getAnatEntityOntology((Collection<Integer>) null,
                 new HashSet<>(Arrays.asList(mouth.getId(), anus.getId(), lung.getId(), swimBladder.getId())),
                 EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))
@@ -394,7 +394,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 Arrays.asList(mouthTC1, mouthTC2, anusTC1, anusTC2, lungTC1, whateverTC1, transfOfAddedTC1), 
                 Arrays.asList(transfOfTC1), 
                 EnumSet.of(RelationType.TRANSFORMATIONOF),
-                this.serviceFactory, AnatEntity.class);
+                AnatEntity.class);
         when(this.ontService.getAnatEntityOntology((Collection<Integer>) null,
                 new HashSet<>(Arrays.asList(mouth.getId(), anus.getId(), lung.getId(), whatever.getId())),
                 EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))
@@ -405,7 +405,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 Arrays.asList(mouthTC1, mouthTC2, anusTC1, anusTC2, lungTC1), 
                 Arrays.asList(), 
                 EnumSet.of(RelationType.TRANSFORMATIONOF),
-                this.serviceFactory, AnatEntity.class);
+                AnatEntity.class);
         when(this.ontService.getAnatEntityOntology((Collection<Integer>) null,
                 new HashSet<>(Arrays.asList(mouth.getId(), anus.getId(), lung.getId())),
                 EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))
@@ -416,7 +416,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 Arrays.asList(mouthTC1, mouthTC2, anusTC1, anusTC2, swimBladderTC1), 
                 Arrays.asList(), 
                 EnumSet.of(RelationType.TRANSFORMATIONOF),
-                this.serviceFactory, AnatEntity.class);
+                AnatEntity.class);
         when(this.ontService.getAnatEntityOntology((Collection<Integer>) null,
                 new HashSet<>(Arrays.asList(mouth.getId(), anus.getId(), swimBladder.getId())),
                 EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))
@@ -427,7 +427,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 Arrays.asList(mouthTC1, mouthTC2), 
                 Arrays.asList(), 
                 EnumSet.of(RelationType.TRANSFORMATIONOF),
-                this.serviceFactory, AnatEntity.class);
+                AnatEntity.class);
         when(this.ontService.getAnatEntityOntology((Collection<Integer>) null,
                 new HashSet<>(Arrays.asList(mouth.getId())),
                 EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))
@@ -438,7 +438,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 Arrays.asList(mouthTC1, mouthTC2, anusTC1, anusTC2), 
                 Arrays.asList(), 
                 EnumSet.of(RelationType.TRANSFORMATIONOF),
-                this.serviceFactory, AnatEntity.class);
+                AnatEntity.class);
         when(this.ontService.getAnatEntityOntology((Collection<Integer>) null,
                 new HashSet<>(Arrays.asList(mouth.getId(), anus.getId())),
                 EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))

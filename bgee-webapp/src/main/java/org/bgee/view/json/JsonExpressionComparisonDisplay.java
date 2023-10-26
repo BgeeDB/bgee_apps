@@ -10,9 +10,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.SearchResult;
-import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
-import org.bgee.model.expressiondata.SingleSpeciesExprAnalysis;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
+import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis;
+import org.bgee.model.expressiondata.call.SingleSpeciesExprAnalysis;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesExprAnalysis;
 import org.bgee.model.gene.Gene;
 import org.bgee.view.ExpressionComparisonDisplay;
 import org.bgee.view.JsonHelper;
@@ -32,11 +32,6 @@ public class JsonExpressionComparisonDisplay extends JsonParentDisplay implement
             RequestParameters requestParameters, BgeeProperties prop, JsonHelper jsonHelper,
             JsonFactory factory) throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, jsonHelper, factory);
-    }
-
-    @Override
-    public void displayExpressionComparisonHomePage() {
-        throw log.throwing(new UnsupportedOperationException("Not implemented for JSON answers"));
     }
 
     @Override

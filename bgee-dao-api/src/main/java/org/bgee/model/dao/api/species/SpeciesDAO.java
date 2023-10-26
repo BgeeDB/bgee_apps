@@ -37,7 +37,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID("id"), COMMON_NAME("name"), GENUS("genus"), SPECIES_NAME("speciesName"),
+        ID("speciesId"), COMMON_NAME("name"), GENUS("genus"), SPECIES_NAME("speciesName"),
         PARENT_TAXON_ID("parentTaxonId"), GENOME_FILE_PATH("genomeFilePath"),
         GENOME_VERSION("genomeVersion"), DATA_SOURCE_ID("dataSourceId"),
         GENOME_SPECIES_ID("genomeSpeciesId"), DISPLAY_ORDER("speciesDisplayOrder");

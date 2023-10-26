@@ -318,7 +318,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
                 .collect(Collectors.joining("_")));
 
         if (getSpeciesId() != null) {
-            if (sb.length() > 0) {
+            if (sb.length() != 0) {
                 sb.append("_");
             }
             sb.append(getSpeciesId().toString());

@@ -954,6 +954,14 @@ public class CommandData extends CommandParent {
             if (!container.getAssays().isEmpty()) {
                 //we found our result
                 dataTypeWithResults = dt;
+                //TODO: For now we consider that one experiment can only correspond to
+                // one datatype. It is not always true. One experiment could contain
+                // bulk AND single cell RNASeq (and even both full length and target based).
+                // We have to update both the API and the webapp to manage those cases as it
+                // impact the libraries retrieved but also the download button on the website.
+                // For now, if we have both bulk and single cell RNASeq data we decided to
+                // retrieve only single cell information. We managed that by defining SC_RNA_SEQ
+                // before RNA_SEQ in the enum org.bgee.model.expressiondata.baseelements.Datatype.
                 break;
             }
             //otherwise we continue to search

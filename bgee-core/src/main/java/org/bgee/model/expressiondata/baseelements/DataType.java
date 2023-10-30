@@ -26,8 +26,8 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
  * this data type considered that absence of expression is assumed in any organ existing 
  * at the developmental stage studied in the <em>in situ</em>, with no report of 
  * expression by any data type, in the organ itself, or any substructure. 
- * <li>{@code RNA_SEQ}: RNA-Seq data.
  * <li>{@code SC_RNA_SEQ}: Full length single cell RNA-Seq data.
+ * <li>{@code RNA_SEQ}: RNA-Seq data.
  * </ul>
  * 
  * @author Frederic Bastian
@@ -39,7 +39,11 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 public enum DataType implements BgeeEnumField {
     AFFYMETRIX("Affymetrix", true, null, true), EST("EST", false, null, false),
     IN_SITU("in situ hybridization", true, null, true),
-    RNA_SEQ("RNA-Seq", true, false, true), SC_RNA_SEQ("single-cell RNA-Seq", false, true, true);
+    //Note: It is important to keep SC_RNA_SEQ before RNA_SEQ until we fix the issue of retrieving
+    // experiment information consisting in different datatype (e.g both RNA_SEQ and SC_RNA_SEQ) as
+    // it defines libraries from which datatype will be retrieved. For now if an experiment has both
+    // bulk and single cell libraries then single cell libraries are retrieved.
+    SC_RNA_SEQ("single-cell RNA-Seq", false, true, true), RNA_SEQ("RNA-Seq", true, false, true);
 
     private final static Logger log = LogManager.getLogger(DataType.class.getName());
 

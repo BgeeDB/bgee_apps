@@ -1,4 +1,4 @@
-# Bgee application source code of Bgee release 14.2
+# Bgee application source code of Bgee release 15.0
 
 1. [Directory structure](#directory-structure)
 2. [To do for each release of Bgee](#to-do-for-each-release-of-bgee)
@@ -80,26 +80,26 @@ with the new data.
 * Change the `bgee.properties` file of the previous release to switch it to archive mode (
 `org.bgee.webapp.archive=true`).
 * Apache server should be updated so that the permalinks of the new release redirect to the root of the server
-(so that, for instance, `https://bgee.org/bgee14_1/` redirects to `https://bgee.org/`). This redirection
+(so that, for instance, `https://www.bgee.org/bgee14_1/` redirects to `https://www.bgee.org/`). This redirection
 should be stopped for the previous release of course.
 
 #### For SPARQL endpoint:
 * EasyBgee would have been regenerated, then the RDF triples to be loaded into Virtuoso
 * there are at least two endpoints, as of Bgee 14.1 there are hosted by the same Virtuoso instance,
 which necessitate some tricks:
-  * the official endpoint to access the latest version of Bgee (as of Bgee 14.1: https://bgee.org/sparql).
+  * the official endpoint to access the latest version of Bgee (as of Bgee 14.1: https://www.bgee.org/sparql).
   From this endpoint, no graph name should be used to target a specific graph: there is a graph
   targeted by default on this endpoint (the graph from the latest release), and specifying
   a specific graph makes the query to use all graphs. Weird, but... wrong results.
   * the archive endpoint to access to any version of Bgee, but with which it is necessary to target
-  a specific graph in the query. For Bgee 14.1, the URL is https://bgee.org/sparql14_1
+  a specific graph in the query. For Bgee 14.1, the URL is https://www.bgee.org/sparql14_1
   (all archived SPARQL URLs point to the same archive endpoint, as of Bgee 14.1).
   From this endpoint, no graph is targeted by default, so it is necessary to explicitly target one
   in the query; otherwise, all graphs will be used... wrong results
 
 => As a result, apache should also be configured for redirecting URLs of the SPARQL endpoint
-(i.e., `https://bgee.org/sparql14_1` should point to the archived endpoint,
-`https://bgee.org/sparql` always to the official endpoint).
+(i.e., `https://www.bgee.org/sparql14_1` should point to the archived endpoint,
+`https://www.bgee.org/sparql` always to the official endpoint).
 
 #### Once everything is ready:
 

@@ -150,13 +150,13 @@
 
                 </div>
                 <!--  VI, Dec, 2015: when file upload activated, modify the 'placeholder line below:
-                placeholder="Enter a list of Ensembl identifiers, one ID per line, no quotes, no comma. Use same format for file upload."
+                placeholder="Enter a list of gene identifiers, one ID per line, no quotes, no comma. Use same format for file upload."
                  -->
                 <textarea name="fg_list" id="fg_list"
                           ng-model="vm.fg_list"
 
                           ng-trim="false"
-                          placeholder="Enter a list of Ensembl identifiers, one ID per line, no quotes, no comma."
+                          placeholder="Enter a list of gene identifiers, one ID per line, no quotes, no comma."
                           ng-class="{'error': vm.selected_species !== '' && !vm.isValidSpecies}"
                           rows="8"
                           cols="30"
@@ -298,7 +298,7 @@
                                          ng-model="vm.bg_list"
                                          ng-trim="false"
                                          ng-show="(vm.isBackgroundChecked === '') || (vm.isBackgroundChecked === 'checked' && !vm.isValidBackground && vm.bg_list.length > 0)"
-                                         placeholder="Ensembl identifiers from {{vm.selected_species}} genome, one ID per line (no quotes, no comma)."
+                                         placeholder="Gene identifiers from {{vm.selected_species}} genome, one ID per line (no quotes, no comma)."
                                          ng-class="{'error': !vm.isValidSpecies}"
                                          ng-change="vm.getDevStages('bg', vm.bg_list)"
                                          ng-model-options="{ updateOn: 'default blur', debounce: { 'default': 600, 'blur': 0 } }"

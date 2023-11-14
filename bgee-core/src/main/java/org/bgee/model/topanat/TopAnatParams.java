@@ -14,15 +14,15 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.CallFilter;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.ConditionFilter;
-import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.call.CallFilter;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.GeneFilter;
@@ -35,7 +35,7 @@ import org.bgee.model.topanat.exception.MissingParameterException;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * 
- * @version Bgee 13, March 2016
+ * @version Bgee 15.0, May 2021
  * @since Bgee 13
  */
 public class TopAnatParams {
@@ -283,7 +283,8 @@ public class TopAnatParams {
          */
         public Builder(Collection<String> submittedForegroundIds, Collection<String> submittedBackgroundIds,
                 Integer speciesId, SummaryCallType callType) {
-            log.entry(submittedForegroundIds,submittedBackgroundIds,speciesId,callType);
+            log.traceEntry("{}, {}, {}, {}", submittedForegroundIds, submittedBackgroundIds,
+                    speciesId, callType);
             this.submittedForegroundIds = submittedForegroundIds;
             this.submittedBackgroundIds = submittedBackgroundIds;
             this.speciesId = speciesId;
@@ -299,7 +300,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder summaryQuality(SummaryQuality summaryQuality){
-            log.entry(summaryQuality);
+            log.traceEntry("{}", summaryQuality);
             this.summaryQuality = summaryQuality;
             return log.traceExit(this);
         } 
@@ -312,7 +313,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder dataTypes(Set<DataType> dataTypes){
-            log.entry(dataTypes);
+            log.traceEntry("{}", dataTypes);
             this.callType.checkCallTypeDataTypes(dataTypes);
             this.dataTypes = dataTypes;
             return log.traceExit(this);
@@ -326,7 +327,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder devStageId(String devStageId){
-            log.entry(devStageId);
+            log.traceEntry("{}", devStageId);
             this.devStageId = devStageId;
             return log.traceExit(this);
         }         
@@ -339,7 +340,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder decorrelationType(DecorrelationType decorrelationType){
-            log.entry(decorrelationType);
+            log.traceEntry("{}", decorrelationType);
             this.decorrelationType = decorrelationType;
             return log.traceExit(this);
         } 
@@ -352,7 +353,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder statisticTest(StatisticTest statisticTest){
-            log.entry(statisticTest);
+            log.traceEntry("{}", statisticTest);
             this.statisticTest = statisticTest;
             return log.traceExit(this);
         } 
@@ -365,7 +366,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder nodeSize(int nodeSize){
-            log.entry(nodeSize);
+            log.traceEntry("{}", nodeSize);
             this.nodeSize = nodeSize;
             return log.traceExit(this);
         }  
@@ -378,7 +379,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder fdrThreshold(double fdrThreshold){
-            log.entry(fdrThreshold);
+            log.traceEntry("{}", fdrThreshold);
             this.fdrThreshold = fdrThreshold;
             return log.traceExit(this);
         }   
@@ -391,7 +392,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder pvalueThreshold(double pvalueThreshold){
-            log.entry(pvalueThreshold);
+            log.traceEntry("{}", pvalueThreshold);
             this.pvalueThreshold = pvalueThreshold;
             return log.traceExit(this);
         }   
@@ -405,7 +406,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder numberOfSignificantNode(int numberOfSignificantNode){
-            log.entry(numberOfSignificantNode);
+            log.traceEntry("{}", numberOfSignificantNode);
             this.numberOfSignificantNode = numberOfSignificantNode;
             return log.traceExit(this);
         }  
@@ -418,7 +419,7 @@ public class TopAnatParams {
          * @return the updated current Builder instance
          */
         public Builder isWithZip(boolean isWithZip){
-            log.entry(isWithZip);
+            log.traceEntry("{}", isWithZip);
             this.isWithZip = isWithZip;
             return log.traceExit(this);
         }  
@@ -442,7 +443,7 @@ public class TopAnatParams {
      * @throws MissingParameterException    If a mandatory parameter is not properly set
      */
     private TopAnatParams(Builder builder) throws MissingParameterException {
-        log.entry(builder);
+        log.traceEntry("{}", builder);
         // mandatory params
 
         if(builder.callType == null){
@@ -601,26 +602,26 @@ public class TopAnatParams {
      * 
      * @return A {@code CallFilter} to be used for the analysis
      */
-    public CallFilter<?, ?> convertRawParametersToCallFilter() {
+    public CallFilter<?, ?, ConditionFilter> convertRawParametersToCallFilter() {
         log.traceEntry();
         
         GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);
         
+        //XXX: filter only on dev. stage. Could potentially add filtering on sex/strain
         Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
-            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), null));
-
-        //TODO: verify this logic
-        //(former note: we need to decide whether we want calls with data propagated only,
-        //because they can have a higher quality thanks to data propagation.)
-        Map<CallType.Expression, Boolean> obsDataFilter = null;
-        if(StringUtils.isBlank(this.devStageId)) {
-            obsDataFilter = new HashMap<>();
-            obsDataFilter.put(null, true);
-        }
+            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), 
+                    null, null, null, null));
         
         if (this.callType == ExpressionSummary.EXPRESSED) {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
             callQualFilter.put(ExpressionSummary.EXPRESSED, this.summaryQuality);
+
+            Map<EnumSet<CallService.Attribute>, Boolean> observedDataFilter = null;
+            //retrieve also propagated anat. entities when no decorrelation is requested in order to run
+            //a Fisher test without running topGo (faster)
+            if (this.decorrelationType != DecorrelationType.NONE) {
+                observedDataFilter = ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT;
+            }
             return log.traceExit(new ExpressionCallFilter(
                     //call type and quality filter
                     callQualFilter,
@@ -630,16 +631,8 @@ public class TopAnatParams {
                     condFilters,
                     //data type filter
                     this.dataTypes,
-                    //observed data filter
-                    //XXX: this should be adapted if we want TopAnat to work on a graph of conditions
-                    //TODO: investigate whether results are the same if we use all data,
-                    //including redundant calls with observed data
-                    //(if we just give values null, null, null)
-                    obsDataFilter, 
-                    //retrieve propagated anat. entities when no decorrelation in order to run a fischer test
-                    //without running topGo 
-                    (this.decorrelationType != DecorrelationType.NONE) ? true : null,
-                    null
+                    //cond. params observed states
+                    observedDataFilter
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {
@@ -695,7 +688,7 @@ public class TopAnatParams {
 //     */
 //    private <T extends CallData<?>> Collection<T> getCallData(
 //            BiFunction<DataType, DataQuality, T> callDataSupplier) {
-//        log.entry(callDataSupplier);
+//        log.traceEntry("{}", callDataSupplier);
 //
 //        final DataQuality dataQual = this.dataQuality == null? DataQuality.LOW: this.dataQuality;
 //

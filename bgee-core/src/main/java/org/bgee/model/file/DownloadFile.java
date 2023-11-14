@@ -8,14 +8,15 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.CallService;
 
 /**
  * A file (available for download), providing information such as size, category.
  *
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2017
+ * @author  Frederic Bastian
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13
  */
 //TODO: sanity checks
@@ -43,39 +44,34 @@ public class DownloadFile {
      * @since   Bgee 13
      */
     public enum CategoryEnum implements BgeeEnumField {
-        EXPR_CALLS_SIMPLE("expr_simple", false),
-        EXPR_CALLS_COMPLETE("expr_advanced", false),
-        DIFF_EXPR_ANAT_SIMPLE("diff_expr_anatomy_simple", true),
+        EXPR_CALLS_SIMPLE("expr_simple", true, false),
+        EXPR_CALLS_COMPLETE("expr_advanced", true, false),
+        DIFF_EXPR_ANAT_SIMPLE("diff_expr_anatomy_simple", true, false),
         //TODO: harmonize use of advanced/complete. Use "advanced" in the text name.
-        DIFF_EXPR_ANAT_COMPLETE("diff_expr_anatomy_complete", true),
-        DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete", true),
-        DIFF_EXPR_DEV_SIMPLE("diff_expr_dev_simple", true),
-        ORTHOLOG("ortholog", false),
-        AFFY_ANNOT("affy_annot", false),
-        AFFY_DATA("affy_data", false),
-        RNASEQ_ANNOT("rnaseq_annot", false),
-        RNASEQ_DATA("rnaseq_data", false);
+        DIFF_EXPR_ANAT_COMPLETE("diff_expr_anatomy_complete", true, false),
+        DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete", true, false),
+        DIFF_EXPR_DEV_SIMPLE("diff_expr_dev_simple", true, false),
+        ORTHOLOG("ortholog", false, true),
+        AFFY_ANNOT("affy_annot", false, true),
+        AFFY_DATA("affy_data", false, true),
+        RNASEQ_ANNOT("rnaseq_annot", false, true),
+        RNASEQ_DATA("rnaseq_data", false, true),
+        SC_RNA_SEQ_ANNOT("full_length_annot", false, true),
+        SC_RNA_SEQ_DATA("full_length_data", false, true);
 
         /**
          * A {@code String} that is the string representation.
          */
         private final String stringRepresentation;
 
-        /**
-         * A {@code boolean} defining whether the file is a differential expression file.
-         */
-        private final boolean isDiffExpr;
+        private final boolean relatedToExprCallFile;
+        private final boolean relatedToProcessedExprValueFile;
 
-        /**
-         * Constructor with 2-params.
-         *
-         * @param stringRepresentation  A {@code String} that is the string representation.
-         * @param isDiffExpr            A {@code boolean} defining whether the file is
-         *                              a differential expression file.
-         */
-        CategoryEnum(String stringRepresentation, boolean isDiffExpr) {
+        CategoryEnum(String stringRepresentation, boolean relatedToExprCallFile,
+                boolean relatedToProcessedExprValueFile) {
             this.stringRepresentation = stringRepresentation;
-            this.isDiffExpr = isDiffExpr;
+            this.relatedToExprCallFile = relatedToExprCallFile;
+            this.relatedToProcessedExprValueFile = relatedToProcessedExprValueFile;
         }
 
         @Override
@@ -101,11 +97,11 @@ public class DownloadFile {
             return BgeeEnum.convert(CategoryEnum.class, representation);
         }
 
-        /**
-         * @return {@code true} if the file category is a differential expression.
-         */
-        public boolean isDiffExpr() {
-            return this.isDiffExpr;
+        public boolean isRelatedToExprCallFile() {
+            return this.relatedToExprCallFile;
+        }
+        public boolean isRelatedToProcessedExprValueFile() {
+            return this.relatedToProcessedExprValueFile;
         }
 
         @Override
@@ -252,13 +248,11 @@ public class DownloadFile {
         return size;
     }
 
-    /**
-     * Define whether the file is a differential expression file.
-     *
-     * @return {@code true} if the file is a differential expression file.
-     */
-    public boolean isDiffExpr(){
-        return category.isDiffExpr();
+    public boolean isRelatedToExprCallFile(){
+        return category.isRelatedToExprCallFile();
+    }
+    public boolean isRelatedToProcessedExprValueFile(){
+        return category.isRelatedToProcessedExprValueFile();
     }
 
     @Override

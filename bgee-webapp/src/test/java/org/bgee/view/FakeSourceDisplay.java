@@ -1,7 +1,7 @@
 package org.bgee.view;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -18,7 +18,7 @@ public class FakeSourceDisplay extends FakeParentDisplay implements SourceDispla
     }
 
 	@Override
-	public void displaySources(Collection<Source> sources) {
+	public void displaySources(List<Source> sources) {
         this.out.println("Test source container");
 	}
 

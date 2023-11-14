@@ -3,7 +3,6 @@ package org.bgee.model.file;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
-import org.bgee.model.file.DownloadFile;
 import org.bgee.model.species.Species;
 
 import java.util.*;
@@ -13,6 +12,7 @@ import java.util.*;
  * @author Philippe Moret
  * @see DownloadFile
  */
+//TODO: change this class to not expose an ID, they are not stable between releases
 public class SpeciesDataGroup extends NamedEntity<Integer> {
 
 	/**

@@ -15,9 +15,9 @@ import java.util.Set;
 
 /**
  * Class allowing to describe genes. The unique identifier for {@code Gene}s
- * are composed of the Ensembl gene ID (see {@link #getEnsemblGeneId()}) and of the species ID
+ * are composed of the gene ID (see {@link #getGeneId()}) and of the species ID
  * (see {@link #getSpecies()} and {@link org.bgee.model.species.Species#getId() Species.getId()}).
- * This is because Ensembl gene IDs are not unique in Bgee, as we sometimes used the genome
+ * This is because gene IDs are not unique in Bgee, as we sometimes used the genome
  * of a closely-related species for species with no genome available.
  * 
  * @author  Frederic Bastian
@@ -26,22 +26,22 @@ import java.util.Set;
  * @since   Bgee 01
  */
 //Note: this class does not extend NamedEntity, because we don't want to expose
-//the internal Bgee gene IDs, and because Ensembl gene IDs are not unique in Bgee,
+//the internal Bgee gene IDs, and because gene IDs are not unique in Bgee,
 //as we sometimes use genomes of closely-related species.
 public class Gene {
     private final static Logger log = LogManager.getLogger(Gene.class.getName());
 
     /**
      * A {@code Comparator} for {@code Gene}s. Sort {@code Gene}s based on their species ID first
-     * ({@code null} species ID sorted last), then comparing their Ensembl gene ID ({@code null} values sorted last).
+     * ({@code null} species ID sorted last), then comparing their gene ID ({@code null} values sorted last).
      */
     public static Comparator<Gene> COMPARATOR = Comparator
             .<Gene, Integer>comparing(g -> g.getSpecies().getId(), Comparator.nullsLast(Comparator.naturalOrder()))
-            .thenComparing(g -> g.getEnsemblGeneId(), Comparator.nullsLast(Comparator.naturalOrder()));
+            .thenComparing(g -> g.getGeneId(), Comparator.nullsLast(Comparator.naturalOrder()));
     /**
-     * A {@code String} that is the Ensembl gene ID.
+     * A {@code String} that is the gene ID.
      */
-    private final String ensemblGeneId;
+    private final String geneId;
     
     /**
      * A {@code String} that is the name of the gene.
@@ -63,6 +63,7 @@ public class Gene {
      */
     //What we have are GeneXRefs, but the difference only matters for internal code,
     //for now we don't need to expose the difference to users.
+    //XXX: should it be a LinkedHashMap<Source, List<XRef>>?
     private final Set<XRef> xRefs;
 
     /**
@@ -76,33 +77,33 @@ public class Gene {
     private final GeneBioType geneBioType;
     
 	/**
-	 * @see #getGeneMappedToSameEnsemblGeneIdCount()
+	 * @see #getGeneMappedToSameGeneIdCount()
 	 */
-	private final int geneMappedToSameEnsemblGeneIdCount;
+	private final int geneMappedToSameGeneIdCount;
     
     /**
-     * Constructor providing the {@code ensemblGeneId} and the {@code Species} of this {@code Gene}.
+     * Constructor providing the {@code geneId} and the {@code Species} of this {@code Gene}.
      * <p>  
-     * These {@code ensemblGeneId} and {@code species} cannot be {@code null}, or blank,
+     * These {@code geneId} and {@code species} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      *
-     * @param ensemblGeneId A {@code String} representing the ID of this object.
+     * @param geneId        A {@code String} representing the ID of this object.
      * @param species       A {@code Species} representing the species this gene belongs to.
      * @param geneBioType   The {@code GeneBioType} of this {@code Gene}.
-     * @throws IllegalArgumentException     if {@code ensemblGeneId} is blank,
+     * @throws IllegalArgumentException     if {@code geneId} is blank,
      *                                      or {@code Species} is {@code null}.
      */
-    public Gene(String ensemblGeneId, Species species, GeneBioType geneBioType) throws IllegalArgumentException {
-        this(ensemblGeneId, null, null, null, null, species, geneBioType, 1);
+    public Gene(String geneId, Species species, GeneBioType geneBioType) throws IllegalArgumentException {
+        this(geneId, null, null, null, null, species, geneBioType, 1);
     }
     /**
-     * Constructor providing the {@code ensemblGeneId}, the name, the description,
+     * Constructor providing the {@code geneId}, the name, the description,
      * and the {@code Species} of this {@code Gene}.  
      * <p>
-     * These {@code ensemblGeneId} and {@code species} cannot be {@code null}, or blank,
+     * These {@code geneId} and {@code species} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param ensemblGeneId                         A {@code String} representing the Ensembl ID
+     * @param geneId                                A {@code String} representing the ID
      *                                              of this {@code Gene}.
      * @param name                                  A {@code String} representing the name of this gene.
      * @param description                           A {@code String} representing the description
@@ -115,19 +116,19 @@ public class Gene {
      * @param species                               A {@code Species} representing the species
      *                                              this gene belongs to.
      * @param geneBioType                           The {@code GeneBioType} of this {@code Gene}.
-     * @param geneMappedToSameEnsemblGeneIdCount    An {@code Integer} that is the number of genes
-     *                                              in the Bgee database with the same Ensembl gene ID.
-     *                                              See {@link #getGeneMappedToSameEnsemblGeneIdCount()}
+     * @param geneMappedToSameGeneIdCount           An {@code Integer} that is the number of genes
+     *                                              in the Bgee database with the same gene ID.
+     *                                              See {@link #getGeneMappedToSameGeneIdCount()}
      *                                              for more details.
-     * @throws IllegalArgumentException     if {@code ensemblGeneId} is blank,
+     * @throws IllegalArgumentException     if {@code geneId} is blank,
      *                                      or {@code Species} is {@code null}.
      */
-    public Gene(String ensemblGeneId, String name, String description, Collection<String> synonyms,
+    public Gene(String geneId, String name, String description, Collection<String> synonyms,
             Collection<GeneXRef> xRefs, Species species, GeneBioType geneBioType,
-            int geneMappedToSameEnsemblGeneIdCount)
+            int geneMappedToSameGeneIdCount)
         throws IllegalArgumentException {
-        if (StringUtils.isBlank(ensemblGeneId)) {
-            throw log.throwing(new IllegalArgumentException("The Ensembl gene ID must be provided."));
+        if (StringUtils.isBlank(geneId)) {
+            throw log.throwing(new IllegalArgumentException("The gene ID must be provided."));
         }
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("The Species must be provided."));
@@ -135,11 +136,11 @@ public class Gene {
         if (geneBioType == null) {
             throw log.throwing(new IllegalArgumentException("The GeneBioType must be provided."));
         }
-        if (geneMappedToSameEnsemblGeneIdCount < 1) {
+        if (geneMappedToSameGeneIdCount < 1) {
             throw log.throwing(new IllegalArgumentException(
-                    "Each gene has at least one match with same Ensembl ID: itself."));
+                    "Each gene has at least one match with same ID: itself."));
         }
-        this.ensemblGeneId = ensemblGeneId;
+        this.geneId = geneId;
         this.name = name;
         this.description = description;
         this.synonyms = Collections.unmodifiableSet(synonyms == null?
@@ -148,14 +149,14 @@ public class Gene {
                 new HashSet<>(): new HashSet<>(xRefs));
         this.species = species;
         this.geneBioType = geneBioType;
-        this.geneMappedToSameEnsemblGeneIdCount = geneMappedToSameEnsemblGeneIdCount;
+        this.geneMappedToSameGeneIdCount = geneMappedToSameGeneIdCount;
     }
     
 	/**
-	 * @return The {@code String} that is the Ensembl gene ID.
+	 * @return The {@code String} that is the gene ID.
 	 */
-	public String getEnsemblGeneId() {
-        return ensemblGeneId;
+	public String getGeneId() {
+        return geneId;
     }
     /**
      * @return  The {@code String} that is the name of the gene.
@@ -199,21 +200,21 @@ public class Gene {
     }
     /**
      * @return  An {@code Integer} that is the number of genes in the Bgee database
-     *          with the same Ensembl gene ID. In Bgee, for some species with no genome available,
+     *          with the same gene ID. In Bgee, for some species with no genome available,
      *          we use the genome of a closely-related species, such as chimpanzee genome
-     *          for analyzing bonobo data. For this reason, a same Ensembl gene ID
+     *          for analyzing bonobo data. For this reason, a same gene ID
      *          can be mapped to several species in Bgee. The value returned here is equal to 1
-     *          when the Ensembl gene ID is uniquely used in the Bgee database.
+     *          when the gene ID is uniquely used in the Bgee database.
 	 */
-	public int getGeneMappedToSameEnsemblGeneIdCount() {
-	    return this.geneMappedToSameEnsemblGeneIdCount;
+	public int getGeneMappedToSameGeneIdCount() {
+	    return this.geneMappedToSameGeneIdCount;
 	}
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((ensemblGeneId == null) ? 0 : ensemblGeneId.hashCode());
+        result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
         result = prime * result + ((species == null) ? 0 : species.hashCode());
         result = prime * result + ((geneBioType == null) ? 0 : geneBioType.hashCode());
         return result;
@@ -230,11 +231,11 @@ public class Gene {
             return false;
         }
         Gene other = (Gene) obj;
-        if (ensemblGeneId == null) {
-            if (other.ensemblGeneId != null) {
+        if (geneId == null) {
+            if (other.geneId != null) {
                 return false;
             }
-        } else if (!ensemblGeneId.equals(other.ensemblGeneId)) {
+        } else if (!geneId.equals(other.geneId)) {
             return false;
         }
         if (species == null) {
@@ -257,14 +258,14 @@ public class Gene {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Gene [ensemblGeneId=").append(ensemblGeneId)
+        builder.append("Gene [geneId=").append(geneId)
                .append(", name=").append(name)
                .append(", description=").append(description)
                .append(", synonyms=").append(synonyms)
                .append(", x-refs=").append(xRefs)
                .append(", species=").append(species)
                .append(", geneBioType=").append(geneBioType)
-               .append(", geneMappedToSameEnsemblGeneIdCount=").append(geneMappedToSameEnsemblGeneIdCount)
+               .append(", geneMappedToSameGeneIdCount=").append(geneMappedToSameGeneIdCount)
                .append("]");
         return builder.toString();
     }

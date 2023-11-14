@@ -18,13 +18,30 @@ import org.bgee.model.species.Taxon;
  * 
  * 
  * @author Julien Wollbrett
- * @version Bgee 14.2 Feb. 2021
+ * @author Frederic Bastian
+ * @version Bgee 15 Oct. 2021
  * @since Bgee 14.2 Feb. 2021
  * @see Gene 
  */
 public class GeneHomologs {
-    
     private final static Logger log = LogManager.getLogger(GeneHomologs.class.getName());
+
+    public static enum HomologyType {
+        PARALOGY("pps"), ORTHOLOGY("vps");
+
+        private final String replacementForHomologyTypeURLTag;
+
+        private HomologyType(String replacementForHomologyTypeURLTag) {
+            this.replacementForHomologyTypeURLTag = replacementForHomologyTypeURLTag;
+        }
+        /**
+         * @return  A {@code String} to be used to replace {@link Source#HOMOLOGY_TYPE_TAG}
+         *          in XRef URLs.
+         */
+        public String getReplacementForHomologyTypeURLTag() {
+            return this.replacementForHomologyTypeURLTag;
+        }
+    }
 
     /**
      * Merge the orthologs and paralogs {@code Map}s of two {@code GeneHomologs} related to a same
@@ -38,7 +55,7 @@ public class GeneHomologs {
      */
     public static GeneHomologs mergeGeneHomologs(GeneHomologs gh1, GeneHomologs gh2)
             throws IllegalArgumentException {
-        log.entry(gh1, gh2);
+        log.traceEntry("{}, {}", gh1, gh2);
         if (!gh1.getGene().equals(gh2.getGene())) {
             throw log.throwing(new IllegalArgumentException(
                     "Cannot merge GeneHomologs for different genes"));
@@ -57,18 +74,29 @@ public class GeneHomologs {
         }
         paralogs = GeneHomologsService.sortMapByTaxon(paralogs);
 
-        return log.traceExit(new GeneHomologs(gh1.getGene(), orthologs, paralogs));
+        return log.traceExit(new GeneHomologs(gh1.getGene(), orthologs, paralogs,
+                gh1.getOrthologyXRef(), gh1.getParalogyXRef()));
     }
 
     private final Gene gene;
     private final LinkedHashMap<Taxon, Set<Gene>> orthologsByTaxon;
+    private final GeneXRef orthologyXRef;
     private final LinkedHashMap<Taxon, Set<Gene>> paralogsByTaxon;
+    private final GeneXRef paralogyXRef;
     
     public GeneHomologs(Gene gene, LinkedHashMap<Taxon, Set<Gene>> orthologsByTaxon,
-            LinkedHashMap<Taxon, Set<Gene>> paralogsByTaxon) {
-        log.entry(gene, orthologsByTaxon, paralogsByTaxon);
+            LinkedHashMap<Taxon, Set<Gene>> paralogsByTaxon, GeneXRef orthologyXRef,
+            GeneXRef paralogyXRef) {
+        log.traceEntry("{}, {}, {}, {}, {}", gene, orthologsByTaxon, paralogsByTaxon,
+                orthologyXRef, paralogyXRef);
         if (gene == null) {
             throw log.throwing(new IllegalArgumentException("a gene can not be null"));
+        }
+        if (orthologyXRef == null) {
+            throw log.throwing(new IllegalArgumentException("orthologyXRef can not be null"));
+        }
+        if (paralogyXRef == null) {
+            throw log.throwing(new IllegalArgumentException("paralogyXRef can not be null"));
         }
 
         this.gene = gene;
@@ -84,8 +112,16 @@ public class GeneHomologs {
                     e -> new HashSet<>(e.getValue()),
                     (v1, v2) -> {throw log.throwing(new IllegalStateException("Collision impossible"));},
                     LinkedHashMap::new));
+        this.orthologyXRef = orthologyXRef;
+        this.paralogyXRef = paralogyXRef;
     }
 
+    public Set<Taxon> getAllTaxa() {
+        log.traceEntry();
+        Set<Taxon> taxa = new HashSet<>(this.orthologsByTaxon.keySet());
+        taxa.addAll(this.paralogsByTaxon.keySet());
+        return log.traceExit(taxa);
+    }
     /**
      * @return  The {@code Gene} for which orthologs and/or paralogs were requested.
      */
@@ -116,12 +152,29 @@ public class GeneHomologs {
         return new LinkedHashMap<>(paralogsByTaxon);
     }
 
+    /**
+     * @return  The {@code GeneXRef} providing information about the source of orthology data
+     *          for this {@code GeneHomlogs} group.
+     */
+    public GeneXRef getOrthologyXRef() {
+        return orthologyXRef;
+    }
+    /**
+     * @return  The {@code GeneXRef} providing information about the source of paralogy data
+     *          for this {@code GeneHomlogs} group.
+     */
+    public GeneXRef getParalogyXRef() {
+        return paralogyXRef;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("GeneHomologs [gene=").append(gene)
                .append(", orthologsByTaxon=").append(orthologsByTaxon)
                .append(", paralogsByTaxon=").append(paralogsByTaxon)
+               .append(", orthologyXRef=").append(orthologyXRef)
+               .append(", paralogyXRef=").append(paralogyXRef)
                .append("]");
         return builder.toString();
     }
@@ -133,6 +186,8 @@ public class GeneHomologs {
         result = prime * result + ((gene == null) ? 0 : gene.hashCode());
         result = prime * result + ((orthologsByTaxon == null) ? 0 : orthologsByTaxon.hashCode());
         result = prime * result + ((paralogsByTaxon == null) ? 0 : paralogsByTaxon.hashCode());
+        result = prime * result + ((orthologyXRef == null) ? 0 : orthologyXRef.hashCode());
+        result = prime * result + ((paralogyXRef == null) ? 0 : paralogyXRef.hashCode());
         return result;
     }
 
@@ -160,11 +215,16 @@ public class GeneHomologs {
                 return false;
         } else if (!paralogsByTaxon.equals(other.paralogsByTaxon))
             return false;
+        if (orthologyXRef == null) {
+            if (other.orthologyXRef != null)
+                return false;
+        } else if (!orthologyXRef.equals(other.orthologyXRef))
+            return false;
+        if (paralogyXRef == null) {
+            if (other.paralogyXRef != null)
+                return false;
+        } else if (!paralogyXRef.equals(other.paralogyXRef))
+            return false;
         return true;
     }
-
-
-    
-    
-
 }

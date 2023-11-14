@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,7 +74,7 @@ import org.bgee.view.ViewFactory;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct 2016
+ * @version Bgee 15.0, Feb. 2023
  * @since   Bgee 13
  */
 public class CommandTopAnat extends CommandParent {
@@ -141,7 +142,8 @@ public class CommandTopAnat extends CommandParent {
                 JobService jobService, User user, long jobId, String jobTitle, String jobCreationDate, 
                 String sendToAddress, BgeeProperties props, MailSender mailSender, 
                 Supplier<ServiceFactory> serviceFactoryProvider) {
-            log.entry(topAnatParams, resultUrl, jobService, jobId, jobTitle, jobCreationDate, 
+            log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}", topAnatParams, resultUrl,
+                    jobService, user, jobId, jobTitle, jobCreationDate,
                     sendToAddress, props, mailSender, serviceFactoryProvider);
             this.topAnatParams = topAnatParams;
             
@@ -282,7 +284,8 @@ public class CommandTopAnat extends CommandParent {
         private void sendMail(long startTimeInMs, String jobCreationDate, 
                 int resultCount, int analysesWithResultCount, Exception exceptionThrown) 
                         throws UnsupportedEncodingException, MessagingException, InterruptedException {
-            log.entry(startTimeInMs, jobCreationDate, resultCount, analysesWithResultCount, exceptionThrown);
+            log.traceEntry("{}, {}, {}, {}, {}", startTimeInMs, jobCreationDate, resultCount,
+                    analysesWithResultCount, exceptionThrown);
             assert this.mailSender != null && StringUtils.isNotBlank(this.sendToAddress): "Cannot send mail";
             
             //build mail subject
@@ -473,7 +476,11 @@ public class CommandTopAnat extends CommandParent {
             JobStatus status = JobStatus.RUNNING;
             long jobId = 0;
             final TopAnatController controller = this.loadTopAnatController();
-            
+
+            //We need a data hash in most cases for TopAnat to work properly,
+            //getDataKey() is used in various places of this class
+            this.requestParameters.generateKeyAndStore();
+
             if (controller.areAnalysesDone()) {
                 log.debug("Results already exist.");
                 status = JobStatus.UNDEFINED;
@@ -488,8 +495,10 @@ public class CommandTopAnat extends CommandParent {
                 message = "The results already exist.";
             }
             LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+
             data.put(JOB_RESPONSE_LABEL, new JobResponse(
                     jobId, status.name(), this.requestParameters.getDataKey()));
+
             display.sendTrackingJobResponse(data, message);
             
 
@@ -498,8 +507,10 @@ public class CommandTopAnat extends CommandParent {
             //TODO: use the more detailed information provided by the Job. 
             //Maybe we can even actually provide the Job in JSON?
             // Get params
-            Integer jobId = this.requestParameters.getJobId(); 
-            String keyParam = this.requestParameters.getDataKey(); 
+            Integer jobId = this.requestParameters.getJobId();
+            //We couldn't track a job without a data key, no need to try to generate one
+            String keyParam = this.requestParameters.getDataKey();
+            assert StringUtils.isNotBlank(keyParam);
             
             if (jobId == null || jobId < 1) {
                 throw log.throwing(new InvalidRequestException("A job ID must be provided"));
@@ -552,8 +563,7 @@ public class CommandTopAnat extends CommandParent {
 
         // Home page, empty
         } else if (this.requestParameters.getAction() == null) {
-            display.displayTopAnatHomePage();
-            
+            throw log.throwing(new InvalidRequestException("an action should be provided"));
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " 
                 + this.requestParameters.getUrlParametersInstance().getParamAction() 
@@ -572,7 +582,7 @@ public class CommandTopAnat extends CommandParent {
      * @throws TooManyJobsException     If the user already has too many running jobs.
      */
     private long launchNewJob(final TopAnatController controller) throws TooManyJobsException {
-        log.entry(controller);
+        log.traceEntry("{}", controller);
         
         //before formally registering a new job in another thread, we check whether 
         //the user has already too many running jobs. If we checked only in the other thread, 
@@ -581,11 +591,11 @@ public class CommandTopAnat extends CommandParent {
         
         log.debug("Results don't exist, launching job");
         
-        //generate result URL, for sending it to the user
-        RequestParameters resultParams = new RequestParameters();
-        resultParams.setPage(RequestParameters.PAGE_TOP_ANAT);
-        resultParams.setURLHash("/result/" + this.requestParameters.getDataKey());
-        final String resultUrl = resultParams.getStableRequestURL();
+        //Generate result URL, for sending it to the user.
+        //The data key is generated before calling this method
+        //XXX does it worth creating a FrontendRequestParameters?
+        final String resultUrl = this.prop.getStableFrontendUrl() + "/analysis/top-anat/" +
+                this.requestParameters.getDataKey();
         
         //OK, we need to launch the analyses. 
         //launch analysis in a different thread, otherwise the response will not be sent.
@@ -651,6 +661,7 @@ public class CommandTopAnat extends CommandParent {
         if (StringUtils.isNotBlank(jobTitle)) {
             globalFileName += jobTitle.replace(' ', '_') + "_";
         }
+        assert StringUtils.isNotBlank(this.requestParameters.getDataKey());
         globalFileName += this.requestParameters.getDataKey() + ".zip";
         
         //If several results are requested, then we will generate a zip of the result zips, 
@@ -753,7 +764,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private GeneListResponse getGeneResponse(List<String> geneList, String paramName)
             throws InvalidRequestException {
-        log.entry(geneList, paramName);
+        log.traceEntry("{}, {}", geneList, paramName);
         
         if (geneList.isEmpty()) {
             throw log.throwing(new AssertionError("Code supposed to be unreachable."));
@@ -764,14 +775,7 @@ public class CommandTopAnat extends CommandParent {
         // Load mapping cross-reference IDs to genes
         final Map<String, Set<Gene>> mappingIdsToGenes =
                 serviceFactory.getGeneService().loadGenesByAnyId(geneSet, false)
-                .collect(Collectors.toMap(e->e.getKey(),
-                        // FIXME: Remove filter on bonobo data, we should give the possibility
-                        // to the user to choose a species. In same time, remove info
-                        // under gene list textarea in TopAnat HTML file.
-                        e -> e.getValue().stream()
-                        .filter(g -> g.getSpecies() == null || g.getSpecies().getId() == null ||
-                        g.getSpecies().getId() != 9597)
-                        .collect(Collectors.toSet())));
+                .collect(Collectors.toMap(e->e.getKey(),e -> e.getValue()));
 
         // Identify undetermined gene IDs
         final Set<String> undeterminedGeneIds = mappingIdsToGenes.entrySet().stream()
@@ -820,7 +824,7 @@ public class CommandTopAnat extends CommandParent {
 
         if (!idsMappingMultipleGenes.isEmpty()) {
             throw log.throwing(new InvalidRequestException(
-                    "At least one ID maps to severals Ensembl gene IDs: " + idsMappingMultipleGenes));
+                    "At least one ID maps to several gene IDs: " + idsMappingMultipleGenes));
         }
 
         // Identify IDs not in the selected species
@@ -899,7 +903,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private String getGeneUploadResponseMessage(Set<String> submittedGeneIds, 
             LinkedHashMap<Species, Long> speciesToGeneCount, Set<String> undeterminedGeneIds) {
-        log.entry(submittedGeneIds, speciesToGeneCount, undeterminedGeneIds);
+        log.traceEntry("{}, {}, {}", submittedGeneIds, speciesToGeneCount, undeterminedGeneIds);
         
         StringBuilder msg = new StringBuilder();
         msg.append(submittedGeneIds.size());
@@ -932,7 +936,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private Set<DevStage> getGroupingDevStages(Integer speciesId, Integer level) 
             throws IllegalStateException {
-        log.entry(speciesId, level);
+        log.traceEntry("{}, {}", speciesId, level);
         Set<DevStage> devStages = serviceFactory.getDevStageService().
                 loadGroupingDevStages(Arrays.asList(speciesId), level);
 
@@ -984,7 +988,7 @@ public class CommandTopAnat extends CommandParent {
         // Data quality can be null if there is no filter to be applied
         SummaryQuality dataQuality = this.checkAndGetSummaryQuality();
         // Data types can be null if there is no filter to be applied
-        Set<DataType> dataTypes = this.checkAndGetDataTypes();
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
     
         // Dev. stages can be null if all selected species stages should be used
         final List<String> subDevStages = Collections.unmodifiableList(Optional.ofNullable(
@@ -1057,7 +1061,6 @@ public class CommandTopAnat extends CommandParent {
         assert cleanFgIds != null && !cleanFgIds.isEmpty();
         assert devStageIds != null && !devStageIds.isEmpty();
         assert speciesId != null && speciesId >= 1;
-        assert callTypes == null || callTypes.isEmpty();
 
         // One TopAnat analyze has one call type and one dev. stage
         List<TopAnatParams> allTopAnatParams = new ArrayList<TopAnatParams>();
@@ -1108,7 +1111,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * Clean the provided list of IDs converting cross-reference IDs into Bgee gene IDs (Ensembl IDs)
+     * Clean the provided list of IDs converting cross-reference IDs into Bgee gene IDs
      * and removing gene IDs not in the selected species and the undetermined gene IDs.
      *
      * @param geneResponse  A {@code GeneListResponse} that is the gene list response
@@ -1117,7 +1120,7 @@ public class CommandTopAnat extends CommandParent {
      * @return              A {@code Set} of {@code String}s that are Bgee gene IDs.
      */
     private Set<String> cleanGeneIds(GeneListResponse geneResponse, Set<String> ids) {
-        log.entry(geneResponse, ids);
+        log.traceEntry("{}, {}", geneResponse, ids);
         
         Set<String> cleanGeneIds = new HashSet<>(ids);
         
@@ -1137,20 +1140,20 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * Retrieve Bgee gene IDs (Ensembl IDs) from any ID list.
+     * Retrieve Bgee gene IDs from any ID list.
      *
      * @param ids   A {@code Collection} of {@code String}s that are the IDs to be converted in Bgee gene IDs.
      * @return      The {@code Set} of {@code String}s that are the Bgee gene IDs.
      * @throws InvalidRequestException  If at least one provided ID map to severals Bgee gene IDs.
      */
     private Set<String> loadBgeeIds(Collection<String> ids) {
-        log.entry(ids);
+        log.traceEntry("{}", ids);
 
         return log.traceExit(Collections.unmodifiableSet(
                 serviceFactory.getGeneService().loadGenesByAnyId(
                         Optional.ofNullable(ids).orElse(new HashSet<>()), false)
                         .flatMap(m -> m.getValue().stream())
-                        .map(g -> g.getEnsemblGeneId())
+                        .map(g -> g.getGeneId())
                         .collect(Collectors.toSet())));
     }
 
@@ -1160,7 +1163,7 @@ public class CommandTopAnat extends CommandParent {
      * @return
      */
     private Set<String> cleanDevStages(GeneListResponse geneResponse, Set<String> devStageIds) {
-        log.entry(geneResponse, devStageIds);
+        log.traceEntry("{}, {}", geneResponse, devStageIds);
 
         Set<String> allDevStageIds = geneResponse.getStages().stream()
                 .map(DevStage::getId)
@@ -1233,8 +1236,8 @@ public class CommandTopAnat extends CommandParent {
                 TreeMap<Integer, Species> detectedSpecies, Integer selectedSpecies,
                 Collection<DevStage> stages, TreeSet<String> notInSelectedSpeciesGeneIds,
                 TreeSet<String> undeterminedGeneIds) {
-            log.entry(geneCount, detectedSpecies, selectedSpecies, stages,
-                    notInSelectedSpeciesGeneIds, undeterminedGeneIds);
+            log.traceEntry("{}, {}, {}, {}, {}, {}", geneCount, detectedSpecies, selectedSpecies,
+                    stages, notInSelectedSpeciesGeneIds, undeterminedGeneIds);
             this.geneCount= geneCount;
             this.detectedSpecies = detectedSpecies;
             this.selectedSpecies = selectedSpecies;
@@ -1377,7 +1380,7 @@ public class CommandTopAnat extends CommandParent {
          * @param data      A {@code String} representing the key of the parameters.
          */
         public JobResponse(long jobId, String jobStatus, String data) {
-            log.entry(jobId, jobStatus, data);
+            log.traceEntry("{}, {}, {}", jobId, jobStatus, data);
             this.jobId = jobId;
             this.jobStatus = jobStatus;
             this.data = data;

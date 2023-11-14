@@ -27,7 +27,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * obtained from this {@code GeneDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link GeneTO#getId()}.
-     * <li>{@code ENSEMBL_ID}: corresponds to {@link GeneTO#getGeneId()}.
+     * <li>{@code GENE_ID}: corresponds to {@link GeneTO#getGeneId()}.
      * <li>{@code NAME}: corresponds to {@link GeneTO#getName()}.
      * <li>{@code DESCRIPTION}: corresponds to {@link GeneTO#getDescription()}.
      * <li>{@code SPECIES_ID}: corresponds to {@link GeneTO#getSpeciesId()}.
@@ -41,8 +41,25 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, ENSEMBL_ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID,
-        ENSEMBL_GENE, GENE_MAPPED_TO_SAME_GENE_ID_COUNT;
+        ID("bgeeGeneId"), GENE_ID("geneId"), NAME("geneName"), DESCRIPTION("geneDescription"),
+        SPECIES_ID("speciesId"), GENE_BIO_TYPE_ID("geneBiotypeId"),
+        OMA_PARENT_NODE_ID("OMAParentNodeId"), ENSEMBL_GENE("ensemblGene"),
+        GENE_MAPPED_TO_SAME_GENE_ID_COUNT("geneMappedToGeneIdCount");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code AffymetrixChipTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
     
     /**
@@ -57,12 +74,12 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     public GeneTOResultSet getAllGenes() throws DAOException;
     
     /**
-     * Retrieve genes by their ensembl ids.
+     * Retrieve genes by theirIDs.
      * @param geneIds A {Collection} of gene ids.
      * @return  A {@code GeneTOResultSet} containing genes found from the data source.
      * @throws DAOException
      */
-    public GeneTOResultSet getGenesByEnsemblGeneIds(Collection<String> geneIds) throws DAOException;
+    public GeneTOResultSet getGenesByGeneIds(Collection<String> geneIds) throws DAOException;
     
     /**
      * Retrieve genes by their bgee gene ids.
@@ -87,18 +104,24 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     public GeneTOResultSet getGenesBySpeciesIds(Collection<Integer> speciesIds) throws DAOException;
     /**
      * Retrieves genes with expression data for the requested species IDs. If no species IDs
-     * provided, retrieve data for all species.
+     * provided, retrieve data for all species. Genes returned are ordered by the internal Bgee gene IDs.
      * <p>
      * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
      * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      to retrieve genes for. Can be {@code null} or empty.
+     * @param offset        An {@code int} that specifies the offset of the first gene
+     *                      for the requested species to return. The offset of the first gene
+     *                      that could be returned is 0. Used only if {@code geneCount}
+     *                      is greater than 0.
+     * @param geneCount     An {@code int} that specifies the maximum number of genes to return.
+     *                      If equals to 0, all genes for the requested species are returned.
      * @return              An {@code GeneTOResultSet} containing all genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneTOResultSet getGenesWithDataBySpeciesIds(Collection<Integer> speciesIds)
-            throws DAOException;
+    public GeneTOResultSet getGenesWithDataBySpeciesIdsOrdered(Collection<Integer> speciesIds,
+            int offset, int geneCount) throws DAOException;
 
     /**
      * Retrieves genes from data source according to a {@code Collection} of {@code Integer}s
@@ -109,7 +132,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * 
      * @param speciesIdToGeneIds    A {@code Map} where keys are {@code Integer}s that are
      *                              species IDs, the associated value being a {@code Set}
-     *                              of {@code String}s that are the Ensembl IDs of the genes
+     *                              of {@code String}s that are theIDs of the genes
      *                              to retrieve in the associated species.
      * @return                      A {@code GeneTOResultSet} containing matching genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
@@ -182,7 +205,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         private static final long serialVersionUID = -9011956802137411474L;
 
         /**
-         * A {@code String} that is the ID of this gene in the Ensembl database.
+         * A {@code String} that is the ID of this gene in the genome database.
          */
         private final String geneId;
 
@@ -222,7 +245,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * Other attributes are set to {@code null}.
          * 
          * @param bgeeGeneId    An {@code Integer} that is the ID of this gene.
-         * @param geneId        A {@code String} that is the ID of this gene in the Ensembl database.
+         * @param geneId        A {@code String} that is the ID of this gene in the genome database.
          * @param geneName  A {@code String} that is the name of this gene.
          * @param speciesId An {@code Integer} of the species which this gene belongs to.
          */
@@ -231,7 +254,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         }
 
         /**
-         * Constructor providing the Bgee gene ID, the Ensembl ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
+         * Constructor providing the Bgee gene ID, the gene ID (for instance, {@code ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), the description, the species ID, the BioType, 
          * the ID of the OMA Hierarchical Orthologous Group, whether this gene is present in 
          * Ensembl (see {@link #isEnsemblGene()}).  
@@ -239,7 +262,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param bgeeGeneId                An {@code Integer} that is the ID of this gene.
-         * @param geneId                    A {@code String} that is the ID of this gene in the Ensembl database.
+         * @param geneId                    A {@code String} that is the ID of this gene in the genome database.
          * @param geneName                  A {@code String} that is the name of this gene.
          * @param geneDescription           A {@code String} that is the description of this gene.
          * @param speciesId                 An {@code Integer} that is the species ID which this 
@@ -250,7 +273,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param ensemblGene               A {code Boolean} defining whether this gene is present 
          *                                  in Ensembl.
          * @param geneMappedToGeneIdCount   An {@code Integer} that is the number of genes
-         *                                  in the Bgee database with the same Ensembl gene ID.
+         *                                  in the Bgee database with the samegene ID.
          */
         public GeneTO(Integer bgeeGeneId, String geneId, String geneName, String geneDescription, 
                 Integer speciesId, Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene,
@@ -265,7 +288,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         }
 
         /**
-         * @return  A {@code String} that is the Ensembl gene ID.
+         * @return  A {@code String} that is the gene ID.
          */
         public String getGeneId() {
             return this.geneId;
@@ -296,11 +319,11 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         }
         /**
          * @return  An {@code Integer} that is the number of genes in the Bgee database
-         *          with the same Ensembl gene ID. In Bgee, for some species with no genome available,
+         *          with the samegene ID. In Bgee, for some species with no genome available,
          *          we use the genome of a closely-related species, such as chimpanzee genome
-         *          for analyzing bonobo data. For this reason, a same Ensembl gene ID
+         *          for analyzing bonobo data. For this reason, a samegene ID
          *          can be mapped to several species in Bgee. The value returned here is equal to 1
-         *          when the Ensembl gene ID is uniquely used in the Bgee database.
+         *          when the gene ID is uniquely used in the Bgee database.
          */
         public Integer getGeneMappedToGeneIdCount() {
             return this.geneMappedToGeneIdCount;

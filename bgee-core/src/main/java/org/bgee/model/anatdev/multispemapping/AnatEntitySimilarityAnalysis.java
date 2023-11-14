@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 
@@ -20,7 +21,7 @@ import org.bgee.model.species.Taxon;
  * of anatomical entities and about the species they exist in.
  *
  * @author Frederic Bastian
- * @version Bgee 14 May 2019
+ * @version Bgee 15, Dec. 2021
  * @since Bgee 14 May 2019
  */
 public class AnatEntitySimilarityAnalysis {
@@ -33,23 +34,20 @@ public class AnatEntitySimilarityAnalysis {
     private final Set<Species> requestedSpecies;
 
     private final Taxon leastCommonAncestor;
+    /**
+     * @see #getTaxonOntology()
+     */
+    private final Ontology<Taxon, Integer> taxonOntology;
     private final Set<AnatEntitySimilarity> anatEntitySimilarities;
     private final Set<AnatEntity> anatEntitiesWithNoSimilarities;
     private final Map<AnatEntity, Set<Species>> anatEntitiesExistInSpecies;
 
-    /**
-     * @param requestedAnatEntityIds
-     * @param requestedSpeciesIds
-     * @param leastCommonAncestor
-     * @param anatEntitySimilarities
-     * @param anatEntitiesWithNoSimilarities
-     * @param anatEntitiesExistInSpecies
-     */
     public AnatEntitySimilarityAnalysis(Collection<String> requestedAnatEntityIds,
             Collection<String> requestedAnatEntityIdsNotFound,
             Collection<Integer> requestedSpeciesIds,
             Collection<Integer> requestedSpeciesIdsNotFound, Collection<Species> requestedSpecies,
-            Taxon leastCommonAncestor, Collection<AnatEntitySimilarity> anatEntitySimilarities,
+            Taxon leastCommonAncestor, Ontology<Taxon, Integer> taxonOntology,
+            Collection<AnatEntitySimilarity> anatEntitySimilarities,
             Collection<AnatEntity> anatEntitiesWithNoSimilarities,
             Map<AnatEntity, Collection<Species>> anatEntitiesExistInSpecies) {
         this.requestedAnatEntityIds = Collections.unmodifiableSet(
@@ -68,6 +66,7 @@ public class AnatEntitySimilarityAnalysis {
                     "A least common ancestor taxon must be provided"));
         }
         this.leastCommonAncestor = leastCommonAncestor;
+        this.taxonOntology = taxonOntology;
         this.anatEntitySimilarities = Collections.unmodifiableSet(
                 anatEntitySimilarities == null? new HashSet<>(): new HashSet<>(anatEntitySimilarities));
         this.anatEntitiesWithNoSimilarities = Collections.unmodifiableSet(
@@ -155,6 +154,15 @@ public class AnatEntitySimilarityAnalysis {
         return leastCommonAncestor;
     }
     /**
+     * @return  The {@code Taxon} {@code Ontology} including the LCA {@code Taxon}
+     *          returned by {@link #getLeastCommonAncestor()} and its ancestors and descendants.
+     *          {@code null} if there are no {@code AnatEntitySimilarity} results
+     *          ({@link #getAnatEntitySimilarities()} returns an empty {@code Set}.
+     */
+    public Ontology<Taxon, Integer> getTaxonOntology() {
+        return this.taxonOntology;
+    }
+    /**
      * @return  An unmodifiable {@code Set} of {@code AnatEntitySimilarity}s for the requested
      *          anatomical entity IDs (see {@link #getRequestedAnatEntityIds()}) and requested
      *          species (see {@link #getRequestedSpecies()}).
@@ -193,6 +201,7 @@ public class AnatEntitySimilarityAnalysis {
                 + ((anatEntitiesWithNoSimilarities == null) ? 0 : anatEntitiesWithNoSimilarities.hashCode());
         result = prime * result + ((anatEntitySimilarities == null) ? 0 : anatEntitySimilarities.hashCode());
         result = prime * result + ((leastCommonAncestor == null) ? 0 : leastCommonAncestor.hashCode());
+        result = prime * result + ((taxonOntology == null) ? 0 : taxonOntology.hashCode());
         result = prime * result + ((requestedAnatEntityIds == null) ? 0 : requestedAnatEntityIds.hashCode());
         result = prime * result
                 + ((requestedAnatEntityIdsNotFound == null) ? 0 : requestedAnatEntityIdsNotFound.hashCode());
@@ -239,6 +248,13 @@ public class AnatEntitySimilarityAnalysis {
                 return false;
             }
         } else if (!leastCommonAncestor.equals(other.leastCommonAncestor)) {
+            return false;
+        }
+        if (taxonOntology == null) {
+            if (other.taxonOntology != null) {
+                return false;
+            }
+        } else if (!taxonOntology.equals(other.taxonOntology)) {
             return false;
         }
         if (requestedAnatEntityIds == null) {
@@ -288,6 +304,7 @@ public class AnatEntitySimilarityAnalysis {
                 .append(", requestedSpeciesIdsNotFound=").append(requestedSpeciesIdsNotFound)
                 .append(", requestedSpecies=").append(requestedSpecies)
                 .append(", leastCommonAncestor=").append(leastCommonAncestor)
+                .append(", taxonOntology=").append(taxonOntology)
                 .append(", anatEntitySimilarities=").append(anatEntitySimilarities)
                 .append(", anatEntitiesWithNoSimilarities=").append(anatEntitiesWithNoSimilarities)
                 .append(", anatEntitiesExistInSpecies=").append(anatEntitiesExistInSpecies)

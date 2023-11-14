@@ -44,7 +44,7 @@ public class GeneXRef extends XRef {
 
     @Override
     public String getXRefUrl(boolean convertAmpersandToHTMLEntity, Function<String, String> urlEncode) {
-        log.entry(convertAmpersandToHTMLEntity, urlEncode);
+        log.traceEntry("{}, {}", convertAmpersandToHTMLEntity, urlEncode);
 
         assert !convertAmpersandToHTMLEntity ||
         !Source.GENE_TAG.contains("&") && !Source.SPECIES_SCIENTIFIC_NAME_TAG.contains("&");

@@ -17,12 +17,13 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionGraph;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionGraph;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -183,8 +184,8 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
         //Not used for writing in the gene TSV files, but to retrieve all unique Conditions and AnatEntities
         //for the information per biotype, and for sums over all genes or all biotypes.
-        private Set<AnatEntity> filteredGenePagePresentAnatEntities;
-        private Set<AnatEntity> presentAnatEntities;
+        private Set<Condition> filteredGenePagePresentAnatEntities;
+        private Set<Condition> presentAnatEntities;
         private Set<Condition> presentConds;
         private Set<AnatEntity> absentAnatEntities;
         private Set<Condition> absentConds;
@@ -408,10 +409,10 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             this.filteredGenePagePresentAnatEntity = filteredGenePagePresentAnatEntity;
         }
 
-        public Set<AnatEntity> getFilteredGenePagePresentAnatEntities() {
+        public Set<Condition> getFilteredGenePagePresentAnatEntities() {
             return filteredGenePagePresentAnatEntities;
         }
-        public Set<AnatEntity> getPresentAnatEntities() {
+        public Set<Condition> getPresentAnatEntities() {
             return presentAnatEntities;
         }
         public Set<Condition> getPresentConds() {
@@ -1087,7 +1088,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     .collect(Collectors.toSet()));
             EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
             ConditionGraph condGraph = serviceFactory.getConditionGraphService().loadConditionGraph(
-                    species.getId(), allCondParams);
+                    Collections.singleton(species), null, allCondParams);
 
             try {
                 this.generatePerSpecies(species, genes, nonInformativeAnatEntities,
@@ -1117,7 +1118,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
             GeneStatsBean bean = new GeneStatsBean();
             bean.setGeneName(gene.getName());
-            bean.setGeneId(gene.getEnsemblGeneId());
+            bean.setGeneId(gene.getGeneId());
             bean.setBioTypeName(gene.getGeneBioType().getName());
 
             this.generateGeneStats(bean, gene, nonInformativeAnatEntities, allCondParams, condGraph);
@@ -1195,36 +1196,37 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         CallService callService = serviceFactory.getCallService();
 
-        GeneFilter geneFilter = new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId());
-        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        obsDataFilter.put(null, true);
+        GeneFilter geneFilter = new GeneFilter(gene.getSpecies().getId(), gene.getGeneId());
         EnumSet<CallService.Attribute> baseAttrs = EnumSet.of(CallService.Attribute.CALL_TYPE,
                 CallService.Attribute.DATA_QUALITY);
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
+                new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
 
-        EnumSet<CallService.Attribute> condParams = EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID);
+        EnumSet<CallService.Attribute> condParams = EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID,
+                CallService.Attribute.CELL_TYPE_ID);
         EnumSet<CallService.Attribute> attrs = EnumSet.copyOf(condParams);
         attrs.addAll(baseAttrs);
-        Set<ExpressionCall> organCalls = callService
+        List<ExpressionCall> organCalls = callService
                 .loadExpressionCalls(
                         new ExpressionCallFilter(null,
                                 Collections.singleton(geneFilter),
-                                null, null, obsDataFilter, null, null),
+                                ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT),
                         attrs,
-                        null)
-                .collect(Collectors.toSet());
+                        serviceOrdering)
+                .collect(Collectors.toList());
         sumUpGeneCalls(bean, organCalls, condParams, nonInformativeAnatEntities);
 
         attrs = EnumSet.copyOf(allCondParams);
         attrs.addAll(baseAttrs);
         attrs.add(CallService.Attribute.MEAN_RANK);
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
-                new LinkedHashMap<>();
-        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = new HashMap<>();
+        callObservedDataFilter.put(allCondParams, true);
         List<ExpressionCall> conditionCalls = callService
                 .loadExpressionCalls(
                         new ExpressionCallFilter(null,
                                 Collections.singleton(geneFilter),
-                                null, null, obsDataFilter, null, null),
+                                callObservedDataFilter),
                         attrs,
                         serviceOrdering)
                 .collect(Collectors.toList());
@@ -1232,22 +1234,27 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
 
         if (!organCalls.isEmpty()) {
-            LinkedHashMap<AnatEntity, List<ExpressionCall>> groupedCalls = callService
-                    .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false, condGraph);
+            LinkedHashMap<ExpressionCall, List<ExpressionCall>> groupedCalls = callService
+                    .loadCondCallsBySilverAnatEntityCalls(organCalls, conditionCalls,
+                            false, condGraph);
             bean.setFilteredGenePagePresentAnatEntity(groupedCalls.size());
-            bean.getFilteredGenePagePresentAnatEntities().addAll(groupedCalls.keySet());
+            bean.getFilteredGenePagePresentAnatEntities().addAll(groupedCalls.keySet().stream()
+                    .map(c -> c.getCondition()).collect(Collectors.toSet()));
             if (!groupedCalls.isEmpty()) {
                 //The LinkedHashMap has the same interface as Map, so we cannot easily access the last element.
                 //We thus create a List of Entries
-                List<Entry<AnatEntity, List<ExpressionCall>>> orderedEntries = new ArrayList<>(groupedCalls.entrySet());
-                Entry<AnatEntity, List<ExpressionCall>> firstEntry = orderedEntries.iterator().next();
-                bean.setFilteredGenePageMinRankAnatEntity(firstEntry.getKey().getName());
-                bean.setFilteredGenePageFormattedMinRank(firstEntry.getValue().iterator().next().getFormattedMeanRank());
+                List<Entry<ExpressionCall, List<ExpressionCall>>> orderedEntries = new ArrayList<>(groupedCalls.entrySet());
+                Entry<ExpressionCall, List<ExpressionCall>> firstEntry = orderedEntries.iterator().next();
+                bean.setFilteredGenePageMinRankAnatEntity((!ConditionDAO.CELL_TYPE_ROOT_ID.equals(
+                        firstEntry.getKey().getCondition().getCellTypeId())?
+                                firstEntry.getKey().getCondition().getCellType().getName() + " in ": "")
+                        + firstEntry.getKey().getCondition().getAnatEntity().getName());
+                bean.setFilteredGenePageFormattedMinRank(firstEntry.getKey().getFormattedMeanRank());
                 //The max rank here could be understood as the max rank over all condition calls displayed on the gene page.
                 //But I think it's a bit confusing, the gene page mostly display information about anat. entities,
                 //so I take the min rank of the last anat. entity, as for the gene page.
-                Entry<AnatEntity, List<ExpressionCall>> lastEntry = orderedEntries.get(orderedEntries.size() - 1);
-                bean.setFilteredGenePageFormattedMaxRank(lastEntry.getValue().iterator().next().getFormattedMeanRank());
+                Entry<ExpressionCall, List<ExpressionCall>> lastEntry = orderedEntries.get(orderedEntries.size() - 1);
+                bean.setFilteredGenePageFormattedMaxRank(lastEntry.getKey().getFormattedMeanRank());
             }
         }
         if (!conditionCalls.isEmpty()) {
@@ -1409,7 +1416,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             switch (call.getSummaryCallType()) {
             case EXPRESSED:
                 if (anatEntityCalls) {
-                    bean.getPresentAnatEntities().add(call.getCondition().getAnatEntity());
+                    bean.getPresentAnatEntities().add(call.getCondition());
                 } else {
                     bean.getPresentConds().add(call.getCondition());
                 }

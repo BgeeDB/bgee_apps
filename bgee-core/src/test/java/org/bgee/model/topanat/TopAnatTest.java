@@ -33,11 +33,11 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.function.PentaFunction;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
@@ -131,13 +131,14 @@ public class TopAnatTest extends TestAncestor {
         anatEntitiesRelationships.put("A3", new HashSet<String>(Arrays.asList("A4")));        
         when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(anyCollectionOf(Integer.class)))
             .thenReturn(anatEntities);
-        when(mockAnatEntityService.loadDirectIsAPartOfRelationships(anyCollectionOf(Integer.class)))
-            .thenReturn(anatEntitiesRelationships);
-        when(mockGene1.getEnsemblGeneId()).thenReturn("G1");
-        when(mockGene2.getEnsemblGeneId()).thenReturn("G2");
-        when(mockGene3.getEnsemblGeneId()).thenReturn("G3");
-        when(mockGene4.getEnsemblGeneId()).thenReturn("G4");
-        when(mockGene5.getEnsemblGeneId()).thenReturn("G5");
+        //TODO: mock ConditionGraph method used instead
+//        when(mockAnatEntityService.loadDirectIsAPartOfRelationships(anyCollectionOf(Integer.class)))
+//            .thenReturn(anatEntitiesRelationships);
+        when(mockGene1.getGeneId()).thenReturn("G1");
+        when(mockGene2.getGeneId()).thenReturn("G2");
+        when(mockGene3.getGeneId()).thenReturn("G3");
+        when(mockGene4.getGeneId()).thenReturn("G4");
+        when(mockGene5.getGeneId()).thenReturn("G5");
         when(mockAnatEntity.getId()).thenReturn("A1").thenReturn("A2")
         .thenReturn("A3").thenReturn("A4").thenReturn("A5");
         when(mockAnatEntity.getName()).thenReturn("body").thenReturn("head")
@@ -158,11 +159,11 @@ public class TopAnatTest extends TestAncestor {
         when(mockExpressionCall3.getCondition()).thenReturn(mockCondition);
         when(mockExpressionCall4.getCondition()).thenReturn(mockCondition);
         when(mockExpressionCall5.getCondition()).thenReturn(mockCondition);
-        when(mockExpressionCall1.getGene().getEnsemblGeneId()).thenReturn("G1");
-        when(mockExpressionCall2.getGene().getEnsemblGeneId()).thenReturn("G2");
-        when(mockExpressionCall3.getGene().getEnsemblGeneId()).thenReturn("G3");
-        when(mockExpressionCall4.getGene().getEnsemblGeneId()).thenReturn("G4");
-        when(mockExpressionCall5.getGene().getEnsemblGeneId()).thenReturn("G5");
+        when(mockExpressionCall1.getGene().getGeneId()).thenReturn("G1");
+        when(mockExpressionCall2.getGene().getGeneId()).thenReturn("G2");
+        when(mockExpressionCall3.getGene().getGeneId()).thenReturn("G3");
+        when(mockExpressionCall4.getGene().getGeneId()).thenReturn("G4");
+        when(mockExpressionCall5.getGene().getGeneId()).thenReturn("G5");
         when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(anyCollectionOf(Integer.class)))
             .thenReturn(anatEntities);
         when(mockCondition.getAnatEntityId())

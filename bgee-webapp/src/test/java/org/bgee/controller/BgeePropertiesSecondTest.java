@@ -37,6 +37,9 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", "testwarning", bgeeProp.getWarningMessage());
         assertEquals("Wrong property value retrieved", true, bgeeProp.isArchive());
         assertEquals("Wrong property value retrieved", "testcurrenturl", bgeeProp.getBgeeCurrentUrl());
+        assertEquals("Wrong property value retrieved", "frontendUrl", bgeeProp.getFrontendUrl());
+        assertEquals("Wrong property value retrieved", "stableFrontendUrl", bgeeProp.getStableFrontendUrl());
+        assertEquals("Wrong property value retrieved", "testcurrenturl", bgeeProp.getBgeeCurrentUrl());
         assertEquals("Wrong property value retrieved", "/file", bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved", 20, bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved",

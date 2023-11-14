@@ -22,8 +22,11 @@ public class XRef {
     private final String xRefId;
     private final String xRefName;
     private final Source source;
+    private final String xRefURLWithTags;
 
     public XRef(String xRefId, String xRefName, Source source) {
+        //Source might be null, and we want to avoid throwing a null pointer exception.
+        //So we repeat the same code as in the other constructor
         if (StringUtils.isBlank(xRefId)) {
             throw log.throwing(new IllegalArgumentException("The cross-reference ID must be provided."));
         }
@@ -33,6 +36,19 @@ public class XRef {
         this.xRefId = xRefId;
         this.xRefName = xRefName;
         this.source = source;
+        this.xRefURLWithTags = source.getXRefUrl();
+    }
+    public XRef(String xRefId, String xRefName, Source source, String xRefURLWithTags) {
+        if (StringUtils.isBlank(xRefId)) {
+            throw log.throwing(new IllegalArgumentException("The cross-reference ID must be provided."));
+        }
+        if (source == null) {
+            throw log.throwing(new IllegalArgumentException("The source must be provided."));
+        }
+        this.xRefId = xRefId;
+        this.xRefName = xRefName;
+        this.source = source;
+        this.xRefURLWithTags = xRefURLWithTags;
     }
 
     /**
@@ -86,12 +102,12 @@ public class XRef {
      *              to provide a way to URL encode the parameter values when needed.
      */
     public String getXRefUrl(boolean convertAmpersandToHTMLEntity, Function<String, String> urlEncode) {
-        log.entry(convertAmpersandToHTMLEntity, urlEncode);
+        log.traceEntry("{}, {}", convertAmpersandToHTMLEntity, urlEncode);
         if (urlEncode == null) {
             throw log.throwing(new IllegalArgumentException("An URL encoding method must be provided"));
         }
 
-        String xRefUrl = this.getSource().getXRefUrl();
+        String xRefUrl = this.xRefURLWithTags;
         if (StringUtils.isBlank(xRefUrl)) {
             return log.traceExit((String) null);
         }
@@ -105,6 +121,9 @@ public class XRef {
         if (xRefUrl.contains(Source.X_REF_TAG)) {
             xRefUrl = xRefUrl.replace(Source.X_REF_TAG, urlEncode.apply(this.getXRefId()));
         }
+        if (xRefUrl.contains(Source.EXPERIMENT_TAG)) {
+            xRefUrl = xRefUrl.replace(Source.EXPERIMENT_TAG, urlEncode.apply(this.getXRefId()));
+        }
         return log.traceExit(xRefUrl);
     }
 
@@ -115,11 +134,12 @@ public class XRef {
         XRef xRef = (XRef) o;
         return Objects.equals(xRefId, xRef.xRefId) &&
                 Objects.equals(xRefName, xRef.xRefName) &&
-                Objects.equals(source, xRef.source);
+                Objects.equals(source, xRef.source) &&
+                Objects.equals(xRefURLWithTags, xRef.xRefURLWithTags);
     }
     @Override
     public int hashCode() {
-        return Objects.hash(xRefId, xRefName, source);
+        return Objects.hash(xRefId, xRefName, source, xRefURLWithTags);
     }
 
     @Override
@@ -127,6 +147,7 @@ public class XRef {
         final StringBuilder sb = new StringBuilder("XRef [xRefId=").append(xRefId)
                 .append(", xRefName=").append(xRefName)
                 .append(", source=").append(source)
+                .append(", xRefURLWithTags=").append(xRefURLWithTags)
                 .append("]");
         return sb.toString();
     }

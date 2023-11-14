@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
@@ -19,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.user.User;
+import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.Service;
@@ -43,7 +43,7 @@ import org.bgee.view.ViewFactory;
  * @author 	Frederic Bastian
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 15, Dec. 2021
  * @see 	#processRequest()
  * @since 	Bgee 1
  *
@@ -63,6 +63,11 @@ abstract class CommandParent {
      * across the entire webapp. 
      */
     protected final JobService jobService;
+    /**
+     * The {@code BgeeCacheService} instance allowing to manage caches between threads 
+     * across the entire webapp. 
+     */
+    protected final BgeeCacheService cacheService;
     /**
      * The {@code User} who is making the query to the webapp. 
      */
@@ -124,6 +129,14 @@ abstract class CommandParent {
                          BgeeProperties prop, ViewFactory viewFactory) {
         this(response, requestParameters, prop, viewFactory, null);
     }
+    public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
+            JobService jobService,
+            User user, ServletContext context, MailSender mailSender) {
+        this(response, requestParameters, prop, viewFactory, serviceFactory,
+            jobService, null, 
+            user, context, mailSender);
+    }
 
     /**
      * Constructor
@@ -139,6 +152,8 @@ abstract class CommandParent {
      *                                  (might be null)
      * @param jobService                A {@code JobService} instance allowing to manage jobs
      *                                  between threads across the entire webapp.
+     * @param cacheService              A {@code BgeeCacheService} instance allowing to manage jobs
+     *                                  between threads across the entire webapp.
      * @param user                      The {@code User} who is making the query to the webapp
      *                                  (might be null).
      * @param context                   The {@code ServletContext} of the servlet using this object. 
@@ -147,10 +162,10 @@ abstract class CommandParent {
      */
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
-                         JobService jobService,
+                         JobService jobService, BgeeCacheService cacheService,
                          User user, ServletContext context, MailSender mailSender) {
-        log.entry(response, requestParameters, prop, viewFactory, serviceFactory,
-                jobService, user, context, mailSender);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}", response, requestParameters, prop,
+                viewFactory, serviceFactory, jobService, user, context, mailSender);
         this.response = response;
         this.context = context;
         this.requestParameters = requestParameters;
@@ -158,6 +173,7 @@ abstract class CommandParent {
         this.viewFactory = viewFactory;
         this.serviceFactory = serviceFactory;
         this.jobService = jobService;
+        this.cacheService = cacheService;
         this.user = user;
         this.mailSender = mailSender;
         this.serverRoot = prop.getBgeeRootDirectory();
@@ -221,7 +237,7 @@ abstract class CommandParent {
      *                          in UTF-8, or the response output stream could not be obtained. 
      */
     protected void launchFileDownload(String filePath, String downloadFileName) throws IOException {
-        log.entry(filePath, downloadFileName);
+        log.traceEntry("{}, {}", filePath, downloadFileName);
         
         File downloadFile = new File(filePath);
         try (FileInputStream inStream = new FileInputStream(downloadFile)) {
@@ -262,7 +278,7 @@ abstract class CommandParent {
      * @return  A {@code Set} of {@code DataType}s retrieved from the request parameters.
      * @throws InvalidRequestException  If the data type request parameter is incorrectly used.
      */
-    protected Set<DataType> checkAndGetDataTypes() throws InvalidRequestException {
+    protected EnumSet<DataType> checkAndGetDataTypes() throws InvalidRequestException {
         log.traceEntry();
         
         List<String> rqDatatypes  = this.requestParameters.getDataType();
@@ -274,7 +290,9 @@ abstract class CommandParent {
             throw log.throwing(new InvalidRequestException("Incorrect data types provided: "
                     + rqDatatypes));
         }
-        return log.traceExit(DataType.convertToDataTypeSet(rqDatatypes));
+        EnumSet<DataType> dataTypes = DataType.convertToDataTypeSet(rqDatatypes);
+        return log.traceExit(dataTypes == null || dataTypes.isEmpty()?
+                EnumSet.allOf(DataType.class): dataTypes);
     }
     /**
      * Check and retrieve the summary quality requested in the {@code RequestParameters} object 
@@ -308,7 +326,7 @@ abstract class CommandParent {
      */
     protected static <T extends Enum<T> & Service.Attribute> List<T> getAttributes(
             RequestParameters rqParams, Class<T> attrType) {
-        log.entry(rqParams, attrType);
+        log.traceEntry("{}, {}", rqParams, attrType);
         
         List<String> requestedAttrs = rqParams.getValues(
                 rqParams.getUrlParametersInstance().getParamAttributeList());

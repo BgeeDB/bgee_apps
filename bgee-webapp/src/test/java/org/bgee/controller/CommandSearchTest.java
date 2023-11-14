@@ -8,10 +8,10 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
-import org.bgee.model.gene.GeneMatch;
-import org.bgee.model.gene.GeneMatch.MatchSource;
-import org.bgee.model.gene.GeneMatchResult;
-import org.bgee.model.gene.GeneMatchResultService;
+import org.bgee.model.search.SearchMatch;
+import org.bgee.model.search.SearchMatch.MatchSource;
+import org.bgee.model.search.SearchMatchResult;
+import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.species.Species;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.ViewFactory;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
  * @since   Bgee 14, Mar. 2018
  */
 public class CommandSearchTest extends TestAncestor {
-    private final static Logger log = LogManager.getLogger(CommandAboutTest.class.getName());
+    private final static Logger log = LogManager.getLogger(CommandSearchTest.class.getName());
 
     @Override
     protected Logger getLogger() {
@@ -48,18 +48,18 @@ public class CommandSearchTest extends TestAncestor {
     @Test
     //FIXME: no idea how up-to-date this test is
     @Ignore
-    public void shouldProcessRequest() throws IOException, PageNotFoundException, InvalidRequestException {
+    public void shouldProcessRequest() throws IOException, InvalidRequestException {
 
         //mock Services
         ServiceFactory serviceFac = mock(ServiceFactory.class);
-        GeneMatchResultService geneMatchService = mock(GeneMatchResultService.class);
-        when(serviceFac.getGeneMatchResultService(any(BgeeProperties.class))).thenReturn(geneMatchService);
+        SearchMatchResultService geneMatchService = mock(SearchMatchResultService.class);
+        when(serviceFac.getSearchMatchResultService(any(BgeeProperties.class))).thenReturn(geneMatchService);
 
-        List<GeneMatch> geneMatches = Collections.singletonList(new GeneMatch(
+        List<SearchMatch<Gene>> geneMatches = Collections.singletonList(new SearchMatch<Gene>(
                 new Gene("geneId", "name", "description", null, null, new Species(1), new GeneBioType("b"), 1),
-                "synonym", MatchSource.ID));
-        GeneMatchResult result = new GeneMatchResult(10000, geneMatches);
-        when(geneMatchService.searchByTerm("gene", null, 0, 1)).thenReturn(result);
+                "synonym", MatchSource.ID, Gene.class));
+        SearchMatchResult<Gene> result = new SearchMatchResult<Gene>(10000, geneMatches, Gene.class);
+        when(geneMatchService.searchGenesByTerm("gene", null, 0, 1)).thenReturn(result);
 
         //mock view
         ViewFactory viewFac = mock(ViewFactory.class);
@@ -72,8 +72,6 @@ public class CommandSearchTest extends TestAncestor {
 
         CommandSearch controller = new CommandSearch(mock(HttpServletResponse.class), params,
                 mock(BgeeProperties.class), viewFac, serviceFac);
-        controller.processRequest();
-        verify(display).displayGeneCompletionByGeneList(geneMatches);
 
         params = mock(RequestParameters.class);
         when(params.getAction()).thenReturn("any action");

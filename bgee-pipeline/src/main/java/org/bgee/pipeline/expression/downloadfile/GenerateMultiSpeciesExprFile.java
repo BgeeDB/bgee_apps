@@ -22,14 +22,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesCall;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCall;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
@@ -1020,40 +1020,37 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         
         boolean[] quoteMode = new boolean[headers.length];
         for (int i = 0; i < headers.length; i++) {
-            switch (headers[i]) {
-                case OMA_ID_COLUMN_NAME:
-                case GENE_ID_LIST_COLUMN_NAME:
-                case ANAT_ENTITY_ID_LIST_COLUMN_NAME:
-                case ANAT_ENTITY_NAME_LIST_COLUMN_NAME:
-                case STAGE_ID_COLUMN_NAME:
-                case SPECIES_WITH_EXPRESSION_COUNT_COLUMN_NAME:
-                case SPECIES_WITH_NO_EXPRESSION_COUNT_COLUMN_NAME:
-                case SPECIES_WITHOUT_CALLS_COUNT_COLUMN_NAME:
-                case CONSERVATION_SCORE_COLUMN_NAME:
-                case GENE_ID_COLUMN_NAME:
-                case SPECIES_LATIN_NAME_COLUMN_NAME:
-                case CIO_ID_COLUMN_NAME:
-                case CIO_NAME_ID_COLUMN_NAME:
-                case EXPRESSION_COLUMN_NAME:
-                case QUALITY_COLUMN_NAME:
-                case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
-                case AFFYMETRIX_DATA_COLUMN_NAME:
-                case AFFYMETRIX_QUAL_COLUMN_NAME:
-                case EST_DATA_COLUMN_NAME:
-                case EST_CALL_QUALITY_COLUMN_NAME:
-                case INSITU_DATA_COLUMN_NAME:
-                case INSITU_CALL_QUALITY_COLUMN_NAME:
-                case RNASEQ_DATA_COLUMN_NAME:
-                case RNASEQ_QUAL_COLUMN_NAME:
-                    quoteMode[i] = false; 
-                    break;
-                case GENE_NAME_COLUMN_NAME:
-                case GENE_NAME_LIST_COLUMN_NAME:
-                case ANAT_ENTITY_NAME_COLUMN_NAME:
-                case STAGE_NAME_COLUMN_NAME:
-                    quoteMode[i] = true; 
-                    break;
-                default:
+            if (headers[i].equals(OMA_ID_COLUMN_NAME) ||
+                    headers[i].equals(GENE_ID_LIST_COLUMN_NAME) ||
+                    headers[i].equals(ANAT_ENTITY_ID_LIST_COLUMN_NAME) ||
+                    headers[i].equals(ANAT_ENTITY_NAME_LIST_COLUMN_NAME) ||
+                    headers[i].equals(STAGE_ID_COLUMN_NAME) ||
+                    headers[i].equals(SPECIES_WITH_EXPRESSION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(SPECIES_WITH_NO_EXPRESSION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(SPECIES_WITHOUT_CALLS_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(CONSERVATION_SCORE_COLUMN_NAME) ||
+                    headers[i].equals(GENE_ID_COLUMN_NAME) ||
+                    headers[i].equals(SPECIES_LATIN_NAME_COLUMN_NAME) ||
+                    headers[i].equals(CIO_ID_COLUMN_NAME) ||
+                    headers[i].equals(CIO_NAME_ID_COLUMN_NAME) ||
+                    headers[i].equals(EXPRESSION_COLUMN_NAME) ||
+                    headers[i].equals(QUALITY_COLUMN_NAME) ||
+                    headers[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_DATA_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_QUAL_COLUMN_NAME) ||
+                    headers[i].equals(EST_DATA_COLUMN_NAME) ||
+                    headers[i].equals(EST_CALL_QUALITY_COLUMN_NAME) ||
+                    headers[i].equals(INSITU_DATA_COLUMN_NAME) ||
+                    headers[i].equals(INSITU_CALL_QUALITY_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_DATA_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_QUAL_COLUMN_NAME)) {
+                quoteMode[i] = false; 
+            } else if (headers[i].equals(GENE_NAME_COLUMN_NAME) ||
+                    headers[i].equals(GENE_NAME_LIST_COLUMN_NAME) ||
+                    headers[i].equals(ANAT_ENTITY_NAME_COLUMN_NAME) ||
+                    headers[i].equals(STAGE_NAME_COLUMN_NAME)) {
+                quoteMode[i] = true; 
+            } else {
                     throw log.throwing(new IllegalArgumentException(
                             "Unrecognized header: " + headers[i] + " for OMA TSV file."));
             }
@@ -1128,47 +1125,32 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 }
             } else {
                 // *** Attributes specific to complete file ***
-                switch (header[i]) {
-
-                case INCLUDING_OBSERVED_DATA_COLUMN_NAME: 
+                if (header[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME)) {
                     mapping[i] = "includingObservedData";
-                    break;
-                case AFFYMETRIX_DATA_COLUMN_NAME: 
+                } else if (header[i].equals(AFFYMETRIX_DATA_COLUMN_NAME)) {
                     mapping[i] = "affymetrixData";
-                    break;
-                case AFFYMETRIX_QUAL_COLUMN_NAME:
+                } else if (header[i].equals(AFFYMETRIX_QUAL_COLUMN_NAME)) {
                     mapping[i] = "affymetrixCallQuality";
-                    break;
-                case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME: 
+                } else if (header[i].equals(AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME)) { 
                     mapping[i] = "includingAffymetrixObservedData";
-                    break;
-                case EST_DATA_COLUMN_NAME: 
+                } else if (header[i].equals(EST_DATA_COLUMN_NAME)) {
                     mapping[i] = "estData";
-                    break;
-                case EST_CALL_QUALITY_COLUMN_NAME: 
+                } else if (header[i].equals(EST_CALL_QUALITY_COLUMN_NAME)) {
                     mapping[i] = "estCallQuality";
-                    break;
-                case EST_OBSERVED_DATA_COLUMN_NAME: 
+                } else if (header[i].equals(EST_OBSERVED_DATA_COLUMN_NAME)) {
                     mapping[i] = "includingEstObservedData";
-                    break;
-                case INSITU_DATA_COLUMN_NAME: 
+                } else if (header[i].equals(INSITU_DATA_COLUMN_NAME)) {
                     mapping[i] = "inSituData";
-                    break;
-                case INSITU_CALL_QUALITY_COLUMN_NAME: 
+                } else if (header[i].equals(INSITU_CALL_QUALITY_COLUMN_NAME)) {
                     mapping[i] = "inSituCallQuality";
-                    break;
-                case IN_SITU_OBSERVED_DATA_COLUMN_NAME: 
+                } else if (header[i].equals(IN_SITU_OBSERVED_DATA_COLUMN_NAME)) {
                     mapping[i] = "includingInSituObservedData";
-                    break;
-                case RNASEQ_DATA_COLUMN_NAME: 
+                } else if (header[i].equals(RNASEQ_DATA_COLUMN_NAME)) {
                     mapping[i] = "rnaSeqData";
-                    break;
-                case RNASEQ_QUAL_COLUMN_NAME:
+                } else if (header[i].equals(RNASEQ_QUAL_COLUMN_NAME)) {
                     mapping[i] = "rnaSeqCallQuality";
-                    break;
-                case RNASEQ_OBSERVED_DATA_COLUMN_NAME: 
+                } else if (header[i].equals(RNASEQ_OBSERVED_DATA_COLUMN_NAME)) {
                     mapping[i] = "includingRnaSeqObservedData";
-                    break;
                 }
             }
             if (mapping[i] == null) {

@@ -3,6 +3,7 @@ package org.bgee.model.gene;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -15,25 +16,25 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 15, Sep. 2022
  * @since   Bgee 13, Oct. 2015
  */
 public class GeneFilter implements Predicate<Gene> {
     private final static Logger log = LogManager.getLogger(GeneFilter.class.getName());
     /**
-     * @see #getEnsemblGeneIds() 
+     * @see #getGeneIds() 
      */
     private final Set<String> geneIds;
     /**
      * @see #getSpeciesId()
      */
-    private final Integer speciesId;
+    private final int speciesId;
     
     /**
      * Constructor allowing to set a {@code GeneFilter} for a given species ID.
      * The species ID is mandatory because in Bgee, the genome of a species can be used
-     * for another closely-related species, thus an Ensembl gene ID can correspond to several genes.
-     * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
+     * for another closely-related species, thus a gene ID can correspond to several genes.
+     * For instance, at some point in Bgee the chimpanzee genome was used for analyzing bonobo data.
      * 
      * @param speciesId An {@code int} that is the ID of the species to target.
      * @throws IllegalArgumentException If {@code geneId} is blank or {@code speciesId} less than 1.
@@ -42,13 +43,13 @@ public class GeneFilter implements Predicate<Gene> {
         this(speciesId, (Collection<String>) null);
     }
     /**
-     * Constructor allowing to set a {@code GeneFilter} for a single Ensembl gene ID and a species ID.
+     * Constructor allowing to set a {@code GeneFilter} for a single gene ID and a species ID.
      * The species ID is mandatory because in Bgee, the genome of a species can be used
-     * for another closely-related species, thus an Ensembl gene ID can correspond to several genes.
-     * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
+     * for another closely-related species, thus a gene ID can correspond to several genes.
+     * For instance, at some point in Bgee the chimpanzee genome was used for analyzing bonobo data.
      * 
      * @param speciesId An {@code int} that is the ID of the species to target.
-     * @param geneId    An {@code String} that is the Ensembl ID of a gene that this {@code GeneFilter} 
+     * @param geneId    An {@code String} that is the ID of a gene that this {@code GeneFilter} 
      *                  will specify to use.
      * @throws IllegalArgumentException If {@code geneId} is blank or {@code speciesId} is smaller than 1.
      */
@@ -56,13 +57,13 @@ public class GeneFilter implements Predicate<Gene> {
         this(speciesId, Collections.singleton(geneId));
     }
     /**
-     * Constructor allowing to set a {@code GeneFilter} for a collection of Ensembl gene IDs
+     * Constructor allowing to set a {@code GeneFilter} for a collection of gene IDs
      * and a species ID. The species ID is mandatory because in Bgee, the genome of a species
-     * can be used for another closely-related species, thus an Ensembl gene ID can correspond
-     * to several genes. For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
+     * can be used for another closely-related species, thus a gene ID can correspond
+     * to several genes. For instance, at some point in Bgee the chimpanzee genome was used for analyzing bonobo data.
      * 
      * @param speciesId An {@code int} that is the ID of the species to target.
-     * @param geneIds   A {@code Collection} of {@code String}s that are the Ensembl IDs of the genes 
+     * @param geneIds   A {@code Collection} of {@code String}s that are the IDs of the genes 
      *                  that this {@code GeneFilter} will specify to use. Can be {@code null} or empty.
      * @throws IllegalArgumentException If any of the gene IDs provided is blank,
      *                                  or if {@code speciesId} less than 1.
@@ -83,14 +84,14 @@ public class GeneFilter implements Predicate<Gene> {
      * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs of the genes 
      *          that this {@code GeneFilter} will specify to use.
      */
-    public Set<String> getEnsemblGeneIds() {
+    public Set<String> getGeneIds() {
         return geneIds;
     }
     /**
      * @return  An {@code int} that is the ID of the species to target. The species ID
      *          is mandatory because in Bgee, the genome of a species can be used for another
-     *          closely-related species, thus an Ensembl gene ID can correspond to several genes.
-     *          For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
+     *          closely-related species, thus a gene ID can correspond to several genes.
+     *          For instance, at some point in Bgee the chimpanzee genome was used for analyzing bonobo data.
      */
     public int getSpeciesId() {
         return speciesId;
@@ -102,45 +103,24 @@ public class GeneFilter implements Predicate<Gene> {
         if (gene == null) {
             throw log.throwing(new IllegalArgumentException("Cannot test null"));
         }
-        return log.traceExit(speciesId.equals(gene.getSpecies().getId()) &&
-                (geneIds == null || geneIds.isEmpty() || geneIds.contains(gene.getEnsemblGeneId())));
+        return log.traceExit(gene.getSpecies().getId().equals(speciesId) &&
+                (geneIds == null || geneIds.isEmpty() || geneIds.contains(gene.getGeneId())));
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
-        result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
-        return result;
+        return Objects.hash(geneIds, speciesId);
     }
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         GeneFilter other = (GeneFilter) obj;
-        if (geneIds == null) {
-            if (other.geneIds != null) {
-                return false;
-            }
-        } else if (!geneIds.equals(other.geneIds)) {
-            return false;
-        }
-        if (speciesId == null) {
-            if (other.speciesId != null) {
-                return false;
-            }
-        } else if (!speciesId.equals(other.speciesId)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(geneIds, other.geneIds) && speciesId == other.speciesId;
     }
 
     @Override

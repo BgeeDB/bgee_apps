@@ -17,15 +17,15 @@ import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionRankInfoTO;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.EntityMinMaxRanksTO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO.RawExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.EntityMinMaxRanksTO;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
@@ -40,7 +40,8 @@ import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbes
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO.RNASeqExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO.RNASeqResultTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO.RNASeqResultAnnotatedSampleTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
@@ -72,7 +73,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 15.0, Jul. 2021
  * @since   Bgee 13, July 2014
  */
 public class TOComparator {
@@ -211,8 +212,8 @@ public class TOComparator {
             return log.traceExit(areTOsEqual((AffymetrixChipTO) to1, (AffymetrixChipTO) to2, compareId));
         } else if (to2 instanceof MicroarrayExperimentTO) {
             return log.traceExit(areTOsEqual((MicroarrayExperimentTO) to1, (MicroarrayExperimentTO) to2, compareId));
-        } else if (to2 instanceof RNASeqResultTO) {
-            return log.traceExit(areTOsEqual((RNASeqResultTO) to1, (RNASeqResultTO) to2));
+        } else if (to2 instanceof RNASeqResultAnnotatedSampleTO) {
+            return log.traceExit(areTOsEqual((RNASeqResultAnnotatedSampleTO) to1, (RNASeqResultAnnotatedSampleTO) to2));
         } else if (to2 instanceof RNASeqLibraryTO) {
             return log.traceExit(areTOsEqual((RNASeqLibraryTO) to1, (RNASeqLibraryTO) to2, compareId));
         } else if (to2 instanceof RNASeqExperimentTO) {
@@ -745,8 +746,8 @@ public class TOComparator {
         if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
                 StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) &&
                 StringUtils.equals(to1.getStageId(), to2.getStageId()) &&
-                Objects.equals(to1.getSex(), to2.getSex()) &&
-                StringUtils.equals(to1.getStrain(), to2.getStrain()) &&
+                Objects.equals(to1.getCellTypeId(), to2.getCellTypeId()) &&
+                StringUtils.equals(to1.getStrainId(), to2.getStrainId()) &&
                 Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
             return log.traceExit(true);
         }
@@ -769,6 +770,8 @@ public class TOComparator {
         log.entry(to1, to2, compareId);
 
         if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId) &&
+
+                Objects.equals(to1.getSex(), to2.getSex()) &&
 
                 //ConditionRankInfoTO do not implement hashCode/equals
                 (to1.getRankInfoTOs() == null && to2.getRankInfoTOs() == null || 
@@ -797,6 +800,7 @@ public class TOComparator {
         log.entry(to1, to2, compareId);
 
         if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId) &&
+                Objects.equals(to1.getSex(), to2.getSex()) &&
                 Objects.equals(to1.getSexInferred(), to2.getSexInferred()) &&
                 Objects.equals(to1.getExprMappedConditionId(), to2.getExprMappedConditionId())) {
             return log.traceExit(true);
@@ -870,7 +874,7 @@ public class TOComparator {
     private static boolean areTOsEqual(RawExpressionCallTO to1, RawExpressionCallTO to2, 
             boolean compareId) {
         log.entry(to1, to2, compareId);
-        if (areEntityTOsEqual(to1, to2, compareId) && 
+        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
                 Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) && 
                 Objects.equals(to1.getConditionId(), to2.getConditionId())) {
             return log.traceExit(true);
@@ -897,14 +901,42 @@ public class TOComparator {
             boolean compareId) {
         log.entry(to1, to2, compareId);
         if (areTOsEqual((RawExpressionCallTO) to1, (RawExpressionCallTO) to2, compareId) &&
-                areBigDecimalEquals(to1.getMeanRank(), to2.getMeanRank()) &&
+
+                Objects.equals(to1.getMeanRanks(), to2.getMeanRanks()) &&
+                //DAOMeanRank equals method only take into account DataTypes, not mean rank value
+                (to1.getMeanRanks() == null || to1.getMeanRanks().stream()
+                .allMatch(r -> areBigDecimalEquals(r.getMeanRank(),
+                        to2.getMeanRanks().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getMeanRank()))) &&
 
                 //GlobalExpressionCallDataTOs do not implement hashCode/equals
                 (to1.getCallDataTOs() == null && to2.getCallDataTOs() == null || 
                 to1.getCallDataTOs() != null && to2.getCallDataTOs() != null &&
                 to1.getCallDataTOs().stream()
                     .allMatch(c1 -> to2.getCallDataTOs().stream()
-                            .anyMatch(c2 -> areTOsEqual(c1, c2))))) {
+                            .anyMatch(c2 -> areTOsEqual(c1, c2)))) &&
+
+                Objects.equals(to1.getPValues(), to2.getPValues()) &&
+                //DAOFDRPValue equals method only take into account DataTypes, not FDR value nor conditionId
+                (to1.getPValues() == null || to1.getPValues().stream()
+                .allMatch(r -> areBigDecimalEquals(r.getFdrPValue(),
+                        to2.getPValues().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getFdrPValue())) &&
+                to1.getPValues().stream()
+                .allMatch(r -> Objects.equals(r.getConditionId(),
+                        to2.getPValues().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getConditionId()))) &&
+
+                Objects.equals(to1.getBestDescendantPValues(), to2.getBestDescendantPValues()) &&
+                //DAOFDRPValue equals method only take into account DataTypes, not FDR value nor conditionId
+                (to1.getBestDescendantPValues() == null || to1.getBestDescendantPValues().stream()
+                .allMatch(r -> areBigDecimalEquals(r.getFdrPValue(),
+                        to2.getBestDescendantPValues().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getFdrPValue())) &&
+                to1.getPValues().stream()
+                .allMatch(r -> Objects.equals(r.getConditionId(),
+                        to2.getBestDescendantPValues().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getConditionId())))) {
             return log.traceExit(true);
         }
         return log.traceExit(false);
@@ -923,10 +955,10 @@ public class TOComparator {
     private static boolean areTOsEqual(GlobalExpressionCallDataTO to1, GlobalExpressionCallDataTO to2) {
         log.entry(to1, to2);
         if (Objects.equals(to1.getDataType(), to2.getDataType()) &&
-                Objects.equals(to1.getDataPropagation(), to2.getDataPropagation()) &&
-                Objects.equals(to1.isConditionObservedData(), to2.isConditionObservedData()) &&
-                Objects.equals(to1.getExperimentCounts(), to2.getExperimentCounts()) &&
-                Objects.equals(to1.getPropagatedCount(), to2.getPropagatedCount()) &&
+                Objects.equals(to1.getSelfObservationCount(), to2.getSelfObservationCount()) &&
+                Objects.equals(to1.getDescendantObservationCount(), to2.getDescendantObservationCount()) &&
+                Objects.equals(to1.getPValue(), to2.getPValue()) &&
+                Objects.equals(to1.getBestDescendantPValue(), to2.getBestDescendantPValue()) &&
                 areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
                 areBigDecimalEquals(to1.getRankNorm(), to2.getRankNorm()) &&
                 areBigDecimalEquals(to1.getWeightForMeanRank(), to2.getWeightForMeanRank())) {
@@ -1223,12 +1255,15 @@ public class TOComparator {
      * @param to2       A {@code RNASeqResultTO} to be compared to {@code to1}.
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
-    private static boolean areTOsEqual(RNASeqResultTO to1, RNASeqResultTO to2) {
+    private static boolean areTOsEqual(RNASeqResultAnnotatedSampleTO to1,
+            RNASeqResultAnnotatedSampleTO to2) {
         log.entry(to1, to2);
         if (areCallSourceTOsEqual(to1, to2) &&
-                areBigDecimalEquals(to1.getTpm(), to2.getTpm()) &&
-                areBigDecimalEquals(to1.getFpkm(), to2.getFpkm()) &&
+                areBigDecimalEquals(to1.getAbundance(), to2.getAbundance()) &&
                 areBigDecimalEquals(to1.getReadCount(), to2.getReadCount()) &&
+                areBigDecimalEquals(to1.getUmiCount(), to2.getUmiCount()) &&
+                areBigDecimalEquals(to1.getPValue(), to2.getPValue()) &&
+                areBigDecimalEquals(to1.getzScore(), to2.getzScore()) &&
                 areBigDecimalEquals(to1.getRank(), to2.getRank())) {
             return log.traceExit(true);
         }
@@ -1298,7 +1333,7 @@ public class TOComparator {
     private static boolean areTOsEqual(CallSourceDataTO to1, CallSourceDataTO to2) {
         log.entry(to1, to2);
         if (Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) &&
-                Objects.equals(to1.getDetectionFlag(), to2.getDetectionFlag()) &&
+                Objects.equals(to1.getPValue(), to2.getPValue()) &&
                 Objects.equals(to1.getExpressionConfidence(), to2.getExpressionConfidence()) &&
                 Objects.equals(to1.getExclusionReason(), to2.getExclusionReason()) &&
                 Objects.equals(to1.getExpressionId(), to2.getExpressionId())) {
@@ -1335,41 +1370,41 @@ public class TOComparator {
         }
         return log.traceExit(false);
     }
-    /**
-     * Method to compare two {@code RNASeqLibraryTO}s, to check for complete
-     * equality of each attribute.
-     *
-     * @param to1       A {@code RNASeqLibraryTO} to be compared to {@code to2}.
-     * @param to2       A {@code RNASeqLibraryTO} to be compared to {@code to1}.
-     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
-     *                  used for comparisons.
-     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
-     */
-    private static boolean areTOsEqual(RNASeqLibraryTO to1, RNASeqLibraryTO to2, boolean compareId) {
-        log.entry(to1, to2);
-        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
-                Objects.equals(to1.getExperimentId(), to2.getExperimentId()) &&
-                Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
-                Objects.equals(to1.getPlatformId(), to2.getPlatformId()) &&
-                areBigDecimalEquals(to1.getTmmFactor(), to2.getTmmFactor()) &&
-                areBigDecimalEquals(to1.getTpmThreshold(), to2.getTpmThreshold()) &&
-                areBigDecimalEquals(to1.getFpkmThreshold(), to2.getFpkmThreshold()) &&
-                areBigDecimalEquals(to1.getAllGenesPercentPresent(), to2.getAllGenesPercentPresent()) &&
-                areBigDecimalEquals(to1.getProteinCodingGenesPercentPresent(), to2.getProteinCodingGenesPercentPresent()) &&
-                areBigDecimalEquals(to1.getIntergenicRegionsPercentPresent(), to2.getIntergenicRegionsPercentPresent()) &&
-                areBigDecimalEquals(to1.getThresholdRatioIntergenicCodingPercent(), to2.getThresholdRatioIntergenicCodingPercent()) &&
-                Objects.equals(to1.getAllReadCount(), to2.getAllReadCount()) &&
-                Objects.equals(to1.getMappedReadCount(), to2.getMappedReadCount()) &&
-                Objects.equals(to1.getMinReadLength(), to2.getMinReadLength()) &&
-                Objects.equals(to1.getMaxReadLength(), to2.getMaxReadLength()) &&
-                Objects.equals(to1.getLibraryType(), to2.getLibraryType()) &&
-                Objects.equals(to1.getLibraryOrientation(), to2.getLibraryOrientation()) &&
-                Objects.equals(to1.getDistinctRankCount(), to2.getDistinctRankCount()) &&
-                areBigDecimalEquals(to1.getMaxRank(), to2.getMaxRank())) {
-            return log.traceExit(true);
-        }
-        return log.traceExit(false);
-    }
+//    /**
+//     * Method to compare two {@code RNASeqLibraryTO}s, to check for complete
+//     * equality of each attribute.
+//     *
+//     * @param to1       A {@code RNASeqLibraryTO} to be compared to {@code to2}.
+//     * @param to2       A {@code RNASeqLibraryTO} to be compared to {@code to1}.
+//     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
+//     *                  used for comparisons.
+//     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+//     */
+//    private static boolean areTOsEqual(RNASeqLibraryTO to1, RNASeqLibraryTO to2, boolean compareId) {
+//        log.entry(to1, to2);
+//        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
+//                Objects.equals(to1.getExperimentId(), to2.getExperimentId()) &&
+//                Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
+//                Objects.equals(to1.getPlatformId(), to2.getPlatformId()) &&
+//                areBigDecimalEquals(to1.getTmmFactor(), to2.getTmmFactor()) &&
+//                areBigDecimalEquals(to1.getTpmThreshold(), to2.getTpmThreshold()) &&
+//                areBigDecimalEquals(to1.getFpkmThreshold(), to2.getFpkmThreshold()) &&
+//                areBigDecimalEquals(to1.getAllGenesPercentPresent(), to2.getAllGenesPercentPresent()) &&
+//                areBigDecimalEquals(to1.getProteinCodingGenesPercentPresent(), to2.getProteinCodingGenesPercentPresent()) &&
+//                areBigDecimalEquals(to1.getIntergenicRegionsPercentPresent(), to2.getIntergenicRegionsPercentPresent()) &&
+//                areBigDecimalEquals(to1.getThresholdRatioIntergenicCodingPercent(), to2.getThresholdRatioIntergenicCodingPercent()) &&
+//                Objects.equals(to1.getAllReadCount(), to2.getAllReadCount()) &&
+//                Objects.equals(to1.getMappedReadCount(), to2.getMappedReadCount()) &&
+//                Objects.equals(to1.getMinReadLength(), to2.getMinReadLength()) &&
+//                Objects.equals(to1.getMaxReadLength(), to2.getMaxReadLength()) &&
+//                Objects.equals(to1.getLibraryType(), to2.getLibraryType()) &&
+//                Objects.equals(to1.getLibraryOrientation(), to2.getLibraryOrientation()) &&
+//                Objects.equals(to1.getDistinctRankCount(), to2.getDistinctRankCount()) &&
+//                areBigDecimalEquals(to1.getMaxRank(), to2.getMaxRank())) {
+//            return log.traceExit(true);
+//        }
+//        return log.traceExit(false);
+//    }
     /**
      * Method to compare two {@code InSituEvidenceTO}s, to check for complete
      * equality of each attribute.

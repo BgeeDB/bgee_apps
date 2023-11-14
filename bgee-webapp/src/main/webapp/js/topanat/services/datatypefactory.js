@@ -10,18 +10,19 @@
         var DataTypes = {};
         DataTypes.names =  [
             { id: "RNA_SEQ", name: 'RNA-Seq' },
-            { id: "AFFYMETRIX", name:'Affymetrix data' },
+            { id: "FULL_LENGTH", name: 'scRNA-Seq full-length' },
+            { id: "AFFYMETRIX", name:'Affymetrix' },
             { id: "IN_SITU", name:'In situ hybridization' },
             { id: "EST", name: 'EST' }
         ];
 
         var SummaryCallTypes = {};
         SummaryCallTypes = {
-            ALL: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ'] },
+            ALL: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ', 'FULL_LENGTH'] },
             //any type of baseline present/absent expression calls
-            EXPRESSION: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ'] },
+            EXPRESSION: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ', 'FULL_LENGTH'] },
             //baseline present expression calls (presence of expression)
-            EXPRESSED: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ'] },
+            EXPRESSED: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ', 'FULL_LENGTH'] },
             //baseline no-expression calls (absence of expression explicitly reported)
             NOT_EXPRESSED: {allowed : ['AFFYMETRIX', 'IN_SITU', 'RNA_SEQ'] },
             //diff. expression calls of any kind (either over-expression or under-expression),

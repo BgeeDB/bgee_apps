@@ -1,9 +1,13 @@
 package org.bgee.model.species;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -15,7 +19,7 @@ import org.bgee.model.source.Source;
  * @author  Frederic Bastian
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13, Mar. 2013
  */
 public class Species extends NamedEntity<Integer> {
@@ -28,16 +32,22 @@ public class Species extends NamedEntity<Integer> {
     
     /** @see #getGenomeVersion() */
     private final String genomeVersion;
+
+    /** @see #getSpeciesFullNameWithoutSpace() */
+    private final String speciesFullNameWithoutSpace;
+
     /**
      * @see #getGenomeSource()
      */
     private final Source genomeSource;
 	
     /**@see #getDataTypesByDataSourcesForData() */
-    private Map<Source, Set<DataType>> dataTypesByDataSourcesForData;
+    private final Map<Source, Set<DataType>> dataTypesByDataSourcesForData;
+    private final Map<DataType, Set<Source>> dataSourcesForDataByDataTypes;
 
     /**@see #getDataTypesByDataSourcesForAnnotation() */
-    private Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation;
+    private final Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation;
+    private final Map<DataType, Set<Source>> dataSourcesForAnnotationByDataTypes;
 
     private final Integer parentTaxonId;
 
@@ -90,6 +100,8 @@ public class Species extends NamedEntity<Integer> {
         super(id, name, description);
         this.genus = genus;
         this.speciesName = speciesName;
+        this.speciesFullNameWithoutSpace = (new StringBuilder()).append(this.genus)
+                .append("_").append(this.speciesName).toString().replace(" ", "_");
         this.genomeVersion = genomeVersion;
         this.genomeSource = genomeSource;
         //In the data source, '0' means that we used the correct genome
@@ -99,10 +111,27 @@ public class Species extends NamedEntity<Integer> {
             this.genomeSpeciesId = genomeSpeciesId;
         }
         this.parentTaxonId = parentTaxonId;
-        this.dataTypesByDataSourcesForData = dataTypesByDataSourcesForData == null ? 
-                null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForData));
-        this.dataTypesByDataSourcesForAnnotation = dataTypesByDataSourcesForAnnotation == null ? 
-                null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForAnnotation));
+        this.dataTypesByDataSourcesForData = Collections.unmodifiableMap(
+                dataTypesByDataSourcesForData == null? new HashMap<>():
+                    new HashMap<>(dataTypesByDataSourcesForData));
+        this.dataTypesByDataSourcesForAnnotation = Collections.unmodifiableMap(
+                dataTypesByDataSourcesForAnnotation == null? new HashMap<>():
+                    new HashMap<>(dataTypesByDataSourcesForAnnotation));
+        //We also inverse key/value in the Maps.
+        this.dataSourcesForDataByDataTypes = Collections.unmodifiableMap(
+                this.dataTypesByDataSourcesForData.entrySet().stream()
+                //transform the Entry<Source, Set<DataType>> into several Entry<DataType, Source>
+                .flatMap(e -> e.getValue().stream().map(t -> new AbstractMap.SimpleEntry<>(t, e.getKey())))
+                //collect the Entry<DataType, Source> into a Map<DataType, Set<Source>>
+                .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(Arrays.asList(e.getValue())), 
+                        (s1, s2) -> {s1.addAll(s2); return s1;})));
+        this.dataSourcesForAnnotationByDataTypes = Collections.unmodifiableMap(
+                this.dataTypesByDataSourcesForAnnotation.entrySet().stream()
+                //transform the Entry<Source, Set<DataType>> into several Entry<DataType, Source>
+                .flatMap(e -> e.getValue().stream().map(t -> new AbstractMap.SimpleEntry<>(t, e.getKey())))
+                //collect the Entry<DataType, Source> into a Map<DataType, Set<Source>>
+                .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(Arrays.asList(e.getValue())), 
+                        (s1, s2) -> {s1.addAll(s2); return s1;})));
         this.preferredDisplayOrder = preferredDisplayOrder;
     }
 
@@ -119,6 +148,17 @@ public class Species extends NamedEntity<Integer> {
      */
     public String getSpeciesName() {
     	return this.speciesName;
+    }
+
+    /**
+     * @return  A {@code String} representing the concatenation of genus
+     *          and species name of this {@code Species}. The concatenation is
+     *          done using an underscore and spaces in the resulting {@code String} are
+     *          replaced by underscore too (e.g., "Homo_sapiens" for human,
+     *          Canis_lupus_familiaris for dog).
+     */
+    public String getSpeciesFullNameWithoutSpace() {
+        return this.speciesFullNameWithoutSpace;
     }
     
     /**
@@ -201,6 +241,13 @@ public class Species extends NamedEntity<Integer> {
         return dataTypesByDataSourcesForAnnotation;
     }
 
+    public Map<DataType, Set<Source>> getDataSourcesForDataByDataTypes() {
+        return dataSourcesForDataByDataTypes;
+    }
+    public Map<DataType, Set<Source>> getDataSourcesForAnnotationByDataTypes() {
+        return dataSourcesForAnnotationByDataTypes;
+    }
+
     /**
      * @return An {@code Integer} allowing to sort {@code Species in preferred display order.
      */
@@ -216,6 +263,7 @@ public class Species extends NamedEntity<Integer> {
         StringBuilder builder = new StringBuilder();
         builder.append("Species [").append(super.toString()).append(", genus=").append(genus)
                 .append(", speciesName=").append(speciesName)
+                .append(", speciesFullNameWithoutSpace=").append(speciesFullNameWithoutSpace)
                 .append(", genomeVersion=").append(genomeVersion)
                 .append(", genomeSource=").append(genomeSource)
                 .append(", genomeSpeciesId=").append(genomeSpeciesId)

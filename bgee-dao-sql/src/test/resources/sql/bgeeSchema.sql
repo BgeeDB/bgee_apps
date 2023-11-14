@@ -495,7 +495,7 @@ create table gene (
 -- defines whether the gene ID is present in Ensembl. For some species, they are not
 -- (for instance, bonobo; we use chimp genome)
     ensemblGene boolean not null default 1 COMMENT 'Is the gene in Ensembl (default) (= 1), if not (= 0)',
-    geneMappedToGeneIdCount tinyint unsigned not null default 1 COMMENT 'number of genes in the Bgee database with the same Ensembl gene ID. In Bgee, for some species with no genome available, we use the genome of a closely-related species, such as chimpanzee genome for analyzing bonobo data. For this reason, a same Ensembl gene ID can be mapped to several species in Bgee. The value returned here is equal to 1 when the Ensembl gene ID is uniquely used in the Bgee database.'
+    geneMappedToGeneIdCount tinyint unsigned not null default 1 COMMENT 'number of genes in the Bgee database with the same gene ID. In Bgee, for some species with no genome available, we use the genome of a closely-related species, such as chimpanzee genome for analyzing bonobo data. For this reason, a same gene ID can be mapped to several species in Bgee. The value returned here is equal to 1 when the gene ID is uniquely used in the Bgee database.'
 ) engine = innodb;
 
 create table geneNameSynonym (
@@ -1166,7 +1166,7 @@ create table globalExpression (
 -- (see 'SELF' expression summaries below), because we need to distinguish between
 -- data propagated along a condition parameter (e.g., a developmental stage),
 -- but observed in another (e.g., an anat. entity).
--- Note that these enum values must stay in sync with org.bgee.model.dao.api.expressiondata.DAOPropagationState.
+-- Note that these enum values must stay in sync with org.bgee.model.dao.api.expressiondata.call.DAOPropagationState.
 -- And these enum are null when the expression calls were propagated without taking into account
 -- the related condition parameter.
 -- Note that for EST data, there is no propagation of ABSENT calls from parent conditions,

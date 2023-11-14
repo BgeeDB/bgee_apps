@@ -52,8 +52,8 @@ public class FakeFactoryProvider extends ViewFactoryProvider
         }
         ViewFactory mockFactory = mock(ViewFactory.class);
         try {
-            when(mockFactory.getAboutDisplay())
-            .thenReturn(mock(AboutDisplay.class));
+            when(mockFactory.getAnatomicalSimilarityDisplay())
+            .thenReturn(mock(AnatomicalSimilarityDisplay.class));
         } catch (IOException e) {
             // Do nothing, should not occur with a mock
         }

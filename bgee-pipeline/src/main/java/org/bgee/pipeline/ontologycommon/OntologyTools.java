@@ -51,10 +51,10 @@ import owltools.graph.OWLGraphWrapper;
  * Class responsible for various generic operations on ontologies.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 15 Mar. 2021
  * @since Bgee 13
  */
-//TODO: merge this class with OntologyUtils
+//TODO: merge this class with OntologyUtils? Not sure actually.
 public class OntologyTools {
     /**
      * {@code Logger} of the class. 
@@ -125,7 +125,7 @@ public class OntologyTools {
     public static void main(String[] args) throws FileNotFoundException, 
         OWLOntologyCreationException, OBOFormatParserException, IllegalArgumentException, 
         DAOException, IOException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
         
         OntologyTools tools = new OntologyTools();
         if (args[0].equalsIgnoreCase("ExtractObsoleteIds")) {
@@ -151,6 +151,40 @@ public class OntologyTools {
             tools.getFromDBAnatPartOfIsAIndirectRelsNotReachedByChainOfDirectRelsAndWriteToFile(
                     DAOManager.getDAOManager(), new Uberon(args[1]),
                     CommandRunner.parseArgumentAsBoolean(args[2]), args[3]);
+        } else if (args[0].equalsIgnoreCase("deletePartOfIsARelations")) {
+            if (args.length != 4) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " +
+                        "4 arguments, " + args.length + " provided."));
+            }
+            tools.deletePartOfIsARelations(CommandRunner.parseMapArgument(args[1]),
+                    CommandRunner.parseListArgumentAsInt(args[2]),
+                    DAOManager.getDAOManager(), args[3]);
+        } else if (args[0].equalsIgnoreCase("insertPartOfIsARelations")) {
+            if (args.length != 4) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " +
+                        "4 arguments, " + args.length + " provided."));
+            }
+            tools.insertPartOfIsARelations(CommandRunner.parseMapArgument(args[1]),
+                    CommandRunner.parseListArgumentAsInt(args[2]),
+                    DAOManager.getDAOManager(), args[3]);
+        } else if (args[0].equalsIgnoreCase("reportOnOntologyRoots")) {
+            if (args.length != 1) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " +
+                        "1 argument, " + args.length + " provided."));
+            }
+            tools.reportOnOntologyRootsInDB(DAOManager.getDAOManager());
+        } else if (args[0].equalsIgnoreCase("explainIndirectRelsFromDB")) {
+            if (args.length != 3) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " +
+                        "3 arguments, " + args.length + " provided."));
+            }
+            tools.explainIndirectRelsFromDB(CommandRunner.parseMapArgument(args[1]),
+                    CommandRunner.parseListArgumentAsInt(args[2]),
+                    DAOManager.getDAOManager());
         } else {
             throw log.throwing(new IllegalArgumentException("Unrecognized command " + 
                 args[0]));
@@ -177,7 +211,7 @@ public class OntologyTools {
     public void writeObsoletedTermsToFile(String ontFile, String obsIdsFile) 
             throws UnknownOWLOntologyException, OWLOntologyCreationException, 
             OBOFormatParserException, IOException {
-        log.entry(ontFile, obsIdsFile);
+        log.traceEntry("{} - {}", ontFile, obsIdsFile);
         
         Set<String> obsoleteIds = this.getObsoleteIds(ontFile);
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
@@ -206,7 +240,7 @@ public class OntologyTools {
      */
     public Set<String> getObsoleteIds(String ontFile) throws UnknownOWLOntologyException, 
         OWLOntologyCreationException, OBOFormatParserException, IOException {
-        log.entry(ontFile);
+        log.traceEntry("{}", ontFile);
         
         return log.traceExit(this.getObsoleteIds(OntologyUtils.loadOntology(ontFile)));
     }
@@ -222,7 +256,7 @@ public class OntologyTools {
      */
     public Set<String> getObsoleteIds(OWLOntology ont) 
             throws UnknownOWLOntologyException, IOException {
-        log.entry(ont);
+        log.traceEntry("{}", ont);
         Set<String> obsoleteIds = new HashSet<String>();
         
         try (OWLGraphWrapper goWrapper = new OWLGraphWrapper(ont)) {
@@ -262,7 +296,7 @@ public class OntologyTools {
     public Set<String> getAllRealOWLClassIds(String ontFile) 
             throws UnknownOWLOntologyException, OWLOntologyCreationException, 
             OBOFormatParserException, IOException {
-        log.entry(ontFile);
+        log.traceEntry("{}", ontFile);
         
         return log.traceExit(this.getAllRealOWLClassIds(
                 new OWLGraphWrapper(OntologyUtils.loadOntology(ontFile))));
@@ -281,7 +315,7 @@ public class OntologyTools {
      * @see #getAllRealOWLClassIds(String)
      */
     public Set<String> getAllRealOWLClassIds(OWLGraphWrapper ontWrapper) {
-        log.entry(ontWrapper);
+        log.traceEntry("{}", ontWrapper);
         Set<String> allIds = new HashSet<String>();
         
         for (OWLClass owlClass: ontWrapper.getAllRealOWLClasses()) {
@@ -311,7 +345,7 @@ public class OntologyTools {
     public void writeOWLClassIdsToFile(String ontFile, String outputFile) 
             throws UnknownOWLOntologyException, OWLOntologyCreationException, 
             OBOFormatParserException, IOException {
-        log.entry(ontFile, outputFile);
+        log.traceEntry("{} - {}", ontFile, outputFile);
         
         Set<String> ids = this.getAllRealOWLClassIds(ontFile);
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
@@ -324,9 +358,340 @@ public class OntologyTools {
         log.traceExit();
     }
 
+    public void explainIndirectRelsFromDB(Map<String, List<String>> indirectRelsToQuery,
+            Collection<Integer> speciesIds, DAOManager daoManager) {
+        log.traceEntry("{} - {} - {}", indirectRelsToQuery, speciesIds, daoManager);
+        if (indirectRelsToQuery == null || indirectRelsToQuery.isEmpty()) {
+            System.out.println("Nothing to be done");
+            log.traceExit(); return;
+        }
+
+        Set<SpeciesTO> allSpeciesTOs = new HashSet<>(
+                daoManager.getSpeciesDAO().getAllSpecies(null).getAllTOs());
+        Set<SpeciesTO> selectedSpeciesTOs = checkAndGetSelectedSpeciesTOs(allSpeciesTOs, speciesIds);
+        AnatEntityDAO anatEntityDAO = daoManager.getAnatEntityDAO();
+        RelationDAO relDAO = daoManager.getRelationDAO();
+
+        Map<PipelineRelationTO<String>, Map<List<PipelineRelationTO<String>>, Set<SpeciesTO>>>
+        explanationChainsAndSpecies = new HashMap<>();
+        Iterator<SpeciesTO> speciesTOIterator = selectedSpeciesTOs.iterator();
+        while (speciesTOIterator.hasNext()) {
+            SpeciesTO speciesTO = speciesTOIterator.next();
+            Collection<Integer> speciesId = Collections.singleton(speciesTO.getId());
+
+            //Get the anat. entity IDs valid in this species
+            Set<String> anatEntityIdsForSpecies = anatEntityDAO.getAnatEntities(speciesId, true, null,
+                    EnumSet.of(AnatEntityDAO.Attribute.ID))
+                    .stream()
+                    .map(aeTO -> aeTO.getId())
+                    .collect(Collectors.toSet());
+            //Get the direct relations valid in this species
+            Set<RelationTO<String>> directRels = new HashSet<>(relDAO.getAnatEntityRelations(
+                    speciesId, true, null, null, true,
+                    EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                    EnumSet.of(RelationTO.RelationStatus.DIRECT),
+                    null)
+                    .getAllTOs());
+            //Get the indirect relations valid in this species
+            Set<RelationTO<String>> indirectRels = new HashSet<>(relDAO.getAnatEntityRelations(
+                    speciesId, true, null, null, true,
+                    EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                    EnumSet.of(RelationTO.RelationStatus.INDIRECT),
+                    null)
+                    .getAllTOs());
+
+            Set<RelationTO<String>> relsToQuery = indirectRelsToQuery.entrySet().stream().flatMap(e ->
+                    indirectRels.stream().filter(rel ->
+                        rel.getSourceId().equals(e.getKey()) && e.getValue().contains(rel.getTargetId())
+                    )
+            ).collect(Collectors.toSet());
+            if (relsToQuery.isEmpty()) {
+                continue;
+            }
+            Map<PipelineRelationTO<String>, Set<List<PipelineRelationTO<String>>>> indirectRelsToExplain =
+                    findChainOfDirectRelsWithNoCorrespondingIndirectRels(directRels, indirectRels,
+                            anatEntityIdsForSpecies, null, relsToQuery);
+            for (Entry<PipelineRelationTO<String>, Set<List<PipelineRelationTO<String>>>> relToExplain:
+                indirectRelsToExplain.entrySet()) {
+                Map<List<PipelineRelationTO<String>>, Set<SpeciesTO>> speciesPerChain =
+                        relToExplain.getValue().stream()
+                        .map(l -> new AbstractMap.SimpleEntry<>(l, new HashSet<>(Arrays.asList(speciesTO))))
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                explanationChainsAndSpecies.merge(relToExplain.getKey(),
+                        speciesPerChain,
+                    (existingSpeciesPerChain, newSpeciesPerChain) -> {
+                        for (Entry<List<PipelineRelationTO<String>>, Set<SpeciesTO>> chain:
+                            newSpeciesPerChain.entrySet()) {
+                            existingSpeciesPerChain.merge(chain.getKey(), new HashSet<>(chain.getValue()),
+                                    (s1, s2) -> {s1.addAll(s2); return s1;});
+                        }
+                        return existingSpeciesPerChain;
+                    });
+            }
+        }
+
+        Map<String, String> anatEntityNameMap = anatEntityDAO.getAnatEntities(
+                selectedSpeciesTOs.stream().map(s -> s.getId()).collect(Collectors.toSet()),
+                true, null,
+                EnumSet.of(AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME))
+                .stream()
+                .map(ae -> new AbstractMap.SimpleEntry<>(ae.getId(), ae.getName()))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+        explanationChainsAndSpecies.entrySet().stream().forEach(e -> {
+            System.out.println("Explanations for relation from " + e.getKey().getSourceId()
+                    + " \"" + anatEntityNameMap.get(e.getKey().getSourceId()) + "\" to "
+                    + e.getKey().getTargetId() + " \""
+                    + anatEntityNameMap.get(e.getKey().getTargetId()) + "\": ");
+            e.getValue().entrySet().stream().forEach(e2 -> {
+                System.out.println("In species: " + e2.getValue().stream()
+                        .map(speTO -> speTO.getId() + " " + speTO.getGenus() + " " + speTO.getSpeciesName())
+                        .collect(Collectors.joining(", ")));
+                System.out.println(e2.getKey().stream().map(aeId -> aeId + " \""
+                        + anatEntityNameMap.get(aeId) + "\" ")
+                .collect(Collectors.joining(" - ", "\t", "")));
+            });
+            System.out.println();
+        });
+        
+
+        log.traceExit();
+    }
+    public void insertPartOfIsARelations(Map<String, List<String>> relMapToAdd,
+            Collection<Integer> speciesIds, DAOManager daoManager, String outputFile) throws IOException {
+        log.traceEntry("{} - {} - {} - {}", relMapToAdd, speciesIds, daoManager, outputFile);
+
+        if (relMapToAdd == null || relMapToAdd.isEmpty()) {
+            log.traceExit(); return;
+        }
+        Set<SpeciesTO> allSpeciesTOs = new HashSet<>(
+                daoManager.getSpeciesDAO().getAllSpecies(null).getAllTOs());
+        Set<Integer> allSpeciesIds = allSpeciesTOs.stream().map(sTO -> sTO.getId())
+                .collect(Collectors.toSet());
+        Set<SpeciesTO> selectedSpeciesTOs = checkAndGetSelectedSpeciesTOs(allSpeciesTOs, speciesIds);
+        AnatEntityDAO anatEntityDAO = daoManager.getAnatEntityDAO();
+        RelationDAO relDAO = daoManager.getRelationDAO();
+        TaxonConstraintDAO taxonConstraintDAO = daoManager.getTaxonConstraintDAO();
+
+        Set<PipelineRelationTO<String>> relsToAdd = relMapToAdd.entrySet().stream().flatMap(e ->
+                e.getValue().stream().map(v -> new PipelineRelationTO<String>(
+                e.getKey(), v,
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT))
+        ).collect(Collectors.toSet());
+
+        // We go species by species, that's how the method
+        // findChainOfDirectRelsWithNoCorrespondingIndirectRels works.
+        Map<PipelineRelationTO<String>, Set<SpeciesTO>> speciesPerRelToAdd = new HashMap<>();
+        Iterator<SpeciesTO> speciesTOIterator = selectedSpeciesTOs.iterator();
+        while (speciesTOIterator.hasNext()) {
+            SpeciesTO speciesTO = speciesTOIterator.next();
+            Collection<Integer> speciesId = Collections.singleton(speciesTO.getId());
+
+            //Get the anat. entity IDs valid in this species
+            Set<String> anatEntityIdsForSpecies = anatEntityDAO.getAnatEntities(speciesId, true, null,
+                    EnumSet.of(AnatEntityDAO.Attribute.ID))
+                    .stream()
+                    .map(aeTO -> aeTO.getId())
+                    .collect(Collectors.toSet());
+            //Get the direct relations valid in this species
+            Set<RelationTO<String>> directRels = new HashSet<>(relDAO.getAnatEntityRelations(
+                    speciesId, true, null, null, true,
+                    EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                    EnumSet.of(RelationTO.RelationStatus.DIRECT),
+                    null)
+                    .getAllTOs());
+            //Get the indirect relations valid in this species
+            Set<RelationTO<String>> indirectRels = new HashSet<>(relDAO.getAnatEntityRelations(
+                    speciesId, true, null, null, true,
+                    EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                    EnumSet.of(RelationTO.RelationStatus.INDIRECT),
+                    null)
+                    .getAllTOs());
+
+            Set<PipelineRelationTO<String>> missingRels =
+                    findChainOfDirectRelsWithNoCorrespondingIndirectRels(directRels, indirectRels,
+                            anatEntityIdsForSpecies, relsToAdd, null).keySet().stream()
+                    .collect(Collectors.toSet());
+            missingRels.addAll(relsToAdd);
+            for (PipelineRelationTO<String> missingRel: missingRels) {
+                speciesPerRelToAdd.merge(missingRel,
+                    new HashSet<>(Arrays.asList(speciesTO)),
+                    (existingSpeciesTOs, newSpeciesTOs) -> {
+                        existingSpeciesTOs.addAll(newSpeciesTOs);
+                        return existingSpeciesTOs;
+                    });
+            }
+        }
+
+
+        Set<RelationTO<String>> allDirectRels = getAllDirectRels(relDAO);
+        Set<RelationTO<String>> allIndirectRels = getAllIndirectRels(relDAO);
+        Map<Integer, Set<Integer>> allRelTaxonConstraints = getAllRelTaxonConstraints(taxonConstraintDAO);
+        int maxRelationId = relDAO.getAnatEntityRelations(
+                null, true, null, null, true, null, null,
+                EnumSet.of(RelationDAO.Attribute.RELATION_ID))
+                .stream().mapToInt(relTO -> relTO.getId())
+                .max().getAsInt();
+ 
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
+                outputFile)))) {
+            writeAddRelsQueries(speciesPerRelToAdd, allDirectRels, allIndirectRels,
+                    allRelTaxonConstraints, allSpeciesIds,
+                    maxRelationId, out);
+        }
+    }
+
+    private static Set<SpeciesTO> checkAndGetSelectedSpeciesTOs(Set<SpeciesTO> allSpeciesTOs,
+            Collection<Integer> requestedSpeciesIds) throws IllegalArgumentException {
+        log.traceEntry("{} - {}", allSpeciesTOs, requestedSpeciesIds);
+        Set<Integer> allSpeciesIds = allSpeciesTOs.stream().map(sTO -> sTO.getId())
+                .collect(Collectors.toSet());
+        if (requestedSpeciesIds != null && !allSpeciesIds.containsAll(requestedSpeciesIds)) {
+            throw log.throwing(new IllegalArgumentException("Unrecognized species IDs: "
+                    + requestedSpeciesIds.stream().filter(id -> !allSpeciesIds.contains(id))
+                    .map(id -> id.toString())
+                    .collect(Collectors.joining(", "))));
+        }
+        return log.traceExit(allSpeciesTOs.stream().filter(speTO ->
+        requestedSpeciesIds == null || requestedSpeciesIds.isEmpty() ||
+        requestedSpeciesIds.contains(speTO.getId()))
+                .collect(Collectors.toSet()));
+    }
+
+    /**
+     * 
+     * @param relsToRemove  A {@code Map} where the keys are {@code String}s that are the OBO-like IDs
+     *                      of the source of the relation to delete, the associated value being
+     *                      a {@code List} of {@code String}s that are the OBO-like IDs
+     *                      of the target of the relations to delete.
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the NCBI IDs of the species
+     *                      the relations should be deleted for. If null or empty, the relations
+     *                      are removed for all species.
+     * @param daoManager
+     * @param uberon
+     * @param outputFile
+     */
+    public void deletePartOfIsARelations(Map<String, List<String>> relMapToRemove,
+            Collection<Integer> speciesIds, DAOManager daoManager, String outputFile)
+                    throws IOException {
+        log.traceEntry("{} - {} - {} - {} - {}", relMapToRemove, speciesIds, daoManager, outputFile);
+
+        if (relMapToRemove == null || relMapToRemove.isEmpty()) {
+            log.traceExit(); return;
+        }
+        Set<SpeciesTO> allSpeciesTOs = new HashSet<>(
+                daoManager.getSpeciesDAO().getAllSpecies(null).getAllTOs());
+        Set<Integer> allSpeciesIds = allSpeciesTOs.stream().map(sTO -> sTO.getId())
+                .collect(Collectors.toSet());
+        Set<SpeciesTO> selectedSpeciesTOs = checkAndGetSelectedSpeciesTOs(allSpeciesTOs, speciesIds);
+
+        RelationDAO relDAO = daoManager.getRelationDAO();
+        TaxonConstraintDAO taxonConstraintDAO = daoManager.getTaxonConstraintDAO();
+        Map<Integer, Set<Integer>> allRelTaxonConstraints = getAllRelTaxonConstraints(taxonConstraintDAO);
+
+        // We go species by species, that's how the method
+        // findIndirectRelsNotReachedByChainOfDirectRels works.
+        Map<Integer, Set<SpeciesTO>> relsToDelete = new HashMap<>();
+        Iterator<SpeciesTO> speciesTOIterator = selectedSpeciesTOs.iterator();
+        while (speciesTOIterator.hasNext()) {
+            SpeciesTO speciesTO = speciesTOIterator.next();
+            Collection<Integer> speciesId = Collections.singleton(speciesTO.getId());
+
+            Set<RelationTO<String>> directRels = new HashSet<>(relDAO.getAnatEntityRelations(
+                    speciesId, true, null, null, true,
+                    EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                    EnumSet.of(RelationTO.RelationStatus.DIRECT),
+                    null)
+                    .getAllTOs());
+            Set<RelationTO<String>> indirectRels = new HashSet<>(relDAO.getAnatEntityRelations(
+                    speciesId, true, null, null, true,
+                    EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                    EnumSet.of(RelationTO.RelationStatus.INDIRECT),
+                    null)
+                    .getAllTOs());
+            Set<RelationTO<String>> allRels = new HashSet<>(directRels);
+            allRels.addAll(indirectRels);
+            
+            Set<RelationTO<String>> relsToRemove = relMapToRemove.entrySet().stream()
+                    .flatMap(e -> allRels.stream().filter(rel ->
+                        rel.getSourceId().equals(e.getKey()) && e.getValue().contains(rel.getTargetId()))
+                    ).collect(Collectors.toSet());
+            if (relsToRemove.isEmpty()) {
+                continue;
+            }
+            relsToRemove.addAll(findIndirectRelsNotReachedByChainOfDirectRels(directRels,
+                    indirectRels, relsToRemove));
+
+            for (RelationTO<String> relToRemove: relsToRemove) {
+                relsToDelete.merge(relToRemove.getId(), new HashSet<>(Arrays.asList(speciesTO)),
+                        (oldSet, newSet) -> {oldSet.addAll(newSet); return oldSet;});
+            }
+        }
+
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
+                outputFile)))) {
+            writeDeleteQueries(relsToDelete, allRelTaxonConstraints, allSpeciesIds, out);
+        }
+    }
+
+    public void reportOnOntologyRootsInDB(DAOManager daoManager) {
+        log.traceEntry("{}", daoManager);
+
+        RelationDAO relDAO = daoManager.getRelationDAO();
+        Map<Set<String>, Set<SpeciesTO>> speciesPerRoots = daoManager.getSpeciesDAO()
+                .getAllSpecies(null).stream()
+                .map(speciesTO -> new AbstractMap.SimpleEntry<>(
+                        getOntologyRoots(relDAO.getAnatEntityRelations(
+                                Collections.singleton(speciesTO.getId()), true, null, null, true,
+                                EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                                EnumSet.of(RelationTO.RelationStatus.DIRECT),
+                                null).getAllTOs()),
+                        new HashSet<>(Arrays.asList(speciesTO))))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                        (v1, v2) -> {v1.addAll(v2); return v1;}));
+
+        AnatEntityDAO anatEntityDAO = daoManager.getAnatEntityDAO();
+        Map<String, String> anatEntityNameMap = anatEntityDAO.getAnatEntities(null, true,
+                speciesPerRoots.keySet().stream().flatMap(s -> s.stream()).collect(Collectors.toSet()),
+                EnumSet.of(AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME))
+                .stream()
+                .map(ae -> new AbstractMap.SimpleEntry<>(ae.getId(), ae.getName()))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+        if (speciesPerRoots.size() == 1) {
+            System.out.println("All species have the same roots: ");
+            speciesPerRoots.keySet().stream().flatMap(s -> s.stream())
+            .forEach(rootId -> System.out.println(rootId + ": " + anatEntityNameMap.get(rootId)));
+        } else {
+            System.out.println("Different roots in different species: ");
+            speciesPerRoots.entrySet().stream().forEach(e -> {
+                e.getKey().stream()
+                .forEach(rootId -> System.out.println(rootId + ": " + anatEntityNameMap.get(rootId)));
+                System.out.println("In species: ");
+                e.getValue().stream()
+                .forEach(speId -> System.out.println(speId));
+                System.out.println();
+            });
+        }
+
+        log.traceExit();
+    }
+
+    private static <T> Set<T> getOntologyRoots(Collection<RelationTO<T>> directRels) {
+        log.traceEntry("{}", directRels);
+        Set<T> targetIds = directRels.stream()
+                .map(rel -> rel.getTargetId())
+                .collect(Collectors.toSet());
+        Set<T> sourceIds = directRels.stream()
+                .map(rel -> rel.getSourceId())
+                .collect(Collectors.toSet());
+        targetIds.removeAll(sourceIds);
+        return log.traceExit(targetIds);
+    }
+
     public void getFromDBAnatPartOfIsAIndirectRelsNotReachedByChainOfDirectRelsAndWriteToFile(
             DAOManager daoManager, Uberon uberon, boolean filterRels, String outputFile) throws IOException {
-        log.entry(daoManager, uberon, filterRels, outputFile);
+        log.traceEntry("{} - {} - {} - {}", daoManager, uberon, filterRels, outputFile);
 
         RelationDAO relDAO = daoManager.getRelationDAO();
         AnatEntityDAO anatEntityDAO = daoManager.getAnatEntityDAO();
@@ -340,26 +705,9 @@ public class OntologyTools {
         //We retrieve all direct relations, all indirect relations, all taxon constraints
         //of all relations, and the max relation ID, to generate the SQL commands to fix
         //the issues identified (rather than directly modifying the database with no review)
-        Set<RelationTO<String>> allDirectRels = new HashSet<>(relDAO.getAnatEntityRelations(
-                null, true, null, null, true,
-                EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
-                EnumSet.of(RelationTO.RelationStatus.DIRECT),
-                EnumSet.of(RelationDAO.Attribute.RELATION_ID,
-                        RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID))
-                .getAllTOs());
-        Set<RelationTO<String>> allIndirectRels = new HashSet<>(relDAO.getAnatEntityRelations(
-                null, true, null, null, true,
-                EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
-                EnumSet.of(RelationTO.RelationStatus.INDIRECT),
-                EnumSet.of(RelationDAO.Attribute.RELATION_ID,
-                        RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID))
-                .getAllTOs());
-        Map<Integer, Set<Integer>> allRelTaxonConstraints = taxonConstraintDAO
-                .getAnatEntityRelationTaxonConstraints(null, null).stream()
-                .map(tcTO -> new AbstractMap.SimpleEntry<>(tcTO.getEntityId(),
-                        new HashSet<>(Arrays.asList(tcTO.getSpeciesId()))))
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
-                        (v1, v2) -> {v1.addAll(v2); return v1;}));
+        Set<RelationTO<String>> allDirectRels = getAllDirectRels(relDAO);
+        Set<RelationTO<String>> allIndirectRels = getAllIndirectRels(relDAO);
+        Map<Integer, Set<Integer>> allRelTaxonConstraints = getAllRelTaxonConstraints(taxonConstraintDAO);
         int maxRelationId = relDAO.getAnatEntityRelations(
                 null, true, null, null, true, null, null,
                 EnumSet.of(RelationDAO.Attribute.RELATION_ID))
@@ -438,7 +786,7 @@ public class OntologyTools {
 
             //Now we find the incorrect indirect relations
             Set<RelationTO<String>> incorrectIndirectRelTOs =
-                    findIndirectRelsNotReachedByChainOfDirectRels(directRels, indirectRels);
+                    findIndirectRelsNotReachedByChainOfDirectRels(directRels, indirectRels, null);
             log.info("{} indirect incorrect relations for species {}",
                     incorrectIndirectRelTOs.size(), speciesTO.getId());
             if (filterRels) {
@@ -451,7 +799,7 @@ public class OntologyTools {
             //Now we find the chains of direct relations with no corresponding indirect rels
             Map<PipelineRelationTO<String>, Set<List<PipelineRelationTO<String>>>> missingIndirectRels =
                     findChainOfDirectRelsWithNoCorrespondingIndirectRels(directRels, indirectRels,
-                            anatEntityIdsForSpecies);
+                            anatEntityIdsForSpecies, null, null);
             log.info("{} missing indirect relations to add for species {}",
                     missingIndirectRels.size(), speciesTO.getId());
             //We merge the potential problems over several species,
@@ -857,61 +1205,9 @@ public class OntologyTools {
                         });
             }
             log.info("{} new indirect RelationTOs to add", speciesPerMissingIndirectRels.size());
-            for (Entry<PipelineRelationTO<String>, Set<SpeciesTO>> e: allRelsToAdd.entrySet()) {
-                RelationTO<String> newRelTO = e.getKey();
-                Set<Integer> speciesIds = e.getValue().stream().map(speTO -> speTO.getId())
-                        .collect(Collectors.toSet());
-                Set<Integer> allNewRelSpeIds = new HashSet<>();
-                allNewRelSpeIds.addAll(speciesIds);
-                Integer relId = null;
-                //try to find if the relation already exists in some species
-                Set<RelationTO<String>> relsToConsider = allDirectRels;
-                if (newRelTO.getRelationStatus().equals(RelationTO.RelationStatus.INDIRECT)) {
-                    relsToConsider = allIndirectRels;
-                }
-                RelationTO<String> foundRelTO = relsToConsider.stream()
-                        .filter(relTO -> Objects.equal(relTO.getSourceId(), newRelTO.getSourceId()) &&
-                                Objects.equal(relTO.getTargetId(), newRelTO.getTargetId()))
-                        .findAny().orElse(null);
-                if (foundRelTO != null) {
-                    Set<Integer> foundRelTOSpeciesIds = allRelTaxonConstraints.get(foundRelTO.getId());
-                    if (foundRelTOSpeciesIds.contains(null)) {
-                        foundRelTOSpeciesIds = allSpeciesIds;
-                    }
-                    allNewRelSpeIds.addAll(foundRelTOSpeciesIds);
-                    relId = foundRelTO.getId();
-                } else {
-                    maxRelationId++;
-                    relId = maxRelationId;
-                    out.print("INSERT INTO anatEntityRelation " +
-                            "(anatEntityRelationId, anatEntitySourceId, anatEntityTargetId, " +
-                            " relationType, relationStatus) " +
-                            "VALUES (" + relId + ", '" + newRelTO.getSourceId()
-                            + "', '" + newRelTO.getTargetId() + "', '"
-                            + newRelTO.getRelationType() + "', '" + newRelTO.getRelationStatus() + "'); ");
-                }
+            maxRelationId = writeAddRelsQueries(allRelsToAdd, allDirectRels, allIndirectRels,
+                    allRelTaxonConstraints, allSpeciesIds, maxRelationId, out);
 
-                if (allSpeciesIds.equals(allNewRelSpeIds)) {
-                    if (foundRelTO != null) {
-                        out.print("DELETE FROM anatEntityRelationTaxonConstraint WHERE "
-                                + "anatEntityRelationId = " + relId + "; ");
-                    }
-                    out.println("INSERT INTO anatEntityRelationTaxonConstraint "
-                            + "(anatEntityRelationId, speciesId) VALUES (" + relId + ", NULL);");
-                } else {
-                    out.print("INSERT INTO anatEntityRelationTaxonConstraint "
-                            + "(anatEntityRelationId, speciesId) VALUES ");
-                    boolean firstSpecies = true;
-                    for (Integer speId: speciesIds) {
-                        if (!firstSpecies) {
-                            out.print(", ");
-                        }
-                        out.print("(" + relId + ", " + speId + ")");
-                        firstSpecies = false;
-                    }
-                    out.println(";");
-                }
-            }
             Map<Integer, Set<SpeciesTO>> allRelsToDelete = new HashMap<>();
             for (Entry<Integer, Set<SpeciesTO>> e: speciesPerPotentialCycle.entrySet()) {
                 allRelsToDelete.put(e.getKey(), new HashSet<>(e.getValue()));
@@ -937,41 +1233,153 @@ public class OntologyTools {
             log.info("{} indirect RelationTOs to remove because direct equivalent relation will be added",
                     speciesPerIndirectRelsToRemove.size());
             log.info("{} indirect RelationTOs to remove in total", allRelsToDelete.size());
-            allRelsToDelete.entrySet().stream().forEach(e -> {
-                int incorrectRelId = e.getKey();
-                Set<Integer> toRemoveSpeciesIds = e.getValue().stream().map(speTO -> speTO.getId())
-                        .collect(Collectors.toSet());
-                Set<Integer> existingSpeciesIds = allRelTaxonConstraints.get(incorrectRelId);
-                if (existingSpeciesIds.contains(null)) {
-                    existingSpeciesIds = allSpeciesIds;
-                }
-                Set<Integer> remainingSpeciesIds = existingSpeciesIds.stream()
-                        .filter(id -> !toRemoveSpeciesIds.contains(id))
-                        .collect(Collectors.toSet());
-                out.print("DELETE FROM anatEntityRelationTaxonConstraint "
-                        + "WHERE anatEntityRelationId = " + incorrectRelId + "; ");
-                if (!remainingSpeciesIds.isEmpty()) {
-                    out.print("INSERT INTO anatEntityRelationTaxonConstraint "
-                            + "(anatEntityRelationId, speciesId) VALUES ");
-                    assert !allSpeciesIds.equals(remainingSpeciesIds):
-                        "There should never be all species remaining";
-//                    if (allSpeciesIds.equals(remainingSpeciesIds)) {
-//                        //Should never happen, just in case
-//                        out.print("(" + incorrectRelId + ", NULL)");
-//                    } else {
-                        out.print(remainingSpeciesIds.stream()
-                                .map(id -> "(" + incorrectRelId + ", " + id + ")")
-                                .collect(Collectors.joining(", ")));
-//                    }
-                    out.print("; ");
-                } else {
-                    out.print("DELETE FROM anatEntityRelation "
-                            + "WHERE anatEntityRelationId = " + incorrectRelId + "; ");
-                }
-                out.println();
-            });
+            writeDeleteQueries(allRelsToDelete, allRelTaxonConstraints, allSpeciesIds, out);
         }
         log.traceExit();
+    }
+
+    private static Set<RelationTO<String>> getAllDirectRels(RelationDAO relDAO) {
+        log.traceEntry("{}", relDAO);
+        return log.traceExit(new HashSet<>(relDAO.getAnatEntityRelations(
+                null, true, null, null, true,
+                EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                EnumSet.of(RelationTO.RelationStatus.DIRECT),
+                EnumSet.of(RelationDAO.Attribute.RELATION_ID,
+                        RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID))
+                .getAllTOs()));
+    }
+    private static Set<RelationTO<String>> getAllIndirectRels(RelationDAO relDAO) {
+        log.traceEntry("{}", relDAO);
+        return log.traceExit(new HashSet<>(relDAO.getAnatEntityRelations(
+                null, true, null, null, true,
+                EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                EnumSet.of(RelationTO.RelationStatus.INDIRECT),
+                EnumSet.of(RelationDAO.Attribute.RELATION_ID,
+                        RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID))
+                .getAllTOs()));
+    }
+    private static Map<Integer, Set<Integer>> getAllRelTaxonConstraints(TaxonConstraintDAO taxonConstraintDAO) {
+        log.traceEntry("{}", taxonConstraintDAO);
+        return log.traceExit(taxonConstraintDAO
+                .getAnatEntityRelationTaxonConstraints(null, null).stream()
+                .map(tcTO -> new AbstractMap.SimpleEntry<>(tcTO.getEntityId(),
+                        new HashSet<>(Arrays.asList(tcTO.getSpeciesId()))))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                        (v1, v2) -> {v1.addAll(v2); return v1;})));
+    }
+
+    private static void writeDeleteQueries(Map<Integer, Set<SpeciesTO>> relsToDelete,
+            Map<Integer, Set<Integer>> allRelTaxonConstraints, Set<Integer> allSpeciesIds,
+            PrintWriter out) {
+        log.traceEntry("{} - {} - {} - {}", relsToDelete, allRelTaxonConstraints, allSpeciesIds, out);
+
+        relsToDelete.entrySet().stream().forEach(e -> {
+            int incorrectRelId = e.getKey();
+            Set<Integer> toRemoveSpeciesIds = e.getValue().stream().map(speTO -> speTO.getId())
+                    .collect(Collectors.toSet());
+            Set<Integer> existingSpeciesIds = allRelTaxonConstraints.get(incorrectRelId);
+            if (existingSpeciesIds.contains(null)) {
+                existingSpeciesIds = allSpeciesIds;
+            }
+            Set<Integer> remainingSpeciesIds = existingSpeciesIds.stream()
+                    .filter(id -> !toRemoveSpeciesIds.contains(id))
+                    .collect(Collectors.toSet());
+            if (remainingSpeciesIds.equals(existingSpeciesIds)) {
+                log.warn("Maybe it's weird that this relation doesn't have to be deleted. "
+                        + "relId: {} - remainingSpeciesIds: {} - existingSpeciesIds: {}",
+                        incorrectRelId, remainingSpeciesIds, existingSpeciesIds);
+                return;
+            }
+            out.print("DELETE FROM anatEntityRelationTaxonConstraint "
+                    + "WHERE anatEntityRelationId = " + incorrectRelId + "; ");
+            if (!remainingSpeciesIds.isEmpty()) {
+                out.print("INSERT INTO anatEntityRelationTaxonConstraint "
+                        + "(anatEntityRelationId, speciesId) VALUES ");
+                assert !allSpeciesIds.equals(remainingSpeciesIds):
+                    "There should never be all species remaining";
+//                if (allSpeciesIds.equals(remainingSpeciesIds)) {
+//                    //Should never happen, just in case
+//                    out.print("(" + incorrectRelId + ", NULL)");
+//                } else {
+                    out.print(remainingSpeciesIds.stream()
+                            .map(id -> "(" + incorrectRelId + ", " + id + ")")
+                            .collect(Collectors.joining(", ")));
+//                }
+                out.print("; ");
+            } else {
+                out.print("DELETE FROM anatEntityRelation "
+                        + "WHERE anatEntityRelationId = " + incorrectRelId + "; ");
+            }
+            out.println();
+        });
+
+        log.traceExit();
+    }
+
+    private static int writeAddRelsQueries(
+            Map<PipelineRelationTO<String>, Set<SpeciesTO>> allRelsToAdd,
+            Set<RelationTO<String>> allDirectRels, Set<RelationTO<String>> allIndirectRels,
+            Map<Integer, Set<Integer>> allRelTaxonConstraints, Set<Integer> allSpeciesIds,
+            int maxRelationId, PrintWriter out) {
+        log.traceEntry("{} - {} - {} - {} - {} - {} - {}", allRelsToAdd, allDirectRels,
+                allIndirectRels, allRelTaxonConstraints, allSpeciesIds, maxRelationId, out);
+
+        for (Entry<PipelineRelationTO<String>, Set<SpeciesTO>> e: allRelsToAdd.entrySet()) {
+            RelationTO<String> newRelTO = e.getKey();
+            Set<Integer> speciesIds = e.getValue().stream().map(speTO -> speTO.getId())
+                    .collect(Collectors.toSet());
+            Set<Integer> allNewRelSpeIds = new HashSet<>();
+            allNewRelSpeIds.addAll(speciesIds);
+            Integer relId = null;
+            //try to find if the relation already exists in some species
+            Set<RelationTO<String>> relsToConsider = allDirectRels;
+            if (newRelTO.getRelationStatus().equals(RelationTO.RelationStatus.INDIRECT)) {
+                relsToConsider = allIndirectRels;
+            }
+            RelationTO<String> foundRelTO = relsToConsider.stream()
+                    .filter(relTO -> Objects.equal(relTO.getSourceId(), newRelTO.getSourceId()) &&
+                            Objects.equal(relTO.getTargetId(), newRelTO.getTargetId()))
+                    .findAny().orElse(null);
+            if (foundRelTO != null) {
+                Set<Integer> foundRelTOSpeciesIds = allRelTaxonConstraints.get(foundRelTO.getId());
+                if (foundRelTOSpeciesIds.contains(null)) {
+                    foundRelTOSpeciesIds = allSpeciesIds;
+                }
+                allNewRelSpeIds.addAll(foundRelTOSpeciesIds);
+                relId = foundRelTO.getId();
+            } else {
+                maxRelationId++;
+                relId = maxRelationId;
+                out.print("INSERT INTO anatEntityRelation " +
+                        "(anatEntityRelationId, anatEntitySourceId, anatEntityTargetId, " +
+                        " relationType, relationStatus) " +
+                        "VALUES (" + relId + ", '" + newRelTO.getSourceId()
+                        + "', '" + newRelTO.getTargetId() + "', '"
+                        + newRelTO.getRelationType() + "', '" + newRelTO.getRelationStatus() + "'); ");
+            }
+
+            if (allSpeciesIds.equals(allNewRelSpeIds)) {
+                if (foundRelTO != null) {
+                    out.print("DELETE FROM anatEntityRelationTaxonConstraint WHERE "
+                            + "anatEntityRelationId = " + relId + "; ");
+                }
+                out.println("INSERT INTO anatEntityRelationTaxonConstraint "
+                        + "(anatEntityRelationId, speciesId) VALUES (" + relId + ", NULL);");
+            } else {
+                out.print("INSERT INTO anatEntityRelationTaxonConstraint "
+                        + "(anatEntityRelationId, speciesId) VALUES ");
+                boolean firstSpecies = true;
+                for (Integer speId: speciesIds) {
+                    if (!firstSpecies) {
+                        out.print(", ");
+                    }
+                    out.print("(" + relId + ", " + speId + ")");
+                    firstSpecies = false;
+                }
+                out.println(";");
+            }
+        }
+        return log.traceExit(maxRelationId);
     }
 
     //TODO
@@ -998,33 +1406,45 @@ public class OntologyTools {
      */
     private static <T> Map<PipelineRelationTO<T>, Set<List<PipelineRelationTO<T>>>>
     findChainOfDirectRelsWithNoCorrespondingIndirectRels(Set<RelationTO<T>> directRels,
-            Set<RelationTO<T>> indirectRels, Set<T> allIds) {
-        log.entry(directRels, indirectRels, allIds);
+            Set<RelationTO<T>> indirectRels, Set<T> allIds, Set<PipelineRelationTO<T>> newRelsToAdd,
+            Set<RelationTO<T>> indirectRelsToExplain) {
+        log.traceEntry("{} - {} - {} - {} - {}", directRels, indirectRels, allIds,
+                newRelsToAdd, indirectRelsToExplain);
 
         //Retrieve the indirect relations and put them in a map where the key is the source ID,
         //and the value a Set of the target IDs
         final Map<T, Set<T>> indirectRelMap = sourceToTargetsOrTargetToSources(
                 indirectRels, true);
         //Same with the direct rels
+        Set<RelationTO<T>> directRelsWithNewRels = new HashSet<>(directRels);
+        if (newRelsToAdd != null) {
+            directRelsWithNewRels.addAll(newRelsToAdd);
+        }
         final Map<T, Set<T>> directRelMap = sourceToTargetsOrTargetToSources(
-                directRels, true);
+                directRelsWithNewRels, true);
+        Set<T> idsToStart = allIds;
+        if (indirectRelsToExplain != null && !indirectRelsToExplain.isEmpty()) {
+            idsToStart = indirectRelsToExplain.stream().map(rel -> rel.getSourceId())
+                    .collect(Collectors.toSet());
+        }
 
         //We store the composed rels as keys, and the chains of direct rels allowing to compose
         //this relation as value
         Map<PipelineRelationTO<T>, Set<List<PipelineRelationTO<T>>>> composedRels = new HashMap<>();
-        for (T id: allIds) {
-            Set<T> firstParentIds = directRelMap.getOrDefault(id, new HashSet<>());
+        for (T id: idsToStart) {
+            Set<T> firstParentIds = Collections.unmodifiableSet(
+                    directRelMap.getOrDefault(id, new HashSet<>()));
             Set<List<PipelineRelationTO<T>>> firstChains = firstParentIds.stream()
                     .filter(parentId -> !parentId.equals(id))
                     .map(parentId -> new ArrayList<>(Arrays.asList(new PipelineRelationTO<>(id, parentId,
                             RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT))))
                     .collect(Collectors.toSet());
-
             Deque<List<PipelineRelationTO<T>>> walker = new ArrayDeque<>(firstChains);
             List<PipelineRelationTO<T>> currentChain = null;
             while ((currentChain = walker.pollFirst()) != null) {
                 T currentTermId = currentChain.get(currentChain.size() - 1).getTargetId();
-                Set<T> parentIds = directRelMap.getOrDefault(currentTermId, new HashSet<>());
+                Set<T> parentIds = Collections.unmodifiableSet(
+                        directRelMap.getOrDefault(currentTermId, new HashSet<>()));
                 for (T parentId: parentIds) {
                     //to protect against cycles
                     if (currentChain.stream().map(relTO -> relTO.getTargetId())
@@ -1047,17 +1467,33 @@ public class OntologyTools {
                 }
             }
         }
+        final Map<T, Set<T>> newRelToAddMap = newRelsToAdd == null || newRelsToAdd.isEmpty()?
+                new HashMap<>(): sourceToTargetsOrTargetToSources(newRelsToAdd, true);
+        final Map<T, Set<T>> relToExplainMap = indirectRelsToExplain == null || indirectRelsToExplain.isEmpty()?
+                new HashMap<>(): sourceToTargetsOrTargetToSources(indirectRelsToExplain, true);
         return log.traceExit(composedRels.entrySet().stream()
-                .filter(e -> !indirectRelMap.getOrDefault(e.getKey().getSourceId(), new HashSet<>())
-                        .contains(e.getKey().getTargetId()) &&
-                        !directRelMap.getOrDefault(e.getKey().getSourceId(), new HashSet<>())
+                //If we requested explanations for some indirect rels, we keep those.
+                .filter(e -> indirectRelsToExplain == null || indirectRelsToExplain.isEmpty() || 
+                        relToExplainMap.getOrDefault(e.getKey().getSourceId(), new HashSet<>())
                         .contains(e.getKey().getTargetId()))
+                //Otherwise, we only keep the missing indirect rels
+                .filter(e -> (indirectRelsToExplain != null && !indirectRelsToExplain.isEmpty()) ||
+                        !indirectRelMap.getOrDefault(e.getKey().getSourceId(), new HashSet<>())
+                        .contains(e.getKey().getTargetId()))
+                //if we were adding new relations, we only want to retrieve the inferred indirect rels
+                //caused by these new relations
+                .filter(e -> newRelsToAdd == null || newRelsToAdd.isEmpty() || 
+                        e.getValue().stream().flatMap(l -> l.stream())
+                        .anyMatch(pathRel -> newRelToAddMap.getOrDefault(
+                                pathRel.getSourceId(), new HashSet<>())
+                                .contains(pathRel.getTargetId())))
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
     }
 
     private static <T> Set<RelationTO<T>> findIndirectRelsNotReachedByChainOfDirectRels(
-            Set<RelationTO<T>> directRels, Set<RelationTO<T>> indirectRels) {
-        log.entry(directRels, indirectRels);
+            Set<RelationTO<T>> directRels, Set<RelationTO<T>> indirectRels,
+            Set<RelationTO<T>> relsNotToUse) {
+        log.traceEntry("{} - {} - {}", directRels, indirectRels, relsNotToUse);
 
         //Retrieve the direct relations and put them in a map where the key is the source ID,
         //and the value a Set of the target IDs
@@ -1066,31 +1502,104 @@ public class OntologyTools {
 
         //Iterate the indirect relations to be checked
         return log.traceExit(indirectRels.stream().filter(indirectRelTO -> {
+            log.trace("indirectRelTO iterated: {}", indirectRelTO);
             //Now we walk the chain of direct relations starting from the source
-            //of this indirect relation, to check whether we can walk to the target
-            boolean targetReached = false;
-            Deque<T> walker = new ArrayDeque<>(directRelMap.getOrDefault(
+            //of this indirect relation, to check whether we can walk to the target.
+            //We used to remove from the first parents the target of the current indirect rel:
+            //if there is an indirect relation between A and B, it must be through a chain
+            //of rel, not a direct relation between them (which might be totally valid by the way).
+            //But actually, an indirect rel might be caused by a cycle, such as:
+            //A part_of B part_of C part_of B => we both have a direct and an indirect relation
+            //A part_of B. Because of that, in order to find the indirect relations caused by
+            //a cycle we'd like to remove, we need to start from all parents, even if it is
+            //the target of the indirect rel already.
+            Set<T> firstParentIds = new HashSet<>(directRelMap.getOrDefault(
                     indirectRelTO.getSourceId(), new HashSet<>()));
-            T currentTermId = null;
-            //to protect against cycles
-            Set<T> visitedParentIds = new HashSet<>();
-            visitedParentIds.add(indirectRelTO.getSourceId());
-            while ((currentTermId = walker.pollFirst()) != null && !targetReached) {
-                visitedParentIds.add(currentTermId);
-                if (currentTermId.equals(indirectRelTO.getTargetId())) {
-                    targetReached = true;
+            log.trace("First parent IDs: {}", firstParentIds);
+            Set<List<PipelineRelationTO<T>>> firstChains = firstParentIds.stream()
+                    .filter(parentId -> !parentId.equals(indirectRelTO.getSourceId()))
+                    .map(parentId -> new ArrayList<>(Arrays.asList(
+                            new PipelineRelationTO<>(indirectRelTO.getSourceId(), parentId,
+                            RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT))))
+                    .collect(Collectors.toSet());
+            log.trace("First chains: {}", firstChains);
+
+            Deque<List<PipelineRelationTO<T>>> walker = new ArrayDeque<>(firstChains);
+            List<PipelineRelationTO<T>> currentChain = null;
+            //We need to store all valid chains, because in case there are rels not to use,
+            //we only want to remove indirect rels if they were supported only by chains
+            //going through these relations not to use. Just knowing that we don't reach the target
+            //of the indirect rels through a chain of direct rels is not enough.
+            //It's only if the only way to reach the target is through a rel not to use
+            //that we remove the indirect rel.
+            Set<List<PipelineRelationTO<T>>> validatedChains = new HashSet<>();
+            while ((currentChain = walker.pollFirst()) != null &&
+                    //If there are rels not to use, we really need to walk all paths to the end
+                    //to know if the indirect rel was supported ONLY by paths going through
+                    //a relation not to use.
+                    //Otherwise, we can stop as soon as we find a chain of direct rels
+                    //supporting the indirect rel.
+                    (validatedChains.isEmpty() || relsNotToUse != null && !relsNotToUse.isEmpty() &&
+                            //but we can stop as soon as the indirect rel is supported
+                            //by a chain of direct rel not going through a rel not to use
+                            validatedChains.stream().noneMatch(chain -> chain.stream()
+                                    .noneMatch(relInChain -> relsNotToUse.stream()
+                                        .anyMatch(relNotToUse ->
+                                            relNotToUse.getSourceId().equals(relInChain.getSourceId()) &&
+                                            relNotToUse.getTargetId().equals(relInChain.getTargetId()))
+                                    )
+                                ))) {
+
+                T currentTermId = currentChain.get(currentChain.size() - 1).getTargetId();
+                log.trace("Current chain: {} - current term ID: {}", currentChain, currentTermId);
+
+                //The chain is validated if we reached the target, but really through
+                //several direct rels, so that the relation is indirect (in case of cycle,
+                //we could directly reach the target through a direct relation, but also
+                //through several direct relations, and this is the latter case we need to identify)
+                if (currentChain.size() > 1 &&
+                        currentTermId.equals(indirectRelTO.getTargetId())) {
+                    log.trace("Chain reached target");
+                    validatedChains.add(currentChain);
                 } else {
                     Set<T> parentIds = directRelMap.getOrDefault(currentTermId, new HashSet<>());
                     for (T parentId: parentIds) {
-                        if (!visitedParentIds.contains(parentId)) {
-                            walker.offerLast(parentId);
+                        PipelineRelationTO<T> newRelInChain = new PipelineRelationTO<>(
+                                currentTermId, parentId,
+                                RelationTO.RelationType.ISA_PARTOF,
+                                RelationTO.RelationStatus.DIRECT);
+                        //To protect against cycles, while still being able to infer
+                        //indirect rels caused by cycles. This is important in case
+                        //we are using this method to, well, remove a cycle.
+                        if (!currentChain.contains(newRelInChain)) {
+                            log.trace("Continue chain with relation: {}", newRelInChain);
+                            List<PipelineRelationTO<T>> newChain = new ArrayList<>(currentChain);
+                            newChain.add(newRelInChain);
+                            walker.offerLast(newChain);
                         } else {
                             log.trace("Cycle, currentTermId {} - parentId {}", currentTermId, parentId);
                         }
                     }
                 }
             }
-            return !targetReached;
+            if (relsNotToUse != null && !relsNotToUse.isEmpty()) {
+                //The indirect rel is not supported, but not because we remove a relation
+                //not to use, so we don't retain this indirect relation and return false.
+                if (validatedChains.isEmpty()) {
+                    return log.traceExit(false);
+                }
+                //In case the indirect rel was supported (!validatedChains.isEmpty()),
+                //but ONLY by chains going through rels not to use, then we retain this indirect rel
+                //for deletion.
+                return log.traceExit(validatedChains.stream().noneMatch(chain -> chain.stream()
+                            .noneMatch(relInChain -> relsNotToUse.stream()
+                                .anyMatch(relNotToUse ->
+                                    relNotToUse.getSourceId().equals(relInChain.getSourceId()) &&
+                                    relNotToUse.getTargetId().equals(relInChain.getTargetId()))
+                            )
+                        ));
+            }
+            return log.traceExit(validatedChains.isEmpty());
         })
         .collect(Collectors.toSet()));
     }
@@ -1118,7 +1627,7 @@ public class OntologyTools {
      */
     private static <T> Set<RelationTO<T>> retainMostPreciseIndirectRelsNotReachedByChainOfDirectRels(
             Set<RelationTO<T>> allRels, Set<RelationTO<T>> incorrectIndirectRels) {
-        log.entry(allRels, incorrectIndirectRels);
+        log.traceEntry("{} - {}", allRels, incorrectIndirectRels);
 
         Map<T, Set<T>> incorrectRelsTargetToSources = sourceToTargetsOrTargetToSources(
                 incorrectIndirectRels, false);
@@ -1137,8 +1646,9 @@ public class OntologyTools {
 
     private static <T extends RelationTO<U>, U> Map<U, Set<U>> sourceToTargetsOrTargetToSources(
             Collection<T> rels, boolean sourceToTargets) {
-        log.entry(rels, sourceToTargets);
-        return log.traceExit(rels.stream().collect(Collectors.toMap(
+        log.traceEntry("{} - {}", rels, sourceToTargets);
+        return log.traceExit(rels.stream()
+                .collect(Collectors.toMap(
                 relTO -> sourceToTargets ? relTO.getSourceId() : relTO.getTargetId(),
                 relTO -> new HashSet<>(Arrays.asList(sourceToTargets ? relTO.getTargetId() : relTO.getSourceId())),
                 (v1, v2) -> {v1.addAll(v2); return v1;})));

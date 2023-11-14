@@ -31,7 +31,6 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTOResult
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
-import org.bgee.model.expressiondata.CallServiceTest;
 import org.bgee.model.source.Source;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.species.Species;
@@ -47,7 +46,7 @@ import org.junit.Test;
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyServiceTest extends TestAncestor {
-    private final static Logger log = LogManager.getLogger(CallServiceTest.class.getName());
+    private final static Logger log = LogManager.getLogger(OntologyServiceTest.class.getName());
     @Override
     protected Logger getLogger() {
         return log;
@@ -236,7 +235,7 @@ public class OntologyServiceTest extends TestAncestor {
         OntologyBase<AnatEntity, String> expectedOntology1 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities1, new HashSet<>(allRelations),
         		        new HashSet<>(taxonConstraints), new HashSet<>(relationTaxonConstraints),
-        		        expRelationTypes1, serviceFactory, AnatEntity.class);
+        		        expRelationTypes1, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology1, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                 		expRelationTypes1, true, true));
@@ -246,7 +245,7 @@ public class OntologyServiceTest extends TestAncestor {
         		        new HashSet<>(Arrays.asList(taxonConstraints.get(0), taxonConstraints.get(1),
         		                taxonConstraints.get(2), taxonConstraints.get(3), taxonConstraints.get(4))),
         		        new HashSet<>(Arrays.asList(relationTaxonConstraints.get(0), relationTaxonConstraints.get(1))),
-        		        expRelationTypes23, serviceFactory, AnatEntity.class);
+        		        expRelationTypes23, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology2, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                 		expRelationTypes23, true, false));
@@ -256,7 +255,7 @@ public class OntologyServiceTest extends TestAncestor {
                         new HashSet<>(Arrays.asList(taxonConstraints.get(1),
                                 taxonConstraints.get(2), taxonConstraints.get(3), taxonConstraints.get(4))),
                         new HashSet<>(),
-        		        expRelationTypes23, serviceFactory, AnatEntity.class);
+        		        expRelationTypes23, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology3, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                 		expRelationTypes23, false, false));
@@ -374,7 +373,7 @@ public class OntologyServiceTest extends TestAncestor {
         OntologyBase<AnatEntity, String> expectedOntology1 = 
                 new MultiSpeciesOntology<>(speciesIds, anatEntities, new HashSet<>(allRelations),
                         taxonConstraints, relationTaxonConstraints,
-                        expRelationTypes, serviceFactory, AnatEntity.class);
+                        expRelationTypes, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology1, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                         expRelationTypes, true, true));
@@ -507,7 +506,7 @@ public class OntologyServiceTest extends TestAncestor {
         		new MultiSpeciesOntology<DevStage, String>(speciesIds, devStages1,
         		        new HashSet<>(allRelationTOs),
         		        Arrays.asList(stageTCs.get(0), stageTCs.get(1), stageTCs.get(2), stageTCs.get(3)),
-        		        null, expRelationTypes, serviceFactory, DevStage.class);
+        		        null, expRelationTypes, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology1,
         		service.getDevStageOntology(speciesIds, stageIds, true, true));
 
@@ -515,7 +514,7 @@ public class OntologyServiceTest extends TestAncestor {
         		new MultiSpeciesOntology<DevStage, String>(speciesIds, devStages2,
         		        new HashSet<>(allRelationTOs),
         		        Arrays.asList(stageTCs.get(0), stageTCs.get(1), stageTCs.get(2), stageTCs.get(3)),
-        		        null, expRelationTypes, serviceFactory, DevStage.class);
+        		        null, expRelationTypes, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology2,
         		service.getDevStageOntology(speciesIds, stageIds, false, true));
 
@@ -523,7 +522,7 @@ public class OntologyServiceTest extends TestAncestor {
         		new MultiSpeciesOntology<DevStage, String>(speciesIds, devStages3,
         		        new HashSet<>(relationTOs3),
         		        Arrays.asList(stageTCs.get(0), stageTCs.get(1)),
-        		        null, expRelationTypes, serviceFactory, DevStage.class);
+        		        null, expRelationTypes, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology3, 
         		service.getDevStageOntology(speciesIds, stageIds, false, false));
     }
@@ -566,7 +565,7 @@ public class OntologyServiceTest extends TestAncestor {
             .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
                 new HashSet<>(TAXON_RELATIONTOS),
-                TAXON_RELATION_TYPES, serviceFactory, Taxon.class);
+                TAXON_RELATION_TYPES, Taxon.class);
         assertEquals("Incorrect taxon ontology", expectedOntology, service.getTaxonOntology());
     }
     /**
@@ -595,7 +594,7 @@ public class OntologyServiceTest extends TestAncestor {
             .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
                 new HashSet<>(TAXON_RELATIONTOS),
-                TAXON_RELATION_TYPES, serviceFactory, Taxon.class);
+                TAXON_RELATION_TYPES, Taxon.class);
         assertEquals("Incorrect taxon ontology", expectedOntology,
                 service.getTaxonOntologyFromTaxonIds(Arrays.asList(TAXA.get(2).getId(), TAXA.get(3).getId()),
                         false, true, false));
@@ -627,7 +626,7 @@ public class OntologyServiceTest extends TestAncestor {
             .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
                 new HashSet<>(TAXON_RELATIONTOS),
-                TAXON_RELATION_TYPES, serviceFactory, Taxon.class);
+                TAXON_RELATION_TYPES, Taxon.class);
         assertEquals("Incorrect taxon ontology", expectedOntology,
                 service.getTaxonOntologyFromTaxonIds(Arrays.asList(TAXA.get(0).getId()),
                         false, false, true));
@@ -661,7 +660,7 @@ public class OntologyServiceTest extends TestAncestor {
             .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
                 new HashSet<>(Arrays.asList(TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(2))),
-                TAXON_RELATION_TYPES, serviceFactory, Taxon.class);
+                TAXON_RELATION_TYPES, Taxon.class);
         assertEquals("Incorrect taxon ontology", expectedOntology,
                 service.getTaxonOntologyFromTaxonIds(Arrays.asList(TAXA.get(1).getId()),
                         false, false, true));
@@ -695,7 +694,7 @@ public class OntologyServiceTest extends TestAncestor {
         .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
                 new HashSet<>(Arrays.asList(TAXON_RELATIONTOS.get(0))),
-                TAXON_RELATION_TYPES, serviceFactory, Taxon.class);
+                TAXON_RELATION_TYPES, Taxon.class);
         assertEquals("Incorrect taxon ontology", expectedOntology,
                 service.getTaxonOntologyFromTaxonIds(Arrays.asList(TAXA.get(1).getId()),
                         true, true, true));
@@ -728,7 +727,7 @@ public class OntologyServiceTest extends TestAncestor {
         .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
                 new HashSet<>(Arrays.asList(TAXON_RELATIONTOS.get(0), TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(3))),
-                TAXON_RELATION_TYPES, serviceFactory, Taxon.class);
+                TAXON_RELATION_TYPES, Taxon.class);
         assertEquals("Incorrect taxon ontology", expectedOntology,
                 service.getTaxonOntologyFromTaxonIds(Arrays.asList(TAXA.get(2).getId()),
                         true, true, true));
@@ -769,7 +768,7 @@ public class OntologyServiceTest extends TestAncestor {
                 new HashSet<>(Arrays.asList(TAXA.get(1), TAXA.get(2), TAXA.get(3))),
                 //and it will not contain all relations returned for the same reason
                 new HashSet<>(Arrays.asList(TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(2))),
-                TAXON_RELATION_TYPES, serviceFactory, Taxon.class);
+                TAXON_RELATION_TYPES, Taxon.class);
         assertEquals("Incorrect taxon ontology", expectedOntology,
                 service.getTaxonOntologyLeadingToSpecies(Arrays.asList(spe1.getId(), spe2.getId()),
                         true, true));
@@ -806,7 +805,7 @@ public class OntologyServiceTest extends TestAncestor {
         .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
                 new HashSet<>(TAXON_RELATIONTOS),
-                TAXON_RELATION_TYPES, serviceFactory, Taxon.class);
+                TAXON_RELATION_TYPES, Taxon.class);
         assertEquals("Incorrect taxon ontology", expectedOntology,
                 service.getTaxonOntologyFromSpeciesLCA(speIds,
                         false, true, true));

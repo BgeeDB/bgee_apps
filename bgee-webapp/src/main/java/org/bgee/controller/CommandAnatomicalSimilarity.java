@@ -2,11 +2,10 @@ package org.bgee.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
-import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Species;
-import org.bgee.model.species.Taxon;
 import org.bgee.view.AnatomicalSimilarityDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -21,7 +20,8 @@ import java.util.Set;
  * Controller handling requests related to anatomical similarities.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @author  Frederic Bastian
+ * @version Bgee 15, Dec 2021
  * @since   Bgee 14, May 2019
  */
 public class CommandAnatomicalSimilarity extends CommandParent {
@@ -52,18 +52,14 @@ public class CommandAnatomicalSimilarity extends CommandParent {
         AnatomicalSimilarityDisplay display = viewFactory.getAnatomicalSimilarityDisplay();
         
         if (speciesList.isEmpty() && anatEntityList.isEmpty()) {
-            display.displayAnatSimilarityHomePage(allSpecies);
-            return;
+            throw log.throwing(new InvalidRequestException("should provide species or anatomical entities"));
         }
         
         AnatEntitySimilarityAnalysis anatEntitySimilarityAnalysis = serviceFactory
                 .getAnatEntitySimilarityService()
                 .loadPositiveAnatEntitySimilarityAnalysis(speciesList, anatEntityList, false);
-
-        Ontology<Taxon, Integer> taxonOntology = serviceFactory.getOntologyService()
-                .getTaxonOntologyFromSpeciesLCA(speciesList, false, true, false);
         
-        display.displayAnatSimilarityResult(allSpecies, speciesList, taxonOntology, 
+        display.displayAnatSimilarityResult(allSpecies, speciesList,
                 anatEntityList, anatEntitySimilarityAnalysis);
 
         log.traceExit();

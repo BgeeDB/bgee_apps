@@ -2,10 +2,11 @@ package org.bgee.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.model.SearchResult;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.expressiondata.SingleSpeciesExprAnalysis;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
+import org.bgee.model.expressiondata.call.SingleSpeciesExprAnalysis;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesExprAnalysis;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.species.Species;
 import org.bgee.view.ExpressionComparisonDisplay;
@@ -56,23 +57,18 @@ public class CommandExpressionComparison extends CommandParent {
 
         ExpressionComparisonDisplay display = viewFactory.getExpressionComparisonDisplay();
 
-        if (userGeneList.isEmpty()) {
-            display.displayExpressionComparisonHomePage();
-            log.traceExit(); return;
-        }
-        if (userGeneList.size() == 1) {
-            display.displayExpressionComparison("At least two Ensembl IDs should be provided.");
-            log.traceExit(); return;
+        if (userGeneList.size() <= 1) {
+            throw log.throwing(new InvalidRequestException("At least two IDs should be provided."));
         }
 
         SearchResult<String, Gene> searchResult = serviceFactory.getGeneService()
-                .searchGenesByEnsemblIds(userGeneList);
+                .searchGenesByIds(userGeneList);
         Set<Species> species = searchResult.getResults().stream()
                 .map(Gene::getSpecies).collect(Collectors.toSet());
 
         if (species.isEmpty()) {
-            display.displayExpressionComparison("No gene from species presents in Bgee are detected.");
-            log.traceExit(); return;
+            throw log.throwing(new InvalidRequestException(
+                    "No gene from species presents in Bgee are detected."));
         }
 
         if (species.size() == 1) {

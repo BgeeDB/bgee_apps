@@ -43,6 +43,10 @@
       <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
       <filter.org.bgee.search.genes>bgee_genes_${project.version}</filter.org.bgee.search.genes>
       <filter.org.bgee.search.autocomplete>bgee_autocomplete_${project.version}</filter.org.bgee.search.autocomplete>
+      <filter.org.bgee.search.anat.entities>bgee_anat_auto_${project.version}</filter.org.bgee.search.anat.entities>
+      <filter.org.bgee.search.strains>bgee_strain_auto_${project.version}</filter.org.bgee.search.strains>
+      <filter.org.bgee.search.experiments>bgee_experiment_auto_${project.version}</filter.org.bgee.search.experiments>
+      <filter.org.bgee.search.assays>bgee_assay_auto_${project.version}</filter.org.bgee.search.assays>
       <!-- Properties for running TopAnat -->
       <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
@@ -55,10 +59,17 @@
       <!-- "From" address when sending mails at TopAnat job completions -->
       <filter.org.bgee.webapp.topAnatFromAddress>personal@email.com</filter.org.bgee.webapp.topAnatFromAddress>
       <!-- Root of the server to use. Important to generate correct links in emails -->
-      <filter.org.bgee.webapp.bgeeRootDirectory>http://test.com/</filter.org.bgee.webapp.bgeeRootDirectory>
-      <filter.org.bgee.webapp.bgeeStableRootDirectory>http://test.com/test14/</filter.org.bgee.webapp.bgeeStableRootDirectory>
-      <filter.org.bgee.webapp.bgeeCurrentUrl>http://test.com/</filter.org.bgee.webapp.bgeeCurrentUrl>
+      <filter.org.bgee.webapp.bgeeRootDirectory>http://test.com/api/</filter.org.bgee.webapp.bgeeRootDirectory>
+      <filter.org.bgee.webapp.bgeeStableRootDirectory>http://test.com/test14/api/</filter.org.bgee.webapp.bgeeStableRootDirectory>
+      <filter.org.bgee.webapp.bgeeCurrentUrl>http://test.com/api/</filter.org.bgee.webapp.bgeeCurrentUrl>
+      <filter.org.bgee.webapp.stableFrontendUrl>http://test.com/test14</filter.org.bgee.webapp.stableFrontendUrl>
+      <filter.org.bgee.webapp.frontendUrl>http://test.com/</filter.org.bgee.webapp.frontendUrl>
       <filter.org.bgee.webapp.bgeeRootDomain>.test.com</filter.org.bgee.webapp.bgeeRootDomain>
+      <filter.org.bgee.webapp.sparqlCurrentUrl>http://test.com/sparql/</filter.org.bgee.webapp.sparqlCurrentUrl>
+      <filter.org.bgee.webapp.sparqlStableUrl>http://test.com/sparql14/</filter.org.bgee.webapp.sparqlStableUrl>
+      <filter.org.bgee.webapp.sparqlStableGraph>http://test.com/rdf_v14</filter.org.bgee.webapp.sparqlStableGraph>
+      <filter.org.bgee.webapp.archive>false</filter.org.bgee.webapp.archive>
+      <filter.org.bgee.webapp.initializeCommandDataCaches>false</filter.org.bgee.webapp.initializeCommandDataCaches>
     </properties>
   </profile>
   <!-- Profile used to configure bgee-webapp, defining the properties to be used for a normal build of the WAR file, 
@@ -82,7 +93,12 @@
       <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
       <filter.org.bgee.search.genes>bgee_genes_${project.version}</filter.org.bgee.search.genes>
       <filter.org.bgee.search.autocomplete>bgee_autocomplete_${project.version}</filter.org.bgee.search.autocomplete>
+      <filter.org.bgee.search.anat.entities>bgee_anat_auto_${project.version}</filter.org.bgee.search.anat.entities>
+      <filter.org.bgee.search.strains>bgee_strain_auto_${project.version}</filter.org.bgee.search.strains>
+      <filter.org.bgee.search.experiments>bgee_experiment_auto_${project.version}</filter.org.bgee.search.experiments>
+      <filter.org.bgee.search.assays>bgee_assay_auto_${project.version}</filter.org.bgee.search.assays>
       <!-- Properties for running TopAnat -->
+      <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
       <filter.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</filter.org.bgee.core.topAnatRScriptExecutable>
@@ -93,10 +109,16 @@
       <!-- "From" address when sending mails at TopAnat job completions -->
       <filter.org.bgee.webapp.topAnatFromAddress>official@production.com</filter.org.bgee.webapp.topAnatFromAddress>
       <!-- Root of the server to use. Important to generate correct links in emails -->
-      <filter.org.bgee.webapp.bgeeRootDirectory>http://production.com/</filter.org.bgee.webapp.bgeeRootDirectory>
-      <filter.org.bgee.webapp.bgeeStableRootDirectory>http://production.com/production14/</filter.org.bgee.webapp.bgeeStableRootDirectory>
-      <filter.org.bgee.webapp.bgeeCurrentUrl>http://production.com/</filter.org.bgee.webapp.bgeeCurrentUrl>
+      <filter.org.bgee.webapp.bgeeRootDirectory>http://production.com/api/</filter.org.bgee.webapp.bgeeRootDirectory>
+      <filter.org.bgee.webapp.bgeeStableRootDirectory>http://production.com/production14/api/</filter.org.bgee.webapp.bgeeStableRootDirectory>
+      <filter.org.bgee.webapp.bgeeCurrentUrl>http://production.com/api/</filter.org.bgee.webapp.bgeeCurrentUrl>
+      <filter.org.bgee.webapp.frontendUrl>http://production.com/</filter.org.bgee.webapp.frontendUrl>
       <filter.org.bgee.webapp.bgeeRootDomain>.production.com</filter.org.bgee.webapp.bgeeRootDomain>
+      <filter.org.bgee.webapp.sparqlCurrentUrl>http://production.com/sparql/</filter.org.bgee.webapp.sparqlCurrentUrl>
+      <filter.org.bgee.webapp.sparqlStableUrl>http://production.com/sparql14/</filter.org.bgee.webapp.sparqlStableUrl>
+      <filter.org.bgee.webapp.sparqlStableGraph>http://production.com/rdf_v14</filter.org.bgee.webapp.sparqlStableGraph>
+      <filter.org.bgee.webapp.archive>false</filter.org.bgee.webapp.archive>
+      <filter.org.bgee.webapp.initializeCommandDataCaches>true</filter.org.bgee.webapp.initializeCommandDataCaches>
     </properties>
   </profile>
   <!-- Profile used for Bgee integration tests-->

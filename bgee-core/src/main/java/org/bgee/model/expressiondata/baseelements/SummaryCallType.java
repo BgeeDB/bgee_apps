@@ -13,19 +13,19 @@ import org.bgee.model.expressiondata.baseelements.PropagationState;
 
 /**
  * This interface is used to type the summary call types associated to 
- * {@link org.bgee.model.expressiondata.Call Call}s. They represent an overall summary 
+ * {@link org.bgee.model.expressiondata.call.Call Call}s. They represent an overall summary 
  * of the {@link CallType}s from individual data types, associated to a same {@code Call}.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @version Bgee 14, Apr. 2017
  * @see CallType
- * @see org.bgee.model.expressiondata.Call Call
+ * @see org.bgee.model.expressiondata.call.Call Call
  * @since Bgee 13 Sept. 2015
  */
 public interface SummaryCallType extends CallType {
     /**
-     * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.Call.ExpressionCall 
+     * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.call.Call.ExpressionCall 
      * ExpressionCall}s. They represent an overall summary of the {@link CallType.Expression Expression}
      * calls from individual data types, associated to a same {@code ExpressionCall}.
      * <ul>
@@ -52,7 +52,7 @@ public interface SummaryCallType extends CallType {
      * @author Frederic Bastian
      * @version Bgee 14 Mar. 2017
      * @see CallType.Expression 
-     * @see org.bgee.model.expressiondata.Call.ExpressionCall ExpressionCall
+     * @see org.bgee.model.expressiondata.call.Call.ExpressionCall ExpressionCall
      * @since Bgee 13 Sept. 2015
      */
     //XXX: although there is no more "ambiguity" status starting from Bgee 14,
@@ -63,25 +63,35 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
-            log.entry(propState);
-            
-            try {
-                switch (this) {
-                case EXPRESSED:
-                    CallType.Expression.EXPRESSED.checkPropagationState(propState);
-                    break;
-                case NOT_EXPRESSED:
-                    CallType.Expression.NOT_EXPRESSED.checkPropagationState(propState);
-                    break;
-                default:
-                    throw log.throwing(new IllegalStateException("CallType not supported: " 
-                            + this));
+            log.traceEntry("{}", propState);
+
+            boolean incorrectPropagation = false;
+            switch (this) {
+            case EXPRESSED:
+                //no propagation from parents allowed for expressed calls,
+                //all other propagations allowed.
+                if (PropagationState.ANCESTOR.equals(propState)) {
+                    incorrectPropagation = true;
                 }
-            } catch (IllegalArgumentException e) {
+                break;
+            case NOT_EXPRESSED:
+                //no propagation from parents allowed for absent calls,
+                //no propagation only from descendant allowed
+                if (PropagationState.DESCENDANT.equals(propState) ||
+                        PropagationState.ANCESTOR.equals(propState)) {
+                    incorrectPropagation = true;
+                }
+                break;
+            default:
+                throw log.throwing(new IllegalStateException("CallType not supported: "
+                        + this));
+            }
+
+            if (incorrectPropagation) {
                 //log in TRACE level, since this method can simply be used to check validity
                 //of a propagation state
                 throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
-                        + "is incorrect for the CallType " + this + ": " + propState));
+                        + "is incorrect for the ExpressionSummary " + this + ": " + propState));
             }
             log.traceExit();
         }
@@ -126,7 +136,7 @@ public interface SummaryCallType extends CallType {
         }
     }
     /**
-     * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.Call.DiffExpressionCall 
+     * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.call.Call.DiffExpressionCall 
      * DiffExpressionCall}s. They represent an overall summary of the {@link CallType.DiffExpression 
      * DiffExpression} calls from individual data types, associated to a same {@code DiffExpressionCall}.
      * <ul>
@@ -163,7 +173,7 @@ public interface SummaryCallType extends CallType {
      * @author Frederic Bastian
      * @version Bgee 14 Mar. 2017
      * @see CallType.DiffExpression 
-     * @see org.bgee.model.expressiondata.Call.DiffExpressionCall DiffExpressionCall
+     * @see org.bgee.model.expressiondata.call.Call.DiffExpressionCall DiffExpressionCall
      * @since Bgee 13 Sept. 2015
      */
     public static enum DiffExpressionSummary implements SummaryCallType, BgeeEnumField {
@@ -173,7 +183,7 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
-            log.entry(propState);
+            log.traceEntry("{}", propState);
             //no propagation allowed for any diff. expression call type
             if (!PropagationState.SELF.equals(propState)) {
                 throw log.throwing(new IllegalArgumentException("The following propagation "

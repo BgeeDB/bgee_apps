@@ -13,7 +13,7 @@ import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 
 /**
  * The DAO interface for DownloadFile objects.
@@ -42,17 +42,8 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
         ID, NAME, DESCRIPTION, PATH, FILE_SIZE, CATEGORY, SPECIES_DATA_GROUP_ID, CONDITION_PARAMETERS
     }
 
-    /**
-     * Get all download files.
-     * <p>
-     * The download files are retrieved and returned as a {@code DownloadFileTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results
-     * are retrieved.
-     *
-     * @return  A {@code DownloadFileTOResultSet} containing all download files from data source.
-     * @throws DAOException If an error occurred when accessing the data source. 
-     */
-    public DownloadFileTOResultSet getAllDownloadFiles() throws DAOException;
+    public DownloadFileTOResultSet getDownloadFiles(Collection<DownloadFileTO.CategoryEnum> categories)
+            throws DAOException;
 
     /**
      * Insert the provided download files into the Bgee database, represented as
@@ -115,7 +106,9 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
             AFFY_ANNOT("affy_annot"),
             AFFY_DATA("affy_data"),
             RNASEQ_ANNOT("rnaseq_annot"),
-            RNASEQ_DATA("rnaseq_data");
+            RNASEQ_DATA("rnaseq_data"),
+            FULL_LENGTH_ANNOT("full_length_annot"),
+            FULL_LENGTH_DATA("full_length_data");
 
             /**
              * Constructor
@@ -142,7 +135,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
              * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
              */
             public static CategoryEnum convertToCategoryEnum(String stringRepresentation){
-                log.entry(stringRepresentation);
+                log.traceEntry("{}", stringRepresentation);
                 return log.traceExit(EntityTO.convert(CategoryEnum.class, stringRepresentation));
             }
 

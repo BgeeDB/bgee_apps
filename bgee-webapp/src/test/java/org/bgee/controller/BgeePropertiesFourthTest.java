@@ -34,6 +34,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.WARNING_MESSAGE_KEY);
         System.clearProperty(BgeeProperties.ARCHIVE_KEY);
         System.clearProperty(BgeeProperties.BGEE_CURRENT_URL_KEY);
+        System.clearProperty(BgeeProperties.FRONTEND_URL_KEY);
+        System.clearProperty(BgeeProperties.STABLE_FRONTEND_URL_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
         System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);  
@@ -71,6 +73,10 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
                 BgeeProperties.ARCHIVE_DEFAULT, bgeeProp.isArchive());
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.BGEE_CURRENT_URL_DEFAULT, bgeeProp.getBgeeCurrentUrl());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.FRONTEND_URL_DEFAULT, bgeeProp.getFrontendUrl());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.STABLE_FRONTEND_URL_DEFAULT, bgeeProp.getStableFrontendUrl());
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.BGEE_ROOT_DIRECTORY_DEFAULT, bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved", BgeeProperties.URL_MAX_LENGTH_DEFAULT, 

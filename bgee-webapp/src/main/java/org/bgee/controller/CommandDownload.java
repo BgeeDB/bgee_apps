@@ -26,7 +26,8 @@ import org.bgee.view.ViewFactory;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Mar. 2017
+ * @author  Frederic Bastian
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13
  */
 public class CommandDownload extends CommandParent {
@@ -64,43 +65,25 @@ public class CommandDownload extends CommandParent {
                    this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOWLOAD_CALL_FILES))) {
 
-            List<SpeciesDataGroup> groups = getAllSpeciesDataGroup();
-            Map<Integer, Set<String>> speciesIdsToTerms = getSpeciesRelatedTerms(groups);
             if (this.requestParameters.getAction().equals(
                     RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES)) {
+                List<SpeciesDataGroup> groups =
+                        serviceFactory.getSpeciesDataGroupService().loadSpeciesDataGroup(false, true);
+                Map<Integer, Set<String>> speciesIdsToTerms = getSpeciesRelatedTerms(groups);
                 display.displayProcessedExpressionValuesDownloadPage(groups, speciesIdsToTerms);
             } else {
+                List<SpeciesDataGroup> groups =
+                        serviceFactory.getSpeciesDataGroupService().loadSpeciesDataGroup(true, false);
+                Map<Integer, Set<String>> speciesIdsToTerms = getSpeciesRelatedTerms(groups);
                 display.displayGeneExpressionCallDownloadPage(groups, speciesIdsToTerms);
             }
-        } else if (this.requestParameters.getAction() != null && 
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_DOWNLOAD_DUMPS)) {
-            display.displayDumpsPage();
-        }
-        else {
+        } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 
                 " parameter value."));
         }
         
         log.traceExit();
-    }
-
-    /**
-     * Gets the {@code SpeciesDataGroup} list that is used to generate the download file views.
-     * @return A {@List} of {@code SpeciesDataGroup} to be displayed in the view.
-     * @throws IllegalStateException    If the {@code SpeciesDataGroupService} obtained 
-     *                                  from the {@code ServiceFactory} did not allow 
-     *                                  to obtain any {@code SpeciesDataGroup}.
-     */
-    private List<SpeciesDataGroup> getAllSpeciesDataGroup() throws IllegalStateException {
-        log.traceEntry();
-        List<SpeciesDataGroup> groups = 
-                serviceFactory.getSpeciesDataGroupService().loadAllSpeciesDataGroup();
-        if (groups.isEmpty()) {
-            throw log.throwing(new IllegalStateException("A SpeciesDataGroupService did not allow "
-                    + "to obtain any SpeciesDataGroup."));
-        }
-        return log.traceExit(groups);
     }
     
     /**
@@ -114,7 +97,7 @@ public class CommandDownload extends CommandParent {
      *                  related terms.
      */
     private Map<Integer, Set<String>> getSpeciesRelatedTerms(Collection<SpeciesDataGroup> groups) {
-        log.entry(groups);
+        log.traceEntry("{}", groups);
 
         //first, associate species IDs to their corresponding name variations and to their ID itself.
         Map<Integer, Set<String>> speciesToNames = groups.stream()

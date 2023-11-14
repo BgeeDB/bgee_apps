@@ -125,8 +125,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @see #loadGeneIdsFromDb()
      */
     //FIXME: maybe we need two maps here: one Map<Gene, Integer> to associate Gene to its bgeeGeneId,
-    //and one map Map<String, Set<Gene>> to associate an Ensembl ID to its relates genes
-    private Map<String, Set<Integer>> ensemblIdToBgeeIdInBgee;
+    //and one map Map<String, Set<Gene>> to associate an ID to its relates genes
+    private Map<String, Set<Integer>> idToBgeeIdInBgee;
 
     /**
      * A {@code Set} of {@code String}s containing taxon IDs of the Bgee database. See 
@@ -182,7 +182,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         this.hierarchicalNodeTOs = new HashSet<HierarchicalNodeTO>();
         this.hierarchicalNodeToGeneTOs = new HashSet<HierarchicalNodeToGeneTO>();
         this.geneTOs = new HashSet<GeneTO>();
-        this.ensemblIdToBgeeIdInBgee = new HashMap<String, Set<Integer>>();
+        this.idToBgeeIdInBgee = new HashMap<String, Set<Integer>>();
         this.taxonIdsInBgee = new HashSet<Integer>();
         this.speciesIdsInBgee = new HashSet<Integer>();
         this.speciesPrefixes = new HashMap<Integer, Set<Integer>>();
@@ -392,20 +392,20 @@ public class ParseOrthoXML extends MySQLDAOUser {
         //dao.setAttributes(GeneDAO.Attribute.ID);
         try (GeneTOResultSet rsGenes = dao.getAllGenes()) {
             while (rsGenes.next()) {
-            	//if some bgee genes have same ensembl gene ID
-            	if(this.ensemblIdToBgeeIdInBgee.containsKey(rsGenes.getTO().getGeneId())){
+            	//if some bgee genes have same gene ID
+            	if(this.idToBgeeIdInBgee.containsKey(rsGenes.getTO().getGeneId())){
             		log.info("Two bgeeGeneIds have the same ID :{}",rsGenes.getTO().getGeneId());
-            		this.ensemblIdToBgeeIdInBgee.get(rsGenes.getTO().getGeneId()).add(rsGenes.getTO().getId());
+            		this.idToBgeeIdInBgee.get(rsGenes.getTO().getGeneId()).add(rsGenes.getTO().getId());
             	}else{
             	//can't use Collection.singleton because we potentially have to add other bgeeGeneIds
 	            	Set<Integer> geneIds = new HashSet<>();
 	            	geneIds.add(rsGenes.getTO().getId());
-	                this.ensemblIdToBgeeIdInBgee.put(rsGenes.getTO().getGeneId(), geneIds);
+	                this.idToBgeeIdInBgee.put(rsGenes.getTO().getGeneId(), geneIds);
             	}
             }
         }
         if (log.isInfoEnabled()) {
-            log.info("Done retrieving gene IDs, {} genes found", this.ensemblIdToBgeeIdInBgee.values().stream().mapToInt(Set::size).sum()); // or (l -> l.size())
+            log.info("Done retrieving gene IDs, {} genes found", this.idToBgeeIdInBgee.values().stream().mapToInt(Set::size).sum()); // or (l -> l.size())
         }
 
         log.traceExit();
@@ -590,8 +590,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 boolean isInBgee = false ;
                 for (String omaGeneId : retrieveSplittedGeneIdentifier(groupGene)) {
                     log.debug("Examining OMA geneId {}", omaGeneId);
-                    if(ensemblIdToBgeeIdInBgee.containsKey(omaGeneId)){
-	                    for (Integer bgeeGeneId : ensemblIdToBgeeIdInBgee.get(omaGeneId)){
+                    if(idToBgeeIdInBgee.containsKey(omaGeneId)){
+	                    for (Integer bgeeGeneId : idToBgeeIdInBgee.get(omaGeneId)){
 	                    	if (this.addGeneTO(new GeneTO(bgeeGeneId,omaGeneId, null, null, null, null, 
 	                                this.omaNodeId,null, null),
 	                                omaXrefId)) {
@@ -697,8 +697,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
             	boolean isInBgee = false ;
             	for (String omaGeneId : retrieveSplittedGeneIdentifier(gene)) {
             		log.debug("Examining OMA geneId {}", omaGeneId);
-            		if(ensemblIdToBgeeIdInBgee.containsKey(omaGeneId)){
-            			for(Integer bgeeGeneId : ensemblIdToBgeeIdInBgee.get(omaGeneId)){
+            		if(idToBgeeIdInBgee.containsKey(omaGeneId)){
+            			for(Integer bgeeGeneId : idToBgeeIdInBgee.get(omaGeneId)){
             				if(bgeeGeneId != null){
             					this.hierarchicalNodeToGeneTOs.add(new HierarchicalNodeToGeneTO(
 	            				OmaNodeId, bgeeGeneId, 
@@ -736,7 +736,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
     private boolean addGeneTO(GeneTO geneTO, String omaXrefId) {
         log.entry(geneTO, omaXrefId);
         
-        if (!this.ensemblIdToBgeeIdInBgee.containsKey(geneTO.getGeneId())) {
+        if (!this.idToBgeeIdInBgee.containsKey(geneTO.getGeneId())) {
             log.debug("Gene discarded because not in Bgee: {}", geneTO.getGeneId());
             return log.traceExit(false);
         }

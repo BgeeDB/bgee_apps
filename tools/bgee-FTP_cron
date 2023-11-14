@@ -11,7 +11,7 @@ use Mail::Send;
 my $user_email = 'bgee_team@unil.ch'; # Comma-separated if several ones
 my $log        = '/tmp/bgee-ftp_failure';
 
-if ( system("wget -S -O /dev/null 'ftp://ftp.bgee.org' 2> $log")!=0 ){
+if ( system("wget -S -O /dev/null 'https://www.bgee.org/ftp/' 2> $log")!=0 ){
     my $host = $ENV{'HOSTNAME'} || `hostname`; chomp $host;
     my $msg = new Mail::Send Subject=>"[BGEE-FTP: service failure] from $host", To=>"$user_email";
     $msg->add('From', 'Bgee@sib.swiss');

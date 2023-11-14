@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,23 +65,23 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         // Test recovery of one attribute without filter on species IDs
         dao.setAttributes(Arrays.asList(AnatEntityDAO.Attribute.ID));
         expectedAnatEntities = Arrays.asList(
-                new AnatEntityTO("Anat_id1", null, null, null, null, null),
-                new AnatEntityTO("Anat_id10", null, null, null, null, null),
-                new AnatEntityTO("Anat_id11", null, null, null, null, null),
-                new AnatEntityTO("Anat_id12", null, null, null, null, null),
-                new AnatEntityTO("Anat_id13", null, null, null, null, null),
-                new AnatEntityTO("Anat_id14", null, null, null, null, null),
-                new AnatEntityTO("Anat_id2", null, null, null, null, null),
-                new AnatEntityTO("Anat_id3", null, null, null, null, null),
-                new AnatEntityTO("Anat_id4", null, null, null, null, null),
-                new AnatEntityTO("Anat_id5", null, null, null, null, null),
-                new AnatEntityTO("Anat_id6", null, null, null, null, null),
-                new AnatEntityTO("Anat_id7", null, null, null, null, null),
-                new AnatEntityTO("Anat_id8", null, null, null, null, null),
-                new AnatEntityTO("Anat_id9", null, null, null, null, null),
-                new AnatEntityTO("UBERON:0001687", null, null, null, null, null),
-                new AnatEntityTO("UBERON:0001853", null, null, null, null, null),
-                new AnatEntityTO("UBERON:0011606", null, null, null, null, null));
+                new AnatEntityTO("Anat_id1", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id10", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id11", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id12", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id13", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id14", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id2", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id3", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id4", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id5", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id6", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id7", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id8", null, null, null, null, null, null),
+                new AnatEntityTO("Anat_id9", null, null, null, null, null, null),
+                new AnatEntityTO("UBERON:0001687", null, null, null, null, null, null),
+                new AnatEntityTO("UBERON:0001853", null, null, null, null, null, null),
+                new AnatEntityTO("UBERON:0011606", null, null, null, null, null, null));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntitiesBySpeciesIds(null).getAllTOs(), expectedAnatEntities));
@@ -132,7 +133,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 AnatEntityDAO.Attribute.START_STAGE_ID, AnatEntityDAO.Attribute.END_STAGE_ID));
         Set<String> anatEntitiesIds = this.getAnatEntityFilterForDataTest();
         expectedAnatEntities = Arrays.asList(
-                new AnatEntityTO(null, null, null, "Stage_id1", "Stage_id2", null));
+                new AnatEntityTO(null, null, null, "Stage_id1", "Stage_id2", null, null));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntitiesByIds(anatEntitiesIds).getAllTOs(), expectedAnatEntities));
@@ -233,39 +234,39 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
     private List<AnatEntityTO> getAllAnatEntityTOs() {
         return Arrays.asList(
                 new AnatEntityTO("Anat_id1", "anatStruct",
-                        "anatStruct desc", "Stage_id1", "Stage_id2", true), 
+                        "anatStruct desc", "Stage_id1", "Stage_id2", true, false), 
                 new AnatEntityTO("Anat_id10", "hindbrain",
-                        "hindbrain desc", "Stage_id8", "Stage_id17", true), 
+                        "hindbrain desc", "Stage_id8", "Stage_id17", true, false), 
                 new AnatEntityTO("Anat_id11", "cerebellum",
-                        "cerebellum desc", "Stage_id9", "Stage_id13", false), 
+                        "cerebellum desc", "Stage_id9", "Stage_id13", false, false), 
                 new AnatEntityTO("Anat_id12", "anat12",
-                        "unused anatE 12", "Stage_id1", "Stage_id13", false), 
+                        "unused anatE 12", "Stage_id1", "Stage_id13", false, false), 
                 new AnatEntityTO("Anat_id13", "anat13",
-                        "unused anatE 13", "Stage_id9", "Stage_id10", true), 
+                        "unused anatE 13", "Stage_id9", "Stage_id10", true, false), 
                 new AnatEntityTO("Anat_id14", "anat14",
-                        "anatE 14", "Stage_id6", "Stage_id13", true), 
+                        "anatE 14", "Stage_id6", "Stage_id13", true, false), 
                 new AnatEntityTO("Anat_id2", "organ",
-                        "organ desc", "Stage_id10", "Stage_id18", false), 
+                        "organ desc", "Stage_id10", "Stage_id18", false, false), 
                 new AnatEntityTO("Anat_id3", "heart",
-                        "heart desc", "Stage_id16", "Stage_id18", false), 
+                        "heart desc", "Stage_id16", "Stage_id18", false, false), 
                 new AnatEntityTO("Anat_id4", "gill",
-                        "gill desc", "Stage_id12", "Stage_id18", false), 
+                        "gill desc", "Stage_id12", "Stage_id18", false, false), 
                 new AnatEntityTO("Anat_id5", "brain",
-                        "brain desc", "Stage_id11", "Stage_id17", false), 
+                        "brain desc", "Stage_id11", "Stage_id17", false, false), 
                 new AnatEntityTO("Anat_id6", "embryoStruct",
-                        "embryoStruct desc", "Stage_id2", "Stage_id5", false), 
+                        "embryoStruct desc", "Stage_id2", "Stage_id5", false, false), 
                 new AnatEntityTO("Anat_id7", "ectoderm",
-                        "ectoderm desc", "Stage_id6", "Stage_id13", false), 
+                        "ectoderm desc", "Stage_id6", "Stage_id13", false, false), 
                 new AnatEntityTO("Anat_id8", "neuralTube",
-                        "neuralTube desc", "Stage_id8", "Stage_id17", false), 
+                        "neuralTube desc", "Stage_id8", "Stage_id17", false, false), 
                 new AnatEntityTO("Anat_id9", "forebrain",
-                        "forebrain desc", "Stage_id8", "Stage_id17", false),
+                        "forebrain desc", "Stage_id8", "Stage_id17", false, false),
                 new AnatEntityTO("UBERON:0001687", "stapes bone",
-                        "stapes bone description", "Stage_id1", "Stage_id2", false),
+                        "stapes bone description", "Stage_id1", "Stage_id2", false, false),
                 new AnatEntityTO("UBERON:0001853", "utricle of membranous labyrinth",
-                        "utricle of membranous labyrinth description", "Stage_id1", "Stage_id2", false),
+                        "utricle of membranous labyrinth description", "Stage_id1", "Stage_id2", false, false),
                 new AnatEntityTO("UBERON:0011606", "hyomandibular bone",
-                        "hyomandibular bone description", "Stage_id1", "Stage_id2", false));
+                        "hyomandibular bone description", "Stage_id1", "Stage_id2", false, false));
     }
     
     /**
@@ -275,15 +276,15 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
      */
     private List<AnatEntityTO> getAnatEntityTOsFilterdBySpeciesIds() {
         return Arrays.asList(
-                new AnatEntityTO("Anat_id1", null, null, "Stage_id1", "Stage_id2", true),
-                new AnatEntityTO("Anat_id11", null, null, "Stage_id9", "Stage_id13", false),
-                new AnatEntityTO("Anat_id13", null, null, "Stage_id9", "Stage_id10", true),
-                new AnatEntityTO("Anat_id14", null, null, "Stage_id6", "Stage_id13", true),
-                new AnatEntityTO("Anat_id2", null, null, "Stage_id10", "Stage_id18", false),
-                new AnatEntityTO("Anat_id6", null, null, "Stage_id2", "Stage_id5", false),
-                new AnatEntityTO("Anat_id8", null, null, "Stage_id8", "Stage_id17", false),
-                new AnatEntityTO("UBERON:0001853", null, null, "Stage_id1", "Stage_id2", false),
-                new AnatEntityTO("UBERON:0011606", null, null, "Stage_id1", "Stage_id2", false));
+                new AnatEntityTO("Anat_id1", null, null, "Stage_id1", "Stage_id2", true, false),
+                new AnatEntityTO("Anat_id11", null, null, "Stage_id9", "Stage_id13", false, false),
+                new AnatEntityTO("Anat_id13", null, null, "Stage_id9", "Stage_id10", true, false),
+                new AnatEntityTO("Anat_id14", null, null, "Stage_id6", "Stage_id13", true, false),
+                new AnatEntityTO("Anat_id2", null, null, "Stage_id10", "Stage_id18", false, false),
+                new AnatEntityTO("Anat_id6", null, null, "Stage_id2", "Stage_id5", false, false),
+                new AnatEntityTO("Anat_id8", null, null, "Stage_id8", "Stage_id17", false, false),
+                new AnatEntityTO("UBERON:0001853", null, null, "Stage_id1", "Stage_id2", false, false),
+                new AnatEntityTO("UBERON:0011606", null, null, "Stage_id1", "Stage_id2", false, false));
     }
 
     /**
@@ -293,8 +294,8 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
      */
     private List<AnatEntityTO> getAnatEntityTOsFilterdByIds() {
         return Arrays.asList(
-                new AnatEntityTO("Anat_id1", null, null, "Stage_id1", "Stage_id2", true), 
-                new AnatEntityTO("UBERON:0001687", null, null, "Stage_id1", "Stage_id2", false));
+                new AnatEntityTO("Anat_id1", null, null, "Stage_id1", "Stage_id2", true, false), 
+                new AnatEntityTO("UBERON:0001687", null, null, "Stage_id1", "Stage_id2", false, false));
     }
 
     /**
@@ -351,12 +352,12 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         // Test recovery of all attributes without filter on species IDs
         List<AnatEntityTO> expectedAnatEntities = Arrays.asList(
                 new AnatEntityTO("Anat_id10", "hindbrain", "hindbrain desc", 
-                        "Stage_id8", "Stage_id17", true),
+                        "Stage_id8", "Stage_id17", true, false),
                 new AnatEntityTO("Anat_id13", "anat13", "unused anatE 13", 
-                        "Stage_id9", "Stage_id10", true));
+                        "Stage_id9", "Stage_id10", true, false));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getNonInformativeAnatEntitiesBySpeciesIds(null).getAllTOs(),
+                        dao.getNonInformativeAnatEntitiesBySpeciesIds(null, null).getAllTOs(),
                         expectedAnatEntities));
 
         // Test recovery of all attributes with filter on species IDs
@@ -364,21 +365,22 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         speciesIds.addAll(Arrays.asList(11, 44));
         expectedAnatEntities = Arrays.asList(
                 new AnatEntityTO("Anat_id13", "anat13", "unused anatE 13", 
-                        "Stage_id9", "Stage_id10", true));
+                        "Stage_id9", "Stage_id10", true, false));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds).getAllTOs(),
+                        dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds, null).getAllTOs(),
                         expectedAnatEntities));
         
         // Test recovery of anatomical entity names with filter on species IDs
-        dao.setAttributes(AnatEntityDAO.Attribute.NAME);
         speciesIds.clear();
         speciesIds.addAll(Arrays.asList(31));
         expectedAnatEntities = Arrays.asList(
-                new AnatEntityTO(null, "hindbrain", null, null, null, null), 
-                new AnatEntityTO(null, "anat13", null, null, null, null));
+                new AnatEntityTO(null, "hindbrain", null, null, null, null, null), 
+                new AnatEntityTO(null, "anat13", null, null, null, null, null));
         List<AnatEntityTO> retrievedAnatEntities = 
-                dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds).getAllTOs();
+                dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds,
+                        EnumSet.of(AnatEntityDAO.Attribute.NAME))
+                .getAllTOs();
         assertTrue("AnatEntityTOs incorrectly retrieved, expected: " + expectedAnatEntities + 
                 ", but was: " + retrievedAnatEntities,
                 TOComparator.areTOCollectionsEqual(retrievedAnatEntities, expectedAnatEntities));
@@ -394,9 +396,9 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         
         //create a Collection of AnatEntityTO to be inserted
         Collection<AnatEntityTO> anatEntityTOs = Arrays.asList(
-                new AnatEntityTO("Anat_id10","hindbrain","hindbrain desc","Stage_id8","Stage_id17", true),
-                new AnatEntityTO("Anat_id5","brain","brain desc","Stage_id11","Stage_id17", false),
-                new AnatEntityTO("Anat_id1","anatStruct",null,"Stage_id1","Stage_id2", false));
+                new AnatEntityTO("Anat_id10","hindbrain","hindbrain desc","Stage_id8","Stage_id17", true, false),
+                new AnatEntityTO("Anat_id5","brain","brain desc","Stage_id11","Stage_id17", false, false),
+                new AnatEntityTO("Anat_id1","anatStruct",null,"Stage_id1","Stage_id2", false, false));
 
         try {
             MySQLAnatEntityDAO dao = new MySQLAnatEntityDAO(this.getMySQLDAOManager());

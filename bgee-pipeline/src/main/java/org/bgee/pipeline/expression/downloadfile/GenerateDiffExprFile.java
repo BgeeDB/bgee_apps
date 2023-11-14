@@ -16,11 +16,11 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.BgeeDBUtils;
@@ -688,24 +688,24 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 // TODO: when relaxed in situ will be in the database, uncomment commented lines
                 switch (header[i]) {
                 
-                case AFFYMETRIX_DATA_COLUMN_NAME:
-                case RNASEQ_DATA_COLUMN_NAME:
-                    processors[i] = new IsElementOf(data);
-                    break;
-                case AFFYMETRIX_QUAL_COLUMN_NAME:
-                case RNASEQ_QUAL_COLUMN_NAME:
-                    processors[i] = new IsElementOf(specificTypeQualities);
-                    break;
-                case AFFYMETRIX_P_VALUE_COLUMN_NAME:
-                case RNASEQ_P_VALUE_COLUMN_NAME:
-                    processors[i] = new DMinMax(0, 1);
-                    break;
-                case AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME:
-                case AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
-                case RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME:
-                case RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
-                    processors[i] = new LMinMax(0, Long.MAX_VALUE);
-                    break;
+//                case AFFYMETRIX_DATA_COLUMN_NAME:
+//                case RNASEQ_DATA_COLUMN_NAME:
+//                    processors[i] = new IsElementOf(data);
+//                    break;
+//                case AFFYMETRIX_QUAL_COLUMN_NAME:
+//                case RNASEQ_QUAL_COLUMN_NAME:
+//                    processors[i] = new IsElementOf(specificTypeQualities);
+//                    break;
+//                case AFFYMETRIX_P_VALUE_COLUMN_NAME:
+//                case RNASEQ_P_VALUE_COLUMN_NAME:
+//                    processors[i] = new DMinMax(0, 1);
+//                    break;
+//                case AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME:
+//                case AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+//                case RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME:
+//                case RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+//                    processors[i] = new LMinMax(0, Long.MAX_VALUE);
+//                    break;
                 }
             }
 
@@ -776,28 +776,28 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         boolean[] quoteMode = new boolean[headers.length];
         for (int i = 0; i < headers.length; i++) {
             switch (headers[i]) {
-                case GENE_ID_COLUMN_NAME:
-                case ANAT_ENTITY_ID_COLUMN_NAME:
-                case STAGE_ID_COLUMN_NAME:
-                case DIFFEXPRESSION_COLUMN_NAME:
-                case QUALITY_COLUMN_NAME:
-                case AFFYMETRIX_DATA_COLUMN_NAME:
-                case AFFYMETRIX_QUAL_COLUMN_NAME:
-                case AFFYMETRIX_P_VALUE_COLUMN_NAME:
-                case AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME:
-                case AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
-                case RNASEQ_DATA_COLUMN_NAME:
-                case RNASEQ_QUAL_COLUMN_NAME:
-                case RNASEQ_P_VALUE_COLUMN_NAME:
-                case RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME:
-                case RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
-                    quoteMode[i] = false; 
-                    break;
-                case GENE_NAME_COLUMN_NAME:
-                case ANAT_ENTITY_NAME_COLUMN_NAME:
-                case STAGE_NAME_COLUMN_NAME:
-                    quoteMode[i] = true; 
-                    break;
+//                case GENE_ID_COLUMN_NAME:
+//                case ANAT_ENTITY_ID_COLUMN_NAME:
+//                case STAGE_ID_COLUMN_NAME:
+//                case DIFFEXPRESSION_COLUMN_NAME:
+//                case QUALITY_COLUMN_NAME:
+//                case AFFYMETRIX_DATA_COLUMN_NAME:
+//                case AFFYMETRIX_QUAL_COLUMN_NAME:
+//                case AFFYMETRIX_P_VALUE_COLUMN_NAME:
+//                case AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME:
+//                case AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+//                case RNASEQ_DATA_COLUMN_NAME:
+//                case RNASEQ_QUAL_COLUMN_NAME:
+//                case RNASEQ_P_VALUE_COLUMN_NAME:
+//                case RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME:
+//                case RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+//                    quoteMode[i] = false; 
+//                    break;
+//                case GENE_NAME_COLUMN_NAME:
+//                case ANAT_ENTITY_NAME_COLUMN_NAME:
+//                case STAGE_NAME_COLUMN_NAME:
+//                    quoteMode[i] = true; 
+//                    break;
                 default:
                     throw log.throwing(new IllegalArgumentException(
                             "Unrecognized header: " + headers[i] + " for diff. expression file."));

@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
@@ -64,7 +64,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *              in a MySQL enum field. 
      */
     protected static int convertDataStateToInt(DataState state) {
-        log.entry(state);
+        log.traceEntry("{}", state);
         switch(state) {
         case NODATA: 
             return log.traceExit(1);
@@ -113,7 +113,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     @Override
     @Deprecated
     public void setAttributes(Collection<T> attributes) {
-        log.entry(attributes);
+        log.traceEntry("{}", attributes);
         this.clearAttributes();
         if (attributes != null) {
             this.attributes.addAll(attributes);
@@ -131,7 +131,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     @Override
     @Deprecated
     public final void setAttributes(T... attributes) {
-        log.entry((Object[]) attributes);
+        log.traceEntry("{}", (Object[]) attributes);
         Set<T> newAttributes = new HashSet<T>();
         for (int i = 0; i < attributes.length; i++) {
             newAttributes.add(attributes[i]);
@@ -189,7 +189,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      */
     protected T getAttributeFromColName(String colName, Map<String, T> colNamesToAttributes) 
             throws UnrecognizedColumnException {
-        log.entry(colName, colNamesToAttributes);
+        log.traceEntry("{}, {}", colName, colNamesToAttributes);
         T attribute = colNamesToAttributes.get(colName);
         if (attribute == null) {
             throw log.throwing(new UnrecognizedColumnException(colName));
@@ -226,7 +226,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     protected static <T extends Enum<T> & DAO.Attribute> String getSelectExprFromAttribute(
             T attr, Map<String, T> selectExprsToAttributes) 
             throws IllegalArgumentException {
-        log.entry(attr, selectExprsToAttributes);
+        log.traceEntry("{}, {}", attr, selectExprsToAttributes);
         
         String selectExpr = selectExprsToAttributes.entrySet().stream()
                 .filter(e -> e.getValue().equals(attr)).map(e -> e.getKey()).findFirst().orElse(null);
@@ -261,7 +261,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      */
     protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 
             boolean distinct) throws IllegalArgumentException {
-        log.entry(tableName, selectExprsToAttributes, distinct);
+        log.traceEntry("{}, {}, {}", tableName, selectExprsToAttributes, distinct);
         return log.traceExit(generateSelectClause(tableName, selectExprsToAttributes, distinct, 
                 this.getAttributes()));
     }
@@ -280,6 +280,9 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  {@link #getAttributeFromColName(String, Map)}.
      * @param distinct                  A {@code boolean} defining whether the DISTINCT keyword 
      *                                  is needed in the SELECT clause.
+     * @param attributes                A {@code Collection} of {@code T.Attribute}s
+     *                                  defining the attributes to populate in the returned
+     *                                  SELECT clause.
      * @return                          A {@code String} that is the generated SELECT clause.
      * @throws IllegalArgumentException If {@code selectExprsToAttributes} is missing a key corresponding 
      *                                  to an {@code Attribute} provided, 
@@ -288,20 +291,53 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      */
     protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 
             boolean distinct, Set<T> attributes) throws IllegalArgumentException {
-        log.entry(tableName, selectExprsToAttributes, distinct, attributes);
-        
+        log.traceEntry("{}, {}, {}, {}", tableName, selectExprsToAttributes, distinct, attributes);
+        return log.traceExit(generateSelectClause(tableName, selectExprsToAttributes, distinct,
+                false, attributes));
+    }
+    /**
+     * Helper method to generate the SELECT clause of a query, from the {@code Attribute}s provided,
+     * using the method {@link #getSelectExprFromAttribute(Enum, Map)}. This method helps only 
+     * in simple cases, more complex statements should be hand-written (for instance, when {@code Attribute}s 
+     * correspond to columns in different tables, or to a sub-query). 
+     * 
+     * @param tableName                 A {@code String} that is the name of the table 
+     *                                  to retrieve data from, or its alias defined in the query.
+     * @param selectExprsToAttributes   A {@code Map} where keys are {@code String}s corresponding to 
+     *                                  'select_expr's, associated to their corresponding 
+     *                                  {@code Attribute} as values. This {@code Map} does not have  
+     *                                  {@code Attribute}s as keys for coherence with the method 
+     *                                  {@link #getAttributeFromColName(String, Map)}.
+     * @param distinct                  A {@code boolean} defining whether the DISTINCT keyword 
+     *                                  is needed in the SELECT clause.
+     * @param straightJoin              A {@code boolean} defining whether the STRAIGHT_JOIN keyword 
+     *                                  is needed in the SELECT clause.
+     * @param attributes                A {@code Collection} of {@code T.Attribute}s
+     *                                  defining the attributes to populate in the returned
+     *                                  SELECT clause.
+     * @return                          A {@code String} that is the generated SELECT clause.
+     * @throws IllegalArgumentException If {@code selectExprsToAttributes} is missing a key corresponding 
+     *                                  to an {@code Attribute} provided, 
+     *                                  or if several 'select_expr's are mapped to a same {@code Attribute}.
+     * @see #getSelectExprFromAttribute(Enum, Map)
+     */
+    protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 
+            boolean distinct, boolean straightJoin, Set<T> attributes) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}, {}", tableName, selectExprsToAttributes, distinct, straightJoin,
+                attributes);
         StringBuilder sb = new StringBuilder("SELECT ");
         if (distinct) {
             sb.append("DISTINCT ");
+        }
+        if (straightJoin) {
+            sb.append("STRAIGHT_JOIN ");
         }
         //any attribute requested
         if (attributes == null || attributes.isEmpty() || 
                 //if all attributes were requested
                 attributes.containsAll(Arrays.asList(
                         attributes.iterator().next().getClass().getEnumConstants()))) {
-            
             sb.append(tableName).append(".* ");
-            
         } else {
             //sort the Attributes to improve chances of cache hit
             List<T> sortedAttributes = new ArrayList<T>(attributes);
@@ -320,7 +356,6 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
 
         return log.traceExit(sb.toString());
     }
-    
     /**
      * Generate a select statement using the table name in the {@code FROM} clause. 
      * This method is similar to {@link #generateSelectClause(String, Map, boolean)}, 
@@ -334,7 +369,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      */
     protected  String generateSelectAllStatement(String tableName,
                                                  Map<String, T> columnToAttributesMap, boolean distinct) {
-        log.entry(tableName, columnToAttributesMap, distinct);
+        log.traceEntry("{}, {}, {}", tableName, columnToAttributesMap, distinct);
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause(tableName, columnToAttributesMap, distinct));
         sb.append(" FROM " + tableName);
@@ -354,7 +389,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * @return              A {@code String} that is the SQL EXISTS clause.
      */
     protected static String getAllSpeciesExistsClause(String existsPart, int speciesCount) {
-        log.entry(existsPart, speciesCount);
+        log.traceEntry("{}, {}", existsPart, speciesCount);
         
         return log.traceExit("(EXISTS(" + existsPart + " IS NULL) OR (" 
                 + IntStream.range(0, speciesCount)

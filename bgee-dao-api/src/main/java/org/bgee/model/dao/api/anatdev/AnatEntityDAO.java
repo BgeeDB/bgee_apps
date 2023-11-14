@@ -28,6 +28,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * <li>{@code STARTSTAGEID}: corresponds to {@link AnatEntityTO#getStartStageId()}.
      * <li>{@code ENDSTAGEID}: corresponds to {@link AnatEntityTO#getEndStageId()}.
      * <li>{@code NONINFORMATIVE}: corresponds to {@link AnatEntityTO#isNonInformative()}.
+     * <li>{@code IS_CELL_TYPE}: corresponds to {@link AnatEntityTO#isCellType()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -36,7 +37,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID("id"), NAME("name"), DESCRIPTION("description"), 
         START_STAGE_ID("startStageId"), END_STAGE_ID("endStageId"), 
-        NON_INFORMATIVE("nonInformative");
+        NON_INFORMATIVE("nonInformative")/*, CELL_TYPE("cellType")*/;
 
         /**
          * A {@code String} that is the corresponding field name in {@code AnatEntityTO} class.
@@ -141,22 +142,27 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
                     throws DAOException;
 
     /**
-     * Retrieves non-informative anatomical entities without expression or no-expression call from 
-     * data source according to a {@code Set} of {@code String}s that are the IDs of species 
-     * allowing to filter the entities to use.
+     * Retrieves non-informative anatomical entities that are non-informative
+     * and not used in raw data annotations (expression data and similarity annotations).
      * <p>
-     * The non-informative anatomical entities are retrieved and returned as a 
-     * {@code AnatEntityTOResultSet}. It is the responsibility of the caller to close this 
-     * {@code DAOResultSet} once results are retrieved.
+     * The non-informative anatomical entities are retrieved and returned as
+     * a {@code AnatEntityTOResultSet}. It is the responsibility of the caller to close
+     * this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
-     *                      allowing to filter the non-informative anatomical entities to use
-     * @return              An {@code AnatEntityTOResultSet} containing non-informative 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species
+     *                      allowing to filter the non-informative anatomical entities to use.
+     *                      If {@code null} or empty, non-informative anatomical entities existing
+     *                      in any species are retrieved.
+     * @param attributes    A {@code Collection} of {@code AnatEntityDAO.Attribute}s
+     *                      defining the attributes to populate in the returned
+     *                      {@code AnatEntityTO}s. If {@code null} or empty,
+     *                      all attributes are populated.
+     * @return              An {@code AnatEntityTOResultSet} containing non-informative
      *                      anatomical entities from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) 
-            throws DAOException;
+    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds,
+            Collection<AnatEntityDAO.Attribute> attributes) throws DAOException;
     
     /**
      * Inserts the provided anatomical entities into the data source, 
@@ -215,6 +221,12 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
          * terms not directly useful for analysis"'.
          */
         private final Boolean nonInformative;
+        /**
+         * A {@code Boolean} defining whether this anatomical entity is a cell type, or not.
+         * It is a cell type if it has the term with ID ConditionDAO.CELL_TYPE_ROOT_ID
+         * as an ancestor by is_a or part_of relation.
+         */
+        private final Boolean cellType;
 
         /**
          * Constructor providing the ID, the name, the description, the start stage, and the end 
@@ -232,13 +244,16 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
          *                          anatomical entity.
          * @param nonInformative    A {@code Boolean} defining whether this anatomical entity is 
          *                          part of a non-informative subset in the used ontology.
+         * @param cellType          A {@code Boolean} defining whether this anatomical entity is
+         *                          a cell type.
          */
         public AnatEntityTO(String id, String name, String description, String startStageId,
-                String endStageId, Boolean nonInformative) {
+                String endStageId, Boolean nonInformative, Boolean cellType) {
             super(id, name, description);
             this.startStageId = startStageId;
             this.endStageId = endStageId;
             this.nonInformative = nonInformative;
+            this.cellType = cellType;
         }
 
         /**
@@ -264,12 +279,29 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
         public Boolean isNonInformative() {
             return this.nonInformative;
         }
+        /**
+         * @return  the {@code Boolean} defining whether this anatomical entity is
+         *          a cell type. It is a cell type if it has the term with ID
+         *          {@code ConditionDAO.CELL_TYPE_ROOT_ID} as an ancestor by
+         *          is_a or part_of relation.
+         */
+        public Boolean isCellType() {
+            return this.cellType;
+        }
 
         @Override
         public String toString() {
-            return " ID: " + this.getId() + " - Name: " + this.getName() +
-            " - Description: " + this.getDescription() + " - Start stage Id: " +  startStageId + 
-            " - End stage Id: " + endStageId + " - Non-informative: " + nonInformative;
+            StringBuilder builder = new StringBuilder();
+            builder.append("AnatEntityTO [")
+                   .append("getId()=").append(getId())
+                   .append(", getName()=").append(getName())
+                   .append(", getDescription()=").append(getDescription())
+                   .append(", startStageId=").append(startStageId)
+                   .append(", endStageId=").append(endStageId)
+                   .append(", nonInformative=").append(nonInformative)
+                   .append(", cellType=").append(cellType)
+                   .append("]");
+            return builder.toString();
         }
     }
 }

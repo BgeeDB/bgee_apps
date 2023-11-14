@@ -47,7 +47,7 @@ public class SourceService extends CommonService {
      * @return                  A {@code List} of {@code Source}s that are sources used in Bgee.
      */
     public List<Source> loadAllSources(boolean withSpeciesInfo) {
-        log.entry(withSpeciesInfo);
+        log.traceEntry("{}", withSpeciesInfo);
         List<Source> sources = getDaoManager().getSourceDAO().getAllDataSources(null).stream()
                 .map(SourceService::mapFromTO)
                 .collect(Collectors.toList());
@@ -65,7 +65,7 @@ public class SourceService extends CommonService {
      * @return              A {@code Map} storing the mappings from source IDs to {@code Source}s.
      */
     public Map<Integer, Source> loadSourcesByIds(Collection<Integer> sourceIds) {
-        log.entry(sourceIds);
+        log.traceEntry("{}", sourceIds);
         return log.traceExit(this.getDaoManager().getSourceDAO()
                 .getDataSourceByIds(sourceIds, null).stream()
                 .map(SourceService::mapFromTO)
@@ -81,7 +81,7 @@ public class SourceService extends CommonService {
      *                          to be displayed.
      */
     public List<Source> loadDisplayableSources(boolean withSpeciesInfo) {
-        log.entry(withSpeciesInfo);
+        log.traceEntry("{}", withSpeciesInfo);
         
         List<Source> sources = getDaoManager().getSourceDAO().getDisplayableDataSources(null).stream()
                 .map(SourceService::mapFromTO)
@@ -100,7 +100,7 @@ public class SourceService extends CommonService {
      * @return          A {@code List} of {@code Source}s that are sources used in Bgee to be displayed.
      */
     private List<Source> loadSpeciesInfo(List<Source> sources) {
-        log.entry(sources);
+        log.traceEntry("{}", sources);
         
         final List<SourceToSpeciesTO> sourceToSpeciesTOs = getDaoManager().getSourceToSpeciesDAO()
                 .getAllSourceToSpecies(null).stream()
@@ -140,7 +140,7 @@ public class SourceService extends CommonService {
      */
     private Map<Integer, Set<DataType>> getDataTypesBySpecies(
             final List<SourceToSpeciesTO> sourceToSpeciesTOs, Integer sourceId, InfoType infoType) {
-        log.entry(sourceToSpeciesTOs, sourceId, infoType);
+        log.traceEntry("{}, {}, {}", sourceToSpeciesTOs, sourceId, infoType);
         Map<Integer, Set<DataType>> map = sourceToSpeciesTOs.stream()
             .filter(to -> to.getDataSourceId().equals(sourceId))
             .filter(to -> to.getInfoType().equals(infoType))
@@ -161,7 +161,7 @@ public class SourceService extends CommonService {
      * @return          The mapped {@link Source}.
      */
     private static Source mapFromTO(SourceTO sourceTO) {
-        log.entry(sourceTO);
+        log.traceEntry("{}", sourceTO);
         if (sourceTO == null) {
             return log.traceExit((Source) null);
         }
@@ -174,7 +174,7 @@ public class SourceService extends CommonService {
     
     private static SourceCategory convertSourceCategoryTOToSourceCategory(SourceTO.SourceCategory cat) 
             throws IllegalStateException{
-        log.entry(cat);
+        log.traceEntry("{}", cat);
         switch(cat) {
             case NONE: 
                 return log.traceExit(SourceCategory.NONE);
@@ -190,6 +190,8 @@ public class SourceService extends CommonService {
                 return log.traceExit(SourceCategory.EST);
             case RNA_SEQ: 
                 return log.traceExit(SourceCategory.RNA_SEQ);
+            case SC_RNA_SEQ:
+                return log.traceExit(SourceCategory.SC_RNA_SEQ);
             case ONTOLOGY: 
                 return log.traceExit(SourceCategory.ONTOLOGY);
         default: 

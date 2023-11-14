@@ -382,18 +382,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                            // (views must override this method if needed)
         this.includeJs();  // load default js files, and css files specific of a view 
                            // (views must override this method if needed)
-        //google analytics
-        //TODO: add the UA ID to properties. If no UA ID defined, do not display the google analytics code.
-        //This will notably allow to stop messing up the google analytics results with our development tests 
-        //(there would be no UA ID defined in test resource properties)
+        //Matomo
         this.writeln("<script>");
-        this.writeln("(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){");
-        this.writeln("(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),");
-        this.writeln("m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)");
-        this.writeln("})(window,document,'script','//www.google-analytics.com/analytics.js','ga');");
-        this.writeln("ga('create', 'UA-18281910-2', 'auto');");
-        this.writeln("ga('set', 'anonymizeIp', true);");
-        this.writeln("ga('send', 'pageview');");
+        this.writeln("var _mtm = window._mtm = window._mtm || [];");
+        this.writeln("_mtm.push({'mtm.startTime': (new Date().getTime()), 'event': 'mtm.Start'});");
+        this.writeln("var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];");
+        this.writeln("g.async=true; g.src='https://matomo.sib.swiss/js/container_F5WPJc2X.js'; s.parentNode.insertBefore(g,s);");
         this.writeln("</script>");
         
         this.writeln("</head>");

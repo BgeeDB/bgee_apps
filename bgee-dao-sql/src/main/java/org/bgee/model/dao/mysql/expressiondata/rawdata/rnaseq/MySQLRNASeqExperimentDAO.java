@@ -26,7 +26,7 @@ public final class MySQLRNASeqExperimentDAO extends MySQLRawDataDAO<RNASeqExperi
 implements RNASeqExperimentDAO{
 
     private final static Logger log = LogManager.getLogger(MySQLRNASeqExperimentDAO.class.getName());
-    public final static String TABLE_NAME = "rnaSeqExperimentDev";
+    public final static String TABLE_NAME = "rnaSeqExperiment";
 
     public MySQLRNASeqExperimentDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
@@ -50,6 +50,12 @@ implements RNASeqExperimentDAO{
         // generate SELECT
         sb.append(generateSelectClauseRawDataFilters(processedFilters, TABLE_NAME,
                 getColToAttributesMap(RNASeqExperimentDAO.Attribute.class), true, clonedAttrs));
+
+        // add boolean isTargetBase to the SELECT clause
+        //XXX in the future this boolean could be added to the DB
+        sb.append(", (CASE WHEN(SELECT distinct 1 from rnaSeqLibrary as t2 inner join rnaSeqLibraryAnnotatedSample "
+                + "as t3 on t2.rnaSeqLibraryId = t3.rnaSeqLibraryId where t2.rnaSeqExperimentId = rnaSeqExperiment.rnaSeqExperimentId "
+                + "and t3.multipleLibraryIndividualSample = 1) then 1 else 0 end) as isTargetBase ");
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
@@ -98,6 +104,7 @@ implements RNASeqExperimentDAO{
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer dataSourceId = null;
+                boolean isTargetBase = false;
                 String id = null, name = null, description = null;
 
                 for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
@@ -112,11 +119,14 @@ implements RNASeqExperimentDAO{
                     } else if(column.getValue().equals(RNASeqExperimentDAO.Attribute.DATA_SOURCE_ID
                             .getTOFieldName())) {
                         dataSourceId = currentResultSet.getInt(column.getKey());
+                    } else if(column.getValue().equals("isTargetBase")) {
+                        Integer value = currentResultSet.getInt(column.getKey());
+                         isTargetBase = currentResultSet.getInt(column.getKey()) == 1? true: false;
                     } else {
                         log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 }
-                return log.traceExit(new RNASeqExperimentTO(id, name, description, dataSourceId));
+                return log.traceExit(new RNASeqExperimentTO(id, name, description, dataSourceId, isTargetBase));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

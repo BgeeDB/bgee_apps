@@ -17,6 +17,9 @@ import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.call.Condition.ConditionEntities;
+import org.bgee.model.expressiondata.rawdata.RawDataLoader;
+import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
@@ -49,8 +52,8 @@ public class ConditionGraphService extends CommonService {
      */
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions) {
         log.traceEntry("{}", conditions);
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null,
-                null, null, null));
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false,
+                false, false, null, null, null, null, null));
     }
     
     /**
@@ -66,8 +69,9 @@ public class ConditionGraphService extends CommonService {
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
             boolean inferDescendantConds) throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}", conditions, inferAncestralConds, inferDescendantConds);
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds,
-                inferDescendantConds, null, null, null, null, null));
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions,
+                inferAncestralConds, inferDescendantConds, true, true,
+                null, null, null, null, null));
     }
     
     /**
@@ -95,7 +99,8 @@ public class ConditionGraphService extends CommonService {
                     throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}, {}, {}", conditions, anatEntityOnt, devStageOnt, cellTypeOnt, 
                 sexOnt, strainOnt);
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false,
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions,
+                false, false, false, false,
                 anatEntityOnt, devStageOnt,
                 cellTypeOnt, sexOnt, strainOnt));
     }
@@ -133,7 +138,7 @@ public class ConditionGraphService extends CommonService {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", conditions, inferAncestralConds, inferDescendantConds, 
                 anatEntityOnt, devStageOnt, cellTypeOnt, sexOnt, strainOnt);
         return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions,
-                inferAncestralConds, inferDescendantConds,
+                inferAncestralConds, inferDescendantConds, true, true,
                 anatEntityOnt, devStageOnt, cellTypeOnt, sexOnt, strainOnt));
     }
 
@@ -227,41 +232,68 @@ public class ConditionGraphService extends CommonService {
     }
 
     /**
-     * Constructor accepting all parameters.  
-     * 
-     * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
-     *                              by the returned {@code ConditionGraph}.
-     * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
-     *                              should be inferred.
-     * @param inferDescendantConds  A {@code boolean} defining whether the descendant conditions
-     *                              should be inferred.
-     * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s that is 
-     *                              the ontology of anatomical entities of a single species.
-     *                              If {@code null}, this method retrieves the ontology.  
-     * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
-     *                              the ontology of developmental stages of a single species.
-     *                              If {@code null}, this method retrieves the ontology.  
-     * @param cellTypeOnt           An {@code Ontology} of {@code AnatEntity}s that is 
-     *                              the ontology of cell types of a single species.
-     *                              If {@code null}, this method retrieves the ontology. 
-     * @param sexOnt                An {@code Ontology} of {@code Sex}s that is 
-     *                              the ontology of sexes. If {@code null}, this method retrieves the ontology.  
-     * @param strainOnt             An {@code Ontology} of {@code Strain}s that is 
-     *                              the ontology of strains. If {@code null}, this method retrieves the ontology.  
+     * @param conditions                                A {@code Collection} of {@code Condition}s
+     *                                                  that will be managed by the returned
+     *                                                  {@code ConditionGraph}.
+     * @param inferAncestralConds                       A {@code boolean} defining whether
+     *                                                  the ancestral conditions should be inferred.
+     * @param inferDescendantConds                      A {@code boolean} defining whether
+     *                                                  the descendant conditions should be inferred.
+     * @param propagateToInformativeAnatEntitiesOnly    When inferring ancestral and/or descendant
+     *                                                  conditions ({@code inferAncestralConds}
+     *                                                  and/or {@code inferAncestralConds} are
+     *                                                  {@code true}), the inferred new propagated
+     *                                                  conditions will use only informative
+     *                                                  anat. entity, if this argument is {@code true}.
+     *                                                  Non-informative anat. entities used in
+     *                                                  {@code Condition}s provided in the argument
+     *                                                  {@code conditions} are always considered anyway.
+     * @param propagateToTermsUsedInAnnotationsOnly     When inferring ancestral and/or descendant
+     *                                                  conditions ({@code inferAncestralConds}
+     *                                                  and/or {@code inferAncestralConds} are
+     *                                                  {@code true}), the inferred new propagated
+     *                                                  conditions will use only terms (anat. entities,
+     *                                                  cell types, dev. stages, etc) that are used
+     *                                                  in annotations, if this argument is {@code true}.
+     *                                                  Terms used in {@code Condition}s provided
+     *                                                  in the argument {@code conditions}
+     *                                                  are always considered anyway.
+     * @param anatEntityOnt                             An {@code Ontology} of {@code AnatEntity}s
+     *                                                  that is the ontology of anatomical entities
+     *                                                  of a single species. If {@code null},
+     *                                                  this method retrieves the ontology.
+     * @param devStageOnt                               An {@code Ontology} of {@code DevStage}s
+     *                                                  that is the ontology of developmental stages
+     *                                                  of a single species. If {@code null},
+     *                                                  this method retrieves the ontology.
+     * @param cellTypeOnt                               An {@code Ontology} of {@code AnatEntity}s
+     *                                                  that is the ontology of cell types
+     *                                                  of a single species. If {@code null},
+     *                                                  this method retrieves the ontology.
+     * @param sexOnt                                    An {@code Ontology} of {@code Sex}s
+     *                                                  that is the ontology of sexes
+     *                                                  of a single species. If {@code null},
+     *                                                  this method retrieves the ontology.
+     * @param strainOnt                                 An {@code Ontology} of {@code Strain}s
+     *                                                  that is the ontology of strains
+     *                                                  of a single species. If {@code null},
+     *                                                  this method retrieves the ontology.
      * @throws IllegalArgumentException If {@code conditions} is {@code null} or empty, 
      *                                  or if the {@code Condition}s does not exist in the same species.
      */
     //XXX: we'll see what we'll do for multi-species later, for now we only accept a single species. 
     //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
     //TODO: unit test for ancestral condition inferences
-    //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
     private ConditionGraph loadConditionGraphFromMultipleArgs(Collection<Condition> conditions, 
             boolean inferAncestralConds, boolean inferDescendantConds,
+            boolean propagateToInformativeAnatEntitiesOnly, boolean propagateToTermsUsedInAnnotationsOnly,
             Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt,
             Ontology<AnatEntity, String> cellTypeOnt, Ontology<Sex, String> sexOnt, 
             Ontology<Strain, String> strainOnt)
                     throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", conditions, inferAncestralConds, inferDescendantConds, 
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}", conditions,
+                inferAncestralConds, inferDescendantConds,
+                propagateToInformativeAnatEntitiesOnly, propagateToTermsUsedInAnnotationsOnly,
                 anatEntityOnt, devStageOnt, cellTypeOnt, sexOnt, strainOnt);
     
         long startTimeInMs = System.currentTimeMillis();
@@ -328,19 +360,44 @@ public class ConditionGraphService extends CommonService {
         
         //TODO: test inference of descendant conditions
         if (inferAncestralConds || inferDescendantConds) {
-            //We don't want to propagate to non-informative anat. entities,
-            //except to the root of the anat. entities and the root of the cell types.
+            //When we don't propagate to non-informative anat. entities,
+            //we still want to keep the root of the anat. entities and the root of the cell types.
             //Of note, non-informative anat. entities used in annotations are not retrieved
             //by the method loadNonInformativeAnatEntitiesBySpeciesIds.
-            Set<AnatEntity> nonInformativeAnatEntities = this.getServiceFactory().getAnatEntityService()
+            Set<AnatEntity> nonInformativeAnatEntities = propagateToInformativeAnatEntitiesOnly?
+                    this.getServiceFactory().getAnatEntityService()
                     .loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(speciesId))
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toSet()):
+                        new HashSet<>();
             AnatEntity rootAnatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
             Set<AnatEntity> anatNonInformatives = new HashSet<>(nonInformativeAnatEntities);
             anatNonInformatives.remove(rootAnatEntity);
             AnatEntity rootCellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
             Set<AnatEntity> cellTypeNonInformatives = new HashSet<>(nonInformativeAnatEntities);
             cellTypeNonInformatives.remove(rootCellType);
+            DevStage rootDevStage = new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID);
+
+
+            //To retrieve all terms used in annotations to filter the conditions to generate
+            Set<AnatEntity> anatEntitiesUsedInAnnots = new HashSet<>();
+            Set<AnatEntity> cellTypesUsedInAnnots = new HashSet<>();
+            Set<DevStage> devStagesUsedInAnnots = new HashSet<>();
+            if (propagateToTermsUsedInAnnotationsOnly) {
+                //we use the RawDataLoader for convenience, even if it is not designed
+                //for such a task
+                RawDataLoader loader = this.getServiceFactory().getRawDataService().loadRawDataLoader(null);
+                for (RawDataDataType<?, ?> dataType: RawDataDataType.allOf()) {
+                    RawDataPostFilter rawDataPostFilter = loader.loadPostFilter(dataType, true, false, false);
+                    anatEntitiesUsedInAnnots.addAll(rawDataPostFilter.getAnatEntities());
+                    cellTypesUsedInAnnots.addAll(rawDataPostFilter.getCellTypes());
+                    devStagesUsedInAnnots.addAll(rawDataPostFilter.getDevStages());
+                }
+                //We keep the roots in all cases
+                anatEntitiesUsedInAnnots.add(rootAnatEntity);
+                cellTypesUsedInAnnots.add(rootCellType);
+                devStagesUsedInAnnots.add(rootDevStage);
+            }
+
 
             Set<Condition> newPropagatedConditions = tempConditions.stream().flatMap(cond -> {
                 Set<DevStage> propStages = new HashSet<>();
@@ -352,6 +409,10 @@ public class ConditionGraphService extends CommonService {
                     if (inferDescendantConds) {
                         propStages.addAll(devStageOntToUse.getDescendants(cond.getDevStage()));
                     }
+                    //Retain terms we only want to propagate to
+                    if (!devStagesUsedInAnnots.isEmpty()) {
+                        propStages.retainAll(devStagesUsedInAnnots);
+                    }
                 }
                 
                 Set<AnatEntity> propAnatEntities = new HashSet<>();
@@ -362,26 +423,33 @@ public class ConditionGraphService extends CommonService {
                     if (inferDescendantConds) {
                         propAnatEntities.addAll(anatEntityOntToUse.getDescendants(cond.getAnatEntity()));
                     }
+                    //Retain terms we only want to propagate to
+                    if (!anatEntitiesUsedInAnnots.isEmpty()) {
+                        propAnatEntities.retainAll(anatEntitiesUsedInAnnots);
+                    }
                     //Remove terms we don't want to propagate to
                     propAnatEntities.removeAll(anatNonInformatives);
                 }
                 //to make sure we don't exclude the annotated term, we add it afterwards
                 propAnatEntities.add(cond.getAnatEntity());
                 
-                Set<AnatEntity> tempPropCellTypes = new HashSet<>();
+                Set<AnatEntity> propCellTypes = new HashSet<>();
                 if (cellTypeOntToUse != null && cond.getCellTypeId() != null) {
                     if (inferAncestralConds) {
-                        tempPropCellTypes.addAll(cellTypeOntToUse.getAncestors(cond.getCellType()));
+                        propCellTypes.addAll(cellTypeOntToUse.getAncestors(cond.getCellType()));
                     }
                     if (inferDescendantConds) {
-                        tempPropCellTypes.addAll(cellTypeOntToUse.getDescendants(cond.getCellType()));
+                        propCellTypes.addAll(cellTypeOntToUse.getDescendants(cond.getCellType()));
+                    }
+                    //Retain terms we only want to propagate to
+                    if (!cellTypesUsedInAnnots.isEmpty()) {
+                        propCellTypes.retainAll(cellTypesUsedInAnnots);
                     }
                     //Remove terms we don't want to propagate to
-                    tempPropCellTypes.removeAll(cellTypeNonInformatives);
+                    propCellTypes.removeAll(cellTypeNonInformatives);
                 }
                 //to make sure we don't exclude the annotated term, we add it afterwards
-                tempPropCellTypes.add(cond.getCellType());
-                Set<AnatEntity> propCellTypes = tempPropCellTypes;
+                propCellTypes.add(cond.getCellType());
                 
                 Set<Sex> propSexes = new HashSet<>();
                 propSexes.add(cond.getSex());
@@ -408,9 +476,16 @@ public class ConditionGraphService extends CommonService {
                 return propAnatEntities.stream()
                         .flatMap(propAnatEntity -> propStages.stream()
                                 .flatMap(propStage -> propCellTypes.stream()
-                                        .flatMap( propCellType -> propSexes.stream()
-                                                .flatMap( propSexe -> propStrains.stream().map( propStrain ->
-                            new Condition(propAnatEntity, propStage, propCellType, propSexe, propStrain, cond.getSpecies()))))))
+                                        .flatMap(propCellType -> propSexes.stream()
+                                                .flatMap(propSexe -> propStrains.stream()
+                                                        .map(propStrain ->
+                                                        new Condition(
+                                                                propAnatEntity,
+                                                                propStage,
+                                                                propCellType,
+                                                                propSexe,
+                                                                propStrain,
+                                                                cond.getSpecies()))))))
                         .filter(propCond -> !cond.equals(propCond));
     
             }).collect(Collectors.toSet());

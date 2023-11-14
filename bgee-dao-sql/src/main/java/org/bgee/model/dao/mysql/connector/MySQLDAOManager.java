@@ -29,7 +29,6 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.anatdev.SexDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
@@ -58,7 +57,6 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotation
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLGlobalExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLSamplePValueDAO;
@@ -1067,11 +1065,6 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLGlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLGlobalExpressionCallDAO(this));
-    }
-    @Override
-    protected ExperimentExpressionDAO getNewExperimentExpressionDAO() {
-        log.traceEntry();
-        return log.traceExit(new MySQLExperimentExpressionDAO(this));
     }
     @Override
     protected MySQLDiffExpressionCallDAO getNewDiffExpressionCallDAO() {

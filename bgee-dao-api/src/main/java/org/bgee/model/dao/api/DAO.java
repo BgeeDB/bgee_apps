@@ -50,7 +50,17 @@ public interface DAO<T extends Enum<T> & DAO.Attribute> {
      * </ul>
      */
     public static enum Direction {
-        ASC, DESC;
+        ASC("ASC"), DESC("DESC");
+
+        private final String sqlString;
+
+        private Direction(String sqlString) {
+            this.sqlString = sqlString;
+        }
+
+        public String getSqlString() {
+            return sqlString;
+        }
     }
 
     /**

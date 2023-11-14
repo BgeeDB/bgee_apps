@@ -143,14 +143,17 @@ public class OntologyTools {
             }
             tools.writeOWLClassIdsToFile(args[1], args[2]);
         } else if (args[0].equalsIgnoreCase("RetrieveAnatIncorrectIndirectRels")) {
-            if (args.length != 4) {
+            if (args.length < 4) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " +
-                        "4 arguments, " + args.length + " provided."));
+                        "at least 4 arguments, " + args.length + " provided."));
             }
+            String uberonPath = CommandRunner.parseArgument(args[1]);
+            Integer speciesId = CommandRunner.parseArgumentAsInteger(args[4]);
+
             tools.getFromDBAnatPartOfIsAIndirectRelsNotReachedByChainOfDirectRelsAndWriteToFile(
-                    DAOManager.getDAOManager(), new Uberon(args[1]),
-                    CommandRunner.parseArgumentAsBoolean(args[2]), args[3]);
+                    DAOManager.getDAOManager(), uberonPath == null? null: new Uberon(uberonPath),
+                    CommandRunner.parseArgumentAsBoolean(args[2]), args[3], speciesId);
         } else if (args[0].equalsIgnoreCase("deletePartOfIsARelations")) {
             if (args.length != 4) {
                 throw log.throwing(new IllegalArgumentException(
@@ -690,8 +693,9 @@ public class OntologyTools {
     }
 
     public void getFromDBAnatPartOfIsAIndirectRelsNotReachedByChainOfDirectRelsAndWriteToFile(
-            DAOManager daoManager, Uberon uberon, boolean filterRels, String outputFile) throws IOException {
-        log.traceEntry("{} - {} - {} - {}", daoManager, uberon, filterRels, outputFile);
+            DAOManager daoManager, Uberon uberon, boolean filterRels, String outputFile, Integer targetedSpeciesId)
+                    throws IOException {
+        log.traceEntry("{} - {} - {} - {} - {}", daoManager, uberon, filterRels, outputFile, targetedSpeciesId);
 
         RelationDAO relDAO = daoManager.getRelationDAO();
         AnatEntityDAO anatEntityDAO = daoManager.getAnatEntityDAO();
@@ -753,6 +757,9 @@ public class OntologyTools {
         while (speciesTOIterator.hasNext()) {
             SpeciesTO speciesTO = speciesTOIterator.next();
             Collection<Integer> speciesId = Collections.singleton(speciesTO.getId());
+            if (targetedSpeciesId != null && !targetedSpeciesId.equals(speciesTO.getId())) {
+                continue;
+            }
 
             //Get the anat. entity IDs valid in this species
             Set<String> anatEntityIdsForSpecies = anatEntityDAO.getAnatEntities(speciesId, true, null,
@@ -821,6 +828,7 @@ public class OntologyTools {
             }
 
             //Now we store the incorrect indirect rels over multiple species and try to find fixes
+            if (uberon != null) {
             for (RelationTO<String> incorrectIndirectRelTO: incorrectIndirectRelTOs) {
                 relationTOIdMap.put(incorrectIndirectRelTO.getId(), incorrectIndirectRelTO);
 
@@ -1092,6 +1100,7 @@ public class OntologyTools {
                                 return existingSpeciesTOs;
                             });
                 }
+            }
             }
         }
 

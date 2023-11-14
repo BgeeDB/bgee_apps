@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,20 +41,23 @@ import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.dao.api.source.SourceDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTOResultSet;
+import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.CallService.Attribute;
 import org.bgee.model.expressiondata.call.Condition;
 import org.bgee.model.expressiondata.call.ConditionFilter;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
-import org.bgee.model.expressiondata.baseelements.PropagationState;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.Species;
 import org.bgee.pipeline.CommandRunner;
@@ -109,6 +111,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 put("SPECIES_NAME", "species");
                 put("COMMON_NAME", "speciesCommonName");
                 put("GENOME_VERSION", "genomeVersion");
+                put("GENOME_ASSEMBLY_XREF", "genomeAssemblyXRef");
                 put("GENOME_SPECIES_ID", "genomeSpeciesId");
             }
         }, new LinkedHashMap<String, Integer>() {
@@ -118,6 +121,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 put("SPECIES_NAME", Types.VARCHAR);
                 put("COMMON_NAME", Types.VARCHAR);
                 put("GENOME_VERSION", Types.VARCHAR);
+                put("GENOME_ASSEMBLY_XREF", Types.VARCHAR);
                 put("GENOME_SPECIES_ID", Types.INTEGER);
             }
         }, new LinkedHashMap<String, Boolean>() {
@@ -127,6 +131,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 put("SPECIES_NAME", false);
                 put("COMMON_NAME", true);
                 put("GENOME_VERSION", false);
+                put("GENOME_ASSEMBLY_XREF", false);
                 put("GENOME_SPECIES_ID", false);
             }
         }), GENE_OUTPUT_FILE("genes_easy_bgee.tsv", "gene", new LinkedHashMap<String, String>() {
@@ -156,6 +161,24 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 put("NAME", null);
                 put("DESCRIPTION", true);
                 put("SPECIES_ID", false);
+            }
+        }), GENE_XREF_OUTPUT_FILE("gene_xrefs_easy_bgee.tsv", "geneXRef", new LinkedHashMap<String, String>() {
+            {
+                put("BGEE_GENE_ID", "bgeeGeneId");
+                put("XREF_URL", "XRefUrl");
+                put("DATASOURCE_NAME", "dataSourceName");
+            }
+        }, new LinkedHashMap<String, Integer>() {
+            {
+                put("BGEE_GENE_ID", Types.INTEGER);
+                put("XREF_URL", Types.VARCHAR);
+                put("DATASOURCE_NAME", Types.VARCHAR);
+            }
+        }, new LinkedHashMap<String, Boolean>() {
+            {
+                put("BGEE_GENE_ID", false);
+                put("XREF_URL", null);
+                put("DATASOURCE_NAME", false);
             }
         }), ANATENTITY_OUTPUT_FILE("anat_entities_easy_bgee.tsv", "anatEntity", new LinkedHashMap<String, String>() {
             {
@@ -191,33 +214,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             {
                 put("ID", false);
                 put("NAME", false);
-                put("DESCRIPTION", true);
-            }
-        }), DATASOURCE_OUTPUT_FILE("datasource_easy_bgee.tsv", "dataSource", new LinkedHashMap<String, String>() {
-            {
-                put("ID", "dataSourceId");
-                put("NAME", "dataSourceName");
-                put("XREF_URL", "XRefUrl");
-                put("BASE_URL", "baseUrl");
-                put("RELEASE_VERSION", "releaseVersion");
-                put("DESCRIPTION", "dataSourceDescription");
-            }
-        }, new LinkedHashMap<String, Integer>() {
-            {
-                put("ID", Types.INTEGER);
-                put("NAME", Types.VARCHAR);
-                put("XREF_URL", Types.VARCHAR);
-                put("BASE_URL", Types.VARCHAR);
-                put("RELEASE_VERSION", Types.VARCHAR);
-                put("DESCRIPTION", Types.VARCHAR);
-            }
-        }, new LinkedHashMap<String, Boolean>() {
-            {
-                put("ID", false);
-                put("NAME", false);
-                put("XREF_URL", false);
-                put("BASE_URL", false);
-                put("RELEASE_VERSION", false);
                 put("DESCRIPTION", true);
             }
         }), GLOBALCOND_OUTPUT_FILE("global_cond_easy_bgee.tsv", "globalCond", new LinkedHashMap<String, String>() {
@@ -453,7 +449,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         Set<Integer> speciesIds = extractSpeciesTable(speciesTOs, directory);
         extractAnatEntityTable(directory);
         extractStageTable(directory);
-        extractDataSourceTable(directory);
+        extractGeneXRefTable(directory);
         for (Integer speciesId : speciesIds) {
             log.info("start to extract genes, conditions and expressions data for species {}", speciesId);
             // Note: we can map ID to one Bgee gene ID because we use
@@ -489,13 +485,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
         orderingAttributes.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
 
-        // generate ordering attributes
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
-                new LinkedHashMap<>();
-        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
-
         // We retrieve calls with all attributes that are not condition parameters.
         EnumSet<CallService.Attribute> attributes = EnumSet.of(CallService.Attribute.GENE,
                 CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
@@ -523,7 +512,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                     mapWriter.writeHeader(header);
                 }
 
-                idToBgeeGeneIds.keySet().parallelStream().forEach(geneId -> {
+                idToBgeeGeneIds.keySet()
+                .parallelStream().forEach(geneId -> {
                     final Stream<ExpressionCall> expressedCalls = serviceFactoryProvider
                             .apply(this.daoManagerSupplier.get())
                             .getCallService()
@@ -538,12 +528,12 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                                             Collections.singleton("wild-type"), condFilter)),
                                     null, null),
                                     attributes, orderingAttributes);
-
                     generateGlobalExpressionLines(expressedCalls,
                             attributes.stream().filter(a -> a.isConditionParameter())
                             .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
-                            idToBgeeGeneIds.get(geneId), condToConditionId, header, processors, mapWriter, file);
+                            idToBgeeGeneIds, condToConditionId, header, processors, mapWriter, file);
                 });
+                
             }
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
@@ -552,17 +542,16 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     }
 
     private void generateGlobalExpressionLines(Stream<ExpressionCall> expressionCalls,
-            EnumSet<CallService.Attribute> condParamComb, Integer bgeeGeneId,
+            EnumSet<CallService.Attribute> condParamComb, Map<String, Integer> geneToBgeeGeneId,
             Map<Condition, String> condToConditionId, String[] header, CellProcessor[] processors,
             ICsvMapWriter mapWriter, File file) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", expressionCalls, condParamComb, bgeeGeneId,
-                condToConditionId);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", expressionCalls, condParamComb, geneToBgeeGeneId,
+                condToConditionId, header, processors, mapWriter, file);
 
-        List<Map<String, String>> headerToValuePerGene = new ArrayList<>();
-
-        expressionCalls.forEach(call -> {
+        List<Map<String, String>> headerToValuePerGene = expressionCalls.map(call -> {
             Map<String, String> headerToValuePerCall = new HashMap<>();
-            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(), String.valueOf(bgeeGeneId));
+            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
+                    String.valueOf(geneToBgeeGeneId.get(call.getGene().getGeneId())));
             Condition updatedCond = new Condition(new AnatEntity(call.getCondition().getAnatEntityId()),
                 call.getCondition().getDevStageId() == null ?
                         new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID) :
@@ -589,8 +578,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                     call.getDataPropagation(), condParamComb));
             headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
             headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getPValue().toString());
-            headerToValuePerGene.add(headerToValuePerCall);
-        });
+            return headerToValuePerCall;
+        }).collect(Collectors.toList());
         try {
             writeExpressionPerGeneToFile(headerToValuePerGene, header, processors, mapWriter);
         } catch (IOException e) {
@@ -616,7 +605,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 GeneDAO.Attribute.NAME.name(), GeneDAO.Attribute.DESCRIPTION.name(),
                 GeneDAO.Attribute.SPECIES_ID.name() };
 
-        List<GeneDAO.GeneTO> allTOs = daoManagerSupplier.get().getGeneDAO()
+       List<GeneTO> allTOs = daoManagerSupplier.get().getGeneDAO()
                 .getGenesBySpeciesIds(Collections.singleton(speciesId)).getAllTOs();
         List<Map<String, String>> allGenesInformation = allTOs.stream().map(gene -> {
             Map<String, String> headerToValue = new HashMap<>();
@@ -634,13 +623,74 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         return log.traceExit(allTOs.stream().collect(Collectors.toMap(to -> to.getGeneId(), to -> to.getId())));
     }
 
+    private void extractGeneXRefTable(String directory) {
+        log.traceEntry("{}", directory);
+        log.info("Start extracting gene XRefs");
+        String[] header = TsvFile.GENE_XREF_OUTPUT_FILE.columnName.keySet().toArray(String[]::new);
+
+
+        GeneXRefTOResultSet allGeneXRefsTOs = daoManagerSupplier.get().getGeneXRefDAO()
+                .getAllGeneXRefs(null);
+        Map<Integer, SourceTO> dataSourceById = daoManagerSupplier.get().getSourceDAO()
+                .getAllDataSources(null).stream().collect(Collectors.toMap(s -> s.getId(), s -> s));
+        Map<Integer, GeneTO> geneByBgeeGeneId = daoManagerSupplier.get().getGeneDAO()
+                .getAllGenes().stream().collect(Collectors.toMap(s -> s.getId(), s -> s));
+        Map<Integer, SpeciesTO> speciesBySpeciesId = daoManagerSupplier.get().getSpeciesDAO()
+                .getAllSpecies(null).stream().collect(Collectors.toMap(s -> s.getId(), s -> s));
+        // In easybgee we do not insert same info as in the dataSource table of Bgee DB. Then, it is possible
+        // to have duplicated XRef URLs for the same gene. As XRefURLs are part of the primary key it is problematic.
+        // This problem appears when a dataSource has an XRefUrl with the pattern [gene_id] and several
+        // xref_id exist for the same gene and datasource.
+        // In order to solve that issue we check xrefs coming from a datasource with [gene_id] pattern
+        // If one gene already has an xrefUrl associated to it, then the corresponding xref is not inserted again.
+        Map<Integer, Set<String>> manageDuplicatedXrefs = new HashMap<>();
+        List<Map<String, String>> allGeneXRefsInformation = allGeneXRefsTOs.stream().map(geneXRef -> {
+            Map<String, String> headerToValue = new HashMap<>();
+            headerToValue.put(header[0], String.valueOf(geneXRef.getBgeeGeneId()));
+            String dataSourceXRefUrl = dataSourceById.get(geneXRef.getDataSourceId()).getXRefUrl();
+            if(dataSourceXRefUrl == null || dataSourceXRefUrl.isEmpty()) {
+                return null;
+            }
+            if (dataSourceXRefUrl != null && dataSourceXRefUrl.contains("[species_ensembl_link]")) {
+                SpeciesTO species = speciesBySpeciesId.get(geneByBgeeGeneId.get(geneXRef.getBgeeGeneId())
+                        .getSpeciesId());
+                dataSourceXRefUrl = dataSourceXRefUrl.replace("[species_ensembl_link]",
+                        species.getGenus().replace(" ", "_") + "_" + species.getSpeciesName().replace(" ", "_"));
+            }
+            if (dataSourceXRefUrl != null && dataSourceXRefUrl.contains("[gene_id]")) {
+                dataSourceXRefUrl = dataSourceXRefUrl.replace("[gene_id]",
+                        geneByBgeeGeneId.get(geneXRef.getBgeeGeneId()).getGeneId());
+                if (manageDuplicatedXrefs.get(geneXRef.getBgeeGeneId()) != null &&
+                        manageDuplicatedXrefs.get(geneXRef.getBgeeGeneId()).contains(dataSourceXRefUrl)) {
+                    return null;
+                }
+                Set<String> xrefs = manageDuplicatedXrefs.containsKey(geneXRef.getBgeeGeneId()) ?
+                        manageDuplicatedXrefs.get(geneXRef.getBgeeGeneId()) :
+                        new HashSet<>();
+                xrefs.add(dataSourceXRefUrl);
+                manageDuplicatedXrefs.put(geneXRef.getBgeeGeneId(), xrefs);
+            }
+            if (dataSourceXRefUrl != null && dataSourceXRefUrl.contains("[xref_id]")) {
+                dataSourceXRefUrl = dataSourceXRefUrl.replace("[xref_id]", geneXRef.getXRefId());
+            }
+            headerToValue.put(header[1], dataSourceXRefUrl);
+            headerToValue.put(header[2], dataSourceById.get(geneXRef.getDataSourceId()).getName());
+            return headerToValue;
+        }).filter(e -> e != null).collect(Collectors.toList());
+        // use TsvFile Enum to generate the CellProcessor
+        final CellProcessor[] processors = createCellProcessor(TsvFile.GENE_XREF_OUTPUT_FILE);
+        File file = new File(directory, TsvFile.GENE_XREF_OUTPUT_FILE.fileName);
+        writeOutputFile(file, allGeneXRefsInformation, header, processors);
+        log.traceExit();
+    }
+
     private void extractAnatEntityTable(String directory) {
         log.traceEntry("{}", directory);
         log.info("Start extracting anatomical entities...");
         String[] header = new String[] { AnatEntityDAO.Attribute.ID.name(), AnatEntityDAO.Attribute.NAME.name(),
                 AnatEntityDAO.Attribute.DESCRIPTION.name() };
         List<Map<String, String>> allAnatEntitiesInformation = daoManagerSupplier.get().getAnatEntityDAO()
-                .getAnatEntitiesByIds(null).getAllTOs().stream().map(ae -> {
+                .getAnatEntitiesByIds(null).stream().map(ae -> {
                     Map<String, String> headerToValue = new HashMap<>();
                     headerToValue.put(AnatEntityDAO.Attribute.ID.name(), ae.getId());
                     headerToValue.put(AnatEntityDAO.Attribute.NAME.name(), ae.getName());
@@ -661,7 +711,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 StageDAO.Attribute.DESCRIPTION.name() };
         List<Map<String, String>> allDevStagesInformation = daoManagerSupplier.get().getStageDAO()
                 .getStagesByIds(new HashSet<>())
-                .getAllTOs().stream().map(stage -> {
+                .stream().map(stage -> {
                     Map<String, String> headerToValue = new HashMap<>();
                     headerToValue.put(StageDAO.Attribute.ID.name(), String.valueOf(stage.getId()));
                     headerToValue.put(StageDAO.Attribute.NAME.name(), stage.getName());
@@ -672,33 +722,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         final CellProcessor[] processors = createCellProcessor(TsvFile.DEVSTAGE_OUTPUT_FILE);
         File file = new File(directory, TsvFile.DEVSTAGE_OUTPUT_FILE.fileName);
         writeOutputFile(file, allDevStagesInformation, header, processors);
-        log.traceExit();
-    }
-    
-    private void extractDataSourceTable(String directory) {
-        log.traceEntry("{}", directory);
-        log.info("Start extracting dataSources");
-        String[] header = new String[] { SourceDAO.Attribute.ID.name(), SourceDAO.Attribute.NAME.name(),
-                SourceDAO.Attribute.XREF_URL.name(), SourceDAO.Attribute.BASE_URL.name(),
-                SourceDAO.Attribute.RELEASE_VERSION.name(), SourceDAO.Attribute.DESCRIPTION.name()};
-        List<Map<String, String>> allDataSourcesInformation = daoManagerSupplier.get().getSourceDAO()
-                .getAllDataSources(Set.of(SourceDAO.Attribute.ID, SourceDAO.Attribute.NAME,
-                SourceDAO.Attribute.XREF_URL, SourceDAO.Attribute.BASE_URL,
-                SourceDAO.Attribute.RELEASE_VERSION, SourceDAO.Attribute.DESCRIPTION))
-                .getAllTOs().stream().map(source -> {
-                    Map<String, String> headerToValue = new HashMap<>();
-                    headerToValue.put(SourceDAO.Attribute.ID.name(), String.valueOf(source.getId()));
-                    headerToValue.put(SourceDAO.Attribute.NAME.name(), source.getName());
-                    headerToValue.put(SourceDAO.Attribute.XREF_URL.name(), source.getXRefUrl());
-                    headerToValue.put(SourceDAO.Attribute.BASE_URL.name(), String.valueOf(source.getXRefUrl()));
-                    headerToValue.put(SourceDAO.Attribute.RELEASE_VERSION.name(), source.getReleaseVersion());
-                    headerToValue.put(SourceDAO.Attribute.DESCRIPTION.name(), String.valueOf(source.getDescription()));
-                    return headerToValue;
-                }).collect(Collectors.toList());
-        // use TsvFile Enum to generate the CellProcessor
-        final CellProcessor[] processors = createCellProcessor(TsvFile.DATASOURCE_OUTPUT_FILE);
-        File file = new File(directory, TsvFile.DATASOURCE_OUTPUT_FILE.getFileName());
-        writeOutputFile(file, allDataSourcesInformation, header, processors);
         log.traceExit();
     }
 
@@ -716,7 +739,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 ConditionDAO.Attribute.STRAIN_ID.name(), ConditionDAO.Attribute.SPECIES_ID.name() };
 
         // create condition filter using root of sex and strain
-        DAOConditionFilter condFilter = new DAOConditionFilter(null, null, null,
+        DAOConditionFilter condFilter = new DAOConditionFilter(null, null,
+                Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID),
                 Collections.singleton(ConditionDAO.SEX_ROOT_ID),
                 Collections.singleton(ConditionDAO.STRAIN_ROOT_ID), null);
 
@@ -754,9 +778,10 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         Set<Integer> speciesIds = new HashSet<>();
         String[] header = new String[] { SpeciesDAO.Attribute.ID.name(), SpeciesDAO.Attribute.GENUS.name(),
                 SpeciesDAO.Attribute.SPECIES_NAME.name(), SpeciesDAO.Attribute.COMMON_NAME.name(),
-                SpeciesDAO.Attribute.GENOME_VERSION.name(), SpeciesDAO.Attribute.GENOME_SPECIES_ID.name() };
+                SpeciesDAO.Attribute.GENOME_VERSION.name(), SpeciesDAO.Attribute.GENOME_ASSEMBLY_XREF.name(),
+                SpeciesDAO.Attribute.GENOME_SPECIES_ID.name() };
         // keep the order, to be able to compare files between 2 versions
-        List<Map<String, String>> allSpeciesInformation = speciesTOs.getAllTOs().stream().map(species -> {
+        List<Map<String, String>> allSpeciesInformation = speciesTOs.stream().map(species -> {
             speciesIds.add(species.getId());
             Map<String, String> headerToValue = new HashMap<>();
             headerToValue.put(SpeciesDAO.Attribute.ID.name(), String.valueOf(species.getId()));
@@ -764,6 +789,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             headerToValue.put(SpeciesDAO.Attribute.SPECIES_NAME.name(), species.getSpeciesName());
             headerToValue.put(SpeciesDAO.Attribute.COMMON_NAME.name(), species.getName());
             headerToValue.put(SpeciesDAO.Attribute.GENOME_VERSION.name(), species.getGenomeVersion());
+            headerToValue.put(SpeciesDAO.Attribute.GENOME_ASSEMBLY_XREF.name(), species.getGenomeAssemblyXRef());
             headerToValue.put(SpeciesDAO.Attribute.GENOME_SPECIES_ID.name(),
                     String.valueOf(species.getGenomeSpeciesId()));
             return headerToValue;
@@ -961,7 +987,10 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                                     throw log.throwing(new IllegalArgumentException(
                                             "For the moment we only take into account VARCHAR and TEXT "
                                                     + "sql data types to transform null column in the TSV file "
-                                                    + "to empty String in the database"));
+                                                    + "to empty String in the database " + customerMap.toString()
+                                                    + " For column " + tsvFile.getColumnName().get(columnId)
+                                                    + " columnId " + columnId + " header " + header.toString() + " processor "
+                                                    + processors.toString() + " columnNumber " + columnNumber));
                                 }
                             } else {
                                 throw log.throwing(new IllegalArgumentException(

@@ -2,6 +2,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -31,7 +32,7 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      * {@code Enum} used to define the attributes to populate in the {@code RNASeqResultTO}s 
      * obtained from this {@code RNASeqResultDAO}.
      * <ul>
-     * <li>{@code RNA_SEQ_LIBRARY_ANNOTATED_ID}: corresponds to {@link RNASeqResultTO#getAssayId()}.
+     * <li>{@code LIBRARY_ANNOTATED_SAMPLE_ID}: corresponds to {@link RNASeqResultTO#getAssayId()}.
      * <li>{@code BGEE_GENE_ID}: corresponds to {@link RNASeqResultTO#getBgeeGeneId()}.
      * <li>{@code ABUNDANCE_UNIT}: corresponds to {@link RNASeqResultTO#getAbundanceUnit()}.
      * <li>{@code ABUNDANCE}: corresponds to {@link RNASeqResultTO#getAbundance()}.
@@ -70,6 +71,35 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
     }
 
     /**
+     * The attributes available to order retrieved {@code RNASeqResultAnnotatedSampleTO}s
+     * <ul>
+     * <li>{@code LIBRARY_ANNOTATED_SAMPLE_ID}: corresponds to {@link RNASeqResultTO#getAssayId()}.
+     * <li>{@code BGEE_GENE_ID}: corresponds to {@link RNASeqResultAnnotatedSampleTO#getBgeeGeneId()}.
+     * <li>{@code EXPRESSION_ID}: corresponds to {@link RNASeqResultTO#getExpressionId()}.
+     * </ul>
+     */
+    public enum OrderingAttribute implements DAO.OrderingAttribute {
+        LIBRARY_ANNOTATED_SAMPLE_ID("rnaSeqLibraryAnnotatedSampleId", Attribute.LIBRARY_ANNOTATED_SAMPLE_ID),
+        BGEE_GENE_ID("bgeeGeneId", Attribute.BGEE_GENE_ID),
+        EXPRESSION_ID("expressionId", Attribute.EXPRESSION_ID);
+
+        private final String fieldName;
+        private final Attribute correspondingAttribute;
+
+        private OrderingAttribute(String fieldName, Attribute correspondingAttribute) {
+            this.fieldName = fieldName;
+            this.correspondingAttribute = correspondingAttribute;
+        }
+
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
+        public Attribute getCorrespondingAttribute() {
+            return this.correspondingAttribute;
+        }
+    }
+
+    /**
      * Allows to retrieve {@code RNASeqResultAnnotatedSampleTO}s according to the provided filters.
      * <p>
      * The {@code RNASeqResultAnnotatedSampleTO}s are retrieved and returned as a
@@ -92,13 +122,64 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
      *                          to retrieve from the data source.
+     * @param orderingAttributes    A {@code LinkedHashMap} where keys are
+     *                              {@code RNASeqResultAnnotatedSampleDAO.OrderingAttribute}s defining
+     *                              the attributes used to order the returned {@code RNASeqResultAnnotatedSampleTO}s,
+     *                              the associated value being a {@code DAO.Direction}
+     *                              defining whether the ordering should be ascendant or descendant.
+     *                              If {@code null} or empty, the default ordering is
+     *                              {@code OrderingAttribute.LIBRARY_ANNOTATED_SAMPLE_ID} {@code ASC},
+     *                              {@code OrderingAttribute.BGEE_GENE_ID} {@code ASC}.
      * @return                  A {@code RNASeqResultAnnotatedSampleTOResultSet} allowing to retrieve the
-     *                          targeted {@code RNASeqResultAnnotatedSampleTOResultSet}s.
+     *                          targeted {@code RNASeqResultAnnotatedSampleTO}s.
      * @throws DAOException     If an error occurred while accessing the data source.
      */
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Long offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
+            Long offset, Integer limit, Collection<Attribute> attributes,
+            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) throws DAOException;
+
+    /**
+     * Allows to retrieve {@code RNASeqResultAnnotatedSampleTO}s according to the provided filters.
+     * <p>
+     * The {@code RNASeqResultAnnotatedSampleTO}s are retrieved and returned as a
+     * {@code RNASeqResultAnnotatedSampleTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters      A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                            how to filter annotated samples results to retrieve. The query uses
+     *                            AND between elements of a same filter and uses OR between filters.
+     * @param isSingleCell        A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                            If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                            If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                            If <strong>null</strong> all RNA-Seq are retrieved.
+     * @param notNullExpressionId A {@code boolean} used to retrieve only not null expressionIds. If true,
+     *                            not null expressionIds are retrieved. If false, all expressionIds are retrieved.
+     * @param offset              A {@code Long} used to specify which row to start from retrieving data
+     *                            in the result of a query. If null, retrieve data from the first row. If
+     *                            not null, a limit should be also provided.
+     *                            {@code Long} because sometimes the number of potential results
+     *                            can be very large.
+     * @param limit               An {@code Integer} used to limit the number of rows returned in a query
+     *                            result. If null, all results are returned.
+     * @param attributes          A {@code Collection} of {@code Attribute}s to specify the information
+     *                            to retrieve from the data source.
+     * @param orderingAttributes    A {@code LinkedHashMap} where keys are
+     *                              {@code RNASeqResultAnnotatedSampleDAO.OrderingAttribute}s defining
+     *                              the attributes used to order the returned {@code RNASeqResultAnnotatedSampleTO}s,
+     *                              the associated value being a {@code DAO.Direction}
+     *                              defining whether the ordering should be ascendant or descendant.
+     *                              If {@code null} or empty, the default ordering is
+     *                              {@code OrderingAttribute.LIBRARY_ANNOTATED_SAMPLE_ID} {@code ASC},
+     *                              {@code OrderingAttribute.BGEE_GENE_ID} {@code ASC}.
+     * @return                  A {@code RNASeqResultAnnotatedSampleTOResultSet} allowing to retrieve the
+     *                          targeted {@code RNASeqResultAnnotatedSampleTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
+     */
+    public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
+            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
+            boolean notNullExpressionId, Long offset, Integer limit, Collection<Attribute> attributes,
+            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s
@@ -196,11 +277,20 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
 
         @Override
         public String toString() {
-            return "RNASeqResultTO [rnaSeqLibraryAnnotatedSampleId=" + rnaSeqLibraryAnnotatedSampleId
-                    + ", abundanceUnit=" + abundanceUnit + ", abundance=" + abundance + ", readCount=" + readCount
-                    + ", umiCount=" + umiCount + ", zscore=" + zScore + ", callSourceDataTO=" + callSourceDataTO
-                    + ", rank=" + rank + "]";
+            StringBuilder builder = new StringBuilder();
+            builder.append("RNASeqResultAnnotatedSampleTO [")
+                   .append("rnaSeqLibraryAnnotatedSampleId=").append(rnaSeqLibraryAnnotatedSampleId)
+                   .append(", abundanceUnit=").append(abundanceUnit)
+                   .append(", abundance=").append(abundance)
+                   .append(", readCount=").append(readCount)
+                   .append(", umiCount=").append(umiCount)
+                   .append(", zScore=").append(zScore)
+                   .append(", callSourceDataTO=").append(callSourceDataTO)
+                   .append(", rank=").append(rank)
+                   .append("]");
+            return builder.toString();
         }
+
 
     }
 }

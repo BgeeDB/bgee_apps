@@ -32,7 +32,7 @@ import org.supercsv.prefs.CsvPreference;
  * them during taxon constraints generation.
  * Example of command line usage for this task: 
      *   {@code java -Dbgee.dao.jdbc.username={ROOT_MYSQL_USERNAME} -Dbgee.dao.jdbc.password={ROOT_MYSQL_PASS} 
-     *   -Dbgee.dao.jdbc.driver.names=com.mysql.jdbc.Driver 
+     *   -Dbgee.dao.jdbc.driver.names=com.mysql.cj.jdbc.Driver
      *   -Dbgee.dao.jdbc.url=jdbc:mysql://{SERVER_NAME}:3306/bgee_v{BGEE_VERSION}  
      *   -jar bgee-pipeline-{BGEE_VERSION}-with-dependencies.jar CorrectTaxonConstraints fromRDB}
  * 

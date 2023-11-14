@@ -175,14 +175,17 @@ public class GenerateXRefsFilesWithExprInfoTest extends TestAncestor {
         when(condGraphService.loadConditionGraphFromSpeciesIds(Collections.singleton(sp2.getId()),
                 null, allCondParams)).thenReturn(graphSpe2);
         when(speciesService.loadSpeciesByIds(null, false)).thenReturn(new HashSet<>(Arrays.asList(sp1, sp2)));
-        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g1.getSpecies().getId(), g1.getGeneId()), graphSpe1)).thenReturn(callsGene1);
-        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g2.getSpecies().getId(), g2.getGeneId()), graphSpe1)).thenReturn(callsGene2);
-        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g3.getSpecies().getId(), g3.getGeneId()), graphSpe2)).thenReturn(callsGene3);
-        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g4.getSpecies().getId(), g4.getGeneId()), graphSpe2)).thenReturn(callsGene4);
+        //Following lines disabled because it's not anymore the method
+        //loadCondCallsWithSilverAnatEntityCallsByAnatEntity that is used
+        //(and this method has been removed entirely)
+//        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+//                new GeneFilter(g1.getSpecies().getId(), g1.getGeneId()), graphSpe1)).thenReturn(callsGene1);
+//        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+//                new GeneFilter(g2.getSpecies().getId(), g2.getGeneId()), graphSpe1)).thenReturn(callsGene2);
+//        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+//                new GeneFilter(g3.getSpecies().getId(), g3.getGeneId()), graphSpe2)).thenReturn(callsGene3);
+//        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+//                new GeneFilter(g4.getSpecies().getId(), g4.getGeneId()), graphSpe2)).thenReturn(callsGene4);
         
         String outputFile = testFolder.newFile("XRefBgee.tsv").getPath();
 

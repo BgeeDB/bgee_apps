@@ -41,7 +41,14 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * <li>{@code SEQUENCED_TRANSCRIPT_PART}: corresponds to {@link RNASeqLibraryTO#getSequencedTranscriptPart()}.
      * <li>{@code FRAGMENTATION}: corresponds to {@link RNASeqLibraryTO#Fragmentation()}.
      * <li>{@code POPULATION_CAPTURE_ID}: corresponds to {@link RNASeqLibraryTO#getPopulationCaptureId()}.
+     * <li>{@code GENOTYPE}: corresponds to {@link RNASeqLibraryTO#getGenotype()}.
+     * <li>{@code ALL_READ_COUNT}: corresponds to {@link RNASeqLibraryTO#getAllReadCount()}.
+     * <li>{@code MAPPED_READ_COUNT}: corresponds to {@link RNASeqLibraryTO#getMappedReadCount()}.
+     * <li>{@code MIN_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMinReadLength()}.
+     * <li>{@code MAX_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMaxReadLength()}.
      * <li>{@code LIBRARY_TYPE}: corresponds to {@link RNASeqLibraryTO#getLibraryType()}.
+
+
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
@@ -50,7 +57,9 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         SAMPLE_MULTIPLEXING("sampleMultiplexing"), LIBRARY_MULTIPLEXING("libraryMultiplexing"),
         STRAND_SELECTION("strandSelection"), CELL_COMPARTMENT("cellCompartment"),
         SEQUENCED_TRANSCRIPT_PART("sequencedTranscriptPart"), FRAGMENTATION("fragmentation"),
-        POPULATION_CAPTURE_ID("rnaSeqPopulationCaptureId"), LIBRARY_TYPE("libraryType");
+        POPULATION_CAPTURE_ID("rnaSeqPopulationCaptureId"), GENOTYPE("genotype"), ALL_READ_COUNT("allReadsCount"),
+        MAPPED_READ_COUNT("mappedReadsCount"), MIN_READ_LENGTH("minReadLength"),
+        MAX_READ_LENGTH("maxReadLength"),LIBRARY_TYPE("libraryType");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTTO} class.
@@ -333,13 +342,32 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         private final SequencedTrancriptPart sequencedTranscriptPart;
         private final Integer fragmentation;
         private final String populationCaptureId;
+        private final String genotype;
+        /**
+         * An {@code int} representing the count of reads present in this library.
+         */
+        private final Integer allReadCount;
+        /**
+         * An {@code int} representing the count of reads mapped to anything.
+         */
+        private final Integer mappedReadCount;
+        /**
+         * An {@code int} representing the minimum length in bases of reads aligned in this library.
+         */
+        private final Integer minReadLength;
+        /**
+         * An {@code int} representing the maximum length in bases of reads aligned in this library.
+         */
+        private final Integer maxReadLength;
         private final LibraryType libraryType;
 
         public RNASeqLibraryTO(String rnaSeqLibraryId, String rnaSeqExperimentId, String sequencerName,
                 String technologyName, Boolean singleCell, Boolean sampleMultiplexing,
                 Boolean libraryMultiplexing, StrandSelection strandSelection,
                 CellCompartment cellCompartment, SequencedTrancriptPart seqTranscriptPart,
-                Integer fragmentation, String populationCaptureId, LibraryType libType) {
+                Integer fragmentation, String populationCaptureId, String genotype,
+                Integer allReadCount, Integer mappedReadCount, Integer minReadLength,
+                Integer maxReadLength, LibraryType libType) {
             super(rnaSeqLibraryId);
             this.rnaSeqExperimentId = rnaSeqExperimentId;
             this.sequencerName = sequencerName;
@@ -352,6 +380,11 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
             this.sequencedTranscriptPart = seqTranscriptPart;
             this.fragmentation = fragmentation;
             this.populationCaptureId = populationCaptureId;
+            this.genotype = genotype;
+            this.allReadCount = allReadCount;
+            this.mappedReadCount = mappedReadCount;
+            this.minReadLength = minReadLength;
+            this.maxReadLength = maxReadLength;
             this.libraryType = libType;
         }
 
@@ -388,6 +421,21 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         public String getPopulationCaptureId() {
             return populationCaptureId;
         }
+        public String getGenotype() {
+            return genotype;
+        }
+        public Integer getAllReadCount() {
+            return allReadCount;
+        }
+        public Integer getMappedReadCount() {
+            return mappedReadCount;
+        }
+        public Integer getMinReadLength() {
+            return minReadLength;
+        }
+        public Integer getMaxReadLength() {
+            return maxReadLength;
+        }
         public LibraryType getLibraryType() {
             return libraryType;
         }
@@ -399,7 +447,9 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
                     + sampleMultiplexing + ", libraryMultiplexing=" + libraryMultiplexing + ", strandSelection="
                     + strandSelection + ", cellCompartment=" + cellCompartment + ", sequencedTranscriptPart="
                     + sequencedTranscriptPart + ", fragmentation=" + fragmentation + ", populationCaptureId="
-                    + populationCaptureId + ", libraryType=" + libraryType + "]";
+                    + populationCaptureId + ", genotype=" + genotype + ", allReadCount=" + allReadCount
+                    + ", mappedReadCount=" + mappedReadCount + ", minReadLength=" + minReadLength + ", maxReadLength="
+                    + maxReadLength + ", libraryType=" + libraryType + "]";
         }
 
     }

@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
@@ -396,5 +398,93 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
                         .mapToObj(i -> "EXISTS(" + existsPart + " = ?)")
                         .collect(Collectors.joining(" AND "))
                 + ")) ");
+    }
+
+    protected static String generateAnatEntityCellTypeWhereFragment(Set<String> anatEntityIds,
+            Set<String> cellIds, String anatEntityTableFieldName, String cellTypeTableFieldName) {
+        log.traceEntry("{}, {}, {}, {}", anatEntityIds, cellIds, anatEntityTableFieldName, cellTypeTableFieldName);
+        StringBuilder sb = new StringBuilder();
+
+        int anatCellFields = 0;
+        if (!anatEntityIds.isEmpty()) {
+            anatCellFields++;
+        }
+        if (!cellIds.isEmpty()) {
+            anatCellFields++;
+        }
+
+        // It is possible that cell type terms are used to annotate the anat. entities.
+        // In order to solve this potential issue, we always check anat. entities and cell types
+        // in both columns.
+        if (anatCellFields > 0) {
+            sb.append(" (");
+        }
+        for (int i = 0; i < anatCellFields; i++) {
+            if (i > 0) {
+                sb.append(" OR ");
+            }
+            Set<String> ids1 = !anatEntityIds.isEmpty()? anatEntityIds: cellIds;
+            Set<String> ids2 = !anatEntityIds.isEmpty()? cellIds: Set.of();
+            if (i > 0) {
+                assert !anatEntityIds.isEmpty() && !cellIds.isEmpty();
+                ids1 = cellIds;
+                ids2 = anatEntityIds;
+            } else if (i > 1) {
+                throw log.throwing(new AssertionError("There is no more than 2 anatomy-related fields"));
+            }
+            assert !ids1.isEmpty();
+            sb.append(anatEntityTableFieldName).append(" IN (")
+              .append(BgeePreparedStatement.generateParameterizedQueryString(ids1.size()))
+              .append(")");
+            if (!ids2.isEmpty()) {
+                sb.append(" AND ")
+                  .append(cellTypeTableFieldName).append(" IN (")
+                  .append(BgeePreparedStatement.generateParameterizedQueryString(ids2.size()))
+                  .append(")");
+            }
+        }
+        if (anatCellFields > 0) {
+            sb.append(") ");
+        }
+
+        return log.traceExit(sb.toString());
+    }
+
+    protected static int parameterizeAnatEntityCellTypeWhereFragment(Set<String> anatEntityIds,
+            Set<String> cellIds, BgeePreparedStatement stmt, int paramIndex) throws SQLException {
+        log.traceEntry("{}, {}, {}, {}", anatEntityIds, cellIds, stmt, paramIndex);
+
+        int offsetParamIndex = paramIndex;
+
+        int anatCellFields = 0;
+        if (!anatEntityIds.isEmpty()) {
+            anatCellFields++;
+        }
+        if (!cellIds.isEmpty()) {
+            anatCellFields++;
+        }
+        // It is possible that cell type terms are used to annotate the anat. entities.
+        // In order to solve this potential issue, we always check anat. entities and cell types
+        // in both columns.
+        for (int i = 0; i < anatCellFields; i++) {
+            Set<String> ids1 = !anatEntityIds.isEmpty()? anatEntityIds: cellIds;
+            Set<String> ids2 = !anatEntityIds.isEmpty()? cellIds: Set.of();
+            if (i > 0) {
+                assert !anatEntityIds.isEmpty() && !cellIds.isEmpty();
+                ids1 = cellIds;
+                ids2 = anatEntityIds;
+            } else if (i > 1) {
+                throw log.throwing(new AssertionError("There is no more than 2 anatomy-related fields"));
+            }
+            assert !ids1.isEmpty();
+            stmt.setStrings(offsetParamIndex, ids1, true);
+            offsetParamIndex += ids1.size();
+            if (!ids2.isEmpty()) {
+                stmt.setStrings(offsetParamIndex, ids2, true);
+                offsetParamIndex += ids2.size();
+            }
+        }
+
+        return log.traceExit(offsetParamIndex);
     }
 }

@@ -18,6 +18,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -367,50 +368,15 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
             throw log.throwing(new IllegalArgumentException("condFilter can not be null"));
         }
 
-        Set<String> anatEntityIds = condFilter.getAnatEntityIds();
-        Set<String> cellIds = condFilter.getCellTypeIds();
-        int anatCellFields = 0;
-        if (!anatEntityIds.isEmpty()) {
-            anatCellFields++;
-        }
-        if (!cellIds.isEmpty()) {
-            anatCellFields++;
-        }
-
-        // It is possible that cell type terms are used to annotate the anat. entities.
-        // In order to solve this potential issue, we always check anat. entities and cell types
-        // in both columns.
         boolean previousCond = false;
-        if (anatCellFields > 0) {
-            sb.append(" (");
-        }
-        for (int i = 0; i < anatCellFields; i++) {
-            if (i > 0) {
-                sb.append(" OR ");
-            }
-            Set<String> ids1 = !anatEntityIds.isEmpty()? anatEntityIds: cellIds;
-            Set<String> ids2 = !anatEntityIds.isEmpty()? cellIds: Set.of();
-            if (i > 0) {
-                assert !anatEntityIds.isEmpty() && !cellIds.isEmpty();
-                ids1 = cellIds;
-                ids2 = anatEntityIds;
-            } else if (i > 1) {
-                throw log.throwing(new AssertionError("There is no more than 2 anatomy-related fields"));
-            }
-            assert !ids1.isEmpty();
-            sb.append(generateOneConditionParameterWhereClause(
-                    ConditionDAO.Attribute.ANAT_ENTITY_ID,
-                    ids1, previousCond));
-            if (!ids2.isEmpty()) {
-                sb.append(" AND ")
-                  .append(generateOneConditionParameterWhereClause(
-                          ConditionDAO.Attribute.CELL_TYPE_ID,
-                          ids2, previousCond));
-            }
-        }
-        if (anatCellFields > 0) {
+
+        String anatEntityCellTypeWhereClause = generateAnatEntityCellTypeWhereFragment(
+                condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                MySQLConditionDAO.TABLE_NAME + "." + ConditionDAO.Attribute.ANAT_ENTITY_ID.getTOFieldName(),
+                MySQLConditionDAO.TABLE_NAME + "." + ConditionDAO.Attribute.CELL_TYPE_ID.getTOFieldName());
+        if (StringUtils.isNotBlank(anatEntityCellTypeWhereClause)) {
             previousCond = true;
-            sb.append(") ");
+            sb.append(anatEntityCellTypeWhereClause);
         }
 
         if (!condFilter.getSpeciesIds().isEmpty()) {
@@ -475,36 +441,9 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         int offsetParamIndex = paramIndex;
         for (DAOConditionFilter2 condFilter: conditionFilters) {
 
-            Set<String> anatEntityIds = condFilter.getAnatEntityIds();
-            Set<String> cellIds = condFilter.getCellTypeIds();
-            int anatCellFields = 0;
-            if (!anatEntityIds.isEmpty()) {
-                anatCellFields++;
-            }
-            if (!cellIds.isEmpty()) {
-                anatCellFields++;
-            }
-            // It is possible that cell type terms are used to annotate the anat. entities.
-            // In order to solve this potential issue, we always check anat. entities and cell types
-            // in both columns.
-            for (int i = 0; i < anatCellFields; i++) {
-                Set<String> ids1 = !anatEntityIds.isEmpty()? anatEntityIds: cellIds;
-                Set<String> ids2 = !anatEntityIds.isEmpty()? cellIds: Set.of();
-                if (i > 0) {
-                    assert !anatEntityIds.isEmpty() && !cellIds.isEmpty();
-                    ids1 = cellIds;
-                    ids2 = anatEntityIds;
-                } else if (i > 1) {
-                    throw log.throwing(new AssertionError("There is no more than 2 anatomy-related fields"));
-                }
-                assert !ids1.isEmpty();
-                stmt.setStrings(offsetParamIndex, ids1, true);
-                offsetParamIndex += ids1.size();
-                if (!ids2.isEmpty()) {
-                    stmt.setStrings(offsetParamIndex, ids2, true);
-                    offsetParamIndex += ids2.size();
-                }
-            }
+            offsetParamIndex = parameterizeAnatEntityCellTypeWhereFragment(
+                    condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                    stmt, offsetParamIndex);
 
             if (!condFilter.getSpeciesIds().isEmpty()) {
                 stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);

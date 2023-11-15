@@ -5,11 +5,11 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -280,18 +280,11 @@ implements RawDataConditionDAO {
         }
         int offsetParamIndex = paramIndex;
         for (DAORawDataConditionFilter condFilter: conditionFilters) {
-            // It is possible that cell type terms are used to annotate the anat. entities.
-            // In order to solve this potential issue, we always check anat. entities and cell types
-            // in both columns.
-            Set<String> anatEntityCellTypeIds = new HashSet<>(condFilter.getAnatEntityIds());
-            anatEntityCellTypeIds.addAll(condFilter.getCellTypeIds());
 
-            if (!anatEntityCellTypeIds.isEmpty()) {
-                stmt.setStrings(offsetParamIndex, anatEntityCellTypeIds, true);
-                offsetParamIndex += anatEntityCellTypeIds.size();
-                stmt.setStrings(offsetParamIndex, anatEntityCellTypeIds, true);
-                offsetParamIndex += anatEntityCellTypeIds.size();
-            }
+            offsetParamIndex = parameterizeAnatEntityCellTypeWhereFragment(
+                    condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                    stmt, offsetParamIndex);
+
             if (!condFilter.getSpeciesIds().isEmpty()) {
                 stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);
                 offsetParamIndex += condFilter.getSpeciesIds().size();
@@ -319,30 +312,15 @@ implements RawDataConditionDAO {
             throw log.throwing(new IllegalArgumentException("condFilter can not be null"));
         }
 
-        Set<String> anatEntityIds = condFilter.getAnatEntityIds();
-        Set<String> cellIds = condFilter.getCellTypeIds();
-
-        // It is possible that cell type terms are used to annotate the anat. entities.
-        // In order to solve this potential issue, we always check anat. entities and cell types
-        // in both columns.
-        Set<String> anatEntityCellTypeIds = new HashSet<>(anatEntityIds);
-        anatEntityCellTypeIds.addAll(cellIds);
         boolean previousCond = false;
-        if (!anatEntityCellTypeIds.isEmpty()) {
-            sb.append("(")
-            .append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
-                    anatEntityCellTypeIds, previousCond));
-            if (!anatEntityIds.isEmpty() && !cellIds.isEmpty()) {
-                sb.append(" AND ");
-            } else {
-                sb.append(" OR ");
-            }
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
-                    anatEntityCellTypeIds, previousCond))
-            .append(")");
+
+        String anatEntityCellTypeWhereClause = generateAnatEntityCellTypeWhereFragment(
+                condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO.Attribute.ANAT_ENTITY_ID.getTOFieldName(),
+                MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO.Attribute.CELL_TYPE_ID.getTOFieldName());
+        if (StringUtils.isNotBlank(anatEntityCellTypeWhereClause)) {
             previousCond = true;
+            sb.append(anatEntityCellTypeWhereClause);
         }
 
         if (!condFilter.getSpeciesIds().isEmpty()) {

@@ -280,18 +280,38 @@ implements RawDataConditionDAO {
         }
         int offsetParamIndex = paramIndex;
         for (DAORawDataConditionFilter condFilter: conditionFilters) {
+
+            Set<String> anatEntityIds = condFilter.getAnatEntityIds();
+            Set<String> cellIds = condFilter.getCellTypeIds();
+            int anatCellFields = 0;
+            if (!anatEntityIds.isEmpty()) {
+                anatCellFields++;
+            }
+            if (!cellIds.isEmpty()) {
+                anatCellFields++;
+            }
             // It is possible that cell type terms are used to annotate the anat. entities.
             // In order to solve this potential issue, we always check anat. entities and cell types
             // in both columns.
-            Set<String> anatEntityCellTypeIds = new HashSet<>(condFilter.getAnatEntityIds());
-            anatEntityCellTypeIds.addAll(condFilter.getCellTypeIds());
-
-            if (!anatEntityCellTypeIds.isEmpty()) {
-                stmt.setStrings(offsetParamIndex, anatEntityCellTypeIds, true);
-                offsetParamIndex += anatEntityCellTypeIds.size();
-                stmt.setStrings(offsetParamIndex, anatEntityCellTypeIds, true);
-                offsetParamIndex += anatEntityCellTypeIds.size();
+            for (int i = 0; i < anatCellFields; i++) {
+                Set<String> ids1 = !anatEntityIds.isEmpty()? anatEntityIds: cellIds;
+                Set<String> ids2 = !anatEntityIds.isEmpty()? cellIds: Set.of();
+                if (i > 0) {
+                    assert !anatEntityIds.isEmpty() && !cellIds.isEmpty();
+                    ids1 = cellIds;
+                    ids2 = anatEntityIds;
+                } else if (i > 1) {
+                    throw log.throwing(new AssertionError("There is no more than 2 anatomy-related fields"));
+                }
+                assert !ids1.isEmpty();
+                stmt.setStrings(offsetParamIndex, ids1, true);
+                offsetParamIndex += ids1.size();
+                if (!ids2.isEmpty()) {
+                    stmt.setStrings(offsetParamIndex, ids2, true);
+                    offsetParamIndex += ids2.size();
+                }
             }
+
             if (!condFilter.getSpeciesIds().isEmpty()) {
                 stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);
                 offsetParamIndex += condFilter.getSpeciesIds().size();
@@ -321,28 +341,48 @@ implements RawDataConditionDAO {
 
         Set<String> anatEntityIds = condFilter.getAnatEntityIds();
         Set<String> cellIds = condFilter.getCellTypeIds();
+        int anatCellFields = 0;
+        if (!anatEntityIds.isEmpty()) {
+            anatCellFields++;
+        }
+        if (!cellIds.isEmpty()) {
+            anatCellFields++;
+        }
 
         // It is possible that cell type terms are used to annotate the anat. entities.
         // In order to solve this potential issue, we always check anat. entities and cell types
         // in both columns.
-        Set<String> anatEntityCellTypeIds = new HashSet<>(anatEntityIds);
-        anatEntityCellTypeIds.addAll(cellIds);
         boolean previousCond = false;
-        if (!anatEntityCellTypeIds.isEmpty()) {
-            sb.append("(")
-            .append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
-                    anatEntityCellTypeIds, previousCond));
-            if (!anatEntityIds.isEmpty() && !cellIds.isEmpty()) {
-                sb.append(" AND ");
-            } else {
+        if (anatCellFields > 0) {
+            sb.append(" (");
+        }
+        for (int i = 0; i < anatCellFields; i++) {
+            if (i > 0) {
                 sb.append(" OR ");
             }
+            Set<String> ids1 = !anatEntityIds.isEmpty()? anatEntityIds: cellIds;
+            Set<String> ids2 = !anatEntityIds.isEmpty()? cellIds: Set.of();
+            if (i > 0) {
+                assert !anatEntityIds.isEmpty() && !cellIds.isEmpty();
+                ids1 = cellIds;
+                ids2 = anatEntityIds;
+            } else if (i > 1) {
+                throw log.throwing(new AssertionError("There is no more than 2 anatomy-related fields"));
+            }
+            assert !ids1.isEmpty();
             sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
-                    anatEntityCellTypeIds, previousCond))
-            .append(")");
+                    RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
+                    ids1, previousCond));
+            if (!ids2.isEmpty()) {
+                sb.append(" AND ")
+                  .append(generateOneConditionParameterWhereClause(
+                          RawDataConditionDAO.Attribute.CELL_TYPE_ID,
+                          ids2, previousCond));
+            }
+        }
+        if (anatCellFields > 0) {
             previousCond = true;
+            sb.append(") ");
         }
 
         if (!condFilter.getSpeciesIds().isEmpty()) {

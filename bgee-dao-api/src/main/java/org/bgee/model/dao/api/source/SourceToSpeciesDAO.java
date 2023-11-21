@@ -131,7 +131,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
              *                                  to any {@code InfoType}.
              */
             public static final InfoType convertToInfoType(String representation) {
-                log.entry(representation);
+                log.traceEntry("{}", representation);
                 return log.traceExit(TransferObject.convert(InfoType.class, representation));
             }
 

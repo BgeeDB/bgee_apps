@@ -52,7 +52,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
     @Override
     public SourceToSpeciesTOResultSet getAllSourceToSpecies(
             Collection<SourceToSpeciesDAO.Attribute> attibutes) throws DAOException {
-        log.entry(attibutes);
+        log.traceEntry("{}", attibutes);
         return log.traceExit(this.getSourceToSpecies(null, null, null, null, attibutes));
         
     }
@@ -61,7 +61,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
     public SourceToSpeciesTOResultSet getSourceToSpecies(Collection<Integer> dataSourceIds,
             Collection<Integer> speciesIds, Collection<DAODataType> dataTypes, Collection<InfoType> infoTypes,
             Collection<SourceToSpeciesDAO.Attribute> attributes) throws DAOException {
-        log.entry(dataSourceIds, speciesIds, dataTypes, infoTypes, attributes);
+        log.traceEntry("{}, {}, {}, {}, {}", dataSourceIds, speciesIds, dataTypes, infoTypes, attributes);
 
         Set<SourceToSpeciesDAO.Attribute> attributesToUse = attributes == null || attributes.isEmpty()? 
                 EnumSet.allOf(SourceToSpeciesDAO.Attribute.class) :

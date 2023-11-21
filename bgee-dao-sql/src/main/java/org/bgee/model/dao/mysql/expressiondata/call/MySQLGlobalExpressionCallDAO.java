@@ -580,7 +580,7 @@ implements GlobalExpressionCallDAO {
                     if (dt.equals(DAODataType.RNA_SEQ)) {
                         //Since RnaSeq is a substring of ScRnaSeqFullLength, we need do to that
                         String fieldNameWithoutFullLength = fieldName
-                            .replace(DAODataType.FULL_LENGTH.getFieldNamePart(), "");
+                            .replace(DAODataType.SC_RNA_SEQ.getFieldNamePart(), "");
                         if (fieldNameWithoutFullLength.contains(dt.getFieldNamePart())) {
                             return true;
                         }

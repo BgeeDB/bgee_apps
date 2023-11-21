@@ -1239,7 +1239,7 @@ public class InsertPropagatedCalls extends CallService {
                         case IN_SITU:
                             return DAODataType.IN_SITU;
                         case SC_RNA_SEQ:
-                            return DAODataType.FULL_LENGTH;
+                            return DAODataType.SC_RNA_SEQ;
                         default:
                             throw log.throwing(new IllegalStateException(
                                     "Unsupported condition parameter: " + dt));

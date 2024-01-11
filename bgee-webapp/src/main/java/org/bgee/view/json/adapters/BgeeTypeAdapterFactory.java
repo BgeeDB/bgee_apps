@@ -97,7 +97,7 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
         }
         if (SpeciesGeneListResponse.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new SpeciesGeneListResponseTypeAdapter(this.utils);
+            TypeAdapter<T> result = (TypeAdapter<T>) new SpeciesGeneListResponseTypeAdapter(gson, this.utils);
             return log.traceExit(result);
         }
         if (GeneExpressionResponse.class.isAssignableFrom(rawClass) ) {

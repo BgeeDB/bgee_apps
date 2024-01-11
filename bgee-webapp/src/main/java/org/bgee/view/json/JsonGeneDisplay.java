@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
+import org.bgee.controller.CommandGene.SpeciesGeneListResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
@@ -40,7 +41,7 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 
     @Override
     public void displayGeneSearchResult(String searchTerm, SearchMatchResult<Gene> result) {
-        log.traceEntry("{}. {}", searchTerm, result);
+        log.traceEntry("{}, {}", searchTerm, result);
         LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
         resultHashMap.put("query", searchTerm);
         resultHashMap.put("result", result);
@@ -48,6 +49,13 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
                 resultHashMap);
         log.traceExit();
         
+    }
+
+    @Override
+    public void displaySpeciesGeneList(SpeciesGeneListResponse speciesGeneListResponse) {
+        log.traceEntry("{}", speciesGeneListResponse);
+        this.sendResponse("Species gene list", speciesGeneListResponse);
+        log.traceExit();
     }
 
     @Override

@@ -1,11 +1,13 @@
 package org.bgee.controller;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -32,6 +34,7 @@ import org.bgee.model.gene.GeneHomologsService;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.search.SearchMatchResult;
+import org.bgee.model.species.Species;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -42,7 +45,7 @@ import org.bgee.view.ViewFactory;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 15.0, Jan. 2023
+ * @version Bgee 15.1, Jan. 2024
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -143,6 +146,63 @@ public class CommandGene extends CommandParent {
         }
     }
 
+    /**
+     * A class to hold the response to retrieve all {@code Gene}s belonging to a {@code Species}.
+     *
+     * @author Frederic Bastian
+     * @version Bgee 15.1, Jan. 2024
+     * @since Bgee 15.1, Jan. 2024
+     */
+    public static class SpeciesGeneListResponse {
+        private final Species species;
+        private final List<Gene> genes;
+
+        public SpeciesGeneListResponse(Species species, List<Gene> genes) {
+            this.species = species;
+            this.genes = genes == null? Collections.emptyList():
+                Collections.unmodifiableList(genes);
+        }
+
+        /**
+         * @return  The {@code Species} the {@code Gene}s have been retrieved for.
+         */
+        public Species getSpecies() {
+            return species;
+        }
+        /**
+         * @return  An unmodifiable {@code List} of {@code Gene}s
+         *          belonging to the {@code Species}.
+         */
+        public List<Gene> getGenes() {
+            return genes;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(genes, species);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SpeciesGeneListResponse other = (SpeciesGeneListResponse) obj;
+            return Objects.equals(genes, other.genes) && Objects.equals(species, other.species);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("SpeciesGeneListResponse [")
+                   .append("species=").append(species)
+                   .append(", genes=").append(genes)
+                   .append("]");
+            return builder.toString();
+        }
+    }
 
     /**
      * Constructor
@@ -173,6 +233,9 @@ public class CommandGene extends CommandParent {
         GeneHomologsService geneHomologsService = serviceFactory.getGeneHomologsService();
         CallService callService = serviceFactory.getCallService();
 
+        //*******************************************
+        // GENE SEARCHES
+        //*******************************************
         //Search for genes based on search term
         if (StringUtils.isNotBlank(search)) {
             int limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
@@ -186,7 +249,16 @@ public class CommandGene extends CommandParent {
             display.displayGeneSearchResult(search, result);
             log.traceExit(); return;
         }
+        //Retrieve all genes belonging to a species
+        if (RequestParameters.ACTION_SPECIES_GENE_LIST.equals(action)) {
+            this.processSpeciesGeneList(geneService, display);
+            log.traceExit(); return;
+        }
 
+
+        //*******************************************
+        // REQUESTS FOR SPECIFIC GENE ID
+        //*******************************************
         //Now, all following queries should be based on a geneId
         if (geneId == null) {
             throw log.throwing(new InvalidRequestException("At least one gene ID should be provided."));
@@ -221,6 +293,40 @@ public class CommandGene extends CommandParent {
         throw log.throwing(new InvalidRequestException("We could not understand your query"));
     }
 
+    private void processSpeciesGeneList(GeneService geneService, GeneDisplay display)
+            throws InvalidRequestException, PageNotFoundException {
+        log.traceEntry("{}, {}", geneService, display);
+        Integer speciesId = requestParameters.getSpeciesId();
+        if (speciesId == null || speciesId < 1) {
+            throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
+        }
+
+        GeneFilter filter = new GeneFilter(speciesId);
+        Comparator<Gene> comparator = Comparator.<Gene, String>comparing(
+                g -> g.getName(), Comparator.nullsLast(String::compareTo))
+                .thenComparing(g -> g.getGeneId());
+
+        List<Gene> genes = null;
+        try {
+            genes = geneService.loadGenes(filter)
+                    .sorted(comparator)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException | GeneNotFoundException e) {
+            //we do nothing here, the speciesId was probably incorrect, this will throw
+            //a PageNotFoundException below;
+            log.catching(e);
+        }
+        if (genes == null || genes.size() == 0) {
+            throw log.throwing(new PageNotFoundException("No gene found belonging to speciesId " + speciesId));
+        }
+        //Retrieve the Species from any gene
+        Species species = genes.stream().findAny().get().getSpecies();
+        SpeciesGeneListResponse response = new SpeciesGeneListResponse(species, genes);
+
+        display.displaySpeciesGeneList(response);
+
+        log.traceExit();
+    }
     /**
      * Process the request for general information about a gene ID. The info for several genes
      * can be displayed if the gene ID exists in several species (since in Bgee we sometimes use

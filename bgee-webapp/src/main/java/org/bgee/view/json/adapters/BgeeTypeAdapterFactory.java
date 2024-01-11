@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandData.ExpressionCallResponse;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
+import org.bgee.controller.CommandGene.SpeciesGeneListResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
 import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis;
@@ -92,6 +93,11 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
             @SuppressWarnings("unchecked")
             TypeAdapter<T> result = (TypeAdapter<T>) new GeneTypeAdapter(gson, urlEncodeFunction,
                     this.utils);
+            return log.traceExit(result);
+        }
+        if (SpeciesGeneListResponse.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new SpeciesGeneListResponseTypeAdapter(this.utils);
             return log.traceExit(result);
         }
         if (GeneExpressionResponse.class.isAssignableFrom(rawClass) ) {

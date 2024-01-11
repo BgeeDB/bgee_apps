@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
+import org.bgee.controller.CommandGene.SpeciesGeneListResponse;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.search.SearchMatchResult;
@@ -25,6 +26,14 @@ public interface GeneDisplay {
      * @param result        A {@code GeneMatchResult} that are the results of the query. 
      */
     void displayGeneSearchResult(String searchTerm, SearchMatchResult<Gene> result);
+
+    /**
+     * Display a list of all genes belonging to a species.
+     *
+     * @param speciesGeneListResponse   The {@code SpeciesGeneListResponse} containing the response
+     *                                  to querying all {@code Gene}s for a {@code Species}.
+     */
+    void displaySpeciesGeneList(SpeciesGeneListResponse speciesGeneListResponse);
 
     /**
      * Displays the general information for a list of genes.

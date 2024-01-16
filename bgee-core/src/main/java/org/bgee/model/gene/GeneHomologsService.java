@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -355,9 +356,31 @@ public class GeneHomologsService extends CommonService{
                 source.getReleaseDate(), source.getReleaseVersion(), source.getToDisplay(),
                 source.getCategory(), source.getDisplayOrder()));
     }
-    private static GeneXRef loadXRef(Gene gene, Source source) {
+    private GeneXRef loadXRef(Gene gene, Source source) {
         log.traceEntry("{}, {}", gene, source);
-        return log.traceExit(new GeneXRef(gene.getGeneId(), gene.getName(), source,
+
+        // Our source of homology is OMA. They use the gene ID as XRefId for species from Ensembl
+        // and UniProt IDs for other species. We then had to hardcode the generation of the homology
+        // XRefId depending on the source of the species. It is ugly because we have to harcode the name of
+        // the sources but it is mandatory for now. If the genome comes from Ensembl then the XRef ID is the
+        // gene ID otherwise it is the UniProt ID.
+        // e.g. OMA XRef for gene 399314 (cdk2 from X. leavis) is not https://omabrowser.org/oma/vps/399314
+        // but https://omabrowser.org/oma/vps/CDK2_XENLA OR https://omabrowser.org/oma/vps/P23437
+        //TODO: remove once OMA does not anymore generate XRefs depending on the genome source
+        String xrefId = gene.getGeneId();
+        Gene geneWithXrefs = this.getServiceFactory().getGeneService()
+                .loadGenes(List.of(new GeneFilter(gene.getSpecies().getId(), gene.getGeneId())),
+                true, false, true).findFirst().get();
+        if (!geneWithXrefs.getSpecies().getGenomeSource().getName().equals("Ensembl")) {
+            String uniProtSourcePrefix = "UniProtKB";
+            xrefId = geneWithXrefs.getXRefs().stream().filter(x -> 
+            x.getSource().getName().length() >= uniProtSourcePrefix.length() &&
+            x.getSource().getName().substring(0, uniProtSourcePrefix.length()).equals(uniProtSourcePrefix))
+                    .map(x -> x.getXRefId())
+                    .findFirst().get();
+        }
+
+        return log.traceExit(new GeneXRef(xrefId, gene.getName(), source,
                 gene.getGeneId(), gene.getSpecies().getScientificName()));
     }
     /**

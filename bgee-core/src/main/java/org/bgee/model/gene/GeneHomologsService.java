@@ -372,12 +372,16 @@ public class GeneHomologsService extends CommonService{
                 .loadGenes(List.of(new GeneFilter(gene.getSpecies().getId(), gene.getGeneId())),
                 true, false, true).findFirst().get();
         if (!geneWithXrefs.getSpecies().getGenomeSource().getName().equals("Ensembl")) {
-            String uniProtSourcePrefix = "UniProtKB";
-            xrefId = geneWithXrefs.getXRefs().stream().filter(x -> 
-            x.getSource().getName().length() >= uniProtSourcePrefix.length() &&
-            x.getSource().getName().substring(0, uniProtSourcePrefix.length()).equals(uniProtSourcePrefix))
+            List<String> uniprotXrefs = geneWithXrefs.getXRefs().stream()
+                    .filter(x -> x.getSource().getName()!= null && x.getSource()
+                        .getName().equals("UniProtKB/Swiss-Prot"))
                     .map(x -> x.getXRefId())
-                    .findFirst().get();
+                    // sort to be sure to always retrieve the same UniProt ID when more than one exist
+                    .sorted()
+                    .collect(Collectors.toList());
+            if (uniprotXrefs != null && !uniprotXrefs.isEmpty()) {
+                xrefId = uniprotXrefs.get(0);
+            }
         }
 
         return log.traceExit(new GeneXRef(xrefId, gene.getName(), source,

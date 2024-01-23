@@ -9,13 +9,16 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.Entity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
 import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -56,31 +59,53 @@ public class CommandSpecies extends CommandParent {
         log.traceEntry();
         
         SpeciesDisplay display = this.viewFactory.getSpeciesDisplay();
-        
-        // Get submitted species ID
+        SpeciesService service = this.serviceFactory.getSpeciesService();
+
+        String action = requestParameters.getAction();
         Integer speciesId = this.requestParameters.getSpeciesId();
+
         if (speciesId != null) {
-            final Set<Species> speciesSet = this.serviceFactory.getSpeciesService()
-                    .loadSpeciesByIds(Collections.singleton(speciesId), true);
+            Set<Species> speciesSet = Collections.emptySet();
+            Set<Integer> speciesIds = Collections.singleton(speciesId);
+
+            if (RequestParameters.ACTION_SPECIES_NAME.equals(action)) {
+                speciesSet = service.loadSpeciesByIds(speciesIds, false);
+
+            } else if (StringUtils.isBlank(action)) {
+                //Originally, there wasn't several actions for this "species" page,
+                //so a blank action was notably to get the SpeciesDataGroup the species belongs to.
+                speciesSet = service.loadSpeciesByIds(speciesIds, true);
+
+            } else {
+                throw log.throwing(new InvalidRequestException(
+                        "This action is invalid when providing a species ID"));
+            }
             if (speciesSet.isEmpty()) {
                 throw log.throwing(new PageNotFoundException());
             }
             assert speciesSet.size() == 1;
             
             Species sp = speciesSet.iterator().next();
-            
-            List<SpeciesDataGroup> groups = serviceFactory.getSpeciesDataGroupService().loadAllSpeciesDataGroup();
-            if (groups.isEmpty()) {
-                throw log.throwing(new IllegalStateException("A SpeciesDataGroupService did not allow "
-                        + "to obtain any SpeciesDataGroup."));
+            Set<SpeciesDataGroup> speciesDataGroups = null;
+
+            if (StringUtils.isBlank(action)) {
+                //Originally, there wasn't several actions for this "species" page,
+                //so a blank action was notably to get the SpeciesDataGroup the species belongs to.
+                List<SpeciesDataGroup> groups = serviceFactory.getSpeciesDataGroupService().loadAllSpeciesDataGroup();
+                if (groups.isEmpty()) {
+                    throw log.throwing(new IllegalStateException("A SpeciesDataGroupService did not allow "
+                            + "to obtain any SpeciesDataGroup."));
+                }
+
+                speciesDataGroups = groups.stream()
+                        .filter(g -> g.isSingleSpecies() && g.getMembers().contains(sp))
+                        .collect(Collectors.toSet());
+                assert speciesDataGroups.size() == 1;
+
             }
 
-            Set<SpeciesDataGroup> speciesDataGroups = groups.stream()
-                    .filter(g -> g.isSingleSpecies() && g.getMembers().contains(sp))
-                    .collect(Collectors.toSet());
-            assert speciesDataGroups.size() == 1;
-
-            display.displaySpecies(sp, speciesDataGroups.iterator().next());
+            display.displaySpecies(sp, speciesDataGroups == null || speciesDataGroups.isEmpty()?
+                    null: speciesDataGroups.iterator().next());
             
             log.traceExit(); return;
         }
@@ -90,8 +115,7 @@ public class CommandSpecies extends CommandParent {
 
         if (submittedSpeciesIds != null && !submittedSpeciesIds.isEmpty()) {
             // Load detected species
-            Set<Species> species = this.serviceFactory.getSpeciesService().
-                    loadSpeciesByIds(submittedSpeciesIds, true);
+            Set<Species> species = service.loadSpeciesByIds(submittedSpeciesIds, true);
             if (species.isEmpty()) {
                 throw log.throwing(new IllegalStateException(
                         "A SpeciesService did not allow to obtain any Species."));
@@ -108,7 +132,7 @@ public class CommandSpecies extends CommandParent {
             log.traceExit(); return;
         }
 
-        Set<Species> species = this.serviceFactory.getSpeciesService().loadSpeciesByIds(null, false);
+        Set<Species> species = service.loadSpeciesByIds(null, false);
         display.displaySpeciesHomePage(species.stream()
                 .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
                 .collect(Collectors.toList()));

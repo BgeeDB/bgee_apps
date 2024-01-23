@@ -63,10 +63,13 @@ public class SpeciesGeneListResponseTypeAdapter extends TypeAdapter<SpeciesGeneL
         out.beginObject();
         out.name("geneId").value(value.getGeneId());
         out.name("name").value(value.getName());
-        out.name("description").value(value.getDescription());
+        //We decided to disable those for a lighter response,
+        //the response is large since we return all genes for a species
 
-        out.name("geneBioType");
-        this.gson.getAdapter(GeneBioType.class).write(out, value.getGeneBioType());
+//        out.name("description").value(value.getDescription());
+//
+//        out.name("geneBioType");
+//        this.gson.getAdapter(GeneBioType.class).write(out, value.getGeneBioType());
 
         out.name("geneMappedToSameGeneIdCount").value(value.getGeneMappedToSameGeneIdCount());
 

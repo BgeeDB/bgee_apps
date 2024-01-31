@@ -65,10 +65,17 @@ public final class GeneHomologsTypeAdapter extends TypeAdapter<GeneHomologs> {
         out.name("paralogsByTaxon");
         this.writeHomologsByTaxon(out, value.getGene(), value.getParalogsByTaxon());
 
-        out.name("orthologyXRef");
-        this.gson.getAdapter(GeneXRef.class).write(out, value.getOrthologyXRef());
-        out.name("paralogyXRef");
-        this.gson.getAdapter(GeneXRef.class).write(out, value.getParalogyXRef());
+        //TODO: the approach to generate XRefs does not work for some species.
+        // In order to avoid broken links we temporarily do not provide links for
+        // those species. It is a temporary hack. XRefs for those species have to be
+        // activated again once OMA Ids are inserted in the database
+        Set<Integer> speciesWithoutXRefs = Set.of(7936, 8355, 8364, 9974, 105023);
+        if (! speciesWithoutXRefs.contains(value.getGene().getSpecies().getId())) {
+            out.name("orthologyXRef");
+            this.gson.getAdapter(GeneXRef.class).write(out, value.getOrthologyXRef());
+            out.name("paralogyXRef");
+            this.gson.getAdapter(GeneXRef.class).write(out, value.getParalogyXRef());
+        }
 
         out.endObject();
         log.traceExit();

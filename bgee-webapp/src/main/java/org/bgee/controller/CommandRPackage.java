@@ -308,11 +308,17 @@ public class CommandRPackage extends CommandParent {
                     dataTypes.containsAll(Set.of(DataType.RNA_SEQ, DataType.SC_RNA_SEQ)))
                 ) {
             
-            Path finalGeneToAnatEntitiesFile = Paths.get(this.prop.getTopAnatResultsWritingDirectory(), 
+            Path finalGeneToAnatEntitiesFile = Paths.get(this.prop.getTopAnatResultsWritingDirectory(),
+                    //Directory used to separate topAnat web files from topAnatR files. Only used for clarity.
+                    //TODO:  Do not use that directory anymore once topAnat has been refactored.
+                    "topAnat_R", 
                     CommandRPackage.getGeneToAnatEntitiesFileName(false, speciesId,
                             callType, stageIds == null || stageIds.isEmpty()? null : stageIds.get(0),
                                     dataTypes, this.checkAndGetSummaryQuality()));
             Path tmpFile = Paths.get(this.prop.getTopAnatResultsWritingDirectory(), 
+                    //Directory used to separate topAnat web files from topAnatR files. Only used for clarity.
+                    //TODO:  Do not use that directory anymore once topAnat has been refactored.
+                    "topAnat_R", 
                     CommandRPackage.getGeneToAnatEntitiesFileName(true, speciesId,
                             callType, stageIds == null || stageIds.isEmpty()? null : stageIds.get(0),
                                     dataTypes, this.checkAndGetSummaryQuality()));//, 

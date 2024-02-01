@@ -198,12 +198,12 @@ public class TopAnatAnalysis extends CommonService {
             Path target = Paths.get(targetFunctionFile.getPath());
             if (!targetFunctionFile.exists()) {
                 try{
-                    this.controller.acquireReadLock(sourceFunctionFileName);
-                    this.controller.acquireWriteLock(targetFunctionFile.getPath());
+                    controller.getReadWriteLocks().acquireReadLock(sourceFunctionFileName);
+                    controller.getReadWriteLocks().acquireWriteLock(targetFunctionFile.getPath());
                     Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
                 } finally{
-                    this.controller.releaseReadLock(sourceFunctionFileName);
-                    this.controller.releaseWriteLock(targetFunctionFile.getPath());
+                    controller.getReadWriteLocks().releaseReadLock(sourceFunctionFileName);
+                    controller.getReadWriteLocks().releaseWriteLock(targetFunctionFile.getPath());
                 }
             }
             
@@ -302,15 +302,15 @@ public class TopAnatAnalysis extends CommonService {
 
         try {
 
-            this.controller.acquireReadLock(namesFileName);
-            this.controller.acquireReadLock(relsFileName);
-            this.controller.acquireReadLock(geneToAnatEntitiesFile);
+            controller.getReadWriteLocks().acquireReadLock(namesFileName);
+            controller.getReadWriteLocks().acquireReadLock(relsFileName);
+            controller.getReadWriteLocks().acquireReadLock(geneToAnatEntitiesFile);
 
-            this.controller.acquireWriteLock(tmpFileName);
-            this.controller.acquireWriteLock(fileName);
+            controller.getReadWriteLocks().acquireWriteLock(tmpFileName);
+            controller.getReadWriteLocks().acquireWriteLock(fileName);
 
-            this.controller.acquireWriteLock(tmpPdfFileName);
-            this.controller.acquireWriteLock(pdfFileName);
+            controller.getReadWriteLocks().acquireWriteLock(tmpPdfFileName);
+            controller.getReadWriteLocks().acquireWriteLock(pdfFileName);
 
             //check, AFTER having acquired the locks, that the final files do not 
             //already exist (maybe another thread generated the files before this one 
@@ -364,13 +364,13 @@ public class TopAnatAnalysis extends CommonService {
         } finally {
             Files.deleteIfExists(tmpFile);
             Files.deleteIfExists(tmpPdfFile);
-            this.controller.releaseWriteLock(tmpFileName);
-            this.controller.releaseWriteLock(fileName);
-            this.controller.releaseWriteLock(tmpPdfFileName);
-            this.controller.releaseWriteLock(pdfFileName);
-            this.controller.releaseReadLock(namesFileName);
-            this.controller.releaseReadLock(relsFileName);
-            this.controller.releaseReadLock(geneToAnatEntitiesFile);   
+            controller.getReadWriteLocks().releaseWriteLock(tmpFileName);
+            controller.getReadWriteLocks().releaseWriteLock(fileName);
+            controller.getReadWriteLocks().releaseWriteLock(tmpPdfFileName);
+            controller.getReadWriteLocks().releaseWriteLock(pdfFileName);
+            controller.getReadWriteLocks().releaseReadLock(namesFileName);
+            controller.getReadWriteLocks().releaseReadLock(relsFileName);
+            controller.getReadWriteLocks().releaseReadLock(geneToAnatEntitiesFile);   
         }
 
         log.info("Result file path: {}", this.getResultFilePath(false));
@@ -396,8 +396,8 @@ public class TopAnatAnalysis extends CommonService {
         Path finalFile = Paths.get(fileName);
 
         try {
-            this.controller.acquireWriteLock(tmpFileName);
-            this.controller.acquireWriteLock(fileName);
+            controller.getReadWriteLocks().acquireWriteLock(tmpFileName);
+            controller.getReadWriteLocks().acquireWriteLock(fileName);
 
             //if the file already exists, we remove it, because we need anyway to call writeRcodeFile, 
             //to set the R code (bad design)
@@ -412,8 +412,8 @@ public class TopAnatAnalysis extends CommonService {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.controller.releaseWriteLock(tmpFileName);
-            this.controller.releaseWriteLock(fileName);
+            controller.getReadWriteLocks().releaseWriteLock(tmpFileName);
+            controller.getReadWriteLocks().releaseWriteLock(fileName);
         }
 
         log.info("Rcode file path: {}", 
@@ -448,13 +448,13 @@ public class TopAnatAnalysis extends CommonService {
         //so that we can create it immediately. 
         String dir = this.getResultDirectoryPath();
         try {
-            this.controller.acquireWriteLock(dir);
+            controller.getReadWriteLocks().acquireWriteLock(dir);
             File newDir = new File(dir);
             if (!newDir.exists()) {
                 newDir.mkdirs();
             }
         } finally {
-            this.controller.releaseWriteLock(dir);
+            controller.getReadWriteLocks().releaseWriteLock(dir);
         }
         log.traceExit();
     }
@@ -487,10 +487,10 @@ public class TopAnatAnalysis extends CommonService {
                 relsFileName);
 
         try {
-            this.controller.acquireWriteLock(namesTmpFile.toString());
-            this.controller.acquireWriteLock(finalNamesFile.toString());
-            this.controller.acquireWriteLock(relsTmpFile.toString());
-            this.controller.acquireWriteLock(finalRelsFile.toString());
+            controller.getReadWriteLocks().acquireWriteLock(namesTmpFile.toString());
+            controller.getReadWriteLocks().acquireWriteLock(finalNamesFile.toString());
+            controller.getReadWriteLocks().acquireWriteLock(relsTmpFile.toString());
+            controller.getReadWriteLocks().acquireWriteLock(finalRelsFile.toString());
 
             //check, AFTER having acquired the locks, that the final files do not 
             //already exist (maybe another thread generated the files before this one 
@@ -517,10 +517,10 @@ public class TopAnatAnalysis extends CommonService {
         } finally {
             Files.deleteIfExists(namesTmpFile);
             Files.deleteIfExists(relsTmpFile);
-            this.controller.releaseWriteLock(namesTmpFile.toString());
-            this.controller.releaseWriteLock(finalNamesFile.toString());
-            this.controller.releaseWriteLock(relsTmpFile.toString());
-            this.controller.releaseWriteLock(finalRelsFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(namesTmpFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(finalNamesFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(relsTmpFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(finalRelsFile.toString());
         }
 
         log.info("anatEntitiesNamesFilePath: {} - relationshipsFilePath: {}", 
@@ -668,8 +668,8 @@ public class TopAnatAnalysis extends CommonService {
         }
 
         try {
-            this.controller.acquireWriteLock(finalGeneToAnatEntitiesFile.toString());
-            this.controller.acquireWriteLock(tmpFile.toString());
+            this.controller.getReadWriteLocks().acquireWriteLock(finalGeneToAnatEntitiesFile.toString());
+            this.controller.getReadWriteLocks().acquireWriteLock(tmpFile.toString());
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
@@ -693,8 +693,8 @@ public class TopAnatAnalysis extends CommonService {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.controller.releaseWriteLock(finalGeneToAnatEntitiesFile.toString());
-            this.controller.releaseWriteLock(tmpFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(finalGeneToAnatEntitiesFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(tmpFile.toString());
         }
 
 
@@ -751,8 +751,8 @@ public class TopAnatAnalysis extends CommonService {
         Path finalTopAnatParamsFile = Paths.get(topAnatParamsFilePath);
 
         try {
-            this.controller.acquireWriteLock(topAnatParamsFilePath);
-            this.controller.acquireWriteLock(tmpFileName);
+            this.controller.getReadWriteLocks().acquireWriteLock(topAnatParamsFilePath);
+            this.controller.getReadWriteLocks().acquireWriteLock(tmpFileName);
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
@@ -768,8 +768,8 @@ public class TopAnatAnalysis extends CommonService {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.controller.releaseWriteLock(topAnatParamsFilePath);
-            this.controller.releaseWriteLock(tmpFileName);
+            this.controller.getReadWriteLocks().releaseWriteLock(topAnatParamsFilePath);
+            this.controller.getReadWriteLocks().releaseWriteLock(tmpFileName);
         }
 
         log.info("TopAnatParamsFilePath: {}", this.getParamsOutputFilePath(false));
@@ -789,8 +789,8 @@ public class TopAnatAnalysis extends CommonService {
         Path finalZipFile = Paths.get(zipFilePath);
 
         try {
-            this.controller.acquireWriteLock(zipFilePath);
-            this.controller.acquireWriteLock(tmpFileName);
+            this.controller.getReadWriteLocks().acquireWriteLock(zipFilePath);
+            this.controller.getReadWriteLocks().acquireWriteLock(tmpFileName);
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
@@ -806,8 +806,8 @@ public class TopAnatAnalysis extends CommonService {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.controller.releaseWriteLock(zipFilePath);
-            this.controller.releaseWriteLock(tmpFileName);
+            this.controller.getReadWriteLocks().releaseWriteLock(zipFilePath);
+            this.controller.getReadWriteLocks().releaseWriteLock(tmpFileName);
         }
 
         log.info("ZIP file path: {}", getZipFilePath(false));
@@ -1106,8 +1106,8 @@ public class TopAnatAnalysis extends CommonService {
         
         //At this point, if the analysis is being run by another thread, we don't want 
         //to wait for the lock on the file: results are not generated, period.
-        if (this.controller.getReadWriteLock(finalFilePath).isWriteLocked() || 
-                this.controller.getReadWriteLock(tmpFilePath).isWriteLocked()) {
+        if (this.controller.getReadWriteLocks().getReadWriteLock(finalFilePath).isWriteLocked() || 
+                this.controller.getReadWriteLocks().getReadWriteLock(tmpFilePath).isWriteLocked()) {
             return log.traceExit(false);
         }
         File file = new File(finalFilePath);

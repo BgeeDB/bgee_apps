@@ -48,7 +48,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
             String[] header = attrs.stream().map(attr -> attr.toString()).toArray(String[]::new);
             this.startDisplay();
             mapWriter.writeHeader(header);
-            for (ExpressionCall call : callsStream.collect(Collectors.toSet())) {
+            callsStream.forEach( call -> {
                 int columnNumber = 0;
                 final Map<String, Object> speMap = new HashMap<String, Object>();
                 while (columnNumber < attrs.size()) {
@@ -73,15 +73,18 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
                         throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));
                     }
                 }
-                mapWriter.write(speMap, header);
-            }
+                try {
+                    mapWriter.write(speMap, header);
+                } catch (IOException e) {
+                    throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
+                }
+            });
             mapWriter.flush();
             this.endDisplay();
         } catch (IOException e) {
             log.catching(e);
             throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
         }
-
     }
 
     @Override

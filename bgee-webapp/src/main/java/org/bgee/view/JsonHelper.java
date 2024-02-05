@@ -171,6 +171,7 @@ public class JsonHelper {
                         () -> getNewRequestParameters(), this.utils))
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
+                .setDateFormat("yyyy-MM-dd")
                 .create();
     }
 

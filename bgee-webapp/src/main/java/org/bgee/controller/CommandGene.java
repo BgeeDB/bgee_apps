@@ -1,11 +1,13 @@
 package org.bgee.controller;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -32,6 +34,7 @@ import org.bgee.model.gene.GeneHomologsService;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.search.SearchMatchResult;
+import org.bgee.model.species.Species;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -42,7 +45,7 @@ import org.bgee.view.ViewFactory;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 15.0, Jan. 2023
+ * @version Bgee 15.1, Jan. 2024
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -142,47 +145,62 @@ public class CommandGene extends CommandParent {
             return clustering;
         }
     }
+
     /**
-     * Contains all information necessary to produce a view related to a {@code Gene}.
-     * 
+     * A class to hold the response to retrieve all {@code Gene}s belonging to a {@code Species}.
+     *
      * @author Frederic Bastian
-     * @version Bgee 15, Oct. 2021
-     * @since   Bgee 13, Jan. 2016
+     * @version Bgee 15.1, Jan. 2024
+     * @since Bgee 15.1, Jan. 2024
      */
-    //TODO: to delete once the new website will be used
-    public static class GeneResponse extends GeneExpressionResponse {
-        private final Gene gene;
-        private final GeneHomologs geneHomologs;
-        
-        /**
-         * @param gene                          See {@link #getGene()}.
-         * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
-         * @param calls                         See {@link #getCalls()}
-         * @param condParams                    See {@link #getCondParams()}
-         * @param clustering                    See {@link #getClustering()}.
-         * @param geneHomologs                  See {@link #getGeneHomologs()}.
-         */
-        public GeneResponse(Gene gene, boolean includingAllRedundantCalls, 
-                List<ExpressionCall> calls, EnumSet<CallService.Attribute> condParams,
-                Map<ExpressionCall, Integer> clustering,
-                GeneHomologs geneHomologs) {
-            super(calls, ExpressionSummary.EXPRESSED, condParams, EnumSet.allOf(DataType.class),
-                    includingAllRedundantCalls, clustering);
-            this.gene = gene;
-            this.geneHomologs = geneHomologs;
+    public static class SpeciesGeneListResponse {
+        private final Species species;
+        private final List<Gene> genes;
+
+        public SpeciesGeneListResponse(Species species, List<Gene> genes) {
+            this.species = species;
+            this.genes = genes == null? Collections.emptyList():
+                Collections.unmodifiableList(genes);
         }
 
         /**
-         * @return  The {@code Gene} which information are requested for. 
+         * @return  The {@code Species} the {@code Gene}s have been retrieved for.
          */
-        public Gene getGene() {
-            return gene;
+        public Species getSpecies() {
+            return species;
         }
         /**
-         * @return  The {@code GeneHomologs} of the gene which information are requested for. 
+         * @return  An unmodifiable {@code List} of {@code Gene}s
+         *          belonging to the {@code Species}.
          */
-        public GeneHomologs getGeneHomologs() {
-            return geneHomologs;
+        public List<Gene> getGenes() {
+            return genes;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(genes, species);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SpeciesGeneListResponse other = (SpeciesGeneListResponse) obj;
+            return Objects.equals(genes, other.genes) && Objects.equals(species, other.species);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("SpeciesGeneListResponse [")
+                   .append("species=").append(species)
+                   .append(", genes=").append(genes)
+                   .append("]");
+            return builder.toString();
         }
     }
 
@@ -215,6 +233,10 @@ public class CommandGene extends CommandParent {
         GeneHomologsService geneHomologsService = serviceFactory.getGeneHomologsService();
         CallService callService = serviceFactory.getCallService();
 
+        //*******************************************
+        // GENE SEARCHES
+        //*******************************************
+        //Search for genes based on search term
         if (StringUtils.isNotBlank(search)) {
             int limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
                 this.requestParameters.getLimit();
@@ -226,74 +248,85 @@ public class CommandGene extends CommandParent {
                     .searchGenesByTerm(search, speciesId == null? null : Set.of(speciesId), 0, limit);
             display.displayGeneSearchResult(search, result);
             log.traceExit(); return;
-        } else if (geneId == null) {
+        }
+        //Retrieve all genes belonging to a species
+        if (RequestParameters.ACTION_SPECIES_GENE_LIST.equals(action)) {
+            this.processSpeciesGeneList(geneService, display);
+            log.traceExit(); return;
+        }
+
+
+        //*******************************************
+        // REQUESTS FOR SPECIFIC GENE ID
+        //*******************************************
+        //Now, all following queries should be based on a geneId
+        if (geneId == null) {
             throw log.throwing(new InvalidRequestException("At least one gene ID should be provided."));
-        } else if (RequestParameters.ACTION_GENE_GENERAL_INFO.equals(action)) {
+        }
+
+        //Here, we accept to have no speciesId provided, and to return several genes
+        //if a same ID is used in different species
+        if (RequestParameters.ACTION_GENE_GENERAL_INFO.equals(action)) {
             this.processGeneralInfoRequest(geneService, display);
             log.traceExit(); return;
-        } else if (RequestParameters.ACTION_GENE_HOMOLOGS.equals(action)) {
+        }
+
+        //Now, all following calls should have the speciesId provided
+        if (speciesId == null || speciesId < 1) {
+            throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
+        }
+
+        if (RequestParameters.ACTION_GENE_HOMOLOGS.equals(action)) {
             this.processHomologsRequest(geneService, geneHomologsService, display);
             log.traceExit(); return;
-        } else if (RequestParameters.ACTION_GENE_XREFS.equals(action)) {
+        }
+        if (RequestParameters.ACTION_GENE_XREFS.equals(action)) {
             this.processXRefsRequest(geneService, display);
             log.traceExit(); return;
-        } else if (RequestParameters.ACTION_GENE_EXPRESSION.equals(action)) {
+        }
+        if (RequestParameters.ACTION_GENE_EXPRESSION.equals(action)) {
             this.processExpressionRequest(callService, display);
             log.traceExit(); return;
         }
 
-        // NOTE: we retrieve genes after the sanity check on geneId to avoid to throw an exception
-        Set<Gene> genes = geneService.loadGenesById(geneId, true, true, true);
-        if (genes.size() == 0) {
-            throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
-        }
-
-        if (genes.size() == 1 && speciesId != null) {
-            //we want to avoid the use of 'species_id' parameter in URL if not necessary,
-            //so if an ID has an unique hit in Bgee, and there is a 'species_id'
-            //in the URL, then we redirect to a page without 'species_id' in the URL,
-            //for nicer URLs, and to avoid duplicated content.
-            // XXX: we do not check that the user gives a bad species?
-            RequestParameters url = new RequestParameters(
-                    this.requestParameters.getUrlParametersInstance(), this.prop, false, "&");
-            url.setPage(RequestParameters.PAGE_GENE);
-            url.setGeneId(genes.iterator().next().getGeneId());
-            this.response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-            this.response.addHeader("Location", url.getRequestURL());
-            log.traceExit(); return;
-        }
-
-        Gene selectedGene = null;
-        if (genes.size() == 1) {
-            selectedGene = genes.iterator().next();
-        } else if (genes.size() > 1)  {
-            //if several gene IDs match, then we need to get the speciesId information,
-            //otherwise we need to let the user choose the species he/she wants
-            if (speciesId == null || speciesId <= 0) {
-                display.displayGeneChoice(genes);
-                log.traceExit(); return;
-            }
-            Set<Gene> speciesGenes = genes.stream()
-                    .filter(g -> g.getSpecies().getId().equals(speciesId))
-                    .collect(Collectors.toSet());
-            if (speciesGenes.size() != 1) {
-                throw log.throwing(new PageNotFoundException("No gene corresponding to "
-                        + geneId + " for species " + speciesId));
-            }
-            selectedGene = speciesGenes.iterator().next();
-        } else {
-            throw log.throwing(new AssertionError("Impossible case"));
-        }
-
-        URLParameters urlParameters = requestParameters.getUrlParametersInstance();
-        Set<String> selectedCondParams = new HashSet<>(
-                Optional.ofNullable(requestParameters.getValues(urlParameters.getCondParam()))
-                .orElseGet(() -> Collections.emptyList()));
-
-        display.displayGene(this.buildGeneResponse(selectedGene, selectedCondParams));
-        log.traceExit();
+        //No other action should be managed here
+        throw log.throwing(new InvalidRequestException("We could not understand your query"));
     }
 
+    private void processSpeciesGeneList(GeneService geneService, GeneDisplay display)
+            throws InvalidRequestException, PageNotFoundException {
+        log.traceEntry("{}, {}", geneService, display);
+        Integer speciesId = requestParameters.getSpeciesId();
+        if (speciesId == null || speciesId < 1) {
+            throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
+        }
+
+        GeneFilter filter = new GeneFilter(speciesId);
+        Comparator<Gene> comparator = Comparator.<Gene, String>comparing(
+                g -> g.getName(), Comparator.nullsLast(String::compareTo))
+                .thenComparing(g -> g.getGeneId());
+
+        List<Gene> genes = null;
+        try {
+            genes = geneService.loadGenes(filter)
+                    .sorted(comparator)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException | GeneNotFoundException e) {
+            //we do nothing here, the speciesId was probably incorrect, this will throw
+            //a PageNotFoundException below;
+            log.catching(e);
+        }
+        if (genes == null || genes.size() == 0) {
+            throw log.throwing(new PageNotFoundException("No gene found belonging to speciesId " + speciesId));
+        }
+        //Retrieve the Species from any gene
+        Species species = genes.stream().findAny().get().getSpecies();
+        SpeciesGeneListResponse response = new SpeciesGeneListResponse(species, genes);
+
+        display.displaySpeciesGeneList(response);
+
+        log.traceExit();
+    }
     /**
      * Process the request for general information about a gene ID. The info for several genes
      * can be displayed if the gene ID exists in several species (since in Bgee we sometimes use
@@ -547,48 +580,6 @@ public class CommandGene extends CommandParent {
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
                     + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
         }
-    }
-
-    //TODO: to delete once the new website is released.
-    private GeneResponse buildGeneResponse(Gene gene, Set<String> condParams) 
-            throws IllegalStateException, PageNotFoundException {
-        log.traceEntry("{}, {}", gene, condParams);
-        //retrieve calls with silver quality for the requested condition parameters.
-        EnumSet<CallService.Attribute> condParamAttrs = condParams == null || condParams.isEmpty()?
-                //default value
-                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID):
-                //otherwise retrieve condition parameters from request
-                CallService.Attribute.getAllConditionParameters()
-                    .stream().filter(a -> condParams.contains(a.getCondParamName()))
-                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
-
-        List<ExpressionCall> calls = serviceFactory.getCallService().loadSilverCondObservedCalls(
-                new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()), condParamAttrs, null, null);
-        
-        // Load homology information.
-        GeneHomologs geneHomologs = loadHomologs(gene.getGeneId(), gene.getSpecies().getId(),
-                serviceFactory.getGeneHomologsService());
-
-        if (calls.isEmpty()) {
-            log.debug("No calls for gene {}", gene.getGeneId());
-            return log.traceExit(new GeneResponse(gene, true, calls, condParamAttrs,
-                    new HashMap<>(), geneHomologs));
-        }
-        
-        //**************************************
-        // Clustering, Building GeneResponse
-        //**************************************
-        long startFilteringTimeInMs = System.currentTimeMillis();
-        //define clustering method
-        Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> clusteringFunction = 
-                getClusteringFunction();
-        //Store a clustering of ExpressionCalls
-        Map<ExpressionCall, Integer> clustering = clusteringFunction.apply(calls);
-        log.debug("Total clustering of calls performed in {} ms", 
-                System.currentTimeMillis() - startFilteringTimeInMs);
-
-        return log.traceExit(new GeneResponse(gene, true, calls, condParamAttrs,
-                clustering, geneHomologs));
     }
     
     /**

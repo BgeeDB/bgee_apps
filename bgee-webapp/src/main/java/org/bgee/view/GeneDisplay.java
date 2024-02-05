@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
-import org.bgee.controller.CommandGene.GeneResponse;
+import org.bgee.controller.CommandGene.SpeciesGeneListResponse;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.search.SearchMatchResult;
@@ -28,15 +28,12 @@ public interface GeneDisplay {
     void displayGeneSearchResult(String searchTerm, SearchMatchResult<Gene> result);
 
     /**
-     * Displays information about a specific {@code Gene}.
-     * 
-     * @param geneResponse     A {@code GeneResponse} containing information about a {@code Gene} 
-     *                         to be displayed.
+     * Display a list of all genes belonging to a species.
+     *
+     * @param speciesGeneListResponse   The {@code SpeciesGeneListResponse} containing the response
+     *                                  to querying all {@code Gene}s for a {@code Species}.
      */
-    //XXX: note that if a view needed to display information both considering and not considering 
-    //redundant calls, then this method should simply accept two GeneResponses; CommandGene was built 
-    //to easily handle this need. 
-    void displayGene(GeneResponse geneResponse);
+    void displaySpeciesGeneList(SpeciesGeneListResponse speciesGeneListResponse);
 
     /**
      * Displays the general information for a list of genes.

@@ -408,6 +408,18 @@ public class RequestParameters {
     public static final String ACTION_RESOURCES_SOURCE_CODE = "source_code";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when all genes for a species
+     * are requested. Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_SPECIES_GENE_LIST = "species_list";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when information about the name
+     * of a species is requested. Value of the parameter page should be {@link #PAGE_SPECIES}.
+     */
+    public static final String ACTION_SPECIES_NAME = "name";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
      * (see {@link URLParameters#getParamAction()}) when general information about a gene
      * is requested. Value of the parameter page should be {@link #PAGE_GENE}.
      */

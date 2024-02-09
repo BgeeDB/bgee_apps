@@ -311,26 +311,32 @@ public class RawDataLoader extends CommonService {
     /**
      * Load raw data of the specified {@code InformationType} and {@code RawDataDataType}.
      *
-     * @param <T>               The type of {@code RawDataContainer} returned, dependent on
-     *                          the {@code RawDataDataType} requested.
-     * @param infoType          The {@code InformationType} to load.
-     * @param rawDataDataType   A {@code RawDataDataType} for which to retrieve
-     *                          {@code InformationType}.
-     * @param offset            A {@code Long} specifying at which index to start getting results
-     *                          of the type {@code infoType}. If {@code null}, equivalent to {@code 0}
-     *                          (first index). {@code Long} because sometimes the number of
-     *                          potential results can be very large.
-     * @param limit             An {@code Integer} specifying the number of results of type
-     *                          {@code infoType} to retrieve. Cannot be greater than {@link #LIMIT_MAX}.
-     *                          If {@code null}, equivalent to {@link #LIMIT_MAX}.
-     * @return                  A {@code RawDataContainer} containing the requested results.
+     * @param <T>                   The type of {@code RawDataContainer} returned, dependent on
+     *                              the {@code RawDataDataType} requested.
+     * @param infoType              The {@code InformationType} to load.
+     * @param rawDataDataType       A {@code RawDataDataType} for which to retrieve
+     *                              {@code InformationType}.
+     * @param isUsedToGenerateCalls A {@code Boolean} allowing to specify if the library has to be used to
+     *                              to generate calls. If <strong>true</strong> only libraries used to
+     *                              generate calls are retrieved. If <strong>false</strong> only libraries
+     *                              not used to generate calls are retrieved. If <strong>null</strong> then
+     *                              no filtering on generation of calls is applied to retrieve libraries.
+     * @param offset                A {@code Long} specifying at which index to start getting results
+     *                              of the type {@code infoType}. If {@code null}, equivalent to {@code 0}
+     *                              (first index). {@code Long} because sometimes the number of
+     *                              potential results can be very large.
+     * @param limit                 An {@code Integer} specifying the number of results of type
+     *                              {@code infoType} to retrieve. Cannot be greater than {@link #LIMIT_MAX}.
+     *                              If {@code null}, equivalent to {@link #LIMIT_MAX}.
+     * @return                      A {@code RawDataContainer} containing the requested results.
      * @throws IllegalArgumentException If {@code infoType} is null,
      *                                  or {@code offset} is non-null and less than 0,
      *                                  or {@code limit} is non-null and less than or equal to 0,
      *                                  or greater than {@link #LIMIT_MAX}.
      */
     public <T extends RawDataContainer<?, ?>> T loadData(InformationType infoType,
-            RawDataDataType<T, ?> rawDataDataType, Long offset, Integer limit)
+            RawDataDataType<T, ?> rawDataDataType, Boolean isUsedToGenerateCalls,
+            Long offset, Integer limit)
                     throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}", infoType, rawDataDataType, offset, limit);
 
@@ -341,7 +347,8 @@ public class RawDataLoader extends CommonService {
         long newOffset = offset == null? 0L: offset;
         int newLimit = limit == null? LIMIT_MAX: limit;
 
-        return log.traceExit(this.loadDataInternal(infoType, rawDataDataType, newOffset, newLimit, false));
+        return log.traceExit(this.loadDataInternal(infoType, rawDataDataType, isUsedToGenerateCalls,
+                newOffset, newLimit, false));
     }
     /**
      * The difference with the method {@link #loadData(InformationType, RawDataDataType, Long, Integer)}
@@ -359,7 +366,8 @@ public class RawDataLoader extends CommonService {
      * @throws IllegalArgumentException
      */
     private <T extends RawDataContainer<?, ?>> T loadDataInternal(InformationType infoType,
-            RawDataDataType<T, ?> rawDataDataType, Long offset, Integer limit, boolean partialInfo)
+            RawDataDataType<T, ?> rawDataDataType, Boolean isUsedToGenerateCalls,
+            Long offset, Integer limit, boolean partialInfo)
                     throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}, {}", infoType, rawDataDataType, offset, limit, partialInfo);
         if (infoType == null) {
@@ -393,7 +401,7 @@ public class RawDataLoader extends CommonService {
             rawDataContainer = rawDataContainerClass.cast(
                     this.loadRnaSeqData(infoType,
                             requestedDataType.equals(DataType.SC_RNA_SEQ)? true: false,
-                                    offset, limit, partialInfo));
+                                    isUsedToGenerateCalls, offset, limit, partialInfo));
             break;
         case EST:
             rawDataContainer = rawDataContainerClass.cast(
@@ -411,8 +419,8 @@ public class RawDataLoader extends CommonService {
     }
 
     public <T extends RawDataCountContainer> T loadDataCount(Collection<InformationType> infoTypes,
-            RawDataDataType<?, T> rawDataDataType) {
-        log.traceEntry("{}, {}", infoTypes, rawDataDataType);
+            RawDataDataType<?, T> rawDataDataType, Boolean isUsedToGenerateCalls) {
+        log.traceEntry("{}, {}, {}", infoTypes, rawDataDataType, isUsedToGenerateCalls);
 
         EnumSet<InformationType> requestedInfoTypes = infoTypes == null || infoTypes.isEmpty()?
                 EnumSet.allOf(InformationType.class): EnumSet.copyOf(infoTypes);
@@ -439,7 +447,7 @@ public class RawDataLoader extends CommonService {
             rawDataCountContainer = rawDataCountContainerClass.cast(
                     this.loadRnaSeqCount(
                             requestedDataType.equals(DataType.SC_RNA_SEQ)? true: false,
-                            withExperiment, withAssay, withCall));
+                            isUsedToGenerateCalls, withExperiment, withAssay, withCall));
             break;
         case EST:
             rawDataCountContainer = rawDataCountContainerClass.cast(
@@ -456,9 +464,11 @@ public class RawDataLoader extends CommonService {
         return log.traceExit(rawDataCountContainer);
     }
 
-    public RawDataPostFilter loadPostFilter(RawDataDataType<?, ?> rawDataDataType) {
-        log.traceEntry("{}", rawDataDataType);
-        return log.traceExit(this.loadPostFilter(rawDataDataType, true, true, true));
+    public RawDataPostFilter loadPostFilter(RawDataDataType<?, ?> rawDataDataType,
+            Boolean isUsedToGenerateCalls) {
+        log.traceEntry("{}, {}", rawDataDataType, isUsedToGenerateCalls);
+        return log.traceExit(this.loadPostFilter(rawDataDataType, true, true, true,
+                isUsedToGenerateCalls));
     }
     /**
      * Load anatomical entities, dev. stages, cell types, sexes and strains for the specified
@@ -480,10 +490,11 @@ public class RawDataLoader extends CommonService {
     //in the future. In that case, we could add a third generic type parameter to RawDataDataType,
     //specifying the type of RawDataPostFilter to return.
     public RawDataPostFilter loadPostFilter(RawDataDataType<?, ?> rawDataDataType,
-            boolean withConditionFilters, boolean withExperimentFilters, boolean withAssayFilters)
+            boolean withConditionFilters, boolean withExperimentFilters, boolean withAssayFilters,
+            Boolean isUsedToGenerateCalls)
                     throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}", rawDataDataType, withConditionFilters, withExperimentFilters,
-                withAssayFilters);
+        log.traceEntry("{}, {}, {}, {}, {}", rawDataDataType, withConditionFilters, withExperimentFilters,
+                withAssayFilters, isUsedToGenerateCalls);
         if (rawDataDataType == null) {
             throw log.throwing(new IllegalArgumentException("dataType can not be null"));
         }
@@ -510,7 +521,7 @@ public class RawDataLoader extends CommonService {
         RawDataPostFilter expAssayFilter = null;
         if (infoType != null) {
             RawDataContainer<?, ?> results = this.loadDataInternal(infoType, rawDataDataType,
-                    null, null, true);
+                    null, null, null, true);
             expAssayFilter = new RawDataPostFilter(null, null, null, null, null, null,
                     !withExperimentFilters || !RawDataContainerWithExperiment.class.isInstance(results)?
                             null: ((RawDataContainerWithExperiment<?, ?, ?>) results).getExperiments()
@@ -530,7 +541,8 @@ public class RawDataLoader extends CommonService {
             condFilter = this.loadConditionPostFilter(
                     (attrs) -> this.rawDataConditionDAO.getRawDataConditionsLinkedToDataType(
                             this.getRawDataProcessedFilter().getDaoFilters(),
-                            requestedDAODataType, requestedDataType.getSingleCell(), attrs),
+                            requestedDAODataType, requestedDataType.getSingleCell(),
+                            isUsedToGenerateCalls, attrs),
                     rawDataDataType);
         }
 
@@ -790,8 +802,9 @@ public class RawDataLoader extends CommonService {
 
     //Long and Integer instead of long and int because used internally to retrieve all results for filtering
     private RnaSeqContainer loadRnaSeqData(InformationType infoType, boolean isSingleCell,
-            Long offset, Integer limit, boolean partialInfo) {
-        log.traceEntry("{}, {}, {}, {}, {}", infoType, isSingleCell, offset, limit, partialInfo);
+            Boolean isUsedTogenerateCalls, Long offset, Integer limit, boolean partialInfo) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", infoType, isSingleCell, isUsedTogenerateCalls,
+                offset, limit, partialInfo);
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
@@ -813,7 +826,7 @@ public class RawDataLoader extends CommonService {
         Set<Integer> bgeeGeneIds = new HashSet<>();
         if (infoType == InformationType.CALL) {
             RNASeqResultAnnotatedSampleTOResultSet callTORS = this.rnaSeqCallDAO.getResultAnnotatedSamples(
-                    daoRawDataFilters, isSingleCell, offset, limit, null, null);
+                    daoRawDataFilters, isSingleCell, isUsedTogenerateCalls, offset, limit, null, null);
             while (callTORS.next()) {
                 RNASeqResultAnnotatedSampleTO callTO = callTORS.getTO();
                 bgeeAnnotatedSampleIds.add(callTO.getAssayId());
@@ -833,7 +846,7 @@ public class RawDataLoader extends CommonService {
                     null);
         } else if (infoType == InformationType.ASSAY) {
             assayTORS = this.rnaSeqAssayDAO.getLibraryAnnotatedSamples(daoRawDataFilters,
-                    isSingleCell, offset, limit,
+                    isSingleCell, isUsedTogenerateCalls, offset, limit,
                     !partialInfo? null: Set.of(
                             RNASeqLibraryAnnotatedSampleDAO.Attribute.ID,
                             RNASeqLibraryAnnotatedSampleDAO.Attribute.RNASEQ_LIBRARY_ID));
@@ -842,7 +855,7 @@ public class RawDataLoader extends CommonService {
         //If no gene and no conditions were retrieved, we have to make a special query for it.
         else if (infoType == InformationType.EXPERIMENT && !partialInfo) {
             assayTORS = this.rnaSeqAssayDAO.getLibraryAnnotatedSamples(daoRawDataFilters,
-                    isSingleCell, 0L, 1,
+                    isSingleCell, isUsedTogenerateCalls, 0L, 1,
                     Set.of(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID));
         }
         Set<String> libraryIds = new HashSet<>();
@@ -893,7 +906,7 @@ public class RawDataLoader extends CommonService {
             //we can use a new DAORawDataFilter to retrieve the requested libraries
             DAORawDataFilter libFilter = new DAORawDataFilter(null, libraryIds, null);
             RNASeqLibraryTOResultSet libTORS = this.rnaSeqLibraryDAO.getRnaSeqLibrary(
-                    Collections.singleton(libFilter), null, null, null,
+                    Collections.singleton(libFilter), null, null, null, null,
                     !partialInfo? null: Set.of(
                             RNASeqLibraryDAO.Attribute.ID,
                             RNASeqLibraryDAO.Attribute.EXPERIMENT_ID));
@@ -1096,8 +1109,8 @@ public class RawDataLoader extends CommonService {
                 infoType == InformationType.CALL? Set.of(): null));
     }
 
-    private RnaSeqCountContainer loadRnaSeqCount(boolean isSingleCell, boolean withExperiment,
-            boolean withAssay, boolean withCall) {
+    private RnaSeqCountContainer loadRnaSeqCount(boolean isSingleCell, Boolean isUsedToGenerateCalls,
+            boolean withExperiment, boolean withAssay, boolean withCall) {
         log.traceEntry("{}, {}, {}, {}", isSingleCell, withExperiment, withAssay, withCall);
 
         //If the DaoRawDataFilters are null it means there was no matching conds
@@ -1112,7 +1125,7 @@ public class RawDataLoader extends CommonService {
 
         RawDataCountContainerTO countTO = rawDataCountDAO.getRnaSeqCount(
                 this.getRawDataProcessedFilter().getDaoFilters(),
-                isSingleCell, withExperiment, withAssay, withAssay, withCall);
+                isSingleCell, isUsedToGenerateCalls, withExperiment, withAssay, withAssay, withCall);
 
         return log.traceExit(new RnaSeqCountContainer(
                 countTO.getExperimentCount(),

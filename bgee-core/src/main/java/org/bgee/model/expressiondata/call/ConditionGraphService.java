@@ -387,7 +387,7 @@ public class ConditionGraphService extends CommonService {
                 //for such a task
                 RawDataLoader loader = this.getServiceFactory().getRawDataService().loadRawDataLoader(null);
                 for (RawDataDataType<?, ?> dataType: RawDataDataType.allOf()) {
-                    RawDataPostFilter rawDataPostFilter = loader.loadPostFilter(dataType, true, false, false);
+                    RawDataPostFilter rawDataPostFilter = loader.loadPostFilter(dataType, true, false, false, null);
                     anatEntitiesUsedInAnnots.addAll(rawDataPostFilter.getAnatEntities());
                     cellTypesUsedInAnnots.addAll(rawDataPostFilter.getCellTypes());
                     devStagesUsedInAnnots.addAll(rawDataPostFilter.getDevStages());

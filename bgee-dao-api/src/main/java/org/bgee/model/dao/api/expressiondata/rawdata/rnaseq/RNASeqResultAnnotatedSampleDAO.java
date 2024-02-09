@@ -106,22 +106,27 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      * {@code RNASeqResultAnnotatedSampleTOResultSet}. It is the responsibility of the caller to close this
      * {@code DAOResultSet} once results are retrieved.
      *
-     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
-     *                          how to filter annotated samples results to retrieve. The query uses
-     *                          AND between elements of a same filter and uses OR between filters.
-     * @param isSingleCell    A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
-     *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
-     *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
-     *                          If <strong>null</strong> all RNA-Seq are retrieved.
-     * @param offset            A {@code Long} used to specify which row to start from retrieving data
-     *                          in the result of a query. If null, retrieve data from the first row. If
-     *                          not null, a limit should be also provided.
-     *                          {@code Long} because sometimes the number of potential results
-     *                          can be very large.
-     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
-     *                          result. If null, all results are returned.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the data source.
+     * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                              how to filter annotated samples results to retrieve. The query uses
+     *                              AND between elements of a same filter and uses OR between filters.
+     * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                              If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                              If <strong>null</strong> all RNA-Seq are retrieved.
+     * @param isUsedToGenerateCalls A {@code Boolean} allowing to specify if the library has to be used to
+     *                              to generate calls. If <strong>true</strong> only libraries used to
+     *                              generate calls are retrieved. If <strong>false</strong> only libraries
+     *                              not used to generate calls are retrieved. If <strong>null</strong> then
+     *                              no filtering on generation of calls is applied to retrieve libraries.
+     * @param offset                A {@code Long} used to specify which row to start from retrieving data
+     *                              in the result of a query. If null, retrieve data from the first row. If
+     *                              not null, a limit should be also provided.
+     *                              {@code Long} because sometimes the number of potential results
+     *                              can be very large.
+     * @param limit                 An {@code Integer} used to limit the number of rows returned in a query
+     *                              result. If null, all results are returned.
+     * @param attributes            A {@code Collection} of {@code Attribute}s to specify the information
+     *                              to retrieve from the data source.
      * @param orderingAttributes    A {@code LinkedHashMap} where keys are
      *                              {@code RNASeqResultAnnotatedSampleDAO.OrderingAttribute}s defining
      *                              the attributes used to order the returned {@code RNASeqResultAnnotatedSampleTO}s,
@@ -130,13 +135,14 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      *                              If {@code null} or empty, the default ordering is
      *                              {@code OrderingAttribute.LIBRARY_ANNOTATED_SAMPLE_ID} {@code ASC},
      *                              {@code OrderingAttribute.BGEE_GENE_ID} {@code ASC}.
-     * @return                  A {@code RNASeqResultAnnotatedSampleTOResultSet} allowing to retrieve the
-     *                          targeted {@code RNASeqResultAnnotatedSampleTO}s.
-     * @throws DAOException     If an error occurred while accessing the data source.
+     * @return                      A {@code RNASeqResultAnnotatedSampleTOResultSet} allowing to retrieve the
+     *                              targeted {@code RNASeqResultAnnotatedSampleTO}s.
+     * @throws DAOException         If an error occurred while accessing the data source.
      */
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Long offset, Integer limit, Collection<Attribute> attributes,
+            Boolean isUsedToGenerateCalls, Long offset, Integer limit,
+            Collection<Attribute> attributes,
             LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) throws DAOException;
 
     /**
@@ -146,24 +152,29 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      * {@code RNASeqResultAnnotatedSampleTOResultSet}. It is the responsibility of the caller to close this
      * {@code DAOResultSet} once results are retrieved.
      *
-     * @param rawDataFilters      A {@code Collection} of {@code DAORawDataFilter} allowing to specify
-     *                            how to filter annotated samples results to retrieve. The query uses
-     *                            AND between elements of a same filter and uses OR between filters.
-     * @param isSingleCell        A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
-     *                            If <strong>true</strong> only single-cell RNA-Seq are retrieved.
-     *                            If <strong>false</strong> only bulk RNA-Seq are retrieved.
-     *                            If <strong>null</strong> all RNA-Seq are retrieved.
-     * @param notNullExpressionId A {@code boolean} used to retrieve only not null expressionIds. If true,
-     *                            not null expressionIds are retrieved. If false, all expressionIds are retrieved.
-     * @param offset              A {@code Long} used to specify which row to start from retrieving data
-     *                            in the result of a query. If null, retrieve data from the first row. If
-     *                            not null, a limit should be also provided.
-     *                            {@code Long} because sometimes the number of potential results
-     *                            can be very large.
-     * @param limit               An {@code Integer} used to limit the number of rows returned in a query
-     *                            result. If null, all results are returned.
-     * @param attributes          A {@code Collection} of {@code Attribute}s to specify the information
-     *                            to retrieve from the data source.
+     * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                              how to filter annotated samples results to retrieve. The query uses
+     *                              AND between elements of a same filter and uses OR between filters.
+     * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                              If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                              If <strong>null</strong> all RNA-Seq are retrieved.
+     * @param isUsedToGenerateCalls A {@code Boolean} allowing to specify if the library has to be used to
+     *                              to generate calls. If <strong>true</strong> only libraries used to
+     *                              generate calls are retrieved. If <strong>false</strong> only libraries
+     *                              not used to generate calls are retrieved. If <strong>null</strong> then
+     *                              no filtering on generation of calls is applied to retrieve libraries.
+     * @param notNullExpressionId   A {@code boolean} used to retrieve only not null expressionIds. If true,
+     *                              not null expressionIds are retrieved. If false, all expressionIds are retrieved.
+     * @param offset                A {@code Long} used to specify which row to start from retrieving data
+     *                              in the result of a query. If null, retrieve data from the first row. If
+     *                              not null, a limit should be also provided.
+     *                              {@code Long} because sometimes the number of potential results
+     *                              can be very large.
+     * @param limit                 An {@code Integer} used to limit the number of rows returned in a query
+     *                              result. If null, all results are returned.
+     * @param attributes            A {@code Collection} of {@code Attribute}s to specify the information
+     *                              to retrieve from the data source.
      * @param orderingAttributes    A {@code LinkedHashMap} where keys are
      *                              {@code RNASeqResultAnnotatedSampleDAO.OrderingAttribute}s defining
      *                              the attributes used to order the returned {@code RNASeqResultAnnotatedSampleTO}s,
@@ -172,13 +183,14 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      *                              If {@code null} or empty, the default ordering is
      *                              {@code OrderingAttribute.LIBRARY_ANNOTATED_SAMPLE_ID} {@code ASC},
      *                              {@code OrderingAttribute.BGEE_GENE_ID} {@code ASC}.
-     * @return                  A {@code RNASeqResultAnnotatedSampleTOResultSet} allowing to retrieve the
-     *                          targeted {@code RNASeqResultAnnotatedSampleTO}s.
-     * @throws DAOException     If an error occurred while accessing the data source.
+     * @return                      A {@code RNASeqResultAnnotatedSampleTOResultSet} allowing to retrieve the
+     *                              targeted {@code RNASeqResultAnnotatedSampleTO}s.
+     * @throws DAOException         If an error occurred while accessing the data source.
      */
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            boolean notNullExpressionId, Long offset, Integer limit, Collection<Attribute> attributes,
+            Boolean isUsedToGenerateCalls, boolean notNullExpressionId, Long offset, Integer limit,
+            Collection<Attribute> attributes,
             LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) throws DAOException;
 
     /**

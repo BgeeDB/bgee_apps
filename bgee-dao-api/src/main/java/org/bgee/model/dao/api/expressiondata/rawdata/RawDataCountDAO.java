@@ -87,27 +87,32 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      * Retrieve RNA-Seq count of experiment, assay and calls based on a {@code Collection} of 
      * {@code DAORawDataFilter}. 
      *
-     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
-     *                          RNA-Seq data for which count are queried.
-     * @param isSingleCell      A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
-     *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
-     *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
-     *                          If <strong>null</strong> all RNA-Seq are retrieved.
-     * @param experimentCount   A boolean defining rather experiment count has to be retrieved.
-     * @param libraryCount      A boolean defining rather RNA-Seq library count has to be retrieved.
-     *                          It corresponds to the physical library sent to the sequencer. If only
-     *                          one condition has been sequenced (e.g. bulk RNA-Seq) then this count
-     *                          is the same than assayCount.
-     * @param assayCount        A boolean defining rather assay count has to be retrieved. Assay
-     *                          correspond to annotated samples. It can be different from library
-     *                          count if more than one condition has been sequenced (e.g. different
-     *                          celltypes in 10x or multiplexing of different tissues)
-     * @param callCount         A boolean defining rather calls count has to be retrieved
-     * @return                  A {@code RawDataConditionTO} containing requested counts.
+     * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} used to filter
+     *                              RNA-Seq data for which count are queried.
+     * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                              If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                              If <strong>null</strong> all RNA-Seq are retrieved.
+     * @param isUsedToGenerateCalls A {@code Boolean} allowing to specify if the library has to be used to
+     *                              to generate calls. If <strong>true</strong> only libraries used to
+     *                              generate calls are retrieved. If <strong>false</strong> only libraries
+     *                              not used to generate calls are retrieved. If <strong>null</strong> then
+     *                              no filtering on generation of calls is applied to retrieve libraries.
+     * @param experimentCount       A boolean defining rather experiment count has to be retrieved.
+     * @param libraryCount          A boolean defining rather RNA-Seq library count has to be retrieved.
+     *                              It corresponds to the physical library sent to the sequencer. If only
+     *                              one condition has been sequenced (e.g. bulk RNA-Seq) then this count
+     *                              is the same than assayCount.
+     * @param assayCount            A boolean defining rather assay count has to be retrieved. Assay
+     *                              correspond to annotated samples. It can be different from library
+     *                              count if more than one condition has been sequenced (e.g. different
+     *                              celltypes in 10x or multiplexing of different tissues)
+     * @param callCount             A boolean defining rather calls count has to be retrieved
+     * @return                      A {@code RawDataConditionTO} containing requested counts.
      */
     public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
-            Boolean isSingleCell, boolean experimentCount, boolean libraryCount,
-            boolean assayCount, boolean callCount);
+            Boolean isSingleCell, Boolean isUsedToGenerateCalls, boolean experimentCount,
+            boolean libraryCount, boolean assayCount, boolean callCount);
 
     /**
      * {@code DAOResultSet} specifics to {@code RawDataCountContainerTO}s

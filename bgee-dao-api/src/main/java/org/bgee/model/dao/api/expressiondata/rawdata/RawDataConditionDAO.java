@@ -118,6 +118,11 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      *                              If <strong>true</strong> only single-cell data are retrieved.
      *                              If <strong>false</strong> only bulk data are retrieved.
      *                              If <strong>null</strong> all data of {@code dataType} are retrieved.
+     * @param isUsedToGenerateCalls A {@code Boolean} allowing to specify if the library has to be used to
+     *                              to generate calls. If <strong>true</strong> only libraries used to
+     *                              generate calls are retrieved. If <strong>false</strong> only libraries
+     *                              not used to generate calls are retrieved. If <strong>null</strong> then
+     *                              no filtering on generation of calls is applied to retrieve libraries.
      * @param attributes            A {@code Collection} of {@code RawDataConditionDAO.Attribute}s
      *                              defining the attributes to populate in the returned
      *                              {@code RawDataConditionTO}s.
@@ -128,7 +133,8 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      */
     public RawDataConditionTOResultSet getRawDataConditionsLinkedToDataType(
             Collection<DAORawDataFilter> rawDataFilters, DAODataType dataType,
-            Boolean isSingleCell, Collection<Attribute> attributes);
+            Boolean isSingleCell, Boolean isUsedToGenerateCalls,
+            Collection<Attribute> attributes);
 
     /**
      * {@code DAOResultSet} specifics to {@code RawDataConditionTO}s

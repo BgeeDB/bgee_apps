@@ -47,6 +47,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * <li>{@code MIN_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMinReadLength()}.
      * <li>{@code MAX_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMaxReadLength()}.
      * <li>{@code LIBRARY_TYPE}: corresponds to {@link RNASeqLibraryTO#getLibraryType()}.
+     * <li>{@code USED_TO_GENERATE_CALLS}: corresponds to {@link RNASeqLibraryTO#isUsedToGenerateCalls()}.
 
 
      * </ul>
@@ -59,7 +60,8 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         SEQUENCED_TRANSCRIPT_PART("sequencedTranscriptPart"), FRAGMENTATION("fragmentation"),
         POPULATION_CAPTURE_ID("rnaSeqPopulationCaptureId"), GENOTYPE("genotype"), ALL_READ_COUNT("allReadsCount"),
         MAPPED_READ_COUNT("mappedReadsCount"), MIN_READ_LENGTH("minReadLength"),
-        MAX_READ_LENGTH("maxReadLength"),LIBRARY_TYPE("libraryType");
+        MAX_READ_LENGTH("maxReadLength"),LIBRARY_TYPE("libraryType"),
+        USED_TO_GENERATE_CALLS("usedToGenerateCalls");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTTO} class.
@@ -81,28 +83,33 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * Retrieve from a data source a set of {@code RNASeqLibraryTO}s according to the provided filters,
      * ordered by experiment IDs and RNA-Seq library IDs.
      * 
-     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
-     *                          which library to retrieve. The query uses AND between elements of a
-     *                          same filter and uses OR between filters.
-     * @param isSingleCell      A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
-     *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
-     *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
-     *                          If <strong>null</strong> all RNA-Seq are retrieved.
-     * @param offset            A {@code Long} used to specify which row to start from retrieving data
-     *                          in the result of a query. If null, retrieve data from the first row.
-     *                          {@code Long} because sometimes the number of potential results
-     *                          can be very large.
-     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
-     *                          result. If null, all results are returned.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the library.
+     * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                              which library to retrieve. The query uses AND between elements of a
+     *                              same filter and uses OR between filters.
+     * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                              If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                              If <strong>null</strong> all RNA-Seq are retrieved.
+     * @param isUsedToGenerateCalls A {@code Boolean} allowing to specify if the library has to be used to
+     *                              to generate calls. If <strong>true</strong> only libraries used to
+     *                              generate calls are retrieved. If <strong>false</strong> only libraries
+     *                              not used to generate calls are retrieved. If <strong>null</strong> then
+     *                              no filtering on generation of calls is applied to retrieve libraries.
+     * @param offset                A {@code Long} used to specify which row to start from retrieving data
+     *                              in the result of a query. If null, retrieve data from the first row.
+     *                              {@code Long} because sometimes the number of potential results
+     *                              can be very large.
+     * @param limit                 An {@code Integer} used to limit the number of rows returned in a query
+     *                              result. If null, all results are returned.
+     * @param attributes            A {@code Collection} of {@code Attribute}s to specify the information
+     *                              to retrieve from the library.
      * @return  A {@code RNASeqLibraryTO}, encapsulating all the data
      *          related to the RNA-Seq library retrieved from the data source,
      *          or {@code null} if none could be found.
      * @throws DAOException     If an error occurred when accessing the data source.
      */
     public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
-            Boolean isSingleCell, Long offset, Integer limit,
+            Boolean isSingleCell, Boolean isUsedoGenerateCalls, Long offset, Integer limit,
             Collection<Attribute> attributes) throws DAOException;
 
     /**
@@ -360,6 +367,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
          */
         private final Integer maxReadLength;
         private final LibraryType libraryType;
+        private final Boolean usedToGenerateCalls;
 
         public RNASeqLibraryTO(String rnaSeqLibraryId, String rnaSeqExperimentId, String sequencerName,
                 String technologyName, Boolean singleCell, Boolean sampleMultiplexing,
@@ -367,7 +375,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
                 CellCompartment cellCompartment, SequencedTrancriptPart seqTranscriptPart,
                 Integer fragmentation, String populationCaptureId, String genotype,
                 Integer allReadCount, Integer mappedReadCount, Integer minReadLength,
-                Integer maxReadLength, LibraryType libType) {
+                Integer maxReadLength, LibraryType libType, Boolean usedToGenerateCalls) {
             super(rnaSeqLibraryId);
             this.rnaSeqExperimentId = rnaSeqExperimentId;
             this.sequencerName = sequencerName;
@@ -386,6 +394,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
             this.minReadLength = minReadLength;
             this.maxReadLength = maxReadLength;
             this.libraryType = libType;
+            this.usedToGenerateCalls = usedToGenerateCalls;
         }
 
         public String getExperimentId() {
@@ -439,6 +448,9 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         public LibraryType getLibraryType() {
             return libraryType;
         }
+        public Boolean isUsedToGenerateCalls() {
+            return usedToGenerateCalls;
+        }
 
         @Override
         public String toString() {
@@ -449,7 +461,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
                     + sequencedTranscriptPart + ", fragmentation=" + fragmentation + ", populationCaptureId="
                     + populationCaptureId + ", genotype=" + genotype + ", allReadCount=" + allReadCount
                     + ", mappedReadCount=" + mappedReadCount + ", minReadLength=" + minReadLength + ", maxReadLength="
-                    + maxReadLength + ", libraryType=" + libraryType + "]";
+                    + maxReadLength + ", libraryType=" + libraryType + ", usedToGenerateCalls=" + usedToGenerateCalls + "]";
         }
 
     }

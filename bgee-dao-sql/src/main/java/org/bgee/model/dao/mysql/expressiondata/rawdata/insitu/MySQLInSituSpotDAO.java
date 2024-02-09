@@ -72,7 +72,7 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
                        .stream()
                        .map(to -> to.getId())
                     .  collect(Collectors.toSet()),
-                String.class, DAODataType.IN_SITU, null);
+                String.class, DAODataType.IN_SITU, null, null);
         if (processedFilters == null) {
             try {
                 return log.traceExit(new MySQLInSituSpotTOResultSet(
@@ -96,7 +96,7 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, null, Set.of(TABLE_NAME), DAODataType.IN_SITU);
+                processedFilters, null, null, Set.of(TABLE_NAME), DAODataType.IN_SITU);
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {

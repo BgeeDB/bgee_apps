@@ -88,20 +88,22 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     protected <U extends Comparable<U>> DAOProcessedRawDataFilter<U> processFilterForCallTableAssayIds(
             DAOProcessedRawDataFilter<U> originalProcessedFilter,
             Function<Set<DAORawDataFilter>, Set<U>> retrieveCallTableAssayIdsFun,
-            Class<U> callTableAssayIdType, DAODataType dataType, Boolean isSingleCell) {
-        log.traceEntry("{}, {}, {}, {}, {}", originalProcessedFilter, retrieveCallTableAssayIdsFun,
-                callTableAssayIdType, dataType, isSingleCell);
+            Class<U> callTableAssayIdType, DAODataType dataType, Boolean isSingleCell,
+            Boolean isUsedToGenerateCalls) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", originalProcessedFilter, retrieveCallTableAssayIdsFun,
+                callTableAssayIdType, dataType, isSingleCell, isUsedToGenerateCalls);
 
         if (!originalProcessedFilter.isNeedAssayId() &&
                 !originalProcessedFilter.isNeedExperimentId() &&
                 !originalProcessedFilter.isNeedSpeciesId() &&
-                isSingleCell == null &&
+                isSingleCell == null && isUsedToGenerateCalls == null &&
                 //For in situ data, condIds are not used to produce filterToAssayIds
                 (!originalProcessedFilter.isNeedConditionId() || !dataType.isAssayRelatedToCondition())) {
             log.debug("No filtering on assay necessary, returning original DAOProcessedRawDataFilter");
             return log.traceExit(originalProcessedFilter);
         }
-        assert(!originalProcessedFilter.getRawDataFilters().isEmpty() || isSingleCell != null);
+        assert(!originalProcessedFilter.getRawDataFilters().isEmpty() || isSingleCell != null
+                || isUsedToGenerateCalls != null);
 
         //First, retrieve conditionIds if necessary. The only case is if a speciesId is requested
         //and the data type does not link assays to conditions
@@ -116,7 +118,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                         }
                         //otherwise, retrieve the cond IDs
                         Set<Integer> condIds = condDAO.getRawDataConditionsLinkedToDataType(
-                                Set.of(f), dataType, null, Set.of(RawDataConditionDAO.Attribute.ID))
+                                Set.of(f), dataType, null, null, Set.of(RawDataConditionDAO.Attribute.ID))
                                 .stream()
                                 .map(to -> to.getId())
                                 .collect(Collectors.toSet());
@@ -148,7 +150,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     //of in situ data type.
                     if (f.getSpeciesIds().isEmpty() && f.getAssayIds().isEmpty() &&
                         f.getExperimentIds().isEmpty() && f.getExprOrAssayIds().isEmpty() &&
-                        isSingleCell == null &&
+                        isSingleCell == null && isUsedToGenerateCalls == null &&
                         (f.getConditionIds().isEmpty() || !dataType.isAssayRelatedToCondition())) {
                         return Map.entry(f, Set.<U>of());
                     }
@@ -169,8 +171,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                         e -> e.getKey(),
                         e -> e.getValue()));
         //special case for if there are no DAORawDataFilters
-        if (originalProcessedFilter.getRawDataFilters().isEmpty() && isSingleCell != null) {
-            //the value isSingleCell should already been taken into account in the function call
+        if (originalProcessedFilter.getRawDataFilters().isEmpty() &&
+                (isSingleCell != null || isUsedToGenerateCalls !=null)) {
+            //the values isSingleCell and isUsedToGenerateCalls should already been taken into
+            //account in the function call
             Set<U> assayIds = retrieveCallTableAssayIdsFun.apply(null);
             if (!assayIds.isEmpty()) {
                 filterToAssayIds.put(null, assayIds);
@@ -208,17 +212,17 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             DAOProcessedRawDataFilter<U> processedFilters, DAODataType datatype, Long offset, Integer limit)
                     throws SQLException {
         log.traceEntry("{}, {}, {}, {}, {}", query, processedFilters, datatype, offset, limit);
-        return log.traceExit(this.parameterizeQuery(query, processedFilters, null, datatype,
-                offset, limit));
+        return log.traceExit(this.parameterizeQuery(query, processedFilters, null, null,
+                datatype, offset, limit));
     }
 
     //parameterize query with rnaSeqTechnologyIds
     protected <U extends Comparable<U>> BgeePreparedStatement parameterizeQuery(String query,
             DAOProcessedRawDataFilter<U> processedFilters, Boolean isSingleCell,
-            DAODataType dataType, Long offset, Integer limit)
+            Boolean isUsedToGenerateCalls, DAODataType dataType, Long offset, Integer limit)
                     throws SQLException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", query, processedFilters, isSingleCell,
-                dataType, offset, limit);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", query, processedFilters, isSingleCell,
+                isUsedToGenerateCalls, dataType, offset, limit);
         if (dataType == null) {
             throw log.throwing(new IllegalArgumentException("datatype can not be null"));
         }
@@ -306,15 +310,26 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     stmt.setBoolean(paramIndex, isSingleCell);
                     paramIndex++;
                 }
+                if (callTableAssayIds == null && isUsedToGenerateCalls != null) {
+                    stmt.setBoolean(paramIndex, isUsedToGenerateCalls);
+                    paramIndex++;
+                }
             }
         }
 
         // special cases outside of the DAORawDataFilters
-        if (processedFilters.getRawDataFilters().isEmpty() && isSingleCell != null &&
+        if (processedFilters.getRawDataFilters().isEmpty() &&
+                (isSingleCell != null || isUsedToGenerateCalls != null) &&
                 (processedFilters.getFilterToCallTableAssayIds() == null ||
                 !processedFilters.getFilterToCallTableAssayIds().containsKey(null))) {
-            stmt.setBoolean(paramIndex, isSingleCell);
-            paramIndex++;
+            if (isSingleCell!=null) {
+                stmt.setBoolean(paramIndex, isSingleCell);
+                paramIndex++;
+            }
+            if (isUsedToGenerateCalls!=null) {
+                stmt.setBoolean(paramIndex, isUsedToGenerateCalls);
+                paramIndex++;
+            }
         }
         if (processedFilters.getFilterToCallTableAssayIds() != null &&
                 processedFilters.getFilterToCallTableAssayIds().containsKey(null)) {
@@ -404,9 +419,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     @SuppressWarnings("unchecked")
     protected <U extends Comparable<U>> RawDataFiltersToDatabaseMapping generateFromClauseRawData(
             StringBuilder sb, DAOProcessedRawDataFilter<U> processedFilters, Boolean isSingleCell,
-            Set<String> necessaryTables, DAODataType datatype) {
-        log.traceEntry("{}, {}, {}, {}, {}", sb, processedFilters, isSingleCell, necessaryTables,
-                datatype);
+            Boolean isUsedToGenerateCalls, Set<String> necessaryTables, DAODataType datatype) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", sb, processedFilters, isSingleCell,
+                isUsedToGenerateCalls, necessaryTables, datatype);
         Map<RawDataColumn, String> ambiguousColToTable = new HashMap<>();
         if (datatype.equals(DAODataType.AFFYMETRIX)) {
             ambiguousColToTable = generateFromClauseRawDataAffymetrix(sb,
@@ -420,7 +435,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         } else if (datatype.equals(DAODataType.RNA_SEQ)) {
             ambiguousColToTable = generateFromClauseRawDataRnaSeq(sb,
                     (DAOProcessedRawDataFilter<Integer>) processedFilters, isSingleCell,
-                    necessaryTables);
+                    isUsedToGenerateCalls, necessaryTables);
         } else {
             throw log.throwing(new IllegalStateException("dataType " + datatype
                     + "not recognized."));
@@ -1013,31 +1028,34 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      * in the WHERE clause as keys and {@code String} corresponding to the table to use to
      * retrieve the data as values.
      *
-     * @param sb                The {@code StringBuilder} for which the FROM clause will be
-     *                          created.
-     * @param processedFilters  The {@code DAOProcessedRawDataFilter} to use to generate the
-     *                          FROM clause
-     * @param isSingleCell      A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
-     *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
-     *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
-     *                          If <strong>null</strong> all RNA-Seq are retrieved.
-     * @param necessaryTables   A {@code Set} of {@code String}s corresponding to the names
-     *                          of tables necessary to the creation of the FROM clause.
-     *                          {@code necessaryTables} must contain only the names
-     *                          of the tables used to retrieve necessary information
-     *                          in the SELECT clause, not the tables used for filtering results.
-     *                          Other tables will be automatically added to the clause
-     *                          by this method to satisfy the {@code filter}s.
-     * @param isSingleCell      A {@code Boolean} defining if bulk RNA-Seq or single cell RNA-Seq
-     *                          technologies have to be retrieved. If null, all RNA-Seq data (bulk
-     *                          and single cell) are retrieved.
-     * @return                  A {@code Map} with {@code RawDataColumn} as keys and
-     *                          {@code String} as value defining the table to use.
+     * @param sb                    The {@code StringBuilder} for which the FROM clause will be
+     *                              created.
+     * @param processedFilters      The {@code DAOProcessedRawDataFilter} to use to generate the
+     *                              FROM clause
+     * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                              If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                              If <strong>null</strong> all RNA-Seq are retrieved.
+     * @param isUsedToGenerateCalls A {@code Boolean} allowing to specify if the library has to be used to
+     *                              to generate calls. If <strong>true</strong> only libraries used to
+     *                              generate calls are retrieved. If <strong>false</strong> only libraries
+     *                              not used to generate calls are retrieved. If <strong>null</strong> then
+     *                              no filtering on generation of calls is applied to retrieve libraries.
+     * @param necessaryTables       A {@code Set} of {@code String}s corresponding to the names
+     *                              of tables necessary to the creation of the FROM clause.
+     *                              {@code necessaryTables} must contain only the names
+     *                              of the tables used to retrieve necessary information
+     *                              in the SELECT clause, not the tables used for filtering results.
+     *                              Other tables will be automatically added to the clause
+     *                              by this method to satisfy the {@code filter}s.
+     * @return                      A {@code Map} with {@code RawDataColumn} as keys and
+     *                              {@code String} as value defining the table to use.
      */
     protected Map<RawDataColumn, String> generateFromClauseRawDataRnaSeq(StringBuilder sb,
             DAOProcessedRawDataFilter<Integer> processedFilters, Boolean isSingleCell,
-            Set<String> necessaryTables) {
-        log.traceEntry("{}, {}, {}, {}", sb, processedFilters, isSingleCell, necessaryTables);
+            Boolean isUsedToGenerateCalls, Set<String> necessaryTables) {
+        log.traceEntry("{}, {}, {}, {}, {}", sb, processedFilters, isSingleCell, isUsedToGenerateCalls,
+                necessaryTables);
 
         // possibilities : experiment or library or annotated samples or result or condition or
         // result and annotated sample (for the counts, to retrieve results, assay and libraries) or
@@ -1059,18 +1077,19 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         LinkedHashSet<String> orderedTables = new LinkedHashSet<>();
         
         boolean needIsSingleCell = isSingleCell != null;
+        boolean needIsUsedToGenerateCalls = isUsedToGenerateCalls != null;
 
 
         // check needed tables
         boolean geneTable = processedFilters.isNeedSpeciesId() && necessaryTables.size() == 1 &&
                 necessaryTables.contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME)
                 && !processedFilters.isNeedAssayId() && !processedFilters.isNeedExperimentId() &&
-                !processedFilters.isNeedConditionId() && !needIsSingleCell;
+                !processedFilters.isNeedConditionId() && !needIsSingleCell && !needIsUsedToGenerateCalls;
         boolean condTable = processedFilters.isNeedSpeciesId() && !geneTable || necessaryTables.contains(
                 MySQLRawDataConditionDAO.TABLE_NAME);
         assert !(geneTable && condTable): "We should never need both cond and gene table";
         boolean expTable = necessaryTables.contains(MySQLRNASeqExperimentDAO.TABLE_NAME);
-        boolean libraryTable = needIsSingleCell ||
+        boolean libraryTable = needIsSingleCell || needIsUsedToGenerateCalls ||
                 necessaryTables.contains(MySQLRNASeqLibraryDAO.TABLE_NAME) ||
                 expTable && (processedFilters.isNeedConditionId() || processedFilters.isNeedGeneId() ||
                         processedFilters.isNeedAssayId() || processedFilters.isNeedSpeciesId()) ||
@@ -1285,15 +1304,15 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
         log.traceEntry("{}, {}}", processedRawDataFilters, filtersToDatabaseMapping);
         return log.traceExit(this.generateWhereClauseRawDataFilter(processedRawDataFilters,
-                filtersToDatabaseMapping, null));
+                filtersToDatabaseMapping, null, null));
     }
+
     protected <U extends Comparable<U>> String generateWhereClauseRawDataFilter(
             DAOProcessedRawDataFilter<U> processedRawDataFilters,
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping,
-            Boolean isSingleCell) {
-        log.traceEntry("{}, {}, {}", processedRawDataFilters, filtersToDatabaseMapping,
-                isSingleCell);
-
+            Boolean isSingleCell, Boolean isUsedToGenerateCalls) {
+        log.traceEntry("{}, {}, {}, {}", processedRawDataFilters, filtersToDatabaseMapping,
+                isSingleCell, isUsedToGenerateCalls);
         DAODataType dataType = filtersToDatabaseMapping.getDatatype();
         //ESTs can't have results if an experiment ID is requested
         //(ESTs don't have experiments)
@@ -1317,11 +1336,12 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 .map(f -> this.generateOneFilterWhereClause(f, filtersToDatabaseMapping,
                         processedRawDataFilters.getFilterToCallTableAssayIds() == null? null:
                             processedRawDataFilters.getFilterToCallTableAssayIds().get(f),
-                        isSingleCell))
+                        isSingleCell, isUsedToGenerateCalls))
                 .collect(Collectors.joining(") OR (", " (", ")"));
 
         //Special case if there are no filters
-        if (processedRawDataFilters.getRawDataFilters().isEmpty() && isSingleCell != null ||
+        if (processedRawDataFilters.getRawDataFilters().isEmpty() &&
+                (isSingleCell != null || isUsedToGenerateCalls != null) ||
                 processedRawDataFilters.getFilterToCallTableAssayIds() != null
                 && processedRawDataFilters.getFilterToCallTableAssayIds().get(null) != null &&
                 !processedRawDataFilters.getFilterToCallTableAssayIds().get(null).isEmpty()) {
@@ -1329,16 +1349,16 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             whereClause = this.generateOneFilterWhereClause(null, filtersToDatabaseMapping,
                     processedRawDataFilters.getFilterToCallTableAssayIds() == null? null:
                         processedRawDataFilters.getFilterToCallTableAssayIds().get(null),
-                    isSingleCell);
+                    isSingleCell, isUsedToGenerateCalls);
         }
         return log.traceExit(whereClause);
     }
 
     private <U extends Comparable<U>> String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter,
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping, Set<U> callTableAssayIds,
-            Boolean isSingleCell) {
-        log.traceEntry("{}, {}, {}, {}", rawDataFilter, filtersToDatabaseMapping,
-                callTableAssayIds, isSingleCell);
+            Boolean isSingleCell, Boolean isUsedToGenerateCalls) {
+        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilter, filtersToDatabaseMapping,
+                callTableAssayIds, isSingleCell, isUsedToGenerateCalls);
 
         DAODataType dataType = filtersToDatabaseMapping.getDatatype();
         Set<Integer> speIds = callTableAssayIds == null && rawDataFilter != null?
@@ -1466,6 +1486,15 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             }
             sb.append(MySQLRNASeqLibraryDAO.TABLE_NAME).append(".")
               .append(RNASeqLibraryDAO.Attribute.IS_SINGLE_CELL.getTOFieldName())
+              .append(" = ?");
+            filterFound = true;
+        }
+        if (callTableAssayIds == null && isUsedToGenerateCalls != null) {
+            if (filterFound) {
+                sb.append(" AND ");
+            }
+            sb.append(MySQLRNASeqLibraryDAO.TABLE_NAME).append(".")
+              .append(RNASeqLibraryDAO.Attribute.USED_TO_GENERATE_CALLS.getTOFieldName())
               .append(" = ?");
             filterFound = true;
         }

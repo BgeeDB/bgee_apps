@@ -77,9 +77,10 @@ implements RNASeqLibraryAnnotatedSampleDAO{
     @Override
     public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Long offset, Integer limit,
+            Boolean isUsedToGenerateCalls, Long offset, Integer limit,
             Collection<RNASeqLibraryAnnotatedSampleDAO.Attribute> attrs) throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attrs);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, isUsedToGenerateCalls,
+                offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);
 
         final DAOProcessedRawDataFilter<Integer> processedFilters =
@@ -101,14 +102,14 @@ implements RNASeqLibraryAnnotatedSampleDAO{
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, isSingleCell, Set.of(TABLE_NAME),
+                processedFilters, isSingleCell, isUsedToGenerateCalls, Set.of(TABLE_NAME),
                 DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
             sb.append(" WHERE ")
               .append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping, isSingleCell));
+                    filtersToDatabaseMapping, isSingleCell, isUsedToGenerateCalls));
         }
 
         // generate ORDER BY
@@ -123,7 +124,7 @@ implements RNASeqLibraryAnnotatedSampleDAO{
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    isSingleCell, DAODataType.RNA_SEQ, offset, limit);
+                    isSingleCell, isUsedToGenerateCalls, DAODataType.RNA_SEQ, offset, limit);
             return log.traceExit(new MySQLRNASeqLibraryAnnotatedSampleTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

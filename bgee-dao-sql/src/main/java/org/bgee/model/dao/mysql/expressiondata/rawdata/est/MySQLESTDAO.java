@@ -65,7 +65,7 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
                        .stream()
                        .map(to -> to.getId())
                     .  collect(Collectors.toSet()),
-                String.class, DAODataType.EST, null);
+                String.class, DAODataType.EST, null, null);
         if (processedFilters == null) {
             try {
                 return log.traceExit(new MySQLESTTOResultSet(
@@ -88,7 +88,7 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, null, Set.of(TABLE_NAME), DAODataType.EST);
+                processedFilters, null, null, Set.of(TABLE_NAME), DAODataType.EST);
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {

@@ -89,7 +89,7 @@ implements InSituEvidenceDAO{
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, null, Set.of(TABLE_NAME), DAODataType.IN_SITU);
+                processedFilters, null, null, Set.of(TABLE_NAME), DAODataType.IN_SITU);
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {

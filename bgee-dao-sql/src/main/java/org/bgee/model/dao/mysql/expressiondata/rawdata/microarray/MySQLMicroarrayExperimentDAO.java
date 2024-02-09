@@ -54,7 +54,7 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
 
         //generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
+                processedFilters, null, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
 
         // generate WHERE
         if (!processedFilters.getRawDataFilters().isEmpty()) {

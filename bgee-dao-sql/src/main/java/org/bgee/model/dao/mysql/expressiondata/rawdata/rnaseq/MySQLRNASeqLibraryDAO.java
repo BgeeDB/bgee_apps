@@ -38,13 +38,12 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         super(manager);
     }
 
-
     @Override
     public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
-            Boolean isSingleCell, Long offset, Integer limit,
+            Boolean isSingleCell, Boolean isUsedToGenerateCalls, Long offset, Integer limit,
             Collection<RNASeqLibraryDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
-                attributes);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, isUsedToGenerateCalls,
+                offset, limit, attributes);
         checkOffsetAndLimit(offset, limit);
 
         final DAOProcessedRawDataFilter<Integer> processedFilters =
@@ -61,13 +60,14 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, isSingleCell, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
+                processedFilters, isSingleCell, isUsedToGenerateCalls, Set.of(TABLE_NAME),
+                DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
             sb.append(" WHERE ")
               .append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping, isSingleCell));
+                    filtersToDatabaseMapping, isSingleCell, isUsedToGenerateCalls));
         }
 
         // generate ORDER BY
@@ -84,7 +84,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    isSingleCell, DAODataType.RNA_SEQ, offset, limit);
+                    isSingleCell, isUsedToGenerateCalls, DAODataType.RNA_SEQ, offset, limit);
             return log.traceExit(new MySQLRNASeqLibraryTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -107,7 +107,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Boolean sampleMultiplexing = null, libraryMultiplexing = null,
-                        isSingleCell = null;
+                        isSingleCell = null, isUsedToGenerateCalls = null;
                 String id = null, experimentId = null, sequencerName= null,
                         technologyName = null, populationCaptureId = null, genotype = null;
                 StrandSelection strandSelection = null;
@@ -178,6 +178,9 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                             .LIBRARY_TYPE.getTOFieldName())) {
                         libType = LibraryType.convertToLibraryType(currentResultSet
                                 .getString(column.getKey()));
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .USED_TO_GENERATE_CALLS.getTOFieldName())) {
+                        isUsedToGenerateCalls = currentResultSet.getBoolean(column.getKey());
                     } else {
                         log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
@@ -186,7 +189,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                         technologyName, isSingleCell, sampleMultiplexing, libraryMultiplexing,
                         strandSelection, cellCompartment, seqTranscriptPart,
                         fragmentation, populationCaptureId, genotype, allReadCount, mappedReadCount,
-                        minReadLength, maxReadLength, libType));
+                        minReadLength, maxReadLength, libType, isUsedToGenerateCalls));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

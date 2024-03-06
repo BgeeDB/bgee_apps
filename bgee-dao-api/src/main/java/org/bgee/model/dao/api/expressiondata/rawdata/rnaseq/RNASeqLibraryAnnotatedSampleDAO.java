@@ -101,35 +101,29 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
      * {@code RNASeqLibraryAnnotatedSampleTOResultSet}. It is the responsibility of the caller to close this
      * {@code DAOResultSet} once results are retrieved.
      *
-     * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
-     *                              how to filter annotated samples to retrieve. The query uses AND between
-     *                              elements of a same filter and uses OR between filters.
-     * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
-     *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
-     *                              If <strong>false</strong> only bulk RNA-Seq are retrieved.
-     *                              If <strong>null</strong> all RNA-Seq are retrieved.
-     * @param isUsedToGenerateCalls A {@code Boolean} allowing to specify if the library has to be used to
-     *                              to generate calls. If <strong>true</strong> only libraries used to
-     *                              generate calls are retrieved. If <strong>false</strong> only libraries
-     *                              not used to generate calls are retrieved. If <strong>null</strong> then
-     *                              no filtering on generation of calls is applied to retrieve libraries.
-     * @param offset                A {@code Long} used to specify which row to start from retrieving data
-     *                              in the result of a query. If null, retrieve data from the first row. If
-     *                              not null, a limit should be also provided.
-     *                              {@code Long} because sometimes the number of potential results
-     *                              can be very large.
-     * @param limit                 An {@code Integer} used to limit the number of rows returned in a query
-     *                              result. If null, all results are returned.
-     * @param attributes            A {@code Collection} of {@code Attribute}s to specify the information
-     *                              to retrieve from the data source.
-     * @return                      A {@code RNASeqLibraryAnnotatedSampleTOResultSet} allowing to retrieve the
-     *                              targeted {@code AffymetrixProbesetTO}s.
-     * @throws DAOException         If an error occurred while accessing the data source.
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter annotated samples to retrieve. The query uses AND between
+     *                          elements of a same filter and uses OR between filters.
+     * @param isSingleCell      A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                          If <strong>null</strong> all RNA-Seq are retrieved.
+     * @param offset            A {@code Long} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row. If
+     *                          not null, a limit should be also provided.
+     *                          {@code Long} because sometimes the number of potential results
+     *                          can be very large.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
+     *                          to retrieve from the data source.
+     * @return                  A {@code RNASeqLibraryAnnotatedSampleTOResultSet} allowing to retrieve the
+     *                          targeted {@code AffymetrixProbesetTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
     public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Boolean isUsedToGenerateCalls, Long offset, Integer limit,
-            Collection<Attribute> attributes) throws DAOException;
+            Long offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s

@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * <li>{@code EST}
  * <li>{@code IN_SITU}
  * <li>{@code RNA_SEQ}
- * <li>{@code SC_RNA_SEQ}
+ * <li>{@code FULL_LENGTH}
  * </ul>
  * 
  * @author Freeric Bastian

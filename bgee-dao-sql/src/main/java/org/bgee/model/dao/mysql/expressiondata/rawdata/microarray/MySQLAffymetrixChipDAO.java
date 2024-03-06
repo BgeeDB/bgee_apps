@@ -57,7 +57,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, null, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
+                processedFilters, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {

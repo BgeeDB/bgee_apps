@@ -53,7 +53,7 @@ implements InSituExperimentDAO{
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, null, null, Set.of(TABLE_NAME), DAODataType.IN_SITU);
+                processedFilters, null, Set.of(TABLE_NAME), DAODataType.IN_SITU);
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {

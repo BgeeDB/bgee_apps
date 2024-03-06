@@ -55,12 +55,12 @@ implements RNASeqResultAnnotatedSampleDAO {
     @Override
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Boolean isUsedToGenerateCalls, Long offset, Integer limit,
+            Long offset, Integer limit,
             Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes,
             LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
                     throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, isUsedToGenerateCalls,
-                offset, limit, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
+                attributes, orderingAttributes);
         return log.traceExit(this.getResultAnnotatedSamples(rawDataFilters, isSingleCell, false,
                 offset, limit, attributes, orderingAttributes));
     }
@@ -68,12 +68,12 @@ implements RNASeqResultAnnotatedSampleDAO {
     @Override
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Boolean isUsedToGenerateCalls, boolean notNullExpressionId, Long offset,
-            Integer limit, Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes,
+            boolean notNullExpressionId, Long offset, Integer limit,
+            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes,
             LinkedHashMap<RNASeqResultAnnotatedSampleDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
                     throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {} ", rawDataFilters, isSingleCell, isUsedToGenerateCalls,
-                notNullExpressionId, offset, limit, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", rawDataFilters, isSingleCell, notNullExpressionId,
+                offset, limit, attributes, orderingAttributes);
         checkOffsetAndLimit(offset, limit);
 
         //It is very ugly, but for performance reasons, we use two queries:
@@ -87,12 +87,12 @@ implements RNASeqResultAnnotatedSampleDAO {
                 new MySQLRNASeqLibraryAnnotatedSampleDAO(this.getManager());
         DAOProcessedRawDataFilter<Integer> processedFilters = this.processFilterForCallTableAssayIds(
                 new DAOProcessedRawDataFilter<Integer>(rawDataFilters),
-                (s) -> assayDAO.getLibraryAnnotatedSamples(s, isSingleCell, isUsedToGenerateCalls,
-                        null, null, Set.of(RNASeqLibraryAnnotatedSampleDAO.Attribute.ID))
+                (s) -> assayDAO.getLibraryAnnotatedSamples(s, isSingleCell, null, null,
+                               Set.of(RNASeqLibraryAnnotatedSampleDAO.Attribute.ID))
                        .stream()
                        .map(to -> to.getId())
                     .  collect(Collectors.toSet()),
-                Integer.class, DAODataType.RNA_SEQ, isSingleCell, isUsedToGenerateCalls);
+                Integer.class, DAODataType.RNA_SEQ, isSingleCell);
         if (processedFilters == null) {
             try {
                 return log.traceExit(new MySQLRNASeqResultAnnotatedSampleTOResultSet(
@@ -123,9 +123,9 @@ implements RNASeqResultAnnotatedSampleDAO {
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
                 processedFilters,
-                //isSingleCell & isUsedToGenerateCalls: at this point, it was already considered in
-                //the assay IDs obtained through processFilterForCallTableAssayIds
-                null, null,
+                //isSingleCell: at this point, it was already considered in the assay IDs
+                //obtained through processFilterForCallTableAssayIds
+                null,
                 Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
@@ -135,9 +135,9 @@ implements RNASeqResultAnnotatedSampleDAO {
             sb.append(" WHERE ")
               .append(generateWhereClauseRawDataFilter(processedFilters,
                     filtersToDatabaseMapping,
-                    //isSingleCell and isUsedToGenerateCalls: at this point, it was already considered
-                    //in the assay IDs obtained through processFilterForCallTableAssayIds
-                    null, null));
+                    //isSingleCell: at this point, it was already considered in the assay IDs
+                    //obtained through processFilterForCallTableAssayIds
+                    null));
             whereClause = true;
         }
         if (notNullExpressionId) {
@@ -174,7 +174,7 @@ implements RNASeqResultAnnotatedSampleDAO {
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    isSingleCell, isUsedToGenerateCalls, DAODataType.RNA_SEQ, offset, limit);
+                    isSingleCell, DAODataType.RNA_SEQ, offset, limit);
             return log.traceExit(new MySQLRNASeqResultAnnotatedSampleTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

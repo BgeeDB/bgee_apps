@@ -59,15 +59,14 @@ implements RNASeqExperimentDAO{
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, isSingleCell, null, Set.of(TABLE_NAME),
+                processedFilters, isSingleCell, Set.of(TABLE_NAME),
                 DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
-        //XXX for now we do not filter experiments used to generate calls.
         if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
             sb.append(" WHERE ")
               .append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping, isSingleCell, null));
+                    filtersToDatabaseMapping, isSingleCell));
         }
 
         // generate ORDER BY
@@ -82,7 +81,7 @@ implements RNASeqExperimentDAO{
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    isSingleCell, null, DAODataType.RNA_SEQ, offset, limit);
+                    isSingleCell, DAODataType.RNA_SEQ, offset, limit);
             return log.traceExit(new MySQLRNASeqExperimentTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -121,6 +120,7 @@ implements RNASeqExperimentDAO{
                             .getTOFieldName())) {
                         dataSourceId = currentResultSet.getInt(column.getKey());
                     } else if(column.getValue().equals("isTargetBase")) {
+                        Integer value = currentResultSet.getInt(column.getKey());
                          isTargetBase = currentResultSet.getInt(column.getKey()) == 1? true: false;
                     } else {
                         log.throwing(new UnrecognizedColumnException(column.getValue()));

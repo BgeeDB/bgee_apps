@@ -53,7 +53,7 @@ public class MySQLESTLibraryDAO extends MySQLRawDataDAO<ESTLibraryDAO.Attribute>
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, null, null, Set.of(TABLE_NAME), DAODataType.EST);
+                processedFilters, null, Set.of(TABLE_NAME), DAODataType.EST);
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {

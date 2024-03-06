@@ -69,7 +69,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
                        .stream()
                        .map(to -> to.getId())
                     .  collect(Collectors.toSet()),
-                Integer.class, DAODataType.AFFYMETRIX, null, null);
+                Integer.class, DAODataType.AFFYMETRIX, null);
         if (processedFilters == null) {
             try {
                 return log.traceExit(new MySQLAffymetrixProbesetTOResultSet(
@@ -92,7 +92,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, null, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
+                processedFilters, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
 
         // generate WHERE
         if (!processedFilters.getRawDataFilters().isEmpty()) {

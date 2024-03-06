@@ -118,10 +118,8 @@ implements RawDataConditionDAO {
     @Override
     public RawDataConditionTOResultSet getRawDataConditionsLinkedToDataType(
             Collection<DAORawDataFilter> rawDataFilters, DAODataType dataType,
-            Boolean isSingleCell, Boolean isUsedToGenerateCalls,
-            Collection<RawDataConditionDAO.Attribute> attributes) {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, dataType, isSingleCell,
-                isUsedToGenerateCalls, attributes);
+            Boolean isSingleCell, Collection<RawDataConditionDAO.Attribute> attributes) {
+        log.traceEntry("{}, {}, {}, {}", rawDataFilters, dataType, isSingleCell, attributes);
         if (dataType == null) {
             throw log.throwing(new IllegalArgumentException("dataType cannot be null"));
         }
@@ -140,7 +138,7 @@ implements RawDataConditionDAO {
 
         //generate FROM
         RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
-                sb, processedFilters, isSingleCell, isUsedToGenerateCalls,
+                sb, processedFilters, isSingleCell,
                 Set.of(TABLE_NAME), dataType);
 
         // generate WHERE
@@ -148,7 +146,7 @@ implements RawDataConditionDAO {
         if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
             sb.append("(")
               .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping,
-                      isSingleCell, isUsedToGenerateCalls))
+                      isSingleCell))
               .append(") AND ");
         }
         //We at least always need to check that results are from conditions
@@ -190,7 +188,7 @@ implements RawDataConditionDAO {
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    isSingleCell, isUsedToGenerateCalls, dataType, null, null);
+                    isSingleCell, dataType, null, null);
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

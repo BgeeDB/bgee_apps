@@ -71,7 +71,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                            .stream()
                            .map(to -> to.getId())
                         .  collect(Collectors.toSet()),
-                    Integer.class, DAODataType.AFFYMETRIX, null, null);
+                    Integer.class, DAODataType.AFFYMETRIX, null);
             //Means there is no result
             if (processedRawDataFilters == null) {
                 return log.traceExit(new RawDataCountContainerTO(
@@ -143,7 +143,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
         // generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedRawDataFilters, null, null, necessaryTables, DAODataType.AFFYMETRIX);
+                processedRawDataFilters, null, necessaryTables, DAODataType.AFFYMETRIX);
 
         // generate WHERE CLAUSE
         if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
@@ -246,7 +246,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
         // generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedRawDataFilters, null, null, necessaryTables, DAODataType.EST);
+                processedRawDataFilters, null, necessaryTables, DAODataType.EST);
 
         // generate WHERE CLAUSE
         if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
@@ -369,7 +369,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
         // generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedRawDataFilters, null, null, necessaryTables, DAODataType.IN_SITU);
+                processedRawDataFilters, null, necessaryTables, DAODataType.IN_SITU);
 
         // generate WHERE CLAUSE
         if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
@@ -397,10 +397,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
     @Override
     public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
-            Boolean isSingleCell, Boolean isUsedToGenerateCalls, boolean experimentCount,
-            boolean libraryCount, boolean assayCount, boolean callCount) {
-        log.traceEntry("{}, {},{}, {}, {}", rawDataFilters, isSingleCell, isUsedToGenerateCalls,
-                experimentCount, libraryCount, assayCount, callCount);
+            Boolean isSingleCell, boolean experimentCount, boolean libraryCount,
+            boolean assayCount, boolean callCount) {
+        log.traceEntry("{}, {},{}, {}", rawDataFilters, isSingleCell, experimentCount, libraryCount,
+                assayCount, callCount);
         if (!experimentCount && !libraryCount && !assayCount && !callCount) {
             throw log.throwing(new IllegalArgumentException(
                     "experimentCount, libraryCount, assayCount and"
@@ -411,8 +411,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         boolean newCallCount = callCount;
         RawDataCountContainerTO callCountTO = null;
         if (callCount && (experimentCount || assayCount || libraryCount)) {
-            callCountTO = this.getRnaSeqCount(rawDataFilters, isSingleCell, isUsedToGenerateCalls,
-                    false, false, false, true);
+            callCountTO = this.getRnaSeqCount(rawDataFilters, isSingleCell, false, false, false, true);
             newCallCount = false;
         }
         // force to have a list in order to keep order of elements. It is mandatory to be able
@@ -420,22 +419,20 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         DAOProcessedRawDataFilter<Integer> processedFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);
         Boolean newIsSingleCell = isSingleCell;
-        Boolean newIsUsedToGenerateCalls = isUsedToGenerateCalls;
         if (newCallCount) {
             final MySQLRNASeqLibraryAnnotatedSampleDAO assayDAO =
                     new MySQLRNASeqLibraryAnnotatedSampleDAO(this.getManager());
             processedFilters = this.processFilterForCallTableAssayIds(
                     processedFilters,
-                    (s) -> assayDAO.getLibraryAnnotatedSamples(s, isSingleCell, isUsedToGenerateCalls,
-                                null, null, Set.of(RNASeqLibraryAnnotatedSampleDAO.Attribute.ID))
+                    (s) -> assayDAO.getLibraryAnnotatedSamples(s, isSingleCell, null, null,
+                                   Set.of(RNASeqLibraryAnnotatedSampleDAO.Attribute.ID))
                            .stream()
                            .map(to -> to.getId())
                         .  collect(Collectors.toSet()),
-                    Integer.class, DAODataType.RNA_SEQ, isSingleCell, isUsedToGenerateCalls);
-            //In that case here we won't need to filter for isSingleCell or isUsedToGenerateCalls
-            //anymore, it will be already filtered by the assay IDs
+                    Integer.class, DAODataType.RNA_SEQ, isSingleCell);
+            //In that case here we won't need to filter for isSingleCell anymore,
+            //it will be already filtered by the assay IDs
             newIsSingleCell = null;
-            newIsUsedToGenerateCalls = null;
             //Means there is no result
             if (processedFilters == null) {
                 return log.traceExit(new RawDataCountContainerTO(
@@ -533,19 +530,18 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
         // generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, newIsSingleCell, newIsSingleCell, necessaryTables,
-                DAODataType.RNA_SEQ);
+                processedFilters, newIsSingleCell, necessaryTables, DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty() || newIsSingleCell != null ||
                 !processedFilters.getFilterToCallTableAssayIds().isEmpty()) {
             sb.append(" WHERE ")
               .append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping,
-                    newIsSingleCell, newIsUsedToGenerateCalls));
+                    newIsSingleCell));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    newIsSingleCell, newIsUsedToGenerateCalls, DAODataType.RNA_SEQ, null, null);
+                    newIsSingleCell, DAODataType.RNA_SEQ, null, null);
             MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
             resultSet.next();
             RawDataCountContainerTO to = resultSet.getTO();

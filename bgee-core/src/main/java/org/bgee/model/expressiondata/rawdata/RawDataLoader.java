@@ -647,7 +647,7 @@ public class RawDataLoader extends CommonService {
         if (!affyExpIds.isEmpty()) {
             //we can use a new DAORawDataFilter to retrieve the requested experiments
             expTORS = this.microarrayExperimentDAO.getExperiments(
-                    Set.of(new DAORawDataFilter(affyExpIds, null, null)), null, null,
+                    Set.of(new DAORawDataFilter(affyExpIds, null, null, null)), null, null,
                     !partialInfo? null:
                         Set.of(MicroarrayExperimentDAO.Attribute.ID,
                                MicroarrayExperimentDAO.Attribute.NAME));
@@ -891,7 +891,7 @@ public class RawDataLoader extends CommonService {
         Set<String> expIds = new HashSet<>();
         if (!libraryIds.isEmpty() && !(infoType == InformationType.EXPERIMENT && !partialInfo)) {
             //we can use a new DAORawDataFilter to retrieve the requested libraries
-            DAORawDataFilter libFilter = new DAORawDataFilter(null, libraryIds, null);
+            DAORawDataFilter libFilter = new DAORawDataFilter(null, libraryIds, null, null);
             RNASeqLibraryTOResultSet libTORS = this.rnaSeqLibraryDAO.getRnaSeqLibrary(
                     Collections.singleton(libFilter), null, null, null,
                     !partialInfo? null: Set.of(
@@ -912,7 +912,7 @@ public class RawDataLoader extends CommonService {
         //CALLs or ASSAYs.
         if (!expIds.isEmpty()) {
             //we can use a new DAORawDataFilter to retrieve the requested experiments
-            DAORawDataFilter expFilter = new DAORawDataFilter(expIds, null, null);
+            DAORawDataFilter expFilter = new DAORawDataFilter(expIds, null, null, null);
             expTORS = this.rnaSeqExperimentDAO.getExperiments(
                     Collections.singleton(expFilter), null, null, null,
                     !partialInfo? null: Set.of(
@@ -1164,7 +1164,7 @@ public class RawDataLoader extends CommonService {
         if (!estLibraryIds.isEmpty()) {
             assert !partialInfo;
             //Create a new DAORawDataFilter for retrieving libraries based on their ID
-            DAORawDataFilter daoFilter = new DAORawDataFilter(null, estLibraryIds, null);
+            DAORawDataFilter daoFilter = new DAORawDataFilter(null, estLibraryIds, null, null);
             assayTORS = this.estLibraryDAO.getESTLibraries(Set.of(daoFilter), null, null,
                     null);
 
@@ -1357,7 +1357,7 @@ public class RawDataLoader extends CommonService {
         if (!expIds.isEmpty()) {
             //we can use a new DAORawDataFilter to retrieve the requested experiments
             expTORS = this.inSituExperimentDAO.getInSituExperiments(
-                    Set.of(new DAORawDataFilter(expIds, null, null)), null, null,
+                    Set.of(new DAORawDataFilter(expIds, null, null, null)), null, null,
                     !partialInfo? null: Set.of(
                             InSituExperimentDAO.Attribute.ID,
                             InSituExperimentDAO.Attribute.NAME));

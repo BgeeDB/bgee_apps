@@ -450,12 +450,13 @@ public class RawDataService extends ExpressionDataService {
 
             if (requestedRawDataCondMap.isEmpty() && filter.hasExperimentAssayIds()) {
                 daoFilters.add(new DAORawDataFilter(filter.getExperimentIds(),
-                    filter.getAssayIds(), filter.getExperimentOrAssayIds()));
+                    filter.getAssayIds(), filter.getExperimentOrAssayIds(),
+                    filter.getUsedInPropagatedCalls()));
                 log.debug("DAORawDataFilter created for any species");
             } else if (!requestedRawDataCondMap.isEmpty()) {
                 daoFilters.add(new DAORawDataFilter(null, requestedRawDataCondMap.keySet(),
                         filter.getExperimentIds(), filter.getAssayIds(),
-                        filter.getExperimentOrAssayIds()));
+                        filter.getExperimentOrAssayIds(), filter.getUsedInPropagatedCalls()));
                 log.debug("DAORawDataFilter created with at least some condition IDs");
             } else {
                 assert requestedRawDataCondMap.isEmpty() && !filter.hasExperimentAssayIds();
@@ -479,11 +480,13 @@ public class RawDataService extends ExpressionDataService {
                             log.debug("DAORawDataFilter created without genes nor cond. for species ID: {}",
                                     speciesId);
                             return new DAORawDataFilter(Set.of(speciesId), filter.getExperimentIds(),
-                                    filter.getAssayIds(), filter.getExperimentOrAssayIds());
+                                    filter.getAssayIds(), filter.getExperimentOrAssayIds(),
+                                    filter.getUsedInPropagatedCalls());
                         }
                         log.debug("Complete DAORawDataFilter created for species ID: {}", speciesId);
                         return new DAORawDataFilter(bgeeGeneIds, rawCondIds, filter.getExperimentIds(),
-                                filter.getAssayIds(), filter.getExperimentOrAssayIds());
+                                filter.getAssayIds(), filter.getExperimentOrAssayIds(),
+                                filter.getUsedInPropagatedCalls());
                     })
                     .collect(Collectors.toSet()));
         }

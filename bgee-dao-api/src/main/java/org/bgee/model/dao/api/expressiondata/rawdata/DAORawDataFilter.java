@@ -18,6 +18,7 @@ public class DAORawDataFilter extends DAODataFilter2 {
     private final Set<String> experimentIds;
     private final Set<String> assayIds;
     private final Set<String> exprOrAssayIds;
+    private final Boolean usedInPropagatedCalls;
 
     /**
      * Constructor allowing to create a {@code DOARawDataFilter} for a given speciesId,
@@ -34,11 +35,15 @@ public class DAORawDataFilter extends DAODataFilter2 {
      *                                  assayIds or experimentIds for which raw data has to be
      *                                  retrieved in the selected species. If null, all assay are
      *                                  retrieved.
+     * @param usedInPropagatedCalls     A {@code Boolean} allowing to specify if the library has to be used
+     *                                  to generate calls. If <strong>true</strong> only libraries used to
+     *                                  generate calls are retrieved. If <strong>false</strong> only libraries
+     *                                  not used to generate calls are retrieved. If <strong>null</strong> then
+     *                                  no filtering on generation of calls is applied to retrieve libraries.
      */
     public DAORawDataFilter(Collection<Integer> speciesIds, Collection<String> experimentIds,
-            Collection<String> assayIds, Collection<String> exprOrAssayIds) {
-        this(speciesIds, null, null, experimentIds, assayIds,
-                exprOrAssayIds);
+            Collection<String> assayIds, Collection<String> exprOrAssayIds, Boolean usedInPropagatedCalls) {
+        this(speciesIds, null, null, experimentIds, assayIds, exprOrAssayIds, usedInPropagatedCalls);
     }
     /**
      * Constructor allowing to create a {@code DOARawDataFilter} for a given set of experimentIds,
@@ -55,10 +60,15 @@ public class DAORawDataFilter extends DAODataFilter2 {
      *                                  assayIds or experimentIds for which raw data has to be
      *                                  retrieved in the selected species. If null, all assay are
      *                                  retrieved.
+     * @param usedInPropagatedCalls     A {@code Boolean} allowing to specify if the library has to be used
+     *                                  to generate calls. If <strong>true</strong> only libraries used to
+     *                                  generate calls are retrieved. If <strong>false</strong> only libraries
+     *                                  not used to generate calls are retrieved. If <strong>null</strong> then
+     *                                  no filtering on generation of calls is applied to retrieve libraries.
      */
     public DAORawDataFilter(Collection<String> experimentIds, Collection<String> assayIds,
-            Collection<String> exprOrAssayIds) {
-        this(null, null, null, experimentIds, assayIds, exprOrAssayIds);
+            Collection<String> exprOrAssayIds, Boolean usedInPropagatedCalls) {
+        this(null, null, null, experimentIds, assayIds, exprOrAssayIds, usedInPropagatedCalls);
     }
     /**
      * Constructor allowing to create a {@code DOARawDataFilter} for given geneIds, rawDataCondIds,
@@ -71,9 +81,15 @@ public class DAORawDataFilter extends DAODataFilter2 {
      *                                  of the raw data conditions for which raw data has to be
      *                                  retrieved. If null, do not filter on raw data condition
      *                                  IDs. geneIds and rawDataCondIds can not be both null.
+     * @param usedInPropagatedCalls     A {@code Boolean} allowing to specify if the library has to be used
+     *                                  to generate calls. If <strong>true</strong> only libraries used to
+     *                                  generate calls are retrieved. If <strong>false</strong> only libraries
+     *                                  not used to generate calls are retrieved. If <strong>null</strong> then
+     *                                  no filtering on generation of calls is applied to retrieve libraries.
      */
-    public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> rawDataCondIds) {
-        this(null, geneIds, rawDataCondIds, null, null, null);
+    public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> rawDataCondIds,
+            Boolean usedInPropagatedCalls) {
+        this(null, geneIds, rawDataCondIds, null, null, null, usedInPropagatedCalls);
     }
     /**
      * Constructor allowing to create a {@code DOARawDataFilter} for given geneIds, rawDataCondIds,
@@ -96,19 +112,25 @@ public class DAORawDataFilter extends DAODataFilter2 {
      *                                  assayIds or experimentIds for which raw data has to be
      *                                  retrieved in the selected species. If null, all assay are
      *                                  retrieved.
+     * @param usedInPropagatedCalls     A {@code Boolean} allowing to specify if the library has to be used
+     *                                  to generate calls. If <strong>true</strong> only libraries used to
+     *                                  generate calls are retrieved. If <strong>false</strong> only libraries
+     *                                  not used to generate calls are retrieved. If <strong>null</strong> then
+     *                                  no filtering on generation of calls is applied to retrieve libraries.
      */
     public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> rawDataCondIds,
             Collection<String> experimentIds, Collection<String> assayIds,
-            Collection<String> exprOrAssayIds) {
+            Collection<String> exprOrAssayIds, Boolean usedInPropagatedCalls) {
         this(null, geneIds, rawDataCondIds, experimentIds, assayIds,
-                exprOrAssayIds);
+                exprOrAssayIds, usedInPropagatedCalls);
     }
     private DAORawDataFilter(Collection<Integer> speciesIds, Collection<Integer> geneIds,
             Collection<Integer> rawDataCondIds, Collection<String> experimentIds,
-            Collection<String> assayIds, Collection<String> exprOrAssayIds) {
+            Collection<String> assayIds, Collection<String> exprOrAssayIds,
+            Boolean usedInPropagatedCalls) {
         super(speciesIds, geneIds, rawDataCondIds);
-        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesIds, geneIds, rawDataCondIds,
-                experimentIds, assayIds, exprOrAssayIds);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", speciesIds, geneIds, rawDataCondIds,
+                experimentIds, assayIds, exprOrAssayIds, usedInPropagatedCalls);
 
         this.experimentIds = Collections.unmodifiableSet(experimentIds == null? new HashSet<>() :
             experimentIds.stream().filter(e -> !StringUtils.isBlank(e)).collect(Collectors.toSet()));
@@ -116,6 +138,8 @@ public class DAORawDataFilter extends DAODataFilter2 {
             assayIds.stream().filter(a -> !StringUtils.isBlank(a)).collect(Collectors.toSet()));
         this.exprOrAssayIds = Collections.unmodifiableSet(exprOrAssayIds == null? new HashSet<>() :
             exprOrAssayIds.stream().filter(a -> !StringUtils.isBlank(a)).collect(Collectors.toSet()));
+        this.usedInPropagatedCalls = usedInPropagatedCalls;
+        // A not null attribute usedInPropagatedCalls is not sufficient to create a DAORawDataFilter
         if (this.getSpeciesIds().isEmpty() && this.getGeneIds().isEmpty() &&
                 this.getConditionIds().isEmpty() &&
                 this.experimentIds.isEmpty() && this.assayIds.isEmpty() &&
@@ -148,12 +172,14 @@ public class DAORawDataFilter extends DAODataFilter2 {
     public Set<String> getExprOrAssayIds() {
         return exprOrAssayIds;
     }
-
+    public Boolean isUsedInPropagatedCalls() {
+        return usedInPropagatedCalls;
+    }
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(assayIds, experimentIds, exprOrAssayIds);
+        result = prime * result + Objects.hash(assayIds, experimentIds, exprOrAssayIds, usedInPropagatedCalls);
         return result;
     }
     @Override
@@ -165,21 +191,14 @@ public class DAORawDataFilter extends DAODataFilter2 {
         if (getClass() != obj.getClass())
             return false;
         DAORawDataFilter other = (DAORawDataFilter) obj;
-        return Objects.equals(assayIds, other.assayIds)
-                && Objects.equals(experimentIds, other.experimentIds)
-                && Objects.equals(exprOrAssayIds, other.exprOrAssayIds);
+        return Objects.equals(assayIds, other.assayIds) && Objects.equals(experimentIds, other.experimentIds)
+                && Objects.equals(exprOrAssayIds, other.exprOrAssayIds)
+                && Objects.equals(usedInPropagatedCalls, other.usedInPropagatedCalls);
     }
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("DAORawDataFilter [")
-               .append("getSpeciesIds()=").append(getSpeciesIds())
-               .append(", getGeneIds()=").append(getGeneIds())
-               .append(", getConditionIds()=").append(getConditionIds())
-               .append(", experimentIds=").append(experimentIds)
-               .append(", assayIds=").append(assayIds)
-               .append(", exprOrAssayIds=").append(exprOrAssayIds)
-               .append("]");
-        return builder.toString();
+        return "DAORawDataFilter [experimentIds=" + experimentIds + ", assayIds=" + assayIds + ", exprOrAssayIds="
+                + exprOrAssayIds + ", usedInPropagatedCalls=" + usedInPropagatedCalls + "]";
     }
+
 }

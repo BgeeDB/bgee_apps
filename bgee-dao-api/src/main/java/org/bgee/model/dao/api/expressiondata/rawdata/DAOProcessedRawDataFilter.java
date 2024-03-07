@@ -63,7 +63,11 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
             this.rawDataFilters.stream().anyMatch(e -> !e.getSpeciesIds().isEmpty());
         this.needAssayId = this.filterToCallTableAssayIds != null? false:
             this.rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
-                !e.getExprOrAssayIds().isEmpty());
+                !e.getExprOrAssayIds().isEmpty() ||
+                // assayIds are also required if filtering on usedInPropagatedCalls and the
+                // datatype can have not propagated calls
+                e.isUsedInPropagatedCalls() != null &&
+                (dataType == null  || dataType.isAlwaysPropagated() == false));
         //For in situ data, conditions are not linked to the assays
         this.needConditionId = this.filterToCallTableAssayIds != null &&
                 (dataType == null || dataType.isAssayRelatedToCondition())? false:

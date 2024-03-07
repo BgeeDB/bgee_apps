@@ -45,8 +45,6 @@ import org.apache.logging.log4j.MarkerManager;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.anatdev.Sex;
-import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -2400,7 +2398,7 @@ public class InsertPropagatedCalls extends CallService {
         SamplePValueDAO samplePValueDAO = daoManager.getSamplePValueDAO();
 
         //New system to access this information
-        Set<DAORawDataFilter> rawDataFilters = Set.of(new DAORawDataFilter(geneIds, null));
+        Set<DAORawDataFilter> rawDataFilters = Set.of(new DAORawDataFilter(geneIds, null, null));
         // ************ RNA-Seq and scRNA-Seq ************
         RNASeqResultAnnotatedSampleDAO rnaSeqResultDAO = daoManager.getRnaSeqResultAnnotatedSampleDAO();
         EnumSet<RNASeqResultAnnotatedSampleDAO.Attribute> rnaSeqAttrs = EnumSet.of(

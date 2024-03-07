@@ -501,6 +501,13 @@ public class URLParameters {
             "cell_type_descendant", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
 
     /**
+     * A {@code Parameter<Boolean>} used to define whether to retrieve all raw data or only
+     * raw data used to generate propagated calls.
+     */
+    private static final Parameter<Boolean> ONLY_PROPAGATED = new Parameter<Boolean>(
+            "only_propagated", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
+
+    /**
      * A {@code Parameter<String>} that contains the propagation to be used.
      * Corresponds to the URL parameter "propagation".
      */
@@ -785,6 +792,7 @@ public class URLParameters {
             ANAT_ENTITY_DESCENDANT,
             CELL_TYPE_DESCENDANT,
             STAGE_DESCENDANT,
+            ONLY_PROPAGATED,
             EXP_ASSAY_ID,
             EXPERIMENT_ID,
             FILTER_EXPERIMENT_ID,
@@ -1105,6 +1113,14 @@ public class URLParameters {
      */
     public Parameter<Boolean> getParamCellTypeDescendant(){
         return CELL_TYPE_DESCENDANT;
+    }
+
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to retrieve all raw data
+     *          or only raw data used to generate propagated calls
+     */
+    public Parameter<Boolean> getOnlyPropagated(){
+        return ONLY_PROPAGATED;
     }
 
     /**

@@ -418,32 +418,31 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
         // in both columns.
         if (anatCellFields > 0) {
             sb.append(" (");
-        }
-        for (int i = 0; i < anatCellFields; i++) {
-            if (i > 0) {
-                sb.append(" OR ");
-            }
             Set<String> ids1 = !anatEntityIds.isEmpty()? anatEntityIds: cellIds;
-            Set<String> ids2 = !anatEntityIds.isEmpty()? cellIds: Set.of();
-            if (i > 0) {
-                assert !anatEntityIds.isEmpty() && !cellIds.isEmpty();
-                ids1 = cellIds;
-                ids2 = anatEntityIds;
-            } else if (i > 1) {
-                throw log.throwing(new AssertionError("There is no more than 2 anatomy-related fields"));
+            Set<String> ids2 = !cellIds.isEmpty()? cellIds: anatEntityIds;
+            if (anatCellFields > 1) {
+                ids1 = anatEntityIds;
+                ids2 = cellIds;
             }
-            assert !ids1.isEmpty();
+            assert !ids1.isEmpty() && !ids2.isEmpty();
             sb.append(anatEntityTableFieldName).append(" IN (")
               .append(BgeePreparedStatement.generateParameterizedQueryString(ids1.size()))
               .append(")");
-            if (!ids2.isEmpty()) {
-                sb.append(" AND ")
-                  .append(cellTypeTableFieldName).append(" IN (")
-                  .append(BgeePreparedStatement.generateParameterizedQueryString(ids2.size()))
-                  .append(")");
+            String operator = " OR ";
+            if (anatCellFields > 1) {
+                operator = " AND ";
             }
-        }
-        if (anatCellFields > 0) {
+            sb.append(operator)
+              .append(cellTypeTableFieldName).append(" IN (")
+              .append(BgeePreparedStatement.generateParameterizedQueryString(ids2.size()))
+              .append(")");
+            if (anatCellFields > 1) {
+                sb.append(" OR ").append(cellTypeTableFieldName).append(" IN (")
+                .append(BgeePreparedStatement.generateParameterizedQueryString(ids1.size()))
+                .append(") AND ").append(anatEntityTableFieldName).append(" IN (")
+                .append(BgeePreparedStatement.generateParameterizedQueryString(ids2.size()))
+                .append(")");
+            }
             sb.append(") ");
         }
 
@@ -466,25 +465,21 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
         // It is possible that cell type terms are used to annotate the anat. entities.
         // In order to solve this potential issue, we always check anat. entities and cell types
         // in both columns.
-        for (int i = 0; i < anatCellFields; i++) {
+        if (anatCellFields > 0) {
             Set<String> ids1 = !anatEntityIds.isEmpty()? anatEntityIds: cellIds;
-            Set<String> ids2 = !anatEntityIds.isEmpty()? cellIds: Set.of();
-            if (i > 0) {
-                assert !anatEntityIds.isEmpty() && !cellIds.isEmpty();
-                ids1 = cellIds;
-                ids2 = anatEntityIds;
-            } else if (i > 1) {
-                throw log.throwing(new AssertionError("There is no more than 2 anatomy-related fields"));
+            Set<String> ids2 = !cellIds.isEmpty()? cellIds: anatEntityIds;
+            // celltype and anatId are searched in their own column with a AND (more stringeant) OR in inversed columns with a AND
+            if (anatCellFields > 1) {
+                ids1 = anatEntityIds;
+                ids2 = cellIds;
             }
-            assert !ids1.isEmpty();
-            stmt.setStrings(offsetParamIndex, ids1, true);
-            offsetParamIndex += ids1.size();
-            if (!ids2.isEmpty()) {
+            for (int i = 0; i < anatCellFields; i++) {
+                stmt.setStrings(offsetParamIndex, ids1, true);
+                offsetParamIndex += ids1.size();
                 stmt.setStrings(offsetParamIndex, ids2, true);
                 offsetParamIndex += ids2.size();
             }
         }
-
         return log.traceExit(offsetParamIndex);
     }
 }

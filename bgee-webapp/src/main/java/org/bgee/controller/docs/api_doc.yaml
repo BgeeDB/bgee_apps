@@ -1,0 +1,1012 @@
+openapi: 3.0.0
+info:
+  title: Bgee API
+  description: |-
+    Bgee is a database that aggregates gene expression data from various external sources across a wide range of animal species, providing a unique resource for exploring and comparing gene expression across species.
+    The Bgee API facilitates access to Bgee database, enabling users to access curated gene expression data, including raw annotations, processed values, and Bgee expression calls across diverse species. 
+    The API also supports advanced queries for expression data comparison, gene homology, and more, each with customizable query parameters to tailor your data retrieval needs.
+    For further exploration, [visit Bgee website](https://www.bgee.org)
+
+    Data retrieved through the API is available under the CC0 license, promoting ease of use in scientific and bioinformatics projects. 
+
+    Bgee Version 15.1.1
+  version: '1.0'
+  termsOfService: https://creativecommons.org/publicdomain/zero/1.0/
+  contact:
+    email: sagane.joye@unil.ch
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+externalDocs:
+  description: Find out more about Bgee
+  url: https://www.bgee.org/about/
+servers:
+  - url: https://www.bgee.org/api
+tags:
+  - name: Access Data
+    description: Allows to retrieve gene expression data and experiments based on specific criteria, enabling access to curated raw annotations, processed values, Bgee expression calls and specific experiment information.
+  - name: Tools
+    description: 'Offers advanced features for gene expression comparison and anatomical homology analysis, enabling complex queries across species and anatomical entities within Bgee database. '
+  - name: Gene focus
+    description: 'Provides comprehensive information about specific genes, including general gene information, cross-references to external databases, homology information, and insights into gene activity across different conditions. '
+  - name: Species Data (name to change?)
+    description: Enables access to detailed information on species within Bgee, supporting queries for species-specific gene expression data.
+paths:
+  /data/raw_data_annots:
+    get:
+      tags:
+        - Access Data
+      externalDocs:
+        url: https://www.bgee.org/support/tutorial-raw-data
+      summary: Retrieve curated raw data annotations
+      description: |
+        Retrieve all libraries in Bgee that match your selected criteria and access their fully **curated** annotated metadata.
+
+        The response provides a structured overview of all librarires matching your criteria, detailing the sequencing technology used, condition annotations (including anatomical entities, developmental stages, sex etc), a summary of gene expression analysis statistics, alongside references and links to further explore the data sources and experiment specifics.
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - data
+          description: Specifies the API's page for data retrieval.
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - raw_data_annots
+          description: Determines the action to perform, here targeting raw data annotations.
+        - $ref: '#/components/parameters/display_type_json'
+        - $ref: '#/components/parameters/get_result_count'
+        - $ref: '#/components/parameters/get_results'
+        - $ref: '#/components/parameters/single_species'
+        - $ref: '#/components/parameters/data_type'
+        - $ref: '#/components/parameters/sex'
+        - $ref: '#/components/parameters/gene_id'
+        - $ref: '#/components/parameters/strain'
+        - $ref: '#/components/parameters/stage_id'
+        - $ref: '#/components/parameters/stage_descendant'
+        - $ref: '#/components/parameters/anat_entity_id'
+        - $ref: '#/components/parameters/anat_entity_descendant'
+        - $ref: '#/components/parameters/cell_type_id'
+        - $ref: '#/components/parameters/cell_type_descendant'
+        - $ref: '#/components/parameters/exp_assay_id'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          description: Bad Request - Some requested gene IDs were not found in Bgee.
+        '500':
+          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience. mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
+  /data/proc_expr_values:
+    get:
+      tags:
+        - Access Data
+      externalDocs:
+        url: https://www.bgee.org/support/tutorial-raw-data#processed-expression-values
+      summary: Retrieve processed expression values
+      description: 'Retrieve gene expression information processed using the Bgee pipeline that matches your selected conditions. Allows to access information such as Read count, UMI count, Expression level, Expression p-value, Signal intensity etc. '
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - data
+          description: Specifies the API's page for data retrieval.
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - proc_expr_values
+          description: Determines the action to perform, here processed expression values.
+        - $ref: '#/components/parameters/display_type_json'
+        - $ref: '#/components/parameters/get_result_count'
+        - $ref: '#/components/parameters/get_results'
+        - $ref: '#/components/parameters/single_species'
+        - $ref: '#/components/parameters/data_type'
+        - $ref: '#/components/parameters/sex'
+        - $ref: '#/components/parameters/gene_id'
+        - $ref: '#/components/parameters/strain'
+        - $ref: '#/components/parameters/stage_id'
+        - $ref: '#/components/parameters/stage_descendant'
+        - $ref: '#/components/parameters/anat_entity_id'
+        - $ref: '#/components/parameters/anat_entity_descendant'
+        - $ref: '#/components/parameters/cell_type_id'
+        - $ref: '#/components/parameters/cell_type_descendant'
+        - $ref: '#/components/parameters/exp_assay_id'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          description: Bad Request - Some requested gene IDs were not found in Bgee.
+        '500':
+          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience. mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
+  /data/expr_calls:
+    get:
+      tags:
+        - Access Data
+      externalDocs:
+        url: https://www.bgee.org/support/tutorial-expression-calls
+      summary: Retrieve expression calls
+      description: |-
+        To answer to the question "Is this gene expressed under this  condition?"
+
+        Retrieve present/absent gene expression calls per condition. These present/absent expression calls are generated through data type-specific statistical tests to assess if the gene expression significantly surpasses the background transcriptional and experimental noise in the defined condition. A 'condition' is defined by any one or a combination of anatomical entity, developmental stage, sex, or strain. \
+        See the main [Bgee publications](https://www.bgee.org/about/publications) or [Bgee documentation](https://www.bgee.org/support/tutorial-expression-call-download-documentation)  for details. 
+
+        The results include FDR-corrected p-values and additional expression metrics for each gene within that particular condition.
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - data
+          description: Specifies the API's page for data retrieval.
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - expr_calls
+          description: Determines the action to perform, here expression calls.
+        - $ref: '#/components/parameters/display_type_json'
+        - $ref: '#/components/parameters/get_result_count'
+        - $ref: '#/components/parameters/get_results'
+        - name: species_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 9606
+          description: The NCBI identifier of the species of interest. Only one species can be specified.
+        - $ref: '#/components/parameters/gene_id_required'
+        - $ref: '#/components/parameters/data_type_calls'
+        - in: query
+          name: cond_param
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - anat_entity
+                - cell_type
+                - strain
+                - dev_stage
+                - sex
+            default:
+              - anat_entity
+              - cell_type
+              - strain
+              - dev_stage
+              - sex
+          explode: true
+          style: form
+          required: false
+          description: |-
+            Select the condition parameters to consider for generating expression calls. For example, selecting only "Anatomical entity" will integrate all strain, developmental and life stage, and sex information, into one singular call per gene and anatomical localization. Select multiple values with cmd + click.
+              * `anat_entity` - Anatomical entity 
+              * `cell_type` - Cell type
+              * `strain` - strain
+              * `dev_stage` - Developmental stage
+              * `sex` - sex
+        - name: sex
+          in: query
+          description: Sex specification, 'all' indicates no specific sex. Applicable only when sex is included among the condition parameters.
+          required: false
+          schema:
+            type: string
+            default: all
+            enum:
+              - male
+              - female
+              - all
+        - name: anat_entity_id
+          in: query
+          description: Anatomical entity identifier of interest, using [UBERON ID(s)](https://www.ebi.ac.uk/ols4/ontologies/uberon). Multiple IDs allowed. Applicable only when 'anat_entity' is included among the condition parameters.
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          example:
+            - UBERON:0000955
+        - $ref: '#/components/parameters/anat_entity_descendant'
+        - name: stage_id
+          in: query
+          description: Developmental stage identifier of interest, using [UBERON ID(s)](https://www.ebi.ac.uk/ols4/ontologies/uberon). Multiple IDs allowed. Applicable only when 'dev_stage' is included among the condition parameters.
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          example:
+            - UBERON:0000068
+        - $ref: '#/components/parameters/stage_descendant'
+        - name: strain
+          in: query
+          description: Strain(s) of interest, or ethnicity in humans. Bgee uses the UniProt controlled vocabulary of strains. Applicable only when 'strain' is included among the condition parameters. Applicable only when 'strain' is included among the condition parameters.
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          example:
+            - Asian
+        - name: cell_type_id
+          in: query
+          description: Cell type identifier(s) of interest, using [CL ontology ID](https://www.ebi.ac.uk/ols4/ontologies/cl).  Multiple IDs allowed. Applicable only when 'cell_type' is included among the condition parameters and with single cell RNA-Seq data type.
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          example:
+            - CL:0000540
+        - $ref: '#/components/parameters/cell_type_descendant'
+        - name: data_qual
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - BRONZE
+              - SILVER
+              - GOLD
+          description: Specifies the minimum confidence level of the expression call for a gene's presence or absence in the specified condition. The scale ranges from "BRONZE" for less confident calls, through "SILVER", to "GOLD" for calls with the strongest support.DEFAULT ??
+        - in: query
+          name: expr_type
+          required: false
+          schema:
+            type: string
+            enum:
+              - EXPRESSED
+              - NOT_EXPRESSED
+          description: Limit to presence or absence of expression calls. "Present" means expression level significantly above background transcriptional noise, "absent" means that the level of expression is not significantly different from the background noise. DEFAUlt  (so if nothing is specified) is BOTH ?? or need to specify both ? and thus need change
+        - in: query
+          name: cond_observed
+          required: false
+          schema:
+            type: boolean
+          description: 'Conditions Observed: Set to ''true'' to include all observed and propagated conditions, or ''false'' to limit the analysis to conditions directly observed in annotations Default ?? '
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          description: Bad Request - Some requested gene IDs were not found in Bgee.
+        '500':
+          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience. mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
+  /data/experiments:
+    get:
+      tags:
+        - Access Data
+      externalDocs:
+        url: https://www.bgee.org/support/tutorial-raw-data#experiments
+      summary: Retrieve experiments
+      description: |-
+        Retrieve the experiment(s) in Bgee that match the specific criteria you are interested in. 
+
+        The output delivers comprehensive experiment details, including download URLs, release dates, descriptions, sources, and more.
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - data
+          description: Specifies the API's page for data retrieval.
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - experiments
+          description: Determines the action to perform, here targeting experiments.
+        - $ref: '#/components/parameters/display_type_json'
+        - $ref: '#/components/parameters/get_result_count'
+        - $ref: '#/components/parameters/get_results'
+        - $ref: '#/components/parameters/single_species'
+        - $ref: '#/components/parameters/data_type'
+        - $ref: '#/components/parameters/sex'
+        - $ref: '#/components/parameters/gene_id'
+        - $ref: '#/components/parameters/strain'
+        - $ref: '#/components/parameters/stage_id'
+        - $ref: '#/components/parameters/stage_descendant'
+        - $ref: '#/components/parameters/anat_entity_id'
+        - $ref: '#/components/parameters/anat_entity_descendant'
+        - $ref: '#/components/parameters/cell_type_id'
+        - $ref: '#/components/parameters/cell_type_descendant'
+        - $ref: '#/components/parameters/exp_assay_id'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          description: Bad Request - Some requested gene IDs were not found in Bgee.
+        '500':
+          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience. mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
+  /page=anat_similarities:
+    get:
+      tags:
+        - Tools
+      summary: Retrieve anatomical homologies
+      description: |
+        to copy from computer
+
+        [More details](https://www.bgee.org/support/tutorial-anatomical-homology)
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - anat_similarities
+          description: The page to access, in this case, 'anat_similarities'.
+        - name: species_list
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+          required: true
+          description: 'The NCBI identifier of the target species. Currently, the list of available species only includes species with expression data in Bgee. Enter minimum two species. '
+          example:
+            - '9606'
+            - '9598'
+        - name: ae_list
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+          required: true
+          description: The [UBERON ID(s)](https://www.ebi.ac.uk/ols4/ontologies/uberon) of the target anatomical entities. Multiples Uberon IDs can be provided.
+          example:
+            - UBERON:0001987
+        - $ref: '#/components/parameters/display_type_json'
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          description: Error page not found, probably incorect species identifier
+  /expression_comparison:
+    get:
+      tags:
+        - Tools
+      summary: Expression comparison tool
+      description: |
+        The expression comparison tool allows for the comparison of gene expression for a list of genes in anatomical entities. If the genes listed belong to a single species, their expression is compared in all anatomical entities with expression data. If the genes listed belong to different species, their expression is compared in homologous anatomical entities with expression data (deriving from a common ancestral entity in the least common ancestor of the selected species).
+
+        Outputs expression results for each anatomical entity, in which the presence and absence of expression for the selected genes and species are displayed.
+
+        [More details](https://www.bgee.org/support/tutorial-expression-comparison)
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+            enum:
+              - expression_comparison
+          required: true
+          description: Specifies the API's page endpoint, in this case 'expression_comparison'.
+        - in: query
+          name: gene_list
+          schema:
+            type: string
+          required: true
+          description: A list of gene identifiers separated by commas. 
+          example: ENSG00000139767,ENSMUSG00000063919,ENSPPAG00000028134
+        - $ref: '#/components/parameters/display_type_json'
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          description: Error page not found, probably incorect species identifier
+  /top_anat:
+    get:
+      tags:
+        - Tools
+      summary: Expression comparison tool
+      description: |
+        To complete
+        [More details](https://www.bgee.org/support/tutorial-expression-comparison)
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+            enum:
+              - top_anat
+          required: true
+          description: Specifies the API's page endpoint, in this case 'top_anat'.
+        - $ref: '#/components/parameters/display_type_json'
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          description: Error page not found, probably incorect species identifier
+  /gene/general_info:
+    get:
+      tags:
+        - Gene focus
+      summary: Retrieve general information about a specific gene
+      description: |
+        Fetches detailed information about a gene, including its gene identifier, common name, a concise description, gene synonyms and species details.
+
+        [More details](https://www.bgee.org/support/tutorial-gene-page)
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+            enum:
+              - gene
+          required: true
+          description: Specifies the API's page endpoint, in this case 'gene'.
+        - in: query
+          name: action
+          schema:
+            type: string
+            enum:
+              - general_info
+          required: true
+          description: The action to perform, here 'general_info'.
+        - $ref: '#/components/parameters/single_gene_id'
+        - $ref: '#/components/parameters/display_type_json'
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          description: Error page not found, probably incorect species identifier
+  /gene/expression:
+    get:
+      tags:
+        - Gene focus
+      summary: Identify where a gene is expressed or absent
+      description: |
+        Provide a ranked list of conditions where the expression or absence of expression of a gene has been reported, enabling exploration of gene activity across various biological contexts. 
+
+        A 'condition' is defined by any one or a combination of anatomical entity, developmental stage, sex, or strain. The default focus is on anatomical localization, with the option to expand or specify other factors using the cond_param query parameters. 
+
+        The response provides details on the call's localization, FDR-corrected p-value for presence/absence, expression state and quality, expression score along with its confidence level, supported data types, and links to the source data.
+
+        [More details](https://www.bgee.org/support/tutorial-gene-page)
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+            enum:
+              - gene
+          required: true
+          description: Specifies the API's page endpoint, in this case 'gene'.
+        - in: query
+          name: action
+          schema:
+            type: string
+            enum:
+              - expression
+          required: true
+          description: The action to perform, here 'expression'.
+        - $ref: '#/components/parameters/single_gene_id'
+        - $ref: '#/components/parameters/corresponding_single_species'
+        - name: expr_type
+          in: query
+          schema:
+            type: string
+            default: expressed
+            enum:
+              - not_expressed
+              - expressed
+          required: false
+          description: |
+            Specifies the type of expression to filter: *'expressed'* for genes found to be active, or *'not_expressed'* for genes with no detected activity. Only one expression type can be provided.
+            The conditions with significant expression (present expression calls) are reported in the "Expression" section, the conditions with a reported absence of expression (absent expression calls) are in the section "reported absence of expression".
+        - in: query
+          name: cond_param
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+          style: form
+          required: false
+          description: 'Condition parameters to filter the expression data. Can include multiple of the following values:  "anat_entity", "cell_type", "strain", "dev_stage", "sex". Default is "anat_entity"'
+          example:
+            - anat_entity
+            - cell_type
+            - strain
+            - dev_stage
+            - sex
+        - $ref: '#/components/parameters/data_type_calls'
+        - $ref: '#/components/parameters/display_type_json'
+      responses:
+        '200':
+          description: Successful response with gene expression data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        anatomicalEntity:
+                          type: string
+                          description: Anatomical localization of the expression call.
+                        fdrCorrectedPValue:
+                          type: number
+                          format: double
+                          description: FDR-corrected p-value of the expression call.
+                        expressionScore:
+                          type: integer
+                          description: Expression score ranging from 0 (low) to 100 (high).
+                        supportedDataTypes:
+                          type: array
+                          items:
+                            type: string
+                          description: Data types supporting the expression call.
+                        sourceDataLink:
+                          type: string
+                          description: Link to browse the source data for the expression call.
+  /gene/xrefs:
+    get:
+      tags:
+        - Gene focus
+      summary: Retrieve gene cross-references
+      description: |
+        Retrieve detailed cross-reference information for a specific gene in a given species, sourcing from diverse external sources, including Ensembl, UniProtKB, GeneCards, EMBL, CCDS, HGNC etc.
+
+        [More details](https://www.bgee.org/support/tutorial-gene-page)
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+            enum:
+              - gene
+          required: true
+          description: Specifies the API's page endpoint, in this case 'gene'.
+        - in: query
+          name: action
+          schema:
+            type: string
+            enum:
+              - xrefs
+          required: true
+          description: The action to perform, here 'xrefs'.
+        - $ref: '#/components/parameters/single_gene_id'
+        - $ref: '#/components/parameters/corresponding_single_species'
+        - $ref: '#/components/parameters/display_type_json'
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          description: Error page not found, probably incorect species identifier
+  /gene/homologs:
+    get:
+      tags:
+        - Gene focus
+      summary: Retrieve gene homology information
+      description: |
+        Retrieves homology information for a specific gene within a given species. Bgee gene homology information is retrieved from the [OMA SPARQL endpoint](https://www.expasy.org/resources/oma-sparql-endpoint). They correspond to one-to-one homologs for each pair of species in Bgee. 
+
+        **Orthology** information is provided at different taxon levels corresponding to the least common ancestor taxon for which orthologs are found in Bgee species. **Paralogy** information is similarly provided at the taxon levels of the least common ancestor with paralogs identified within Bgee species.
+
+
+        [More details](https://www.bgee.org/support/tutorial-gene-page)
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+            enum:
+              - gene
+          required: true
+          description: Specifies the API's page endpoint, in this case 'gene'.
+        - in: query
+          name: action
+          schema:
+            type: string
+            enum:
+              - homologs
+          required: true
+          description: The action to perform, here 'homologs'.
+        - $ref: '#/components/parameters/single_gene_id'
+        - $ref: '#/components/parameters/corresponding_single_species'
+        - $ref: '#/components/parameters/display_type_json'
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          description: Error page not found, probably incorect species identifier
+  /page=species:
+    get:
+      tags:
+        - Species Data (name to change?)
+      summary: Retrieve species-specific informations
+      description: |
+        Fetches detailed information for a specified species using its NCBI Taxonomy ID. 
+
+        The output includes detailed species information and download paths for gene expression call files, and processed expression files per data type. Omitting the species ID returns a comprehensive list of all species available in Bgee. 
+
+        [More details and mouse data example](https://www.bgee.org/species/10090)
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - species
+          description: The page to access, in this case 'species'.
+        - name: species_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 9606
+          description: The NCBI identifier of the target species. If omitted, a list of all available species in Bgee is returned.
+        - $ref: '#/components/parameters/display_type_json'
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          description: Error page not found, probably incorect species identifier
+  /page=download/proc_values:
+    get:
+      tags:
+        - Download
+      summary: Retrieve download URLs for Bgee data 
+      description: |
+        To complete
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - download
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - proc_values
+          description: The specific action to perform in the download section.
+        - name: display_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - json
+          description: The format of the output (currently only JSON supported).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /page=download/expr_calls:
+    get:
+      tags:
+        - Download
+      summary: Retrieve download URLs for Bgee data 
+      description: |
+        To complete
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - download
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - expr_calls
+          description: The specific action to perform in the download section.
+        - name: display_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - json
+          description: The format of the output (currently only JSON supported).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+components:
+  schemas:
+    NotFoundError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: The resource specified by the request does not exist.
+  parameters:
+    single_species:
+      name: species_id
+      in: query
+      required: false
+      schema:
+        type: integer
+        example: 9606
+      description: NCBI identifier of a species of interest. Only one species can be specified.
+    corresponding_single_species:
+      name: species_id
+      in: query
+      required: true
+      schema:
+        type: integer
+        example: 9606
+      description: The corresponding species NCBI identifier associated with the gene of interest. Only one species can be specified.
+    get_result_count:
+      name: get_result_count
+      in: query
+      description: Indicates whether to return the total count of results.
+      required: true
+      schema:
+        type: boolean
+        default: true
+    get_results:
+      name: get_results
+      in: query
+      description: Indicates whether to return the results.
+      required: true
+      schema:
+        type: boolean
+        default: true
+    data_type:
+      name: data_type
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - all
+            - RNA_SEQ
+            - SC_RNA_SEQ
+            - AFFYMETRIX
+            - IN_SITU
+            - EST
+        default:
+          - all
+      explode: true
+      required: false
+      description: 'Specifies the type of data to be retrieved, with ''all'' as the default option covering all data types. Available data types include "RNA_SEQ", "SC_RNA_SEQ" (single-cell), "AFFYMETRIX", "IN_SITU" (in situ hybridization), "EST" (Expressed Sequence Tag). Multiple data types can be selected using cmd + click. '
+    data_type_calls:
+      name: data_type
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - RNA_SEQ
+            - SC_RNA_SEQ
+            - AFFYMETRIX
+            - IN_SITU
+            - EST
+        default:
+          - RNA_SEQ
+          - SC_RNA_SEQ
+          - AFFYMETRIX
+          - IN_SITU
+          - EST
+      explode: true
+      required: false
+      description: 'Restricts expression call support to specific data types, with the default setting encompassing all available data types. Available data types include "RNA_SEQ", "SC_RNA_SEQ" (single-cell), "AFFYMETRIX", "IN_SITU" (in situ hybridization), "EST" (Expressed Sequence Tag). Multiple data types can be selected using cmd + click. '
+    display_type_json:
+      name: display_type
+      in: query
+      required: true
+      schema:
+        type: string
+        enum:
+          - json
+      description: Output format, currently supporting only JSON.
+    sex:
+      name: sex
+      in: query
+      description: 'Filters data by sex: male, female, or all (default).'
+      required: false
+      schema:
+        type: string
+        default: all
+        enum:
+          - male
+          - female
+          - all
+    gene_id:
+      name: gene_id
+      in: query
+      description: Gene identifiers of interest. Multiple IDs can be specified.
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      example:
+        - ENSG00000036828
+        - ENSG00000144355
+    gene_id_required:
+      name: gene_id
+      in: query
+      description: Gene identifiers of interest. Multiple IDs can be specified.
+      required: true
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      example:
+        - ENSG00000036828
+        - ENSG00000144355
+    single_gene_id:
+      name: gene_id
+      in: query
+      required: true
+      schema:
+        type: string
+        example: ENSG00000036828
+      description: Gene identifier of interest. Only one gene can be specified.
+    strain:
+      name: strain
+      in: query
+      description: Strain(s) of interest, or ethnicity in humans. Bgee uses the UniProt controlled vocabulary of strains.
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      example:
+        - Asian
+    stage_id:
+      name: stage_id
+      in: query
+      description: Developmental stage identifier of interest, using [UBERON ID(s)](https://www.ebi.ac.uk/ols4/ontologies/uberon). Multiple IDs allowed.
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      example:
+        - UBERON:0000068
+    stage_descendant:
+      name: stage_descendant
+      in: query
+      description: Includes all child stages of the specified developmental stage(s). Default is true.
+      schema:
+        type: boolean
+        default: true
+    anat_entity_id:
+      name: anat_entity_id
+      in: query
+      description: Anatomical entity identifier of interest, using [UBERON ID(s)](https://www.ebi.ac.uk/ols4/ontologies/uberon). Multiple IDs allowed.
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      example:
+        - UBERON:0000955
+    anat_entity_descendant:
+      name: anat_entity_descendant
+      in: query
+      description: Include all substructures of the specified anatomical entities. Default is true.
+      schema:
+        type: boolean
+        default: true
+    cell_type_id:
+      name: cell_type_id
+      in: query
+      description: Cell type identifier(s) of interest, using [CL ontology ID](https://www.ebi.ac.uk/ols4/ontologies/cl). Only available for single cell RNA-Seq data type. Multiple IDs allowed.
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      example:
+        - CL:0000540
+    cell_type_descendant:
+      name: cell_type_descendant
+      in: query
+      description: Include all cell subtypes of the specified cell type(s). Default is true.
+      schema:
+        type: boolean
+        default: true
+    exp_assay_id:
+      name: exp_assay_id
+      in: query
+      description: |
+        Search for specific experiment(s) using [Gene Expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/) or [Sequence Read Archive (SRA)](https://www.ncbi.nlm.nih.gov/sra) identifiers. Multiple IDs allowed.
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      example:
+        - SRP000304
+    offset:
+      name: offset
+      in: query
+      description: Sets the starting point for fetching results, crucial for large dataset navigation and effective pagination. Works in tandem with 'limit' to control the volume of data returned by the request.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        default: 0
+        minimum: 0
+      example: 0
+    limit:
+      name: limit
+      in: query
+      description: Limits the number of results returned per response, up to a maximum of 10,000. Works in tandem with 'offset' to control the volume of data returned by the request.
+      required: false
+      schema:
+        type: integer
+        default: 100
+        maximum: 10000
+      example: 100

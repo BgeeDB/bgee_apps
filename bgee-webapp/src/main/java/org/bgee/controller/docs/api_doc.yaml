@@ -3,20 +3,19 @@ info:
   title: Bgee API
   description: |-
     Bgee is a database that aggregates gene expression data from various external sources across a wide range of animal species, providing a unique resource for exploring and comparing gene expression across species.
-    The Bgee API facilitates access to Bgee database, enabling users to access curated gene expression data, including raw annotations, processed values, and Bgee expression calls across diverse species. 
+    The Bgee API facilitates access to Bgee database, enabling users to access curated gene expression data, including raw annotations, processed values, and Bgee expression calls across diverse species.
     The API also supports advanced queries for expression data comparison, gene homology, and more, each with customizable query parameters to tailor your data retrieval needs.
     For further exploration, [visit Bgee website](https://www.bgee.org)
 
-    Data retrieved through the API is available under the CC0 license, promoting ease of use in scientific and bioinformatics projects. 
+    Data retrieved through the API is available under the CC0 license, promoting ease of use in scientific and bioinformatics projects.
 
     Bgee Version 15.1.1
   version: '1.0'
-  termsOfService: https://creativecommons.org/publicdomain/zero/1.0/
   contact:
-    email: sagane.joye@unil.ch
+    email: Bgee@sib.swiss
   license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
+    name: CC0 1.0 Universal
+    url: https://creativecommons.org/publicdomain/zero/1.0/
 externalDocs:
   description: Find out more about Bgee
   url: https://www.bgee.org/about/
@@ -144,7 +143,7 @@ paths:
         To answer to the question "Is this gene expressed under this  condition?"
 
         Retrieve present/absent gene expression calls per condition. These present/absent expression calls are generated through data type-specific statistical tests to assess if the gene expression significantly surpasses the background transcriptional and experimental noise in the defined condition. A 'condition' is defined by any one or a combination of anatomical entity, developmental stage, sex, or strain. \
-        See the main [Bgee publications](https://www.bgee.org/about/publications) or [Bgee documentation](https://www.bgee.org/support/tutorial-expression-call-download-documentation)  for details. 
+        See the main [Bgee publications](https://www.bgee.org/about/publications) or [Bgee documentation](https://www.bgee.org/support/tutorial-expression-call-download-documentation)  for details.
 
         The results include FDR-corrected p-values and additional expression metrics for each gene within that particular condition.
       parameters:
@@ -199,7 +198,7 @@ paths:
           required: false
           description: |-
             Select the condition parameters to consider for generating expression calls. For example, selecting only "Anatomical entity" will integrate all strain, developmental and life stage, and sex information, into one singular call per gene and anatomical localization. Select multiple values with cmd + click.
-              * `anat_entity` - Anatomical entity 
+              * `anat_entity` - Anatomical entity
               * `cell_type` - Cell type
               * `strain` - strain
               * `dev_stage` - Developmental stage
@@ -308,7 +307,7 @@ paths:
         url: https://www.bgee.org/support/tutorial-raw-data#experiments
       summary: Retrieve experiments
       description: |-
-        Retrieve the experiment(s) in Bgee that match the specific criteria you are interested in. 
+        Retrieve the experiment(s) in Bgee that match the specific criteria you are interested in.
 
         The output delivers comprehensive experiment details, including download URLs, release dates, descriptions, sources, and more.
       parameters:
@@ -424,7 +423,7 @@ paths:
           schema:
             type: string
           required: true
-          description: A list of gene identifiers separated by commas. 
+          description: A list of gene identifiers separated by commas.
           example: ENSG00000139767,ENSMUSG00000063919,ENSPPAG00000028134
         - $ref: '#/components/parameters/display_type_json'
       responses:
@@ -494,9 +493,9 @@ paths:
         - Gene focus
       summary: Identify where a gene is expressed or absent
       description: |
-        Provide a ranked list of conditions where the expression or absence of expression of a gene has been reported, enabling exploration of gene activity across various biological contexts. 
+        Provide a ranked list of conditions where the expression or absence of expression of a gene has been reported, enabling exploration of gene activity across various biological contexts.
 
-        A 'condition' is defined by any one or a combination of anatomical entity, developmental stage, sex, or strain. The default focus is on anatomical localization, with the option to expand or specify other factors using the cond_param query parameters. 
+        A 'condition' is defined by any one or a combination of anatomical entity, developmental stage, sex, or strain. The default focus is on anatomical localization, with the option to expand or specify other factors using the cond_param query parameters.
 
         The response provides details on the call's localization, FDR-corrected p-value for presence/absence, expression state and quality, expression score along with its confidence level, supported data types, and links to the source data.
 
@@ -621,7 +620,7 @@ paths:
         - Gene focus
       summary: Retrieve gene homology information
       description: |
-        Retrieves homology information for a specific gene within a given species. Bgee gene homology information is retrieved from the [OMA SPARQL endpoint](https://www.expasy.org/resources/oma-sparql-endpoint). They correspond to one-to-one homologs for each pair of species in Bgee. 
+        Retrieves homology information for a specific gene within a given species. Bgee gene homology information is retrieved from the [OMA SPARQL endpoint](https://www.expasy.org/resources/oma-sparql-endpoint). They correspond to one-to-one homologs for each pair of species in Bgee.
 
         **Orthology** information is provided at different taxon levels corresponding to the least common ancestor taxon for which orthologs are found in Bgee species. **Paralogy** information is similarly provided at the taxon levels of the least common ancestor with paralogs identified within Bgee species.
 
@@ -658,9 +657,9 @@ paths:
         - Species Data (name to change?)
       summary: Retrieve species-specific informations
       description: |
-        Fetches detailed information for a specified species using its NCBI Taxonomy ID. 
+        Fetches detailed information for a specified species using its NCBI Taxonomy ID.
 
-        The output includes detailed species information and download paths for gene expression call files, and processed expression files per data type. Omitting the species ID returns a comprehensive list of all species available in Bgee. 
+        The output includes detailed species information and download paths for gene expression call files, and processed expression files per data type. Omitting the species ID returns a comprehensive list of all species available in Bgee.
 
         [More details and mouse data example](https://www.bgee.org/species/10090)
       parameters:
@@ -689,7 +688,7 @@ paths:
     get:
       tags:
         - Download
-      summary: Retrieve download URLs for Bgee data 
+      summary: Retrieve download URLs for Bgee data
       description: |
         To complete
       parameters:
@@ -728,7 +727,7 @@ paths:
     get:
       tags:
         - Download
-      summary: Retrieve download URLs for Bgee data 
+      summary: Retrieve download URLs for Bgee data
       description: |
         To complete
       parameters:

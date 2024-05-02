@@ -1154,14 +1154,16 @@ public class RequestParameters {
                     "No key was generated before trying to store the associated parameters.");
         }
         //first check whether these parameters have already been serialized
-        File storageFile = new File(prop.getRequestParametersStorageDirectory() 
-                + this.getFirstValue(this.getKeyParam()));
+        String fileLocation = prop.getRequestParametersStorageDirectory() 
+                + this.getFirstValue(this.getKeyParam());
+        File storageFile = new File(fileLocation);
         if (storageFile.exists()) {
             //file already exists, no need to continue
             return;
         }
         ReentrantReadWriteLock lock = this.getReadWriteLock(this.getFirstValue(
                 this.getKeyParam()));
+        String parametersQuery = null;
         try {
             lock.writeLock().lock();
             while (readWriteLocks.get(this.getDataKey()) == null ||  
@@ -1169,20 +1171,26 @@ public class RequestParameters {
                 lock = this.getReadWriteLock(this.getDataKey());
                 lock.writeLock().lock();
             }
+            //A bit hacky to know where the error occurred in this try block,
+            //rather than having debug logs, we will distinguish between parametersQuery = null
+            //and parametersQuery = ""
+            parametersQuery = "";
             try (BufferedWriter bufferedWriter = new BufferedWriter(
-                    new FileWriter(prop.getRequestParametersStorageDirectory() 
-                            + this.getFirstValue(this.getKeyParam())))) {
+                    new FileWriter(fileLocation))) {
                 // we cannot store an URL-decoded query string, to store encoding-independent values, 
                 // because of cases where, e.g., a parameter value include a character such as '&': 
                 // we couldn't distinguish it anymore from real parameter separators.
-                bufferedWriter.write(generateParametersQuery(null, true, false, "&", null, false));
+                parametersQuery = generateParametersQuery(null, true, false, "&", null, false);
+                bufferedWriter.write(parametersQuery);
             }
         } catch (IOException e) {
             log.catching(e);
+            log.error("Error trying to write requestparameters file {}, parametersQuery: {}",
+                    fileLocation, parametersQuery);
             //delete the file if something went wrong
-            storageFile = new File(prop.getRequestParametersStorageDirectory() 
-                    + this.getFirstValue(this.getKeyParam()));
+            storageFile = new File(fileLocation);
             if (storageFile.exists()) {
+                log.error("File was created, deleting it");
                 if (!storageFile.delete()) {
                     log.error("The file was not deleted before before throwing the exception");
                 }

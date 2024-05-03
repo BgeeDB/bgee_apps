@@ -2471,6 +2471,17 @@ public class RequestParameters {
         return this.getValues(this.getUrlParametersInstance().getParamAnatEntity());
     }
     /**
+     * Convenient method to retrieve values of the parameter returned by
+     * {@link URLParameters#getParamDiscardAnatEntity()}. Equivalent to calling
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  The {@code List} of {@code String}s that are the values of
+     *          the {@code discard_anat_entity_and_children_id} URL parameter. Can be {@code null}.
+     */
+    public List<String> getDiscardAnatEntity() {
+        return this.getValues(this.getUrlParametersInstance().getParamDiscardAnatEntity());
+    }
+    /**
      * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
      * {@link URLParameters#getParamAnatEntityDescendant()}.
      *
@@ -2504,6 +2515,30 @@ public class RequestParameters {
         log.traceEntry();
         return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
                 this.getUrlParametersInstance().getParamCellTypeDescendant())));
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamObservedData()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamObservedData()},
+     *          {@code false} otherwise.
+     */
+    public boolean isObservedData() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamObservedData())));
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamExcludeNonInformative()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamExcludeNonInformative()},
+     *          {@code false} otherwise.
+     */
+    public boolean isExcludeNonInformative() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamExcludeNonInformative())));
     }
     /**
      * Convenient method to retrieve values of the parameter returned by

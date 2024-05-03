@@ -932,7 +932,7 @@ public class RawDataLoader extends CommonService {
                     .collect(Collectors.toMap(
                             to -> to.getId(),
                             to -> new RnaSeqExperiment(to.getId(), to.getName(),
-                                  to.getDescription(),
+                                  to.getDescription(), to.getDOI(),
                                   to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
                                   finalExpSpeciesId == null? null:
                                       getRNASeqExperimentDownloadURL(isSingleCell, to.isTargetBase(),

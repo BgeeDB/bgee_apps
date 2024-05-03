@@ -7,9 +7,9 @@ public class RnaSeqExperiment extends ExperimentWithDataDownload<String>{
 
     private final boolean isTargetBase;
 
-    public RnaSeqExperiment(String id, String name, String description, Source dataSource,
+    public RnaSeqExperiment(String id, String name, String description, String dOI, Source dataSource,
             String downloadUrl, int assayCount, boolean isTargetBase) {
-        super(id, name, description, dataSource, downloadUrl, assayCount);
+        super(id, name, description, dOI, dataSource, downloadUrl, assayCount);
         this.isTargetBase = isTargetBase;
     }
 

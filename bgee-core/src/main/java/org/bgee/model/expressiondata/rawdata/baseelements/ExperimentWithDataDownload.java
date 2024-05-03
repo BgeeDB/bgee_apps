@@ -6,13 +6,13 @@ public abstract class ExperimentWithDataDownload<T extends Comparable<T>> extend
 
     private final String downloadUrl;
 
-    protected ExperimentWithDataDownload(T id, String name, String description, Source dataSource,
+    protected ExperimentWithDataDownload(T id, String name, String description, String dOI, Source dataSource,
             String downloadUrl, int assayCount) {
-        this(id, id, name, description, dataSource, downloadUrl, assayCount);
+        this(id, id, name, description, dOI, dataSource, downloadUrl, assayCount);
     }
-    protected ExperimentWithDataDownload(T id, T xRefId, String name, String description, Source dataSource,
+    protected ExperimentWithDataDownload(T id, T xRefId, String name, String description, String dOI, Source dataSource,
             String downloadUrl, int assayCount) {
-        super(id, xRefId, name, description, dataSource, assayCount);
+        super(id, xRefId, name, description, dOI, dataSource, assayCount);
         this.downloadUrl = downloadUrl;
     }
 

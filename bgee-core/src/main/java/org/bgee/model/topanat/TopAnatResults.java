@@ -238,7 +238,7 @@ public class TopAnatResults {
 
         @Override
         public Object execute(Object value, CsvContext context) {
-            log.entry(value, context);
+            log.traceEntry("{}, {}", value, context);
             //throws an Exception if the input is null, as all CellProcessors usually do.
             validateInputNotNull(value, context);  
             
@@ -276,7 +276,7 @@ public class TopAnatResults {
                     this.getResultDirectory(), 
                     this.getResultFileName()).toFile();
 
-            this.controller.acquireReadLock(resultFile.getPath());
+            this.controller.getReadWriteLocks().acquireReadLock(resultFile.getPath());
 
             List<TopAnatResults.TopAnatResultRow> listToReturn 
             = new ArrayList<TopAnatResults.TopAnatResultRow>();
@@ -304,7 +304,7 @@ public class TopAnatResults {
                 }
             }
 
-            this.controller.releaseReadLock(resultFile.getPath());
+            this.controller.getReadWriteLocks().releaseReadLock(resultFile.getPath());
 
             return log.traceExit(listToReturn);
    
@@ -368,6 +368,6 @@ public class TopAnatResults {
                 .append("]");
         return builder.toString();
     }
- 
+
 }
 

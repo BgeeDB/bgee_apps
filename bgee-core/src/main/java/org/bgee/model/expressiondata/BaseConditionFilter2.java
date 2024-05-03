@@ -86,7 +86,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
          *                                  to retrieve child terms of the IDs provided
          *                                  in {@code filterIds}. Always considered as {@code false}
          *                                  if {@code filterIds} is {@code null} or empty.
-         * @param excludeTermsAndChildrenIds    A {@code Collection} of {@code T}s containing the term IDs
+         * @param excludeTermsAndChildrenIds A {@code Collection} of {@code T}s containing the term IDs
          *                                  which we want to exclude from the results,
          *                                  excluding also all of their children.
          *                                  Can be {@code null} or empty. Cannot contain null elements,
@@ -103,7 +103,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
          *                                  is {@code null} or empty, otherwise an
          *                                  {@code IllegalArgumentException} is thrown.
          */
-        private FilterIds(Collection<T> filterIds, boolean includeChildTerms,
+        public FilterIds(Collection<T> filterIds, boolean includeChildTerms,
                 Collection<T> excludeTermsAndChildrenIds, Collection<T> notToExcludeIds) {
             if (filterIds != null && filterIds.stream().anyMatch(e -> e == null)) {
                 throw log.throwing(new IllegalArgumentException("No filter ID can be null"));
@@ -331,6 +331,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
     //We could still another generic type to ConditionParameter if we wanted to specify
     //the type of ID of each condition parameter value
     private final Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds;
+    private final boolean excludeNonInformative;
 
     /**
      * @param speciesId                     An {@code Integer} that is the ID of the species
@@ -347,11 +348,14 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
      *                                      The provided argument can be null, or empty, or not contain
      *                                      all {@code ConditionParameter}s, or have {@code null} values.
      *                                      It should not contain {@code null} keys.
+     * @param excludeNonInformative         A {@code boolean} defining whether to exclude non-informative
+     *                                      conditions from results. If {@code true}, non-informative conditions
+     *                                      are excluded.
      * @throws IllegalArgumentException
      */
     protected BaseConditionFilter2(Integer speciesId,
-            Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds)
-                    throws IllegalArgumentException {
+            Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds,
+            boolean excludeNonInformative) throws IllegalArgumentException {
         if (speciesId != null && speciesId < 1) {
             throw log.throwing(new IllegalArgumentException("No species ID can be less than 1"));
         }
@@ -377,6 +381,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
                             }
                             return f;
                         })));
+        this.excludeNonInformative = excludeNonInformative;
     }
 
     /**
@@ -407,11 +412,19 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
     public ComposedFilterIds<String> getComposedFilterIds(ConditionParameter<?, ?> condParam) {
         return condParamToComposedFilterIds.get(condParam);
     }
+    /**
+     * @return  A {@code boolean} defining whether to exclude non-informative
+     *          conditions from results. If {@code true}, non-informative conditions
+     *          are excluded.
+     */
+    public boolean isExcludeNonInformative() {
+        return excludeNonInformative;
+    }
 
-    public boolean areAllCondParamFiltersEmpty() {
+    public boolean areAllFiltersExceptSpeciesEmpty() {
         log.traceEntry();
-        return log.traceExit(this.getCondParamToComposedFilterIds().values()
-                .stream()
+        return log.traceExit(!this.isExcludeNonInformative() &&
+                this.getCondParamToComposedFilterIds().values().stream()
                 .allMatch(composedIds -> composedIds.isEmpty()));
     }
 
@@ -436,12 +449,18 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
             }
             sb.append(getSpeciesId().toString());
         }
+        if (this.isExcludeNonInformative()) {
+            if (sb.length() != 0) {
+                sb.append("_");
+            }
+            sb.append(this.isExcludeNonInformative());
+        }
         return log.traceExit(sb.toString());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(condParamToComposedFilterIds, speciesId);
+        return Objects.hash(condParamToComposedFilterIds, excludeNonInformative, speciesId);
     }
     @Override
     public boolean equals(Object obj) {
@@ -453,6 +472,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
             return false;
         BaseConditionFilter2<?> other = (BaseConditionFilter2<?>) obj;
         return Objects.equals(condParamToComposedFilterIds, other.condParamToComposedFilterIds)
+                && excludeNonInformative == other.excludeNonInformative
                 && Objects.equals(speciesId, other.speciesId);
     }
 }

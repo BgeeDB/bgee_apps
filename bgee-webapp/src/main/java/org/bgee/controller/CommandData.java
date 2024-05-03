@@ -1433,8 +1433,8 @@ public class CommandData extends CommandParent {
             condFilter = new ConditionFilter2(speciesId,
                     condParamToComposedFilterIds,
                     condParams,
-                    null);
-            if (condFilter.areAllCondParamFiltersEmpty()) {
+                    null, false);
+            if (condFilter.areAllFiltersExceptSpeciesEmpty()) {
                 //To request a species a GeneFilter is mandatory,
                 //so if there are no other filters, we can discard this ConditionFilter
                 condFilter = null;

@@ -47,9 +47,9 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
      * <li>{@code DISTINCT_RANK_COUNT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getDistinctRankCount()}.
      * <li>{@code MULTIPLE_INDIVIDUAL_SAMPLE}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMultipleIndividualSample()}.
      * <li>{@code BARCODE}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getBarcode()}.
-     * <li>{@code TIME}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getBarcode()}.
-     * <li>{@code TIME_UNIT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getBarcode()}.
-     * <li>{@code FREE_TEXT_ANNOTATION}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getBarcode()}.
+     * <li>{@code TIME}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getTime()}.
+     * <li>{@code TIME_UNIT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getTimeUnit()}.
+     * <li>{@code PHYSIOLOGICAL_STATUS}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getPhysiologicalStatus()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
@@ -66,7 +66,7 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         MAPPED_UMIS_COUNT("mappedUMIsCount"), MAX_RANK("rnaSeqLibraryAnnotatedSampleMaxRank"),
         DISTINCT_RANK_COUNT("rnaSeqLibraryAnnotatedSampleDistinctRankCount"),
         MULTIPLE_INDIVIDUAL_SAMPLE("multipleLibraryIndividualSample"), BARCODE("barcode"),
-        TIME("time"), TIME_UNIT("timeUnit"), FREE_TEXT_ANNOTATION("freeTextAnnotation");
+        TIME("time"), TIME_UNIT("timeUnit"), PHYSIOLOGICAL_STATUS("physiologicalStatus");
         
         /**
          * A {@code String} that is the corresponding field name in {@code ESTTO} class.
@@ -254,7 +254,7 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         private final String barcode;
         private final Integer time;
         private final String timeUnit;
-        private final String freeTextAnnotation;
+        private final String physiologicalStatus;
 
 
         /**
@@ -268,7 +268,7 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
                 BigDecimal intergenicRegionsPercentPresent, BigDecimal  pValueThreshold,
                 Integer allUMIsCount, Integer mappedUMIsCount, BigDecimal maxRank,
                 Integer distinctRankCount, Boolean multipleLibraryIndividualSample,
-                Integer time, String timeUnit, String freeTextAnnotation) {
+                Integer time, String timeUnit, String physiologicalStatus) {
             super(libraryAnnotatedSampleId);
             this.libraryId = libraryId;
             this.conditionId = conditionId;
@@ -292,7 +292,7 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
             this.multipleLibraryIndividualSample = multipleLibraryIndividualSample;
             this.time = time;
             this.timeUnit = timeUnit;
-            this.freeTextAnnotation = freeTextAnnotation;
+            this.physiologicalStatus = physiologicalStatus;
         }
         
         public String getLibraryId() {
@@ -365,8 +365,8 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         public String getTimeUnit() {
             return timeUnit;
         }
-        public String getFreeTextAnnotation() {
-            return freeTextAnnotation;
+        public String getPhysiologicalStatus() {
+            return physiologicalStatus;
         }
 
         @Override
@@ -383,7 +383,7 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
                     + pValueThreshold + ", allUMIsCount=" + allUMIsCount + ", mappedUMIsCount=" + mappedUMIsCount
                     + ", maxRank=" + maxRank + ", distinctRankCount=" + distinctRankCount
                     + ", multipleLibraryIndividualSample=" + multipleLibraryIndividualSample + ", barcode=" + barcode
-                    + ", time=" + time + ", timeUnit=" + timeUnit + ", freeTextAnnotation=" + freeTextAnnotation + "]";
+                    + ", time=" + time + ", timeUnit=" + timeUnit + ", physiologicalStatus=" + physiologicalStatus + "]";
         }
 
 

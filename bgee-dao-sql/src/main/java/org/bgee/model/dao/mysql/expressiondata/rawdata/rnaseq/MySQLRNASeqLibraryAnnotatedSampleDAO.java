@@ -150,7 +150,7 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                         time = null;
                 String libraryId = null, barcode = null, cellTypeAuthorAnnotation = null,
                         anatEntityAuthorAnnotation = null, stageAuthorAnnotation = null, timeUnit = null,
-                        freeTextAnnotation = null;
+                        physiologicalStatus = null;
                 BigDecimal meanRefIntergenicDistribution = null, sdRefIntergenicDistribution = null,
                         tmmFactor = null, abundanceThreshold = null, allGenesPercentPresent = null,
                         proteinCodingGenesPercentPresent = null, 
@@ -236,8 +236,8 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                             .TIME_UNIT.getTOFieldName())) {
                         timeUnit = currentResultSet.getString(column.getKey());
                     } else if (column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
-                            .FREE_TEXT_ANNOTATION.getTOFieldName())) {
-                        freeTextAnnotation = currentResultSet.getString(column.getKey());
+                            .PHYSIOLOGICAL_STATUS.getTOFieldName())) {
+                        physiologicalStatus = currentResultSet.getString(column.getKey());
                     } else {
                         log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
@@ -248,7 +248,7 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                         abundanceThreshold, allGenesPercentPresent, proteinCodingGenesPercentPresent,
                         intergenicRegionsPercentPresent, pValueThreshold, allUMIsCount,
                         mappedUMIsCount, maxRank, distinctRankCount, multipleLibraryIndividualSample,
-                        time, timeUnit, freeTextAnnotation));
+                        time, timeUnit, physiologicalStatus));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

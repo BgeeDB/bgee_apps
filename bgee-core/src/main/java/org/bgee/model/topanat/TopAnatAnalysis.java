@@ -16,32 +16,30 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.input.ReversedLinesFileReader;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.io.input.ReversedLinesFileReader;
-import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.CallFilter;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.Condition;
 import org.bgee.model.expressiondata.call.ConditionFilter;
 import org.bgee.model.expressiondata.call.ConditionGraph;
 import org.bgee.model.expressiondata.call.ConditionGraphService;
-import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
@@ -69,39 +67,8 @@ public class TopAnatAnalysis extends CommonService {
     /**
      * 
      */
-    private final static String FILE_PREFIX = "topAnat_";
-    
-    private final static String TMP_FILE_SUFFIX = ".tmp";
-    
     protected final static String FAKE_ROOT_COND_ID = "BGEE:0";
     protected final static String FAKE_ROOT_COND_NAME = "Added root";
-
-    private final static EnumSet<CallService.Attribute> CALL_SERVICE_ATTRIBUTES =
-            EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                    CallService.Attribute.CELL_TYPE_ID);
-    //TODO: actually, these generators should be methods, so that we can know
-    //what were the parameters requested, in order to work on any condition parameters
-    //(work on a real condition graph)
-    private final static Function<Condition, String> COND_ID_GENERATOR =
-            cond -> {
-                StringBuilder sb = new StringBuilder();
-                String cellTypeId = cond.getCellTypeId();
-                if (cellTypeId != null && !cellTypeId.equals(ConditionDAO.CELL_TYPE_ROOT_ID)) {
-                    sb.append(cellTypeId).append("-");
-                }
-                sb.append(cond.getAnatEntityId());
-                return sb.toString();
-            };
-    private final static Function<Condition, String> COND_NAME_GENERATOR =
-            cond -> {
-                StringBuilder sb = new StringBuilder();
-                AnatEntity cellType = cond.getCellType();
-                if (cellType != null && !cellType.getId().equals(ConditionDAO.CELL_TYPE_ROOT_ID)) {
-                    sb.append(cellType.getName()).append(" in ");
-                }
-                sb.append(cond.getAnatEntity().getName());
-                return sb.toString();
-            };
 
     /**
      * 
@@ -198,12 +165,12 @@ public class TopAnatAnalysis extends CommonService {
             Path target = Paths.get(targetFunctionFile.getPath());
             if (!targetFunctionFile.exists()) {
                 try{
-                    this.controller.acquireReadLock(sourceFunctionFileName);
-                    this.controller.acquireWriteLock(targetFunctionFile.getPath());
+                    controller.getReadWriteLocks().acquireReadLock(sourceFunctionFileName);
+                    controller.getReadWriteLocks().acquireWriteLock(targetFunctionFile.getPath());
                     Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
                 } finally{
-                    this.controller.releaseReadLock(sourceFunctionFileName);
-                    this.controller.releaseWriteLock(targetFunctionFile.getPath());
+                    controller.getReadWriteLocks().releaseReadLock(sourceFunctionFileName);
+                    controller.getReadWriteLocks().releaseWriteLock(targetFunctionFile.getPath());
                 }
             }
             
@@ -302,15 +269,15 @@ public class TopAnatAnalysis extends CommonService {
 
         try {
 
-            this.controller.acquireReadLock(namesFileName);
-            this.controller.acquireReadLock(relsFileName);
-            this.controller.acquireReadLock(geneToAnatEntitiesFile);
+            controller.getReadWriteLocks().acquireReadLock(namesFileName);
+            controller.getReadWriteLocks().acquireReadLock(relsFileName);
+            controller.getReadWriteLocks().acquireReadLock(geneToAnatEntitiesFile);
 
-            this.controller.acquireWriteLock(tmpFileName);
-            this.controller.acquireWriteLock(fileName);
+            controller.getReadWriteLocks().acquireWriteLock(tmpFileName);
+            controller.getReadWriteLocks().acquireWriteLock(fileName);
 
-            this.controller.acquireWriteLock(tmpPdfFileName);
-            this.controller.acquireWriteLock(pdfFileName);
+            controller.getReadWriteLocks().acquireWriteLock(tmpPdfFileName);
+            controller.getReadWriteLocks().acquireWriteLock(pdfFileName);
 
             //check, AFTER having acquired the locks, that the final files do not 
             //already exist (maybe another thread generated the files before this one 
@@ -364,13 +331,13 @@ public class TopAnatAnalysis extends CommonService {
         } finally {
             Files.deleteIfExists(tmpFile);
             Files.deleteIfExists(tmpPdfFile);
-            this.controller.releaseWriteLock(tmpFileName);
-            this.controller.releaseWriteLock(fileName);
-            this.controller.releaseWriteLock(tmpPdfFileName);
-            this.controller.releaseWriteLock(pdfFileName);
-            this.controller.releaseReadLock(namesFileName);
-            this.controller.releaseReadLock(relsFileName);
-            this.controller.releaseReadLock(geneToAnatEntitiesFile);   
+            controller.getReadWriteLocks().releaseWriteLock(tmpFileName);
+            controller.getReadWriteLocks().releaseWriteLock(fileName);
+            controller.getReadWriteLocks().releaseWriteLock(tmpPdfFileName);
+            controller.getReadWriteLocks().releaseWriteLock(pdfFileName);
+            controller.getReadWriteLocks().releaseReadLock(namesFileName);
+            controller.getReadWriteLocks().releaseReadLock(relsFileName);
+            controller.getReadWriteLocks().releaseReadLock(geneToAnatEntitiesFile);   
         }
 
         log.info("Result file path: {}", this.getResultFilePath(false));
@@ -396,8 +363,8 @@ public class TopAnatAnalysis extends CommonService {
         Path finalFile = Paths.get(fileName);
 
         try {
-            this.controller.acquireWriteLock(tmpFileName);
-            this.controller.acquireWriteLock(fileName);
+            controller.getReadWriteLocks().acquireWriteLock(tmpFileName);
+            controller.getReadWriteLocks().acquireWriteLock(fileName);
 
             //if the file already exists, we remove it, because we need anyway to call writeRcodeFile, 
             //to set the R code (bad design)
@@ -412,8 +379,8 @@ public class TopAnatAnalysis extends CommonService {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.controller.releaseWriteLock(tmpFileName);
-            this.controller.releaseWriteLock(fileName);
+            controller.getReadWriteLocks().releaseWriteLock(tmpFileName);
+            controller.getReadWriteLocks().releaseWriteLock(fileName);
         }
 
         log.info("Rcode file path: {}", 
@@ -448,13 +415,13 @@ public class TopAnatAnalysis extends CommonService {
         //so that we can create it immediately. 
         String dir = this.getResultDirectoryPath();
         try {
-            this.controller.acquireWriteLock(dir);
+            controller.getReadWriteLocks().acquireWriteLock(dir);
             File newDir = new File(dir);
             if (!newDir.exists()) {
                 newDir.mkdirs();
             }
         } finally {
-            this.controller.releaseWriteLock(dir);
+            controller.getReadWriteLocks().releaseWriteLock(dir);
         }
         log.traceExit();
     }
@@ -487,10 +454,10 @@ public class TopAnatAnalysis extends CommonService {
                 relsFileName);
 
         try {
-            this.controller.acquireWriteLock(namesTmpFile.toString());
-            this.controller.acquireWriteLock(finalNamesFile.toString());
-            this.controller.acquireWriteLock(relsTmpFile.toString());
-            this.controller.acquireWriteLock(finalRelsFile.toString());
+            controller.getReadWriteLocks().acquireWriteLock(namesTmpFile.toString());
+            controller.getReadWriteLocks().acquireWriteLock(finalNamesFile.toString());
+            controller.getReadWriteLocks().acquireWriteLock(relsTmpFile.toString());
+            controller.getReadWriteLocks().acquireWriteLock(finalRelsFile.toString());
 
             //check, AFTER having acquired the locks, that the final files do not 
             //already exist (maybe another thread generated the files before this one 
@@ -517,10 +484,10 @@ public class TopAnatAnalysis extends CommonService {
         } finally {
             Files.deleteIfExists(namesTmpFile);
             Files.deleteIfExists(relsTmpFile);
-            this.controller.releaseWriteLock(namesTmpFile.toString());
-            this.controller.releaseWriteLock(finalNamesFile.toString());
-            this.controller.releaseWriteLock(relsTmpFile.toString());
-            this.controller.releaseWriteLock(finalRelsFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(namesTmpFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(finalNamesFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(relsTmpFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(finalRelsFile.toString());
         }
 
         log.info("anatEntitiesNamesFilePath: {} - relationshipsFilePath: {}", 
@@ -546,7 +513,7 @@ public class TopAnatAnalysis extends CommonService {
         ConditionGraph conditionGraph = this.condGraphService.loadConditionGraphFromSpeciesIds(
                 Collections.singleton(this.params.getSpeciesId()),
                 this.callFilter.getConditionFilters(),
-                CALL_SERVICE_ATTRIBUTES.stream().filter(a -> a.isConditionParameter())
+                TopAnatUtils.CALL_SERVICE_ATTRIBUTES.stream().filter(a -> a.isConditionParameter())
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))));
 
         Condition realCondRoot = null;
@@ -568,8 +535,8 @@ public class TopAnatAnalysis extends CommonService {
                         c.getStrain().getId().equals(ConditionDAO.STRAIN_ROOT_ID))) {
                     realCondRoot = c;
                 }
-                out.println(COND_ID_GENERATOR.apply(c) + "\t"
-                        + COND_NAME_GENERATOR.apply(c).replaceAll("'", ""));
+                out.println(TopAnatUtils.COND_ID_GENERATOR.apply(c) + "\t"
+                        + TopAnatUtils.COND_NAME_GENERATOR.apply(c).replaceAll("'", ""));
             }
             //We add a fake root, TopAnat doesn't manage multiple root.
             //Even if we have only one root in Bgee, since we can select only observed calls,
@@ -599,8 +566,8 @@ public class TopAnatAnalysis extends CommonService {
                 allConds.add(cond);
                 for (Condition parentCond: conditionGraph.getAncestorConditions(cond, true)) {
                     childConds.add(cond);
-                    out.println(COND_ID_GENERATOR.apply(cond) + '\t'
-                              + COND_ID_GENERATOR.apply(parentCond));
+                    out.println(TopAnatUtils.COND_ID_GENERATOR.apply(cond) + '\t'
+                              + TopAnatUtils.COND_ID_GENERATOR.apply(parentCond));
                 }
             }
             allConds.removeAll(childConds);
@@ -608,10 +575,10 @@ public class TopAnatAnalysis extends CommonService {
             if (allConds.size() > 1) {
                 for (Condition root: allConds) {
                     if (realCondRoot == null ||
-                            !COND_ID_GENERATOR.apply(root).equals(
-                                    COND_ID_GENERATOR.apply(realCondRoot))) {
-                        out.println(COND_ID_GENERATOR.apply(root) + '\t'
-                            + (realCondRoot != null? COND_ID_GENERATOR.apply(realCondRoot): FAKE_ROOT_COND_ID));
+                            !TopAnatUtils.COND_ID_GENERATOR.apply(root).equals(
+                                    TopAnatUtils.COND_ID_GENERATOR.apply(realCondRoot))) {
+                        out.println(TopAnatUtils.COND_ID_GENERATOR.apply(root) + '\t'
+                            + (realCondRoot != null? TopAnatUtils.COND_ID_GENERATOR.apply(realCondRoot): FAKE_ROOT_COND_ID));
                     }
                 }
             }
@@ -631,12 +598,12 @@ public class TopAnatAnalysis extends CommonService {
                 geneToAnatEntitiesFile)))) {
             this.callService.loadExpressionCalls(
                     (ExpressionCallFilter) this.callFilter,
-                    CALL_SERVICE_ATTRIBUTES,
+                    TopAnatUtils.CALL_SERVICE_ATTRIBUTES,
                     null
                 ).forEach(
                     call -> out.println(
                         call.getGene().getGeneId() + '\t' +
-                        COND_ID_GENERATOR.apply(call.getCondition())
+                        TopAnatUtils.COND_ID_GENERATOR.apply(call.getCondition())
                     )
                 );
         }
@@ -668,8 +635,8 @@ public class TopAnatAnalysis extends CommonService {
         }
 
         try {
-            this.controller.acquireWriteLock(finalGeneToAnatEntitiesFile.toString());
-            this.controller.acquireWriteLock(tmpFile.toString());
+            this.controller.getReadWriteLocks().acquireWriteLock(finalGeneToAnatEntitiesFile.toString());
+            this.controller.getReadWriteLocks().acquireWriteLock(tmpFile.toString());
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
@@ -693,8 +660,8 @@ public class TopAnatAnalysis extends CommonService {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.controller.releaseWriteLock(finalGeneToAnatEntitiesFile.toString());
-            this.controller.releaseWriteLock(tmpFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(finalGeneToAnatEntitiesFile.toString());
+            this.controller.getReadWriteLocks().releaseWriteLock(tmpFile.toString());
         }
 
 
@@ -751,8 +718,8 @@ public class TopAnatAnalysis extends CommonService {
         Path finalTopAnatParamsFile = Paths.get(topAnatParamsFilePath);
 
         try {
-            this.controller.acquireWriteLock(topAnatParamsFilePath);
-            this.controller.acquireWriteLock(tmpFileName);
+            this.controller.getReadWriteLocks().acquireWriteLock(topAnatParamsFilePath);
+            this.controller.getReadWriteLocks().acquireWriteLock(tmpFileName);
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
@@ -768,8 +735,8 @@ public class TopAnatAnalysis extends CommonService {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.controller.releaseWriteLock(topAnatParamsFilePath);
-            this.controller.releaseWriteLock(tmpFileName);
+            this.controller.getReadWriteLocks().releaseWriteLock(topAnatParamsFilePath);
+            this.controller.getReadWriteLocks().releaseWriteLock(tmpFileName);
         }
 
         log.info("TopAnatParamsFilePath: {}", this.getParamsOutputFilePath(false));
@@ -789,8 +756,8 @@ public class TopAnatAnalysis extends CommonService {
         Path finalZipFile = Paths.get(zipFilePath);
 
         try {
-            this.controller.acquireWriteLock(zipFilePath);
-            this.controller.acquireWriteLock(tmpFileName);
+            this.controller.getReadWriteLocks().acquireWriteLock(zipFilePath);
+            this.controller.getReadWriteLocks().acquireWriteLock(tmpFileName);
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
@@ -806,8 +773,8 @@ public class TopAnatAnalysis extends CommonService {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.controller.releaseWriteLock(zipFilePath);
-            this.controller.releaseWriteLock(tmpFileName);
+            this.controller.getReadWriteLocks().releaseWriteLock(zipFilePath);
+            this.controller.getReadWriteLocks().releaseWriteLock(tmpFileName);
         }
 
         log.info("ZIP file path: {}", getZipFilePath(false));
@@ -891,9 +858,9 @@ public class TopAnatAnalysis extends CommonService {
      */
     protected String getResultFileName(boolean tmpFile){
         log.traceEntry("{}", tmpFile);
-        String fileName = TopAnatAnalysis.FILE_PREFIX + "results.tsv";
+        String fileName = TopAnatUtils.FILE_PREFIX + "results.tsv";
         if (tmpFile) {
-            fileName += TMP_FILE_SUFFIX;
+            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
         }
         return log.traceExit(fileName);
     }
@@ -912,7 +879,7 @@ public class TopAnatAnalysis extends CommonService {
      * 
      */
     protected String getRScriptConsoleFileName(){
-        return TopAnatAnalysis.FILE_PREFIX + "log.R_console";
+        return TopAnatUtils.FILE_PREFIX + "log.R_console";
     }
     protected String getRScriptConsoleFilePath(){
         log.traceEntry();
@@ -924,9 +891,9 @@ public class TopAnatAnalysis extends CommonService {
      */
     protected String getResultPDFFileName(boolean tmpFile){
         log.traceEntry("{}", tmpFile);
-        String fileName = TopAnatAnalysis.FILE_PREFIX + "results.pdf";
+        String fileName = TopAnatUtils.FILE_PREFIX + "results.pdf";
         if (tmpFile) {
-            fileName += TMP_FILE_SUFFIX;
+            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
         }
         return log.traceExit(fileName);
     }
@@ -971,10 +938,10 @@ public class TopAnatAnalysis extends CommonService {
             //custom background provided, use the hash
             paramsEncoded = this.params.getKey();
         }
-        String fileName = TopAnatAnalysis.FILE_PREFIX + "GeneToAnatEntities_" 
+        String fileName = TopAnatUtils.FILE_PREFIX + "GeneToAnatEntities_" 
             + paramsEncoded + ".tsv";
         if (tmpFile) {
-            fileName += TMP_FILE_SUFFIX;
+            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
         }
         return log.traceExit(fileName);
     }
@@ -995,14 +962,14 @@ public class TopAnatAnalysis extends CommonService {
         assert this.callFilter.getConditionFilters().size() <= 1;
         DAOConditionFilter daoCondFilter = generateDAOConditionFilter(
                 this.callFilter.getConditionFilters().stream().findAny().orElse(null),
-                convertCondParamAttrsToCondDAOAttrs(CALL_SERVICE_ATTRIBUTES));
+                convertCondParamAttrsToCondDAOAttrs(TopAnatUtils.CALL_SERVICE_ATTRIBUTES));
 
-        String fileName = TopAnatAnalysis.FILE_PREFIX + "AnatEntitiesNames_"
+        String fileName = TopAnatUtils.FILE_PREFIX + "AnatEntitiesNames_"
             + this.params.getSpeciesId()
             + (daoCondFilter != null? "_" + daoCondFilter.toParamString(): "")
             + ".tsv";
         if (tmpFile) {
-            fileName += TMP_FILE_SUFFIX;
+            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
         }
         return log.traceExit(fileName);
     }
@@ -1023,14 +990,14 @@ public class TopAnatAnalysis extends CommonService {
         assert this.callFilter.getConditionFilters().size() <= 1;
         DAOConditionFilter daoCondFilter = generateDAOConditionFilter(
                 this.callFilter.getConditionFilters().stream().findAny().orElse(null),
-                convertCondParamAttrsToCondDAOAttrs(CALL_SERVICE_ATTRIBUTES));
+                convertCondParamAttrsToCondDAOAttrs(TopAnatUtils.CALL_SERVICE_ATTRIBUTES));
 
-        String fileName = TopAnatAnalysis.FILE_PREFIX 
+        String fileName = TopAnatUtils.FILE_PREFIX 
                 + "AnatEntitiesRelationships_" + this.params.getSpeciesId()
                 + (daoCondFilter != null? "_" + daoCondFilter.toParamString(): "")
                 + ".tsv";
         if (tmpFile) {
-            fileName += TMP_FILE_SUFFIX;
+            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
         }
         return log.traceExit(fileName);
     }
@@ -1044,9 +1011,9 @@ public class TopAnatAnalysis extends CommonService {
      */
     protected String getRScriptAnalysisFileName(boolean tmpFile){
         log.traceEntry("{}", tmpFile);
-        String fileName = TopAnatAnalysis.FILE_PREFIX + "script.R";
+        String fileName = TopAnatUtils.FILE_PREFIX + "script.R";
         if (tmpFile) {
-            fileName += TMP_FILE_SUFFIX;
+            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
         }
         return log.traceExit(fileName);
     }
@@ -1060,9 +1027,9 @@ public class TopAnatAnalysis extends CommonService {
      */
     protected String getParamsOutputFileName(boolean tmpFile){
         log.traceEntry("{}", tmpFile);
-        String fileName = TopAnatAnalysis.FILE_PREFIX + "Params.txt";
+        String fileName = TopAnatUtils.FILE_PREFIX + "Params.txt";
         if (tmpFile) {
-            fileName += TMP_FILE_SUFFIX;
+            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
         }
         return log.traceExit(fileName);
     }
@@ -1076,9 +1043,9 @@ public class TopAnatAnalysis extends CommonService {
      */
     protected String getZipFileName(boolean tmpFile){
         log.traceEntry("{}", tmpFile);
-        String fileName = TopAnatAnalysis.FILE_PREFIX + "results.zip";
+        String fileName = TopAnatUtils.FILE_PREFIX + "results.zip";
         if (tmpFile) {
-            fileName += TMP_FILE_SUFFIX;
+            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
         }
         return log.traceExit(fileName);
     }
@@ -1106,8 +1073,8 @@ public class TopAnatAnalysis extends CommonService {
         
         //At this point, if the analysis is being run by another thread, we don't want 
         //to wait for the lock on the file: results are not generated, period.
-        if (this.controller.getReadWriteLock(finalFilePath).isWriteLocked() || 
-                this.controller.getReadWriteLock(tmpFilePath).isWriteLocked()) {
+        if (this.controller.getReadWriteLocks().getReadWriteLock(finalFilePath).isWriteLocked() || 
+                this.controller.getReadWriteLocks().getReadWriteLock(tmpFilePath).isWriteLocked()) {
             return log.traceExit(false);
         }
         File file = new File(finalFilePath);

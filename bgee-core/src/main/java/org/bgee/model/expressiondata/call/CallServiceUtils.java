@@ -305,8 +305,8 @@ public class CallServiceUtils {
 
     public Set<DAOConditionFilter2> convertConditionFiltersToDAOConditionFilters(
             Collection<ConditionFilter2> condFilters, OntologyService ontService,
-            Set<Integer> consideredSpeciesIds) {
-        log.traceEntry("{}, {}, {}", condFilters, ontService, consideredSpeciesIds);
+            AnatEntityService anatEntityService, Set<Integer> consideredSpeciesIds) {
+        log.traceEntry("{}, {}, {}, {}", condFilters, ontService, anatEntityService, consideredSpeciesIds);
         if (condFilters == null || condFilters.isEmpty()) {
             return log.traceExit(new HashSet<>());
         }
@@ -345,7 +345,7 @@ public class CallServiceUtils {
                 speciesIdsWithDevStageChildrenRequested.add(filter.getSpeciesId());
             }
         }
-    
+
         //Now we load the ontologies if needed
         MultiSpeciesOntology<AnatEntity, String> anatOntology = anatEntityAndCellTypeIdsWithChildrenRequested.isEmpty()?
                 null: ontService.getAnatEntityOntology(
@@ -356,7 +356,21 @@ public class CallServiceUtils {
                         speciesIdsWithDevStageChildrenRequested, devStageIdsWithChildrenRequested, false, true);
         //There is no ontology for RawDataSex and RawDataStrain (String), really it's simply one root
         //with all other terms at the first level.
-    
+
+        Map<Integer, Set<String>> nonInformativePerSpeciesId = condFilters.stream()
+                .filter(f -> f.isExcludeNonInformative())
+                .map(f -> f.getSpeciesId()).distinct()
+                .collect(Collectors.toMap(
+                        id -> id,
+                        id -> anatEntityService.loadNonInformativeAnatEntitiesBySpeciesIds(Set.of(id), true)
+                              .map(ae -> ae.getId())
+                              //we don't store the anatomy root and cell type root, otherwise we would exclude
+                              //all results that are only in an anat. entity or only in a cell type
+                              //(in that case, the roots are used for the other cond. params)
+                              .filter(aeid -> !aeid.equals(ConditionDAO.ANAT_ENTITY_ROOT_ID) &&
+                                      !aeid.equals(ConditionDAO.CELL_TYPE_ROOT_ID))
+                              .collect(Collectors.toSet())));
+
         //Now we have everything we need to create the DAO filters
         Set<DAOConditionFilter2> daoCondFilters = new HashSet<>();
         for (ConditionFilter2 filter: condFilters) {
@@ -488,8 +502,11 @@ public class CallServiceUtils {
                     !condParamComb.contains(ConditionParameter.STRAIN)?
                             Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
                                 filter.getComposedFilterIds(ConditionParameter.STRAIN).getIds(0),
+
                     convertCondParamsToDAOCondParams(filter.getObservedCondForParams()),
-                    null);
+
+                    filter.isExcludeNonInformative()?
+                            nonInformativePerSpeciesId.get(filter.getSpeciesId()): null);
             log.debug("ConditionFilter: {} - condParamCombination: {} - Generated DAOConditionFilter: {}",
                     filter, condParamComb, daoCondFilter);
             daoCondFilters.add(daoCondFilter);

@@ -107,7 +107,7 @@ public class ExpressionCallService extends CallServiceParent {
         //all of them to configure the DAOCallFilter, even if there is a large number.
         Set<DAOConditionFilter2> daoCondFilters =
             this.utils.convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
-                    this.ontService, filter.getSpeciesIdsConsidered());
+                    this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered());
         Map<Integer, Condition2> requestedCondMap = daoCondFilters.isEmpty()?
                 new HashMap<>():
                 this.utils.loadGlobalConditionMap(speciesMap.values(), daoCondFilters,

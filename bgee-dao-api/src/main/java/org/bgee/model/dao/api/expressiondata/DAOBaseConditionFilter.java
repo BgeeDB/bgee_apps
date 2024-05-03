@@ -3,6 +3,7 @@ package org.bgee.model.dao.api.expressiondata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -41,11 +42,19 @@ public abstract class DAOBaseConditionFilter {
      * @see #getStrains()
      */
     private final Set<String> strainIds;
+    /**
+     * @see #getExcludedAnatEntityCellTypeIds()
+     */
+    private final Set<String> excludedAnatEntityCellTypeIds;
 
     public DAOBaseConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds, 
-            Collection<String> cellTypeIds, Collection<String> sexIds, Collection<String> strainIds) {
+            Collection<String> cellTypeIds, Collection<String> sexIds, Collection<String> strainIds,
+            Collection<String> excludedAnatEntityCellTypeIds) {
         this.anatEntityIds = Collections.unmodifiableSet(anatEntitieIds == null ? 
                 new HashSet<>(): new HashSet<>(anatEntitieIds));
+        this.excludedAnatEntityCellTypeIds = Collections.unmodifiableSet(
+                excludedAnatEntityCellTypeIds == null?
+                new HashSet<>(): new HashSet<>(excludedAnatEntityCellTypeIds));
         this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 
                 new HashSet<>(): new HashSet<>(devStageIds));
         this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds == null ?
@@ -54,7 +63,6 @@ public abstract class DAOBaseConditionFilter {
                 new HashSet<>(): new HashSet<>(sexIds));
         this.strainIds = Collections.unmodifiableSet(strainIds == null ?
                 new HashSet<>(): new HashSet<>(strainIds));
-        
     }
 
     /**
@@ -92,65 +100,48 @@ public abstract class DAOBaseConditionFilter {
     public Set<String> getStrainIds() {
         return strainIds;
     }
-    
+    /**
+     * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs
+     *          of the anatomical entities to exclude from the results.
+     */
+    public Set<String> getExcludedAnatEntityCellTypeIds() {
+        return excludedAnatEntityCellTypeIds;
+    }
+
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
-        result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
-        result = prime * result + ((cellTypeIds == null) ? 0 : cellTypeIds.hashCode());
-        result = prime * result + ((sexIds == null) ? 0 : sexIds.hashCode());
-        result = prime * result + ((strainIds == null) ? 0 : strainIds.hashCode());
-        return result;
+        return Objects.hash(anatEntityIds, cellTypeIds, devStageIds,
+                excludedAnatEntityCellTypeIds, sexIds, strainIds);
     }
+
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         DAOBaseConditionFilter other = (DAOBaseConditionFilter) obj;
-        if (anatEntityIds == null) {
-            if (other.anatEntityIds != null) {
-                return false;
-            }
-        } else if (!anatEntityIds.equals(other.anatEntityIds)) {
-            return false;
-        }
-        if (devStageIds == null) {
-            if (other.devStageIds != null) {
-                return false;
-            }
-        } else if (!devStageIds.equals(other.devStageIds)) {
-            return false;
-        }
-        if (cellTypeIds == null) {
-            if (other.cellTypeIds != null) {
-                return false;
-            }
-        } else if (!cellTypeIds.equals(other.cellTypeIds)) {
-            return false;
-        }
-        if (sexIds == null) {
-            if (other.sexIds != null) {
-                return false;
-            }
-        } else if (!sexIds.equals(other.sexIds)) {
-            return false;
-        }
-        if (strainIds == null) {
-            if (other.strainIds != null) {
-                return false;
-            }
-        } else if (!strainIds.equals(other.strainIds)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(anatEntityIds, other.anatEntityIds)
+                && Objects.equals(cellTypeIds, other.cellTypeIds)
+                && Objects.equals(devStageIds, other.devStageIds)
+                && Objects.equals(excludedAnatEntityCellTypeIds, other.excludedAnatEntityCellTypeIds)
+                && Objects.equals(sexIds, other.sexIds)
+                && Objects.equals(strainIds, other.strainIds);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("DAOBaseConditionFilter [")
+                .append("anatEntityIds=").append(anatEntityIds)
+                .append(", devStageIds=").append(devStageIds)
+                .append(", cellTypeIds=").append(cellTypeIds)
+                .append(", sexIds=").append(sexIds)
+                .append(", strainIds=").append(strainIds)
+                .append(", excludedAnatEntityCellTypeIds=").append(excludedAnatEntityCellTypeIds)
+                .append("]");
+        return builder.toString();
     }
 }

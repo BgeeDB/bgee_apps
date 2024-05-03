@@ -48,7 +48,7 @@ public class DAOConditionFilter extends DAOConditionFilterBase<ConditionDAO.Attr
             Collection<String> cellTypeIds, Collection<String> sexIds, Collection<String> strainIds,
             Collection<ConditionDAO.Attribute> observedCondForParams) throws IllegalArgumentException {
         super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds, observedCondForParams,
-                ConditionDAO.Attribute.class);
+                ConditionDAO.Attribute.class, null);
         if (this.getObservedCondForParams().stream().anyMatch(a -> !a.isConditionParameter())) {
             throw new IllegalArgumentException(
                     "A ConditionDAO.Attribute that is not a condition parameter was provided");

@@ -42,7 +42,7 @@ public class DAORawDataConditionFilter extends DAOBaseConditionFilter {
     public DAORawDataConditionFilter(Collection<Integer> speciesIds,
             Collection<String> anatEntityIds, Collection<String> devStageIds,
             Collection<String> cellTypeIds, Collection<String>  sexIds, Collection<String> strainIds) {
-        super(anatEntityIds, devStageIds, cellTypeIds, sexIds, strainIds);
+        super(anatEntityIds, devStageIds, cellTypeIds, sexIds, strainIds, null);
         this.speciesIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>():
             speciesIds.stream().filter(id -> {return (id != null && id >= 1);}).collect(Collectors.toSet()));
 

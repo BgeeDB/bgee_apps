@@ -36,16 +36,20 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
      *                              will also be considered). If {@code null}
      *                              or empty, no filtering will be performed on whether
      *                              the global conditions considered have been observed in annotations.
+     * @param excludedAnatEntityCellTypeIds A {@code Collection} of {@code String}s that are the IDs
+     *                                      of the anatomical entities that this {@code DAOConditionFilter}
+     *                                      will specify to discard.
      * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs 
      *                                  are provided. 
      */
     public DAOConditionFilter2(Collection<Integer> speciesIds, Collection<String> anatEntitieIds,
             Collection<String> devStageIds, Collection<String> cellTypeIds,
             Collection<String> sexIds, Collection<String> strainIds, 
-            Collection<ConditionDAO.ConditionParameter> observedCondForParams)
+            Collection<ConditionDAO.ConditionParameter> observedCondForParams,
+            Collection<String> excludedAnatEntityCellTypeIds)
                     throws IllegalArgumentException {
         super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds, observedCondForParams,
-                ConditionDAO.ConditionParameter.class);
+                ConditionDAO.ConditionParameter.class, excludedAnatEntityCellTypeIds);
         if (speciesIds != null && speciesIds.stream().anyMatch(id -> id == null || id < 1)) {
             throw new IllegalArgumentException("No speciesId can be null or less than 1");
         }
@@ -59,6 +63,7 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
 
     public boolean areAllFiltersExceptSpeciesEmpty() {
         return this.getAnatEntityIds().isEmpty() &&
+                this.getExcludedAnatEntityCellTypeIds().isEmpty() &&
                 this.getCellTypeIds().isEmpty() &&
                 this.getDevStageIds().isEmpty() &&
                 this.getSexIds().isEmpty() &&
@@ -92,6 +97,7 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
         builder.append("DAOConditionFilter [")
                .append("speciesIds=").append(getSpeciesIds())
                .append(", anatEntityIds=").append(getAnatEntityIds())
+               .append(", excludedAnatEntityCellTypeIds=").append(getExcludedAnatEntityCellTypeIds())
                .append(", devStageIds=").append(getDevStageIds())
                .append(", cellTypeIds=").append(getCellTypeIds())
                .append(", sexIds=").append(getSexIds())

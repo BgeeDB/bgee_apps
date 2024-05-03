@@ -372,6 +372,7 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
 
         String anatEntityCellTypeWhereClause = generateAnatEntityCellTypeWhereFragment(
                 condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                condFilter.getExcludedAnatEntityCellTypeIds(),
                 MySQLConditionDAO.TABLE_NAME + "." + ConditionDAO.Attribute.ANAT_ENTITY_ID.getTOFieldName(),
                 MySQLConditionDAO.TABLE_NAME + "." + ConditionDAO.Attribute.CELL_TYPE_ID.getTOFieldName());
         if (StringUtils.isNotBlank(anatEntityCellTypeWhereClause)) {
@@ -443,6 +444,7 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
 
             offsetParamIndex = parameterizeAnatEntityCellTypeWhereFragment(
                     condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                    condFilter.getExcludedAnatEntityCellTypeIds(),
                     stmt, offsetParamIndex);
 
             if (!condFilter.getSpeciesIds().isEmpty()) {

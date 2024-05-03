@@ -401,8 +401,10 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     }
 
     protected static String generateAnatEntityCellTypeWhereFragment(Set<String> anatEntityIds,
-            Set<String> cellIds, String anatEntityTableFieldName, String cellTypeTableFieldName) {
-        log.traceEntry("{}, {}, {}, {}", anatEntityIds, cellIds, anatEntityTableFieldName, cellTypeTableFieldName);
+            Set<String> cellIds, Set<String> excludedAnatEntityCellTypeIds,
+            String anatEntityTableFieldName, String cellTypeTableFieldName) {
+        log.traceEntry("{}, {}, {}, {}, {}", anatEntityIds, cellIds, excludedAnatEntityCellTypeIds,
+                anatEntityTableFieldName, cellTypeTableFieldName);
         StringBuilder sb = new StringBuilder();
 
         int anatCellFields = 0;
@@ -445,13 +447,26 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
             }
             sb.append(") ");
         }
+        if (excludedAnatEntityCellTypeIds != null && !excludedAnatEntityCellTypeIds.isEmpty()) {
+            if (anatCellFields > 0) {
+                sb.append(" AND ");
+            }
+            sb.append(anatEntityTableFieldName).append(" NOT IN (")
+              .append(BgeePreparedStatement.generateParameterizedQueryString(excludedAnatEntityCellTypeIds.size()))
+              .append(")")
+              .append(" AND ")
+              .append(cellTypeTableFieldName).append(" NOT IN (")
+              .append(BgeePreparedStatement.generateParameterizedQueryString(excludedAnatEntityCellTypeIds.size()))
+              .append(")");
+        }
 
         return log.traceExit(sb.toString());
     }
 
     protected static int parameterizeAnatEntityCellTypeWhereFragment(Set<String> anatEntityIds,
-            Set<String> cellIds, BgeePreparedStatement stmt, int paramIndex) throws SQLException {
-        log.traceEntry("{}, {}, {}, {}", anatEntityIds, cellIds, stmt, paramIndex);
+            Set<String> cellIds, Set<String> excludedAnatEntityCellTypeIds,
+            BgeePreparedStatement stmt, int paramIndex) throws SQLException {
+        log.traceEntry("{}, {}, {}, {}, {}", anatEntityIds, cellIds, excludedAnatEntityCellTypeIds, stmt, paramIndex);
 
         int offsetParamIndex = paramIndex;
 
@@ -479,6 +494,12 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
                 stmt.setStrings(offsetParamIndex, ids2, true);
                 offsetParamIndex += ids2.size();
             }
+        }
+        if (excludedAnatEntityCellTypeIds != null && !excludedAnatEntityCellTypeIds.isEmpty()) {
+            stmt.setStrings(offsetParamIndex, excludedAnatEntityCellTypeIds, true);
+            offsetParamIndex += excludedAnatEntityCellTypeIds.size();
+            stmt.setStrings(offsetParamIndex, excludedAnatEntityCellTypeIds, true);
+            offsetParamIndex += excludedAnatEntityCellTypeIds.size();
         }
         return log.traceExit(offsetParamIndex);
     }

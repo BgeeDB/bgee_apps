@@ -488,7 +488,8 @@ public class CallServiceUtils {
                     !condParamComb.contains(ConditionParameter.STRAIN)?
                             Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
                                 filter.getComposedFilterIds(ConditionParameter.STRAIN).getIds(0),
-                    convertCondParamsToDAOCondParams(filter.getObservedCondForParams()));
+                    convertCondParamsToDAOCondParams(filter.getObservedCondForParams()),
+                    null);
             log.debug("ConditionFilter: {} - condParamCombination: {} - Generated DAOConditionFilter: {}",
                     filter, condParamComb, daoCondFilter);
             daoCondFilters.add(daoCondFilter);

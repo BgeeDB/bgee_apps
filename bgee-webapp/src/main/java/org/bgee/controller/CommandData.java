@@ -16,6 +16,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
@@ -657,6 +658,21 @@ public class CommandData extends CommandParent {
      * when the URL parameter {@code exp_id} is provided).
      */
     private final static String EXPERIMENT_PAGE_ACTION = "experiment";
+
+    private final static String ID_PARAM_SUMMARY_VALUE = "SUMMARY";
+    private final static Set<String> SUMMARY_ANAT_ENTITY_IDS = Set.of(
+            "UBERON:0001062",
+            "UBERON:0000010", "UBERON:0000211", "UBERON:0000309", "UBERON:0000468",
+            "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007",
+            "UBERON:0001008", "UBERON:0001009", "UBERON:0001015", "UBERON:0001017",
+            "UBERON:0001032", "UBERON:0001434", "UBERON:0002193", "UBERON:0002330",
+            "UBERON:0002384", "UBERON:0002405", "UBERON:0002416", "UBERON:0015204");
+    private final static String SUMMARY_ANAT_ENTITY_ROOT_ID = "UBERON:0001062";
+    private final static Set<String> SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS =
+            Collections.unmodifiableSet(
+                   SUMMARY_ANAT_ENTITY_IDS.stream().filter(id -> !id.equals(SUMMARY_ANAT_ENTITY_ROOT_ID))
+                   .collect(Collectors.toSet()));
+    private final static Set<String> SUMMARY_CELL_TYPE_IDS = Set.of(ConditionDAO.CELL_TYPE_ROOT_ID);
 
     //Static initializer
     {
@@ -1356,29 +1372,63 @@ public class CommandData extends CommandParent {
         Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds =
                 new HashMap<>();
 
+        //--------------
+        //Management of "magic" values:
+        //If we receive the magic value "SUMMARY", we'll use a fix list of terms.
+        List<String> anatEntityIds = this.requestParameters.getAnatEntity() == null? new ArrayList<>():
+            new ArrayList<>(this.requestParameters.getAnatEntity());
+        if (anatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            anatEntityIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
+            anatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
+        }
+        List<String> cellTypeIds = this.requestParameters.getCellType() == null? new ArrayList<>():
+            new ArrayList<>(this.requestParameters.getCellType());
+        if (cellTypeIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            cellTypeIds.addAll(SUMMARY_CELL_TYPE_IDS);
+            cellTypeIds.remove(ID_PARAM_SUMMARY_VALUE);
+        }
+        List<String> discardAnatEntityIds = this.requestParameters.getDiscardAnatEntity() == null?
+                new ArrayList<>(): new ArrayList<>(this.requestParameters.getDiscardAnatEntity());
+        if (discardAnatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            discardAnatEntityIds.addAll(SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS);
+            discardAnatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
+        }
+        boolean requestedAnatEntityDescendant = Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                this.requestParameters.getUrlParametersInstance().getParamAnatEntityDescendant()));
+        if (!anatEntityIds.isEmpty() && !discardAnatEntityIds.isEmpty() && !requestedAnatEntityDescendant) {
+            throw log.throwing(new InvalidRequestException("Only when anat. entity descendants are requested "
+                    + "it is possible to exclude anat. entities and their children."));
+        }
+        //And we never include child terms when the parameter comes from a filter.
+        boolean anatEntityDescendant =
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty() ||
+                anatEntityIds.isEmpty()? false:
+                    Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                            this.requestParameters.getUrlParametersInstance()
+                            .getParamAnatEntityDescendant()));
+        //--------------
+
         //ANAT ENTITY AND CELL TYPE
         FilterIds<String> anatEntityFilter = new FilterIds<>(
                 //Filters override the related parameter from the form
                 filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()?
-                        filterAnatEntityCellTypeIds: this.requestParameters.getAnatEntity(),
-                //And we never include child terms when the parameter comes from a filter.
-                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty() ||
-                this.requestParameters.getAnatEntity() == null ||
-                this.requestParameters.getAnatEntity().isEmpty()?
-                        false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
-                                this.requestParameters.getUrlParametersInstance()
-                                .getParamAnatEntityDescendant())));
+                        filterAnatEntityCellTypeIds: anatEntityIds,
+                anatEntityDescendant,
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()?
+                        null: discardAnatEntityIds,
+                null);
         FilterIds<String> cellTypeFilter = new FilterIds<>(
                 //Filters override the related parameter from the form
                 filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()?
-                        filterAnatEntityCellTypeIds: this.requestParameters.getCellType(),
+                        filterAnatEntityCellTypeIds: cellTypeIds,
                 //And we never include child terms when the parameter comes from a filter.
                 filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty() ||
-                this.requestParameters.getCellType() == null ||
-                this.requestParameters.getCellType().isEmpty()?
+                        cellTypeIds.isEmpty()?
                         false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
                                 this.requestParameters.getUrlParametersInstance()
                                 .getParamCellTypeDescendant())));
+
+
         List<FilterIds<String>> composedFilterIds = new ArrayList<>(List.of(anatEntityFilter));
         //In case we used the filters, anatEntityFilter and cellTypeFilter should be equal,
         //and we thus don't use the cellTypeFilter
@@ -1433,7 +1483,8 @@ public class CommandData extends CommandParent {
             condFilter = new ConditionFilter2(speciesId,
                     condParamToComposedFilterIds,
                     condParams,
-                    null, false);
+                    null,
+                    this.requestParameters.isExcludeNonInformative());
             if (condFilter.areAllFiltersExceptSpeciesEmpty()) {
                 //To request a species a GeneFilter is mandatory,
                 //so if there are no other filters, we can discard this ConditionFilter
@@ -1481,7 +1532,8 @@ public class CommandData extends CommandParent {
                     condFilter != null? Set.of(condFilter): null,
                     dataTypes,
                     condParams,
-                    null, null));
+                    condParams,
+                    this.requestParameters.isObservedData()));
         } catch (IllegalArgumentException e) {
             log.catching(Level.DEBUG, e);
             throw log.throwing(new InvalidRequestException("Incorrect parameters"));

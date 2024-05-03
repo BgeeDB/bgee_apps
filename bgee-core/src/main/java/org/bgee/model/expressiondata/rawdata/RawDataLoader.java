@@ -70,6 +70,7 @@ import org.bgee.model.expressiondata.rawdata.baseelements.CellCompartment;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAuthorAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithExperiment;
@@ -705,7 +706,7 @@ public class RawDataLoader extends CommonService {
                                                     "Missing RawDataCondition ID "
                                                     + to.getConditionId()
                                                     + " for chip ID " + to.getAffymetrixChipId())),
-                                            null, null, null),
+                                            null, null, null, null, null),
                                     null,
                                     to.getDistinctRankCount() == null? null: new AffymetrixChipPipelineSummary(
                                             to.getDistinctRankCount(), to.getMaxRank(), to.getScanDate(),
@@ -996,7 +997,6 @@ public class RawDataLoader extends CommonService {
                     .stream()
                     .collect(Collectors.toMap(
                             to -> to.getId(),
-
                             to -> new RnaSeqLibraryAnnotatedSample(
                                     Optional.ofNullable(libMap.get(to.getLibraryId()))
                                     .orElseThrow(() -> new IllegalStateException(
@@ -1010,7 +1010,10 @@ public class RawDataLoader extends CommonService {
                                                     "Missing RawDataCondition ID "
                                                     + to.getConditionId()
                                                     + " for annotated sample ID " + to.getId())),
-                                            null, null, null),
+                                            new RawDataAuthorAnnotation(to.getAnatEntityAuthorAnnotation(),
+                                                    to.getCellTypeAuthorAnnotation(), to.getStageAuthorAnnotation(),
+                                                    to.getTime(), to.getTimeUnit()),
+                                            to.getPhysiologicalStatus(), null, null, null),
                                     to.getDistinctRankCount() == null? null: new RnaSeqLibraryAnnotatedSamplePipelineSummary(
                                             to.getMeanAbundanceRefIntergenicDistribution(),
                                             to.getSdAbundanceRefIntergenicDistribution(),
@@ -1211,7 +1214,7 @@ public class RawDataLoader extends CommonService {
                                                 "Missing RawDataCondition ID "
                                                 + to.getConditionId()
                                                 + " for annotated sample ID " + to.getId())),
-                                        null, null, null),
+                                        null, null, null, null, null),
                                 to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId())),
 
                         (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
@@ -1427,7 +1430,7 @@ public class RawDataLoader extends CommonService {
                                                     "Missing RawDataCondition ID "
                                                             + to.getConditionId()
                                                             + " for spot ID " + to.getId())),
-                                            null, null, null)),
+                                            null, null, null, null, null)),
 
                             (v1, v2) -> {
                                 //We do nothing special here, it means that an evidence

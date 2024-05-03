@@ -327,10 +327,12 @@ public class CallServiceUtils {
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(1);
             if (anatEntityFilterIds != null && anatEntityFilterIds.isIncludeChildTerms()) {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(anatEntityFilterIds.getIds());
+                anatEntityAndCellTypeIdsWithChildrenRequested.addAll(anatEntityFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithAnatCellChildrenRequested.add(filter.getSpeciesId());
             }
             if (cellTypeFilterIds != null && cellTypeFilterIds.isIncludeChildTerms()) {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(cellTypeFilterIds.getIds());
+                anatEntityAndCellTypeIdsWithChildrenRequested.addAll(cellTypeFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithAnatCellChildrenRequested.add(filter.getSpeciesId());
             }
             //For now we consider there is no composition for dev. stages
@@ -339,6 +341,7 @@ public class CallServiceUtils {
                     ConditionParameter.DEV_STAGE).getFilterIds(0);
             if (devStageFilterIds != null && devStageFilterIds.isIncludeChildTerms()) {
                 devStageIdsWithChildrenRequested.addAll(devStageFilterIds.getIds());
+                devStageIdsWithChildrenRequested.addAll(devStageFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithDevStageChildrenRequested.add(filter.getSpeciesId());
             }
         }
@@ -379,6 +382,22 @@ public class CallServiceUtils {
                             .collect(Collectors.toSet())
                     );
                 }
+                if (!anatEntityFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
+                    Set<String> anatEntityIdsToExclude = new HashSet<>();
+                    anatEntityIdsToExclude.addAll(anatEntityFilterIds.getExcludeTermsAndChildrenIds());
+                    anatEntityIdsToExclude.addAll(
+                            anatEntityFilterIds.getExcludeTermsAndChildrenIds().stream()
+                            .flatMap(id -> anatOntology.getDescendantIds(
+                                    id, false, Collections.singleton(filter.getSpeciesId()))
+                                    .stream())
+                            .collect(Collectors.toSet())
+                    );
+                    anatEntityIdsToExclude.removeAll(anatEntityFilterIds.getNotToExcludeIds());
+                    if (anatEntityIds.removeAll(anatEntityIdsToExclude) && anatEntityIds.isEmpty()) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No result should be retrieved because of anat. entity exclusion"));
+                    }
+                }
             }
             if (cellTypeFilterIds != null) {
                 cellTypeIds.addAll(cellTypeFilterIds.getIds());
@@ -390,6 +409,23 @@ public class CallServiceUtils {
                                     .stream())
                             .collect(Collectors.toSet())
                     );
+                }
+                if (!cellTypeFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
+                    Set<String> cellTypeIdsToExclude = new HashSet<>();
+                    cellTypeIdsToExclude.addAll(cellTypeFilterIds.getExcludeTermsAndChildrenIds());
+                    cellTypeIdsToExclude.addAll(
+                            cellTypeFilterIds.getExcludeTermsAndChildrenIds().stream()
+                            .flatMap(id -> anatOntology.getDescendantIds(
+                                    id, false, Collections.singleton(filter.getSpeciesId()))
+                                    .stream())
+                            .collect(Collectors.toSet())
+                    );
+                    //we don't want to exclude the selected terms themselves
+                    cellTypeIdsToExclude.removeAll(cellTypeFilterIds.getNotToExcludeIds());
+                    if (cellTypeIds.removeAll(cellTypeIdsToExclude) && cellTypeIds.isEmpty()) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No result should be retrieved because of cell type exclusion"));
+                    }
                 }
             }
 
@@ -407,6 +443,23 @@ public class CallServiceUtils {
                                     .stream())
                             .collect(Collectors.toSet())
                     );
+                }
+                if (!devStageFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
+                    Set<String> devStageIdsToExclude = new HashSet<>();
+                    devStageIdsToExclude.addAll(devStageFilterIds.getExcludeTermsAndChildrenIds());
+                    devStageIdsToExclude.addAll(
+                            devStageFilterIds.getExcludeTermsAndChildrenIds().stream()
+                            .flatMap(id -> stageOntology.getDescendantIds(
+                                    id, false, Collections.singleton(filter.getSpeciesId()))
+                                    .stream())
+                            .collect(Collectors.toSet())
+                    );
+                    //we don't want to exclude the selected terms themselves
+                    devStageIdsToExclude.removeAll(devStageFilterIds.getNotToExcludeIds());
+                    if (devStageIds.removeAll(devStageIdsToExclude) && devStageIds.isEmpty()) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No result should be retrieved because of dev. stage exclusion"));
+                    }
                 }
             }
 

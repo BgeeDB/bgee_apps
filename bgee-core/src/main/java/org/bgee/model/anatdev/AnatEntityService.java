@@ -150,20 +150,26 @@ public class AnatEntityService extends Service {
     /**
      * Retrieves non-informative anatomical entities for the requested species. They
      * correspond to anatomical entities belonging to non-informative subsets in Uberon,
-     * and not used in raw data annotations in Bgee (expression data and similarity annotations).
+     * and not used in raw data annotations in Bgee (expression data and similarity annotations),
+     * unless {@code evenIfUsedInAnnots} is {@code true}, in which case all non-informative entities
+     * are returned.
      * <p>
      * Note: only the ID is populated in the returned {@code AnatEntity}s.
      * 
-     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
-     *                      allowing to filter the non-informative anatomical entities to use
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                              allowing to filter the non-informative anatomical entities to use.
+     * @param evenIfUsedInAnnots    A {@code boolean} specifying, if {@code true}, that even
+     *                              the non-informative anat. entities used in annotations
+     *                              should be returned.
      * @return              A {@code Stream} of {@code AnatEntity}s retrieved for
      *                      the requested species IDs.
      */
-    public Stream<AnatEntity> loadNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) {
-        log.traceEntry("{}", speciesIds);
+    public Stream<AnatEntity> loadNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds,
+            boolean evenIfUsedInAnnots) {
+        log.traceEntry("{}, {}", speciesIds, evenIfUsedInAnnots);
         
         return log.traceExit(this.getDaoManager().getAnatEntityDAO()
-                .getNonInformativeAnatEntitiesBySpeciesIds(speciesIds,
+                .getNonInformativeAnatEntitiesBySpeciesIds(speciesIds, evenIfUsedInAnnots,
                         EnumSet.of(AnatEntityDAO.Attribute.ID))
                 .stream()
                 .map(AnatEntityService::mapFromTO));

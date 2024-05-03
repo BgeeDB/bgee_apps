@@ -530,7 +530,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             // TODO: filter by non informative anat. entities in ExpressionCallFilter instead of
             // filter stream, see comment in ConditionFilter class.
             Set<String> nonInformativeAnatEntities = serviceFactory.getAnatEntityService()
-                    .loadNonInformativeAnatEntitiesBySpeciesIds(speciesFilter)
+                    .loadNonInformativeAnatEntitiesBySpeciesIds(speciesFilter, false)
                     .map(AnatEntity::getId)
                     .collect(Collectors.toSet());
 

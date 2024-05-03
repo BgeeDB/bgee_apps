@@ -142,27 +142,31 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
                     throws DAOException;
 
     /**
-     * Retrieves non-informative anatomical entities that are non-informative
-     * and not used in raw data annotations (expression data and similarity annotations).
+     * Retrieves non-informative anatomical entities. If {@code evenIfUsedInAnnots} is {@code false},
+     * only the non-informative anatomical entities not used in raw data annotations
+     * (expression data and similarity annotations) will be returned.
      * <p>
      * The non-informative anatomical entities are retrieved and returned as
      * a {@code AnatEntityTOResultSet}. It is the responsibility of the caller to close
      * this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species
-     *                      allowing to filter the non-informative anatomical entities to use.
-     *                      If {@code null} or empty, non-informative anatomical entities existing
-     *                      in any species are retrieved.
-     * @param attributes    A {@code Collection} of {@code AnatEntityDAO.Attribute}s
-     *                      defining the attributes to populate in the returned
-     *                      {@code AnatEntityTO}s. If {@code null} or empty,
-     *                      all attributes are populated.
-     * @return              An {@code AnatEntityTOResultSet} containing non-informative
-     *                      anatomical entities from data source.
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species
+     *                              allowing to filter the non-informative anatomical entities to use.
+     *                              If {@code null} or empty, non-informative anatomical entities existing
+     *                              in any species are retrieved.
+     * @param evenIfUsedInAnnots    A {@code boolean} specifying, if {@code true}, that even
+     *                              the non-informative anat. entities used in annotations
+     *                              should be returned.
+     * @param attributes            A {@code Collection} of {@code AnatEntityDAO.Attribute}s
+     *                              defining the attributes to populate in the returned
+     *                              {@code AnatEntityTO}s. If {@code null} or empty,
+     *                              all attributes are populated.
+     * @return                      An {@code AnatEntityTOResultSet} containing non-informative
+     *                              anatomical entities from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds,
-            Collection<AnatEntityDAO.Attribute> attributes) throws DAOException;
+            boolean evenIfUsedInAnnots, Collection<AnatEntityDAO.Attribute> attributes) throws DAOException;
     
     /**
      * Inserts the provided anatomical entities into the data source, 

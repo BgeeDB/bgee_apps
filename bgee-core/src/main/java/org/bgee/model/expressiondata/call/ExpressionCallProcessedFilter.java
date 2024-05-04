@@ -12,13 +12,35 @@ import org.bgee.model.expressiondata.ProcessedFilter;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 
 //Most methods and constructors are protected, so that only the {@link ExpressionCallService}
 //can instantiate this class, and only {@link ExpressionCallLoader} use it.
 public class ExpressionCallProcessedFilter extends ProcessedFilter<ExpressionCallFilter2,
-DAOCallFilter, Condition2> {
+DAOCallFilter, Condition2, ConditionFilter2> {
+
+    //We redeclare these classes notably for making their constructor visible to the package
+    public static class ExpressionCallProcessedFilterGeneSpeciesPart extends ProcessedFilterGeneSpeciesPart {
+        ExpressionCallProcessedFilterGeneSpeciesPart(Collection<GeneFilter> geneFilters,
+                Map<Integer, Gene> requestedGeneMap, Map<Integer, Species> speciesMap) {
+            super(geneFilters, requestedGeneMap, speciesMap);
+        }
+    }
+    public static class ExpressionCallProcessedFilterConditionPart
+    extends ProcessedFilterConditionPart<ConditionFilter2, Condition2> {
+        ExpressionCallProcessedFilterConditionPart(Collection<ConditionFilter2> conditionFilters,
+                Map<Integer, Condition2> requestedConditionMap) {
+            super(conditionFilters, requestedConditionMap);
+        }
+    }
+    public static class ExpressionCallProcessedFilterInvariablePart extends ProcessedFilterInvariablePart {
+        ExpressionCallProcessedFilterInvariablePart(Map<Integer, GeneBioType> geneBioTypeMap,
+                Map<Integer, Source> sourceMap) {
+            super(geneBioTypeMap, sourceMap);
+        }
+    }
 
     private final boolean useGlobalRank;
     private final BigDecimal exprScoreMinValue;
@@ -45,15 +67,15 @@ DAOCallFilter, Condition2> {
     private final Map<Integer, ConditionRankInfoTO> maxRankPerSpecies;
 
     ExpressionCallProcessedFilter(ExpressionCallFilter2 sourceFilter,
-            Collection<DAOCallFilter> daoFilters, Map<Integer, Gene> requestedGeneMap,
-            Map<Integer, Condition2> requestedConditionMap,
-            Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap,
-            Map<Integer, Source> sourceMap, Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
+            Collection<DAOCallFilter> daoFilters,
+            ExpressionCallProcessedFilterGeneSpeciesPart geneSpeciesPart,
+            ExpressionCallProcessedFilterConditionPart conditionPart,
+            ExpressionCallProcessedFilterInvariablePart invariablePart,
+            Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
             boolean useGlobalRank, BigDecimal exprScoreMinValue, BigDecimal exprScoreMaxValue,
             BigDecimal presentLowThreshold, BigDecimal presentHighThreshold,
             BigDecimal absentLowThreshold, BigDecimal absentHighThreshold) {
-        super(sourceFilter, daoFilters, requestedGeneMap, requestedConditionMap,
-                speciesMap, geneBioTypeMap, sourceMap);
+        super(sourceFilter, daoFilters, geneSpeciesPart, conditionPart, invariablePart);
         this.maxRankPerSpecies = maxRankPerSpecies;
         this.useGlobalRank = useGlobalRank;
         this.exprScoreMinValue = exprScoreMinValue;
@@ -64,6 +86,20 @@ DAOCallFilter, Condition2> {
         this.absentHighThreshold = absentHighThreshold;
     }
 
+    @Override
+    protected ExpressionCallProcessedFilterGeneSpeciesPart getGeneSpeciesPart() {
+        return (ExpressionCallProcessedFilterGeneSpeciesPart) super.getGeneSpeciesPart();
+    }
+    @Override
+    protected ExpressionCallProcessedFilterConditionPart getConditionPart() {
+        return (ExpressionCallProcessedFilterConditionPart) super.getConditionPart();
+    }
+    @Override
+    protected ExpressionCallProcessedFilterInvariablePart getInvariablePart() {
+        return (ExpressionCallProcessedFilterInvariablePart) super.getInvariablePart();
+    }
+
+    //We override the methods to make them visible to ExpressionCallLoader in the same package
     @Override
     protected Set<DAOCallFilter> getDaoFilters() {
         return super.getDaoFilters();
@@ -117,8 +153,9 @@ DAOCallFilter, Condition2> {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(absentHighThreshold, absentLowThreshold, exprScoreMaxValue,
-                exprScoreMinValue, maxRankPerSpecies, presentHighThreshold, presentLowThreshold, useGlobalRank);
+        result = prime * result + Objects.hash(absentHighThreshold, absentLowThreshold,
+                exprScoreMaxValue, exprScoreMinValue, maxRankPerSpecies,
+                presentHighThreshold, presentLowThreshold, useGlobalRank);
         return result;
     }
     @Override
@@ -146,12 +183,9 @@ DAOCallFilter, Condition2> {
         builder.append("ExpressionCallProcessedFilter [")
                .append("getSourceFilter()=").append(getSourceFilter())
                .append(", getDaoFilters()=").append(getDaoFilters())
-               .append(", getRequestedGeneMap()=").append(getRequestedGeneMap())
-               .append(", getRequestedConditionMap()=").append(getRequestedConditionMap())
-               .append(", getSpeciesMap()=").append(getSpeciesMap())
-               .append(", getGeneBioTypeMap()=").append(getGeneBioTypeMap())
-               .append(", getSourceMap()=").append(getSourceMap())
-               .append(", maxRankPerSpecies=").append(maxRankPerSpecies)
+               .append(", getGeneSpeciesPart()=").append(getGeneSpeciesPart())
+               .append(", getConditionPart()=").append(getConditionPart())
+               .append(", getInvariablePart()=").append(getInvariablePart())
                .append(", useGlobalRank=").append(useGlobalRank)
                .append(", exprScoreMinValue=").append(exprScoreMinValue)
                .append(", exprScoreMaxValue=").append(exprScoreMaxValue)
@@ -159,6 +193,7 @@ DAOCallFilter, Condition2> {
                .append(", presentHighThreshold=").append(presentHighThreshold)
                .append(", absentLowThreshold=").append(absentLowThreshold)
                .append(", absentHighThreshold=").append(absentHighThreshold)
+               .append(", maxRankPerSpecies=").append(maxRankPerSpecies)
                .append("]");
         return builder.toString();
     }

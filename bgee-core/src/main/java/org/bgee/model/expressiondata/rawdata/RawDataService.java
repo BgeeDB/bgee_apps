@@ -21,6 +21,9 @@ import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.expressiondata.ExpressionDataService;
+import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter.RawDataProcessedFilterConditionPart;
+import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter.RawDataProcessedFilterGeneSpeciesPart;
+import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter.RawDataProcessedFilterInvariablePart;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 import org.bgee.model.gene.Gene;
@@ -368,6 +371,8 @@ public class RawDataService extends ExpressionDataService {
         //Sources to be used by the RawDataLoader
         Map<Integer, Source> sourceMap = this.getServiceFactory().getSourceService()
                 .loadSourcesByIds(null);
+        RawDataProcessedFilterInvariablePart invariablePart =
+                new RawDataProcessedFilterInvariablePart(geneBioTypeMap, sourceMap);
 
         //It's OK that the filter is null if we want to retrieve any raw data
         if (filter == null) {
@@ -377,9 +382,12 @@ public class RawDataService extends ExpressionDataService {
                     //thus there will be no result and no query done".
                     //While here we want to say "give me all results".
                     new HashSet<>(),
-                    null, null,
-                    //load all Species, gene biotypes, and sources
-                    this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap));
+                    new RawDataProcessedFilterGeneSpeciesPart(
+                            null,
+                            null,
+                            this.loadSpeciesMap(null, false, null)),
+                    null,
+                    invariablePart));
         }
 
         Map<Integer, Species> speciesMap = this.loadSpeciesMap(filter.getSpeciesIdsConsidered(),
@@ -437,8 +445,14 @@ public class RawDataService extends ExpressionDataService {
         //between the species requested in GeneFilters and ConditionFilters
         if (speciesMap.keySet().equals(speciesIdsWithCondRequested) && speciesIdsWithCondFound.isEmpty()) {
             return log.traceExit(new RawDataProcessedFilter(filter, null,
-                    requestedGeneMap, requestedRawDataCondMap,
-                    speciesMap, geneBioTypeMap, sourceMap));
+                    new RawDataProcessedFilterGeneSpeciesPart(
+                            filter.getGeneFilters(),
+                            requestedGeneMap,
+                            speciesMap),
+                    new RawDataProcessedFilterConditionPart(
+                            filter.getConditionFilters(),
+                            requestedRawDataCondMap),
+                    invariablePart));
         }
 
         //if filter.getSpeciesIdsConsidered() is empty, we can create just one DAORawDataFilter
@@ -490,8 +504,14 @@ public class RawDataService extends ExpressionDataService {
         log.debug("daoFilters: {}", daoFilters);
 
         return log.traceExit(new RawDataProcessedFilter(filter, daoFilters,
-                requestedGeneMap, requestedRawDataCondMap,
-                speciesMap, geneBioTypeMap, sourceMap));
+                new RawDataProcessedFilterGeneSpeciesPart(
+                        filter.getGeneFilters(),
+                        requestedGeneMap,
+                        speciesMap),
+                new RawDataProcessedFilterConditionPart(
+                        filter.getConditionFilters(),
+                        requestedRawDataCondMap),
+                invariablePart));
     }
     private static Set<DAORawDataConditionFilter> convertRawDataConditionFilterToDAORawDataConditionFilter(
             Collection<RawDataConditionFilter> condFilters, OntologyService ontService,

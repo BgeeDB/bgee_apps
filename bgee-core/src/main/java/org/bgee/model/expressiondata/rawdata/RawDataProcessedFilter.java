@@ -9,6 +9,7 @@ import org.bgee.model.expressiondata.ProcessedFilter;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 
@@ -23,7 +24,7 @@ import org.bgee.model.species.Species;
  * storing it in a {@code RawDataLoader} could maintain the connection open.
  *
  * @author Frederic Bastian
- * @version Bgee 15.0, Nov. 2022
+ * @version Bgee 15.1 May 2024
  * @since Bgee 15.0, Nov. 2022
  * @see #getRawDataFilter()
  * @see RawDataLoader#getRawDataProcessedFilter()
@@ -31,14 +32,48 @@ import org.bgee.model.species.Species;
  * @see RawDataService#loadRawDataLoader(RawDataFilter)
  */
 public class RawDataProcessedFilter extends ProcessedFilter<RawDataFilter,
-DAORawDataFilter, RawDataCondition> {
+DAORawDataFilter, RawDataCondition, RawDataConditionFilter> {
+
+    //We redeclare these classes notably for making their constructor visible to the package
+    public static class RawDataProcessedFilterGeneSpeciesPart extends ProcessedFilterGeneSpeciesPart {
+        RawDataProcessedFilterGeneSpeciesPart(Collection<GeneFilter> geneFilters,
+                Map<Integer, Gene> requestedGeneMap, Map<Integer, Species> speciesMap) {
+            super(geneFilters, requestedGeneMap, speciesMap);
+        }
+    }
+    public static class RawDataProcessedFilterConditionPart
+    extends ProcessedFilterConditionPart<RawDataConditionFilter, RawDataCondition> {
+        RawDataProcessedFilterConditionPart(Collection<RawDataConditionFilter> conditionFilters,
+                Map<Integer, RawDataCondition> requestedConditionMap) {
+            super(conditionFilters, requestedConditionMap);
+        }
+    }
+    public static class RawDataProcessedFilterInvariablePart extends ProcessedFilterInvariablePart {
+        RawDataProcessedFilterInvariablePart(Map<Integer, GeneBioType> geneBioTypeMap,
+                Map<Integer, Source> sourceMap) {
+            super(geneBioTypeMap, sourceMap);
+        }
+    }
+
     RawDataProcessedFilter(RawDataFilter sourceFilter,
-            Collection<DAORawDataFilter> daoFilters, Map<Integer, Gene> requestedGeneMap,
-            Map<Integer, RawDataCondition> requestedConditionMap,
-            Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap,
-            Map<Integer, Source> sourceMap) {
-        super(sourceFilter, daoFilters, requestedGeneMap, requestedConditionMap,
-                speciesMap, geneBioTypeMap, sourceMap);
+            Collection<DAORawDataFilter> daoFilters,
+            ProcessedFilterGeneSpeciesPart geneSpeciesPart,
+            RawDataProcessedFilterConditionPart conditionPart,
+            ProcessedFilterInvariablePart invariablePart) {
+        super(sourceFilter, daoFilters, geneSpeciesPart, conditionPart, invariablePart);
+    }
+
+    @Override
+    protected RawDataProcessedFilterGeneSpeciesPart getGeneSpeciesPart() {
+        return (RawDataProcessedFilterGeneSpeciesPart) super.getGeneSpeciesPart();
+    }
+    @Override
+    protected RawDataProcessedFilterConditionPart getConditionPart() {
+        return (RawDataProcessedFilterConditionPart) super.getConditionPart();
+    }
+    @Override
+    protected RawDataProcessedFilterInvariablePart getInvariablePart() {
+        return (RawDataProcessedFilterInvariablePart) super.getInvariablePart();
     }
 
     //We override the methods to make them visible to RawDataLoader in the same package
@@ -88,11 +123,9 @@ DAORawDataFilter, RawDataCondition> {
         builder.append("RawDataProcessedFilter [")
                .append("getSourceFilter()=").append(getSourceFilter())
                .append(", getDaoFilters()=").append(getDaoFilters())
-               .append(", getRequestedGeneMap()=").append(getRequestedGeneMap())
-               .append(", getRequestedConditionMap()=").append(getRequestedConditionMap())
-               .append(", getSpeciesMap()=").append(getSpeciesMap())
-               .append(", getGeneBioTypeMap()=").append(getGeneBioTypeMap())
-               .append(", getSourceMap()=").append(getSourceMap())
+               .append(", getGeneSpeciesPart()=").append(getGeneSpeciesPart())
+               .append(", getConditionPart()=").append(getConditionPart())
+               .append(", getInvariablePart()=").append(getInvariablePart())
                .append("]");
         return builder.toString();
     }

@@ -14,6 +14,9 @@ import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterGeneSpeciesPart;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterInvariablePart;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
@@ -55,6 +58,8 @@ public class ExpressionCallService extends CallServiceParent {
         //Sources to be used by the RawDataLoader
         Map<Integer, Source> sourceMap = this.getServiceFactory().getSourceService()
                 .loadSourcesByIds(null);
+        ExpressionCallProcessedFilterInvariablePart invariablePart =
+                new ExpressionCallProcessedFilterInvariablePart(geneBioTypeMap, sourceMap);
 
         //It's OK that the filter is null or empty if we want to retrieve any raw data
         if (filter == null || filter.isEmptyFilter()) {
@@ -64,11 +69,13 @@ public class ExpressionCallService extends CallServiceParent {
                     //thus there will be no result and no query done".
                     //While here we want to say "give me all results".
                     new HashSet<>(),
-                    null, null,
-                    //load all Species, gene biotypes, and sources
-                    this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap,
-                    conditionDAO
-                    .getMaxRanks(null,
+                    new ExpressionCallProcessedFilterGeneSpeciesPart(
+                            null,
+                            null,
+                            this.loadSpeciesMap(null, false, null)),
+                    null,
+                    invariablePart,
+                    conditionDAO.getMaxRanks(null,
                             //We always request the max rank over all data types,
                             //independently of the data types requested in the query,
                             //because ranks are all normalized based on the max rank over all data types
@@ -143,8 +150,15 @@ public class ExpressionCallService extends CallServiceParent {
         //between the species requested in GeneFilters and ConditionFilters
         if (speciesMap.keySet().equals(speciesIdsWithCondRequested) && speciesIdsWithCondFound.isEmpty()) {
             return log.traceExit(new ExpressionCallProcessedFilter(filter, null,
-                    requestedGeneMap, requestedCondMap,
-                    speciesMap, geneBioTypeMap, sourceMap, maxRankPerSpecies,
+                    new ExpressionCallProcessedFilterGeneSpeciesPart(
+                            filter.getGeneFilters(),
+                            requestedGeneMap,
+                            speciesMap),
+                    new ExpressionCallProcessedFilterConditionPart(
+                            filter.getConditionFilters(),
+                            requestedCondMap),
+                    invariablePart,
+                    maxRankPerSpecies,
                     GLOBAL_RANK, EXPRESSION_SCORE_MIN_VALUE, EXPRESSION_SCORE_MAX_VALUE,
                     PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
                     PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO, ABSENT_LOW_GREATER_THAN,
@@ -179,8 +193,15 @@ public class ExpressionCallService extends CallServiceParent {
         log.debug("daoFilter: {}", daoFilter);
 
         return log.traceExit(new ExpressionCallProcessedFilter(filter, Set.of(daoFilter),
-                requestedGeneMap, requestedCondMap,
-                speciesMap, geneBioTypeMap, sourceMap, maxRankPerSpecies,
+                new ExpressionCallProcessedFilterGeneSpeciesPart(
+                        filter.getGeneFilters(),
+                        requestedGeneMap,
+                        speciesMap),
+                new ExpressionCallProcessedFilterConditionPart(
+                        filter.getConditionFilters(),
+                        requestedCondMap),
+                invariablePart,
+                maxRankPerSpecies,
                 GLOBAL_RANK, EXPRESSION_SCORE_MIN_VALUE, EXPRESSION_SCORE_MAX_VALUE,
                 PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
                 PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO, ABSENT_LOW_GREATER_THAN,

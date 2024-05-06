@@ -1,6 +1,12 @@
 package org.bgee.controller;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,19 +28,26 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.user.User;
-import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.BgeeEnum;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
+import org.bgee.model.ManageReadWriteLocks;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
-import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallFilter;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
@@ -45,6 +59,7 @@ import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
+import org.bgee.model.topanat.TopAnatUtils;
 import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -87,7 +102,7 @@ public class CommandRPackage extends CommandParent {
     public final static String SPECIES_EST_PARAM = "EST";
     public final static String SPECIES_IN_SITU_PARAM = "IN_SITU";
     public final static String SPECIES_RNA_SEQ_PARAM = "RNA_SEQ";
-    public final static String SPECIES_FULL_LENGTH_PARAM = "FULL_LENGTH";
+    public final static String SPECIES_FULL_LENGTH_PARAM = "SC_RNA_SEQ";
 
     public final static String PROPAGATION_ID_PARAM = "ID";
     public final static String PROPAGATION_NAME_PARAM = "NAME";
@@ -95,6 +110,8 @@ public class CommandRPackage extends CommandParent {
     public final static String PROPAGATION_LEVEL_PARAM = "LEVEL";
     public final static String PROPAGATION_LEFTBOUND_PARAM = "LEFT_BOUND";
     public final static String PROPAGATION_RIGHTBOUND_PARAM = "RIGHT_BOUND";
+
+    private final ManageReadWriteLocks manageReadWriteLocks;
 
     public enum PropagationParam implements BgeeEnumField {
         DESCENDANTS("descendants", true, false), ANCESTORS("ancestors", false, true),
@@ -148,6 +165,7 @@ public class CommandRPackage extends CommandParent {
             BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
             JobService jobService, User user) {
         super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user, null, null);
+        this.manageReadWriteLocks = new ManageReadWriteLocks();
     }
 
     @Override
@@ -261,16 +279,157 @@ public class CommandRPackage extends CommandParent {
                 //for now, we always include substages when stages requested, and never include substructures
                 observedDataFilter);
 
+        SummaryCallType callType = SummaryCallType.ExpressionSummary.EXPRESSED;
 
         //****************************************
         // Perform query and display results
         //****************************************
-        Stream<ExpressionCall> callStream = this.serviceFactory.getCallService().loadExpressionCalls(
-                callFilter,
-                //Attributes requested; no ordering requested
-                attrs, null);
+        // For some species topAnat was taking too much time to retrieve calls then resulting in an
+        // apache timeout. To avoid that we provide an hardcoded list of species and stages for which
+        // we retrieve calls from files on our server and not anymore generate calls files on the fly.
+        // TODO: remove all hardcoded parts of that logic once topAnat has been optimized.
+        // TODO: refactor topAnat codes from R and web and then implement the logic below for all species/stages
+        Set<Integer> speciesRetrievedFromFile = new HashSet<Integer>(Arrays.asList(7227, 9823, 9913, 9606, 10090));
+        Set<String> stagesRetrievedFromFile = new HashSet<String>(Arrays.asList(ConditionDAO.DEV_STAGE_ROOT_ID,
+                "UBERON:0000066", "UBERON:0000068", "UBERON:0000092"));
+        
+        Stream<ExpressionCall> callStream;
+        
+        // for specified species we retrieve gene to anatEntity association from a file.
+        // In topAnat R a user can retrieve calls for several stageIDs. Each combination of stageIds will result
+        // in a different file. In order not to create too many files for now, we decided to use a generated file
+        // only for a subset of stages AND only if one single stage is queried. It should cover a high proportion
+        // of analysis on the selected species as stageIds are not often specified per the users.
+        
+        if (speciesRetrievedFromFile.contains(speciesId) &&
+                (stageIds == null || stageIds.size() == 1 && stagesRetrievedFromFile.contains(stageIds.get(0))) &&
+                (dataTypes.containsAll(Set.of(DataType.values())) || dataTypes.size() == 1 && 
+                    dataTypes.contains(DataType.RNA_SEQ) || dataTypes.size() == 2 &&
+                    dataTypes.containsAll(Set.of(DataType.RNA_SEQ, DataType.SC_RNA_SEQ)))
+                ) {
+            
+            Path finalGeneToAnatEntitiesFile = Paths.get(this.prop.getTopAnatResultsWritingDirectory(),
+                    //Directory used to separate topAnat web files from topAnatR files. Only used for clarity.
+                    //TODO:  Do not use that directory anymore once topAnat has been refactored.
+                    "topAnat_R", 
+                    CommandRPackage.getGeneToAnatEntitiesFileName(false, speciesId,
+                            callType, stageIds == null || stageIds.isEmpty()? null : stageIds.get(0),
+                                    dataTypes, this.checkAndGetSummaryQuality()));
+            Path tmpFile = Paths.get(this.prop.getTopAnatResultsWritingDirectory(), 
+                    //Directory used to separate topAnat web files from topAnatR files. Only used for clarity.
+                    //TODO:  Do not use that directory anymore once topAnat has been refactored.
+                    "topAnat_R", 
+                    CommandRPackage.getGeneToAnatEntitiesFileName(true, speciesId,
+                            callType, stageIds == null || stageIds.isEmpty()? null : stageIds.get(0),
+                                    dataTypes, this.checkAndGetSummaryQuality()));//, 
+            try {
+                this.manageReadWriteLocks.acquireWriteLock(finalGeneToAnatEntitiesFile.toString());
+                this.manageReadWriteLocks.acquireWriteLock(tmpFile.toString());
+
+                //check, AFTER having acquired the locks, that the final file does not 
+                //already exist (maybe another thread generated the files before this one 
+                //acquired the lock)
+                if (!Files.exists(finalGeneToAnatEntitiesFile)) {
+                    log.info("Gene to AnatEntities association file not already generated.");
+
+                    this.writeToGeneToAnatEntitiesFile(tmpFile.toString(), this.serviceFactory.getCallService(),
+                            callFilter, attrs);
+                    //move tmp file if successful
+                    TopAnatUtils.move(tmpFile, finalGeneToAnatEntitiesFile, false);
+                }
+            } finally {
+                Files.deleteIfExists(tmpFile);
+                this.manageReadWriteLocks.releaseWriteLock(finalGeneToAnatEntitiesFile.toString());
+                this.manageReadWriteLocks.releaseWriteLock(tmpFile.toString());
+            }
+            // Now that the file is created we can read it
+            try {
+                this.manageReadWriteLocks.acquireReadLock(finalGeneToAnatEntitiesFile.toString());
+                callStream = Files.lines(finalGeneToAnatEntitiesFile)
+                        //do not consider header of files manually generated using SQL queries.
+                        //Could have been removed from the files but keep this filter as a sanity check
+                        //in case other files have to be generated and we forget to remove the header
+                        .filter(line -> ! line.equals("GENE_ID\tANAT_ENTITY_ID"))
+                        .map(l -> {
+                            String[] lineValues = l.split("\t");
+                            // create fake expressionCalls objects to be able to retrieve data from the file
+                            // once topAnat has been updated we will directly provide a Stream<String> to the
+                            // view
+                            return new ExpressionCall(new Gene(lineValues[0], new Species(speciesId),
+                                    new GeneBioType("fake")), new Condition(new AnatEntity(lineValues[1]),
+                                    null, null, null, null, null),null, null, null, null, null, null, null, null);
+                        });
+
+            } finally {
+                this.manageReadWriteLocks.releaseReadLock(finalGeneToAnatEntitiesFile.toString());
+            }
+            
+        } else {
+             callStream = this.serviceFactory.getCallService().loadExpressionCalls(
+                    callFilter,
+                    //Attributes requested; no ordering requested
+                    attrs, null);
+        }
         display.displayCalls(requestedAttrs, callStream);
         
+        log.traceExit();
+    }
+
+    //TODO: this function reproduce the logic of TopAnatAnalysis.getGeneToAnatEntitiesFileName(boolean, TopAnatParameter)
+    // Code refactoring has to be done while optimazing topAnat
+    // As topAnat R does not yet use celltypes we can not reuse files created for topAnat web. That is why we add a
+    // "_R" suffix at the end of the file name. It is ugly but it will be fixed for Bgee 15.2. All modifications to
+    // implement for Bgee 15.2 are listed in the Jira issue BA-744
+    private static String getGeneToAnatEntitiesFileName(boolean tmpFile, int speciesId, SummaryCallType callType,
+            String devStageId, Set<DataType> dataTypes, SummaryQuality summaryQuality){
+        log.traceEntry("{}, {}, {}, {}, {}, {}", tmpFile, speciesId, callType, devStageId, dataTypes, summaryQuality);
+        
+        String paramsEncoded = "";
+        //TODO: use some kind of encoding of the Strings for file name (see replacement for stage ID)
+        final StringBuilder sb = new StringBuilder();
+        sb.append(speciesId);
+        sb.append("_").append(callType.toString());
+        Optional.ofNullable(devStageId)
+            //replace column in IDs
+            .ifPresent(e -> sb.append("_").append(e.replace(":", "_")));
+        //use EnumSet for consistent ordering
+        Optional.ofNullable(dataTypes).map(e -> EnumSet.copyOf(e))
+        .orElse(EnumSet.allOf(DataType.class))
+        .stream()
+        .forEach(e -> sb.append("_").append(e.toString()));
+        sb.append("_").append(Optional.ofNullable(summaryQuality).orElse(SummaryQuality.SILVER)
+                .toString());
+        //on topAnat web a last parameter corresponding to the decorrelation type is used to generate
+        //the name of the file. As topAnat R does not allow to choose the decorrelation type we always
+        //add _NONE add the end of the filename
+        sb.append("_NONE");
+        paramsEncoded = sb.toString();
+        String fileName = TopAnatUtils.FILE_PREFIX + "GeneToAnatEntities_" 
+        //TODO: Do not forget to remove the "_R" suffix once updates for Bgee 15.2 are implemented
+            + paramsEncoded + "_R" + ".tsv";
+        if (tmpFile) {
+            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
+        }
+        return log.traceExit(fileName);
+    }
+    //TODO: this function partially reproduce the logic of TopAnatAnalysis.writeToGeneToAnatEntitiesFile(String)
+    // Code refactoring has to be done for Bgee 15.2
+    private void writeToGeneToAnatEntitiesFile(String geneToAnatEntitiesFile, CallService callService,
+            CallFilter<?, ?, ConditionFilter> callFilter, Set<CallService.Attribute> callServiceAttributes)
+            throws IOException {
+        log.traceEntry("{}", geneToAnatEntitiesFile);
+
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
+                geneToAnatEntitiesFile)))) {
+            callService.loadExpressionCalls(
+                    (ExpressionCallFilter) callFilter,
+                    callServiceAttributes,
+                    null
+                ).forEach(
+                    call -> out.println(
+                        call.getGene().getGeneId() + '\t' + call.getCondition().getAnatEntityId())
+                );
+        }
         log.traceExit();
     }
     
@@ -280,6 +439,7 @@ public class CommandRPackage extends CommandParent {
      * @throws InvalidRequestException  In case of invalid request parameter.
      * @throws IOException              In case of issue when writing results. 
      */
+    //TODO: once topAnat has been refactored then generate/read those files from our server
     private void processGetAnatEntities() throws InvalidRequestException, IOException {
         log.traceEntry();
         
@@ -329,6 +489,7 @@ public class CommandRPackage extends CommandParent {
      * @throws IOException              In case of issue when writing results. 
      */
     //TODO: test
+    //TODO: once topAnat has been refactored then generate/read those files from our server
     private void processGetAnatEntityRelations() throws InvalidRequestException, IOException {
         log.traceEntry();
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
@@ -399,11 +560,11 @@ public class CommandRPackage extends CommandParent {
             requestedAttrs.add(SPECIES_GENUS_PARAM);
             requestedAttrs.add(SPECIES_NAME_PARAM);
             requestedAttrs.add(SPECIES_COMMON_NAME_PARAM);
-            requestedAttrs.add(SPECIES_AFFYMETRIX_PARAM);
-            requestedAttrs.add(SPECIES_EST_PARAM);
-            requestedAttrs.add(SPECIES_IN_SITU_PARAM);
-            requestedAttrs.add(SPECIES_RNA_SEQ_PARAM);
-            requestedAttrs.add(SPECIES_FULL_LENGTH_PARAM);
+            requestedAttrs.add(DataType.AFFYMETRIX.toString());
+            requestedAttrs.add(DataType.EST.toString());
+            requestedAttrs.add(DataType.IN_SITU.toString());
+            requestedAttrs.add(DataType.RNA_SEQ.toString());
+            requestedAttrs.add(DataType.SC_RNA_SEQ.toString());
         }
         checkSpeciesAttrs(requestedAttrs);
         //****************************************
@@ -559,7 +720,7 @@ public class CommandRPackage extends CommandParent {
                 default :
                     throw log.throwing(new UnsupportedOperationException(
                             "Attribute parameter not supported: " + rqAttr));
-            } 
+            }
         }
         return log.traceExit(attrs);
     }
@@ -610,11 +771,11 @@ public class CommandRPackage extends CommandParent {
                     && !rqAttr.equals(SPECIES_GENUS_PARAM)
                     && !rqAttr.equals(SPECIES_NAME_PARAM)
                     && !rqAttr.equals(SPECIES_COMMON_NAME_PARAM)
-                    && !rqAttr.equals(SPECIES_AFFYMETRIX_PARAM)
-                    && !rqAttr.equals(SPECIES_EST_PARAM)
-                    && !rqAttr.equals(SPECIES_IN_SITU_PARAM)
-                    && !rqAttr.equals(SPECIES_RNA_SEQ_PARAM)
-                    && !rqAttr.equals(SPECIES_FULL_LENGTH_PARAM)){
+                    && !rqAttr.equals(DataType.AFFYMETRIX.toString())
+                    && !rqAttr.equals(DataType.EST.toString())
+                    && !rqAttr.equals(DataType.IN_SITU.toString())
+                    && !rqAttr.equals(DataType.RNA_SEQ.toString())
+                    && !rqAttr.equals(DataType.SC_RNA_SEQ.toString())){
                 throw log.throwing(new UnsupportedOperationException(
                         "Attribute parameter not supported: " + rqAttr));
             }

@@ -390,7 +390,7 @@ V, W> {
      *          in this {@code Map} and they should be retrieved as needed.
      */
     protected Map<Integer, Gene> getRequestedGeneMap() {
-        return geneSpeciesPart.getRequestedGeneMap();
+        return geneSpeciesPart == null? Map.of(): geneSpeciesPart.getRequestedGeneMap();
     }
     /**
      * @return  A {@code Map} where keys are species IDs, the associated value being
@@ -399,7 +399,7 @@ V, W> {
      *          that can potentially be queried are stored in this {@code Map}.
      */
     protected Map<Integer, Species> getSpeciesMap() {
-        return geneSpeciesPart.getSpeciesMap();
+        return geneSpeciesPart == null? Map.of(): geneSpeciesPart.getSpeciesMap();
     }
     /**
      * @return  A {@code Map} where keys are {@code Integer}s corresponding to Bgee internal
@@ -411,7 +411,7 @@ V, W> {
      *          in this {@code Map} and they should be retrieved as needed.
      */
     protected Map<Integer, V> getRequestedConditionMap() {
-        return conditionPart.getRequestedConditionMap();
+        return conditionPart == null? Map.of(): conditionPart.getRequestedConditionMap();
     }
     /**
      * @return  A {@code Map} where keys are gene biotype IDs, the associated value being
@@ -419,7 +419,7 @@ V, W> {
      *          more efficiently create new {@code Gene}s.
      */
     protected Map<Integer, GeneBioType> getGeneBioTypeMap() {
-        return invariablePart.geneBioTypeMap;
+        return invariablePart == null? Map.of(): invariablePart.geneBioTypeMap;
     }
     /**
      * @return  A {@code Map} where keys are source IDs, the associated value being
@@ -427,7 +427,7 @@ V, W> {
      *          of the objects returned by this class.
      */
     protected Map<Integer, Source> getSourceMap() {
-        return invariablePart.getSourceMap();
+        return invariablePart == null? Map.of(): invariablePart.getSourceMap();
     }
 
     @Override

@@ -38,6 +38,31 @@ import org.bgee.model.species.Species;
 public class RawDataService extends ExpressionDataService {
     private final static Logger log = LogManager.getLogger(RawDataService.class.getName());
 
+    /**
+     * Since the information contained in an {@code RawDataProcessedFilterInvariablePart}
+     * will be the same in all {@code RawDataProcessedFilter}s, we store it statically
+     * not to retrieve it for each {@code RawDataProcessedFilter} created.
+     *
+     * @see #loadIfNecessaryAndGetInvariablePart()
+     * @see #processRawDataFilter(RawDataFilter,
+     * RawDataProcessedFilterGeneSpeciesPart,
+     * RawDataProcessedFilterConditionPart,
+     * RawDataProcessedFilterInvariablePart)
+     */
+    private static RawDataProcessedFilterInvariablePart PROCESSED_FILTER_INVARIABLE_PART;
+    /**
+     * When an {@code RawDataProcessedFilter} is generated for a filtering requesting
+     * all species and any gene, the {@code RawDataProcessedFilterGeneSpeciesPart}
+     * is always the same, we store it here.
+     *
+     * @see #loadIfNecessaryAndGetGenericGeneSpeciesPart()
+     * @see #processRawDataFilter(RawDataFilter,
+     * RawDataProcessedFilterGeneSpeciesPart,
+     * RawDataProcessedFilterConditionPart,
+     * RawDataProcessedFilterInvariablePart)
+     */
+    private static RawDataProcessedFilterGeneSpeciesPart PROCESSED_ALL_SPECIES_NO_GENE_PART;
+
 //    /**
 //     * {@code Enum} used to define the attributes to populate in the experiments, assay and raw calls.
 //     * Some {@code Enum} are specific to one dataType and one raw data category (experiment, assay
@@ -365,14 +390,36 @@ public class RawDataService extends ExpressionDataService {
 
     public RawDataProcessedFilter processRawDataFilter(RawDataFilter filter) {
         log.traceEntry("{}", filter);
+        return log.traceExit(this.processRawDataFilter(filter, null, null, null));
+    }
+    //For explanations, see javadoc in org.bgee.model.expressiondata.call.ExpressionCallService
+    //#processExpressionCallFilter(ExpressionCallFilter2, ExpressionCallProcessedFilterGeneSpeciesPart,
+    //ExpressionCallProcessedFilterConditionPart, ExpressionCallProcessedFilterInvariablePart),
+    //the logic is the same
+    public RawDataProcessedFilter processRawDataFilter(RawDataFilter filter,
+            RawDataProcessedFilterGeneSpeciesPart geneSpeciesPart,
+            RawDataProcessedFilterConditionPart conditionPart,
+            RawDataProcessedFilterInvariablePart invariablePart) {
+        log.traceEntry("{}, {}, {}, {}", filter, geneSpeciesPart, conditionPart, invariablePart);
 
-        //We load the GeneBioTypes to be used in this method and in RawDataLoader
-        Map<Integer, GeneBioType> geneBioTypeMap = loadGeneBioTypeMap(this.geneDAO);
-        //Sources to be used by the RawDataLoader
-        Map<Integer, Source> sourceMap = this.getServiceFactory().getSourceService()
-                .loadSourcesByIds(null);
-        RawDataProcessedFilterInvariablePart invariablePart =
-                new RawDataProcessedFilterInvariablePart(geneBioTypeMap, sourceMap);
+        if (geneSpeciesPart != null && filter != null &&
+                !geneSpeciesPart.getGeneFilters().equals(filter.getGeneFilters())) {
+            throw log.throwing(new IllegalArgumentException("The RawDataProcessedFilterGeneSpeciesPart "
+                    + "does not correspond to the RawDataFilter"));
+        }
+        if (conditionPart != null && filter != null &&
+                !conditionPart.getConditionFilters().equals(filter.getConditionFilters())) {
+            throw log.throwing(new IllegalArgumentException("The RawDataProcessedFilterConditionPart "
+                    + "does not correspond to the RawDataFilter"));
+        }
+        final RawDataProcessedFilterInvariablePart procInvariablePart = invariablePart != null?
+                invariablePart: loadIfNecessaryAndGetInvariablePart();
+        final RawDataProcessedFilterGeneSpeciesPart procGeneSpeciesPart =
+                geneSpeciesPart != null?
+                    geneSpeciesPart:
+                    (filter == null?
+                        loadIfNecessaryAndGetGenericGeneSpeciesPart():
+                        loadGeneSpeciesPart(filter, procInvariablePart.getGeneBioTypeMap()));
 
         //It's OK that the filter is null if we want to retrieve any raw data
         if (filter == null) {
@@ -382,37 +429,17 @@ public class RawDataService extends ExpressionDataService {
                     //thus there will be no result and no query done".
                     //While here we want to say "give me all results".
                     new HashSet<>(),
-                    new RawDataProcessedFilterGeneSpeciesPart(
-                            null,
-                            null,
-                            this.loadSpeciesMap(null, false, null)),
+
+                    procGeneSpeciesPart,
                     null,
-                    invariablePart));
+                    procInvariablePart));
         }
 
-        Map<Integer, Species> speciesMap = this.loadSpeciesMap(filter.getSpeciesIdsConsidered(),
-                false, null);
+        //At this point, the filter cannot be null and we can use the method loadConditionPart
+        assert filter != null;
+        final RawDataProcessedFilterConditionPart procConditionPart = conditionPart != null?
+                conditionPart: loadConditionPart(filter, procGeneSpeciesPart.getSpeciesMap());
 
-        //Now, we load specific genes that can be queried (and not all genes of a species
-        //if a GeneFilter contains no gene ID)
-        Set<GeneFilter> geneFiltersToUse = filter.getGeneFilters().stream()
-                .filter(f -> !f.getGeneIds().isEmpty())
-                .collect(Collectors.toSet());
-        Map<Integer, Gene> requestedGeneMap = geneFiltersToUse.isEmpty()? new HashMap<>():
-            loadGeneMapFromGeneFilters(geneFiltersToUse, speciesMap, geneBioTypeMap, this.geneDAO);
-
-        //Now, we load specific raw data conditions that can be queried (and not all conditions
-        //of a species if a RawDataConditionFilter contains no filtering on condition parameters).
-        Set<DAORawDataConditionFilter> daoCondFilters =
-            convertRawDataConditionFilterToDAORawDataConditionFilter(filter.getConditionFilters(),
-                    this.ontService, filter.getSpeciesIdsConsidered());
-        Set<DAORawDataConditionFilter> daoCondFiltersToUse = daoCondFilters.stream()
-                .filter(f -> !f.areAllCondParamFiltersEmpty())
-                .collect(Collectors.toSet());
-        Map<Integer, RawDataCondition> requestedRawDataCondMap = daoCondFiltersToUse.isEmpty()?
-                new HashMap<>():
-                loadRawDataConditionMap(speciesMap.values(), daoCondFiltersToUse,
-                        null, this.rawDataCondDAO, this.anatEntityService, this.devStageService);
 
         //Maybe we have no matching conditions at all for some species,
         //it means we should have no result in the related species.
@@ -422,7 +449,7 @@ public class RawDataService extends ExpressionDataService {
         //
         //Of note, we don't have this problem with gene IDs: users can only select valid gene IDs,
         //and loadGeneMapFromGeneFilters throws an exception if a gene ID is not found.
-        Set<Integer> speciesIdsWithCondFound = requestedRawDataCondMap.values().stream()
+        Set<Integer> speciesIdsWithCondFound = procConditionPart.getRequestedConditionMap().values().stream()
                 .map(c -> c.getSpeciesId())
                 .collect(Collectors.toSet());
         //Thanks to checks in the original filter, we know for sure that if a species
@@ -432,7 +459,7 @@ public class RawDataService extends ExpressionDataService {
                 //we use speciesMap.keySet() here, rather than filter.getSpeciesIdsConsidered(),
                 //because if filter.getSpeciesIdsConsidered() is null, speciesMap will contain
                 //all the species.
-                .flatMap(f -> f.getSpeciesId() == null? speciesMap.keySet().stream():
+                .flatMap(f -> f.getSpeciesId() == null? procGeneSpeciesPart.getSpeciesMap().keySet().stream():
                     Stream.of(f.getSpeciesId()))
                 .collect(Collectors.toSet());
         Set<Integer> speciesIdsWithNoResult = new HashSet<>(speciesIdsWithCondRequested);
@@ -443,16 +470,12 @@ public class RawDataService extends ExpressionDataService {
         //to the ProcessedFilter). We don't need to check what was provided
         //in the GeneFilters, because the class DataFilter check the consistency
         //between the species requested in GeneFilters and ConditionFilters
-        if (speciesMap.keySet().equals(speciesIdsWithCondRequested) && speciesIdsWithCondFound.isEmpty()) {
+        if (procGeneSpeciesPart.getSpeciesMap().keySet().equals(speciesIdsWithCondRequested) &&
+                speciesIdsWithCondFound.isEmpty()) {
             return log.traceExit(new RawDataProcessedFilter(filter, null,
-                    new RawDataProcessedFilterGeneSpeciesPart(
-                            filter.getGeneFilters(),
-                            requestedGeneMap,
-                            speciesMap),
-                    new RawDataProcessedFilterConditionPart(
-                            filter.getConditionFilters(),
-                            requestedRawDataCondMap),
-                    invariablePart));
+                    procGeneSpeciesPart,
+                    procConditionPart,
+                    procInvariablePart));
         }
 
         //if filter.getSpeciesIdsConsidered() is empty, we can create just one DAORawDataFilter
@@ -460,19 +483,19 @@ public class RawDataService extends ExpressionDataService {
         //and/or experiment/assay IDs targeting any species
         Set<DAORawDataFilter> daoFilters = new HashSet<>();
         if (filter.getSpeciesIdsConsidered().isEmpty()) {
-            assert filter.getGeneFilters().isEmpty() && requestedGeneMap.isEmpty();
+            assert filter.getGeneFilters().isEmpty() && procGeneSpeciesPart.getRequestedGeneMap().isEmpty();
 
-            if (requestedRawDataCondMap.isEmpty() && filter.hasExperimentAssayIds()) {
+            if (procConditionPart.getRequestedConditionMap().isEmpty() && filter.hasExperimentAssayIds()) {
                 daoFilters.add(new DAORawDataFilter(filter.getExperimentIds(),
                     filter.getAssayIds(), filter.getExperimentOrAssayIds()));
                 log.debug("DAORawDataFilter created for any species");
-            } else if (!requestedRawDataCondMap.isEmpty()) {
-                daoFilters.add(new DAORawDataFilter(null, requestedRawDataCondMap.keySet(),
+            } else if (!procConditionPart.getRequestedConditionMap().isEmpty()) {
+                daoFilters.add(new DAORawDataFilter(null, procConditionPart.getRequestedConditionMap().keySet(),
                         filter.getExperimentIds(), filter.getAssayIds(),
                         filter.getExperimentOrAssayIds()));
                 log.debug("DAORawDataFilter created with at least some condition IDs");
             } else {
-                assert requestedRawDataCondMap.isEmpty() && !filter.hasExperimentAssayIds();
+                assert procConditionPart.getRequestedConditionMap().isEmpty() && !filter.hasExperimentAssayIds();
                 log.debug("No DAORawDataFilter created: no species, no genes, no conds, no exp/assay IDs");
             }
         } else {
@@ -481,11 +504,11 @@ public class RawDataService extends ExpressionDataService {
             daoFilters.addAll(filter.getSpeciesIdsConsidered().stream()
                     .filter(speciesId -> !speciesIdsWithNoResult.contains(speciesId))
                     .map(speciesId -> {
-                        Set<Integer> bgeeGeneIds = requestedGeneMap.entrySet().stream()
+                        Set<Integer> bgeeGeneIds = procGeneSpeciesPart.getRequestedGeneMap().entrySet().stream()
                                 .filter(e -> speciesId.equals(e.getValue().getSpecies().getId()))
                                 .map(e -> e.getKey())
                                 .collect(Collectors.toSet());
-                        Set<Integer> rawCondIds = requestedRawDataCondMap.entrySet().stream()
+                        Set<Integer> rawCondIds = procConditionPart.getRequestedConditionMap().entrySet().stream()
                                 .filter(e -> speciesId.equals(e.getValue().getSpeciesId()))
                                 .map(e -> e.getKey())
                                 .collect(Collectors.toSet());
@@ -504,14 +527,9 @@ public class RawDataService extends ExpressionDataService {
         log.debug("daoFilters: {}", daoFilters);
 
         return log.traceExit(new RawDataProcessedFilter(filter, daoFilters,
-                new RawDataProcessedFilterGeneSpeciesPart(
-                        filter.getGeneFilters(),
-                        requestedGeneMap,
-                        speciesMap),
-                new RawDataProcessedFilterConditionPart(
-                        filter.getConditionFilters(),
-                        requestedRawDataCondMap),
-                invariablePart));
+                procGeneSpeciesPart,
+                procConditionPart,
+                procInvariablePart));
     }
     private static Set<DAORawDataConditionFilter> convertRawDataConditionFilterToDAORawDataConditionFilter(
             Collection<RawDataConditionFilter> condFilters, OntologyService ontService,
@@ -623,5 +641,73 @@ public class RawDataService extends ExpressionDataService {
                     return l.stream();
             }).collect(Collectors.toSet())
         );
+    }
+
+    private RawDataProcessedFilterInvariablePart loadIfNecessaryAndGetInvariablePart() {
+        //We don't fear a race condition here, because this information is cheap to compute
+        //and does not change, so no problem to retrieve and set it multiple times.
+        if (PROCESSED_FILTER_INVARIABLE_PART == null) {
+            //We load the GeneBioTypes to be used in this method and in RawDataLoader
+            Map<Integer, GeneBioType> geneBioTypeMap = loadGeneBioTypeMap(this.geneDAO);
+            //Sources to be used by the RawDataLoader
+            Map<Integer, Source> sourceMap = this.getServiceFactory().getSourceService()
+                    .loadSourcesByIds(null);
+            PROCESSED_FILTER_INVARIABLE_PART =
+                    new RawDataProcessedFilterInvariablePart(geneBioTypeMap, sourceMap);
+        }
+        return log.traceExit(PROCESSED_FILTER_INVARIABLE_PART);
+    }
+    private RawDataProcessedFilterGeneSpeciesPart loadIfNecessaryAndGetGenericGeneSpeciesPart() {
+
+        //We don't fear a race condition here, because this information is cheap to compute
+        //and does not change, so no problem to retrieve and set it multiple times.
+        if (PROCESSED_ALL_SPECIES_NO_GENE_PART == null) {
+            PROCESSED_ALL_SPECIES_NO_GENE_PART = new RawDataProcessedFilterGeneSpeciesPart(
+                    null,
+                    null,
+                    this.loadSpeciesMap(null, false, null));
+        }
+        return log.traceExit(PROCESSED_ALL_SPECIES_NO_GENE_PART);
+    }
+    private RawDataProcessedFilterGeneSpeciesPart loadGeneSpeciesPart(RawDataFilter filter,
+            Map<Integer, GeneBioType> geneBioTypeMap) {
+        log.traceEntry("{}, {}", filter, geneBioTypeMap);
+
+        Map<Integer, Species> speciesMap = this.loadSpeciesMap(filter.getSpeciesIdsConsidered(),
+                false, null);
+
+        //Now, we load specific genes that can be queried (and not all genes of a species
+        //if a GeneFilter contains no gene ID)
+        Set<GeneFilter> geneFiltersToUse = filter.getGeneFilters().stream()
+                .filter(f -> !f.getGeneIds().isEmpty())
+                .collect(Collectors.toSet());
+        Map<Integer, Gene> requestedGeneMap = geneFiltersToUse.isEmpty()? new HashMap<>():
+            loadGeneMapFromGeneFilters(geneFiltersToUse, speciesMap, geneBioTypeMap, this.geneDAO);
+
+        return log.traceExit(new RawDataProcessedFilterGeneSpeciesPart(
+                filter.getGeneFilters(),
+                requestedGeneMap,
+                speciesMap));
+    }
+    private RawDataProcessedFilterConditionPart loadConditionPart(RawDataFilter filter,
+            Map<Integer, Species> speciesMap) {
+        log.traceEntry("{}, {}", filter, speciesMap);
+
+        //Now, we load specific raw data conditions that can be queried (and not all conditions
+        //of a species if a RawDataConditionFilter contains no filtering on condition parameters).
+        Set<DAORawDataConditionFilter> daoCondFilters =
+            convertRawDataConditionFilterToDAORawDataConditionFilter(filter.getConditionFilters(),
+                    this.ontService, filter.getSpeciesIdsConsidered());
+        Set<DAORawDataConditionFilter> daoCondFiltersToUse = daoCondFilters.stream()
+                .filter(f -> !f.areAllCondParamFiltersEmpty())
+                .collect(Collectors.toSet());
+        Map<Integer, RawDataCondition> requestedRawDataCondMap = daoCondFiltersToUse.isEmpty()?
+                new HashMap<>():
+                loadRawDataConditionMap(speciesMap.values(), daoCondFiltersToUse,
+                        null, this.rawDataCondDAO, this.anatEntityService, this.devStageService);
+
+        return log.traceExit(new RawDataProcessedFilterConditionPart(
+                filter.getConditionFilters(),
+                requestedRawDataCondMap));
     }
 }

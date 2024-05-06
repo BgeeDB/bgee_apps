@@ -22,15 +22,25 @@ import org.bgee.model.species.Species;
  * because a {@code RawDataLoader} is a {@code Service}, and holds a connection to a data source.
  * If we wanted to store this pre-processed information to be reused by different threads,
  * storing it in a {@code RawDataLoader} could maintain the connection open.
+ * <p>
+ * A {@code RawDataProcessedFilter} can be obtained either by calling
+ * {@link RawDataService#processRawDataFilter(RawDataFilter)},
+ * or by calling {@link RawDataLoader#getRawDataProcessedFilter()} from
+ * an already-existing {@code RawDataLoader}.
+ * <p>
+ * See {@link ProcessedFilter} for additional details about the structure of the processed information.
  *
  * @author Frederic Bastian
  * @version Bgee 15.1 May 2024
  * @since Bgee 15.0, Nov. 2022
- * @see #getRawDataFilter()
+ * @see #getSourceFilter()
  * @see RawDataLoader#getRawDataProcessedFilter()
  * @see RawDataService#getRawDataLoader(RawDataProcessedFilter)
+ * @see RawDataService#processRawDataFilter(RawDataFilter)
  * @see RawDataService#loadRawDataLoader(RawDataFilter)
  */
+//Most methods and constructors are protected, so that only the {@link RawDataService}
+//can instantiate this class, and only {@link RawDataLoader} use it.
 public class RawDataProcessedFilter extends ProcessedFilter<RawDataFilter,
 DAORawDataFilter, RawDataCondition, RawDataConditionFilter> {
 
@@ -40,6 +50,14 @@ DAORawDataFilter, RawDataCondition, RawDataConditionFilter> {
                 Map<Integer, Gene> requestedGeneMap, Map<Integer, Species> speciesMap) {
             super(geneFilters, requestedGeneMap, speciesMap);
         }
+        @Override
+        protected Map<Integer, Gene> getRequestedGeneMap() {
+            return super.getRequestedGeneMap();
+        }
+        @Override
+        protected Map<Integer, Species> getSpeciesMap() {
+            return super.getSpeciesMap();
+        }
     }
     public static class RawDataProcessedFilterConditionPart
     extends ProcessedFilterConditionPart<RawDataConditionFilter, RawDataCondition> {
@@ -47,11 +65,23 @@ DAORawDataFilter, RawDataCondition, RawDataConditionFilter> {
                 Map<Integer, RawDataCondition> requestedConditionMap) {
             super(conditionFilters, requestedConditionMap);
         }
+        @Override
+        protected Map<Integer, RawDataCondition> getRequestedConditionMap() {
+            return super.getRequestedConditionMap();
+        }
     }
     public static class RawDataProcessedFilterInvariablePart extends ProcessedFilterInvariablePart {
         RawDataProcessedFilterInvariablePart(Map<Integer, GeneBioType> geneBioTypeMap,
                 Map<Integer, Source> sourceMap) {
             super(geneBioTypeMap, sourceMap);
+        }
+        @Override
+        protected Map<Integer, GeneBioType> getGeneBioTypeMap() {
+            return super.getGeneBioTypeMap();
+        }
+        @Override
+        protected Map<Integer, Source> getSourceMap() {
+            return super.getSourceMap();
         }
     }
 
@@ -64,15 +94,15 @@ DAORawDataFilter, RawDataCondition, RawDataConditionFilter> {
     }
 
     @Override
-    protected RawDataProcessedFilterGeneSpeciesPart getGeneSpeciesPart() {
+    public RawDataProcessedFilterGeneSpeciesPart getGeneSpeciesPart() {
         return (RawDataProcessedFilterGeneSpeciesPart) super.getGeneSpeciesPart();
     }
     @Override
-    protected RawDataProcessedFilterConditionPart getConditionPart() {
+    public RawDataProcessedFilterConditionPart getConditionPart() {
         return (RawDataProcessedFilterConditionPart) super.getConditionPart();
     }
     @Override
-    protected RawDataProcessedFilterInvariablePart getInvariablePart() {
+    public RawDataProcessedFilterInvariablePart getInvariablePart() {
         return (RawDataProcessedFilterInvariablePart) super.getInvariablePart();
     }
 

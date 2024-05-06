@@ -281,8 +281,8 @@ V> extends DataFilter<V> {
      *
      * @author  Frederic Bastian
      * @author  Valentine Rech de Laval
-     * @version Bgee 14, Mar. 2017
-     * @since   Bgee 13
+     * @version Bgee 15.0, Nov. 2022
+     * @since Bgee 15.0, Nov. 2022
      */
     public static class ExpressionCallFilter2
     extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary, ConditionFilter2> {

@@ -26,6 +26,14 @@ import org.bgee.model.species.Species;
  * because a {@code Loader} is a {@code Service}, and holds a connection to a data source.
  * If we wanted to store this pre-processed information to be reused by different threads,
  * storing it in a {@code Loader} could maintain the connection open.
+ * <p>
+ * The processed information is structured in 3 parts:
+ * <ul>
+ * <li>{@link ProcessedFilterGeneSpeciesPart}
+ * <li>{@link ProcessedFilterConditionPart}
+ * <li>{@link ProcessedFilterInvariablePart}
+ * </ul>
+ * This allows for instance to cache different parts of the processed information independently.
  *
  * @author Frederic Bastian
  * @version Bgee 15.1, May 2024
@@ -186,7 +194,7 @@ V, W> {
          *          If all conditions of a species were requested, they are not present
          *          in this {@code Map} and they should be retrieved as needed.
          */
-        Map<Integer, U> getRequestedConditionMap() {
+        protected Map<Integer, U> getRequestedConditionMap() {
             return requestedConditionMap;
         }
 

@@ -29,6 +29,7 @@ import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
@@ -43,6 +44,7 @@ import org.bgee.model.expressiondata.rawdata.RawDataLoader;
 import org.bgee.model.expressiondata.rawdata.RawDataLoader.InformationType;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter.RawDataProcessedFilterConditionPart;
 import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
@@ -414,9 +416,9 @@ public class CommandData extends CommandParent {
         private final DataType dataType;
         private final EnumSet<InformationType> informationTypes;
 
-        public RawDataCacheKey(RawDataFilter processedFilter, DataType dataType,
+        public RawDataCacheKey(RawDataFilter sourceFilter, DataType dataType,
                 EnumSet<InformationType> informationTypes) {
-            this.sourceFilter = processedFilter;
+            this.sourceFilter = sourceFilter;
             this.dataType = dataType;
             this.informationTypes = informationTypes;
         }
@@ -465,9 +467,9 @@ public class CommandData extends CommandParent {
         private final Long offset;
         private final Integer limit;
 
-        public RawDataResultCacheKey(RawDataFilter processedFilter, DataType dataType,
+        public RawDataResultCacheKey(RawDataFilter sourceFilter, DataType dataType,
                 EnumSet<InformationType> informationTypes, Long offset, Integer limit) {
-            super(processedFilter, dataType, informationTypes);
+            super(sourceFilter, dataType, informationTypes);
             this.offset = offset;
             this.limit = limit;
         }
@@ -561,6 +563,66 @@ public class CommandData extends CommandParent {
             return builder.toString();
         }
     }
+    public static class RawDataCondPartProcessingCacheKey {
+        private final Set<RawDataConditionFilter> condFilters;
+        public RawDataCondPartProcessingCacheKey(Set<RawDataConditionFilter> condFilters) {
+            this.condFilters = condFilters;
+        }
+        public Set<RawDataConditionFilter> getCondFilters() {
+            return condFilters;
+        }
+        @Override
+        public int hashCode() {
+            return Objects.hash(condFilters);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            RawDataCondPartProcessingCacheKey other = (RawDataCondPartProcessingCacheKey) obj;
+            return Objects.equals(condFilters, other.condFilters);
+        }
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("RawDataCondPartProcessingCacheKey [condFilters=").append(condFilters).append("]");
+            return builder.toString();
+        }
+    }
+    public static class ExprCallCondPartProcessingCacheKey {
+        private final Set<ConditionFilter2> condFilters;
+        public ExprCallCondPartProcessingCacheKey(Set<ConditionFilter2> condFilters) {
+            this.condFilters = condFilters;
+        }
+        public Set<ConditionFilter2> getCondFilters() {
+            return condFilters;
+        }
+        @Override
+        public int hashCode() {
+            return Objects.hash(condFilters);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            ExprCallCondPartProcessingCacheKey other = (ExprCallCondPartProcessingCacheKey) obj;
+            return Objects.equals(condFilters, other.condFilters);
+        }
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("ExprCallCondPartProcessingCacheKey [condFilters=").append(condFilters).append("]");
+            return builder.toString();
+        }
+    }
 
     /**
      * An {@code int} that is the maximum allowed number of results
@@ -593,22 +655,31 @@ public class CommandData extends CommandParent {
             ExpressionCallFilter2.class, Long.class, CacheType.LRU, 60);
 
     /**
-     * A {@code long} that is the execution time in milliseconds of the processing of a filter
-     * that triggers storing the result in cache. Defined as {@code long}
-     * for convenience when comparing to start and end times provided as {@code long}.
+     * A {@code long} that is the execution time in milliseconds of the processing of
+     * the part of a filter related to condition, that triggers storing the result in cache.
+     * We store the condition part rather than the full processing for more flexibility,
+     * since it is this part that is costly, and can be reused, with, for instance,
+     * different gene filtering parts.
+     * <p>
+     * Defined as {@code long} for convenience when comparing to start and end times
+     * provided as {@code long}.
      *
      * @see #loadRawDataLoader(RawDataFilter)
      * @see #loadExprCallLoader(ExpressionCallFilter2)
      */
-    private final static long COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS = 1000L;
+    private final static long COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS = 1000L;
 
-    private final static CacheDefinition<RawDataFilter, RawDataProcessedFilter>
-    RAW_DATA_PROCESSED_FILTER_CACHE_DEF = new CacheDefinition<>("rawDataProcessedFilterCache",
-            RawDataFilter.class, RawDataProcessedFilter.class, CacheType.LRU, 20);
+    private final static CacheDefinition<RawDataCondPartProcessingCacheKey, RawDataProcessedFilterConditionPart>
+    RAW_DATA_PROCESSED_COND_PART_CACHE_DEF = new CacheDefinition<>("rawDataProcessedCondPartCache",
+            RawDataCondPartProcessingCacheKey.class,
+            RawDataProcessedFilter.RawDataProcessedFilterConditionPart.class,
+            CacheType.LRU, 20);
 
-    private final static CacheDefinition<ExpressionCallFilter2, ExpressionCallProcessedFilter>
-    EXPR_CALL_PROCESSED_FILTER_CACHE_DEF = new CacheDefinition<>("exprCallProcessedFilterCache",
-            ExpressionCallFilter2.class, ExpressionCallProcessedFilter.class, CacheType.LRU, 20);
+    private final static CacheDefinition<ExprCallCondPartProcessingCacheKey, ExpressionCallProcessedFilterConditionPart>
+    EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF = new CacheDefinition<>("exprCallProcessedCondPartCache",
+            ExprCallCondPartProcessingCacheKey.class,
+            ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart.class,
+            CacheType.LRU, 20);
 
     /**
      * A {@code long} that is the execution time in milliseconds of the processing of results
@@ -1207,24 +1278,32 @@ public class CommandData extends CommandParent {
         log.traceEntry("{}", filter);
 
         RawDataService rawDataService = this.serviceFactory.getRawDataService();
-        //Try to get the processed filter from the cache.
+        //Try to get the processed condition part of the processed filter from cache
         RawDataProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
-                RAW_DATA_PROCESSED_FILTER_CACHE_DEF,
-                filter,
+                RAW_DATA_PROCESSED_COND_PART_CACHE_DEF,
+                new RawDataCondPartProcessingCacheKey(filter.getConditionFilters()),
                 () -> rawDataService.processRawDataFilter(filter),
-                COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS);
+                pf -> pf.getConditionPart(),
+                condPart -> rawDataService.processRawDataFilter(filter,
+                        null, condPart, null),
+                COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS);
+
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
     }
     private ExpressionCallLoader loadExprCallLoader(ExpressionCallFilter2 filter) {
         log.traceEntry("{}", filter);
 
         ExpressionCallService callService = this.serviceFactory.getExpressionCallService();
-        //Try to get the processed filter from the cache.
+        //Try to get the processed condition part of the processed filter from cache
         ExpressionCallProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
-                EXPR_CALL_PROCESSED_FILTER_CACHE_DEF,
-                filter,
+                EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF,
+                new ExprCallCondPartProcessingCacheKey(filter.getConditionFilters()),
                 () -> callService.processExpressionCallFilter(filter),
-                COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS);
+                pf -> pf.getConditionPart(),
+                condPart -> callService.processExpressionCallFilter(filter,
+                        null, condPart, null),
+                COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS);
+
         return log.traceExit(callService.getCallLoader(processedFilter));
     }
 

@@ -3,7 +3,8 @@ swagger-ui.git/ submodule, by updating it.
 
 Edit the swagger-initializer.js file to use the Bgee JSON definition file.
 
-The Matomo script tag should be added in the swagger-ui.git/dist/index.html file.
+The Matomo script tag should be added in the swagger-ui.git/dist/index.html file,
+and also in the swagger-ui.git/dist/oauth2-redirect.html file.
 => to test
 
 The full swagger-ui.git/dist/ folder is used to deploy the Bgee API doc,

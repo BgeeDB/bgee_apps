@@ -1,0 +1,13 @@
+You can change the version used (currently v5.12.3) within the
+swagger-ui.git/ submodule, by updating it.
+
+Edit the swagger-initializer.js file to use the Bgee JSON definition file.
+
+The Matomo script tag should be added in the swagger-ui.git/dist/index.html file.
+=> to test
+
+The full swagger-ui.git/dist/ folder is used to deploy the Bgee API doc,
+with the Bgee JSON definition file put in the same folder.
+
+The api_doc.yaml can be tested at https://editor.swagger.io/
+and converted to JSON.

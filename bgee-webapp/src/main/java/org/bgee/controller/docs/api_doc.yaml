@@ -3,13 +3,13 @@ info:
   title: Bgee API
   description: |-
     Bgee is a database that aggregates gene expression data from various external sources across a wide range of animal species, providing a unique resource for exploring and comparing gene expression across species.
-    The Bgee API facilitates access to Bgee database, enabling users to access curated gene expression data, including raw annotations, processed values, and Bgee expression calls across diverse species.
+    The Bgee API facilitates access to the Bgee database, enabling users to access curated gene expression data, including raw annotations, processed values, and Bgee expression calls across diverse species.
     The API also supports advanced queries for expression data comparison, gene homology, and more, each with customizable query parameters to tailor your data retrieval needs.
-    For further exploration, [visit Bgee website](https://www.bgee.org)
+    For further exploration, [visit the Bgee website](https://www.bgee.org)
 
     Data retrieved through the API is available under the CC0 license, promoting ease of use in scientific and bioinformatics projects.
 
-    Bgee Version 15.1.1
+    Bgee Version 15.2.0
   version: '1.0'
   contact:
     email: Bgee@sib.swiss
@@ -25,7 +25,7 @@ tags:
   - name: Access Data
     description: Allows to retrieve gene expression data and experiments based on specific criteria, enabling access to curated raw annotations, processed values, Bgee expression calls and specific experiment information.
   - name: Tools
-    description: 'Offers advanced features for gene expression comparison and anatomical homology analysis, enabling complex queries across species and anatomical entities within Bgee database. '
+    description: 'Offers advanced features for gene expression comparison and anatomical homology analysis, enabling complex queries across species and anatomical entities within the Bgee database.'
   - name: Gene focus
     description: 'Provides comprehensive information about specific genes, including general gene information, cross-references to external databases, homology information, and insights into gene activity across different conditions. '
   - name: Species Data (name to change?)
@@ -41,7 +41,7 @@ paths:
       description: |
         Retrieve all libraries in Bgee that match your selected criteria and access their fully **curated** annotated metadata.
 
-        The response provides a structured overview of all librarires matching your criteria, detailing the sequencing technology used, condition annotations (including anatomical entities, developmental stages, sex etc), a summary of gene expression analysis statistics, alongside references and links to further explore the data sources and experiment specifics.
+        The response provides a structured overview of all libraries matching your criteria, detailing the sequencing technology used, condition annotations (including anatomical entities, developmental stages, sex, etc.), a summary of gene expression analysis statistics, alongside references and links to further explore the data sources and experiment specifics.
       parameters:
         - name: page
           in: query
@@ -82,7 +82,7 @@ paths:
         '400':
           description: Bad Request - Some requested gene IDs were not found in Bgee.
         '500':
-          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience. mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
+          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience.# mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
   /data/proc_expr_values:
     get:
       tags:
@@ -90,7 +90,7 @@ paths:
       externalDocs:
         url: https://www.bgee.org/support/tutorial-raw-data#processed-expression-values
       summary: Retrieve processed expression values
-      description: 'Retrieve gene expression information processed using the Bgee pipeline that matches your selected conditions. Allows to access information such as Read count, UMI count, Expression level, Expression p-value, Signal intensity etc. '
+      description: 'Retrieve gene expression information processed using the Bgee pipeline that matches your selected conditions. Allows to access information such as Read count, UMI count, Expression level, Expression p-value, Signal intensity, etc. '
       parameters:
         - name: page
           in: query
@@ -131,7 +131,7 @@ paths:
         '400':
           description: Bad Request - Some requested gene IDs were not found in Bgee.
         '500':
-          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience. mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
+          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience.# mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
   /data/expr_calls:
     get:
       tags:
@@ -142,7 +142,7 @@ paths:
       description: |-
         To answer to the question "Is this gene expressed under this  condition?"
 
-        Retrieve present/absent gene expression calls per condition. These present/absent expression calls are generated through data type-specific statistical tests to assess if the gene expression significantly surpasses the background transcriptional and experimental noise in the defined condition. A 'condition' is defined by any one or a combination of anatomical entity, developmental stage, sex, or strain. \
+        Retrieve present/absent gene expression calls per condition. These present/absent expression calls are generated through data type-specific statistical tests to assess if the gene expression significantly surpasses the background transcriptional and experimental noise in the defined condition. A 'condition' is defined by any - or a combination of - anatomical entity, developmental stage, sex, or strain. \
         See the main [Bgee publications](https://www.bgee.org/about/publications) or [Bgee documentation](https://www.bgee.org/support/tutorial-expression-call-download-documentation)  for details.
 
         The results include FDR-corrected p-values and additional expression metrics for each gene within that particular condition.
@@ -274,7 +274,7 @@ paths:
               - BRONZE
               - SILVER
               - GOLD
-          description: Specifies the minimum confidence level of the expression call for a gene's presence or absence in the specified condition. The scale ranges from "BRONZE" for less confident calls, through "SILVER", to "GOLD" for calls with the strongest support.DEFAULT ??
+          description: Specifies the minimum confidence level of the expression call for a gene's presence or absence in the specified condition. The scale ranges from "BRONZE" for less confident calls, through "SILVER", to "GOLD" for calls with the strongest support. DEFAULT ??
         - in: query
           name: expr_type
           required: false
@@ -283,7 +283,7 @@ paths:
             enum:
               - EXPRESSED
               - NOT_EXPRESSED
-          description: Limit to presence or absence of expression calls. "Present" means expression level significantly above background transcriptional noise, "absent" means that the level of expression is not significantly different from the background noise. DEFAUlt  (so if nothing is specified) is BOTH ?? or need to specify both ? and thus need change
+          description: Limit to presence or absence of expression calls. "Present" means expression level significantly above background transcriptional noise, "absent" means that the level of expression is not significantly different from the background noise. DEFAULT  (so if nothing is specified) is BOTH ?? or need to specify both ? and thus need change
         - in: query
           name: cond_observed
           required: false
@@ -298,7 +298,7 @@ paths:
         '400':
           description: Bad Request - Some requested gene IDs were not found in Bgee.
         '500':
-          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience. mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
+          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience.# mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
   /data/experiments:
     get:
       tags:
@@ -350,7 +350,7 @@ paths:
         '400':
           description: Bad Request - Some requested gene IDs were not found in Bgee.
         '500':
-          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience. mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
+          description: UnexpectedError. An error occurred on our side. This error was logged and will be investigated. We apologize for any inconvenience.# mais pas vraiment vrai, aussi si identifiant pas correctd donc a voir
   /page=anat_similarities:
     get:
       tags:
@@ -397,7 +397,7 @@ paths:
         '200':
           description: Successful response
         '404':
-          description: Error page not found, probably incorect species identifier
+          description: Error page not found, probably incorrect species identifier
   /expression_comparison:
     get:
       tags:
@@ -430,15 +430,15 @@ paths:
         '200':
           description: Successful response
         '404':
-          description: Error page not found, probably incorect species identifier
+          description: Error page not found, probably incorrect species identifier
   /top_anat:
     get:
       tags:
         - Tools
-      summary: Expression comparison tool
+      summary: Gene Expression Enrichment tool
       description: |
         To complete
-        [More details](https://www.bgee.org/support/tutorial-expression-comparison)
+        [more details](https://www.bgee.org/support/tutorial-TopAnat)
       parameters:
         - in: query
           name: page
@@ -453,7 +453,7 @@ paths:
         '200':
           description: Successful response
         '404':
-          description: Error page not found, probably incorect species identifier
+          description: Error page not found, probably incorrect species identifier
   /gene/general_info:
     get:
       tags:
@@ -486,7 +486,7 @@ paths:
         '200':
           description: Successful response
         '404':
-          description: Error page not found, probably incorect species identifier
+          description: Error page not found, probably incorrect species identifier
   /gene/expression:
     get:
       tags:
@@ -495,7 +495,7 @@ paths:
       description: |
         Provide a ranked list of conditions where the expression or absence of expression of a gene has been reported, enabling exploration of gene activity across various biological contexts.
 
-        A 'condition' is defined by any one or a combination of anatomical entity, developmental stage, sex, or strain. The default focus is on anatomical localization, with the option to expand or specify other factors using the cond_param query parameters.
+        A 'condition' is defined by any - or a combination of - anatomical entity, developmental stage, sex, or strain. The default focus is on anatomical localization, with the option to expand or specify other factors using the cond_param query parameters.
 
         The response provides details on the call's localization, FDR-corrected p-value for presence/absence, expression state and quality, expression score along with its confidence level, supported data types, and links to the source data.
 
@@ -586,7 +586,7 @@ paths:
         - Gene focus
       summary: Retrieve gene cross-references
       description: |
-        Retrieve detailed cross-reference information for a specific gene in a given species, sourcing from diverse external sources, including Ensembl, UniProtKB, GeneCards, EMBL, CCDS, HGNC etc.
+        Retrieve detailed cross-reference information for a specific gene in a given species, sourcing from diverse external sources, including Ensembl, UniProtKB, GeneCards, EMBL, CCDS, HGNC, etc.
 
         [More details](https://www.bgee.org/support/tutorial-gene-page)
       parameters:
@@ -613,7 +613,7 @@ paths:
         '200':
           description: Successful response
         '404':
-          description: Error page not found, probably incorect species identifier
+          description: Error page not found, probably incorrect species identifier
   /gene/homologs:
     get:
       tags:
@@ -622,7 +622,7 @@ paths:
       description: |
         Retrieves homology information for a specific gene within a given species. Bgee gene homology information is retrieved from the [OMA SPARQL endpoint](https://www.expasy.org/resources/oma-sparql-endpoint). They correspond to one-to-one homologs for each pair of species in Bgee.
 
-        **Orthology** information is provided at different taxon levels corresponding to the least common ancestor taxon for which orthologs are found in Bgee species. **Paralogy** information is similarly provided at the taxon levels of the least common ancestor with paralogs identified within Bgee species.
+        **Orthology** information is provided at different taxon levels, corresponding to the least common ancestor taxon for which orthologs are found in Bgee species. **Paralogy** information is similarly provided at the taxon levels of the least common ancestor, with paralogs identified within Bgee species.
 
 
         [More details](https://www.bgee.org/support/tutorial-gene-page)
@@ -650,12 +650,12 @@ paths:
         '200':
           description: Successful response
         '404':
-          description: Error page not found, probably incorect species identifier
+          description: Error page not found, probably incorrect species identifier
   /page=species:
     get:
       tags:
         - Species Data (name to change?)
-      summary: Retrieve species-specific informations
+      summary: Retrieve species-specific information
       description: |
         Fetches detailed information for a specified species using its NCBI Taxonomy ID.
 
@@ -683,7 +683,7 @@ paths:
         '200':
           description: Successful response
         '404':
-          description: Error page not found, probably incorect species identifier
+          description: Error page not found, probably incorrect species identifier
   /page=download/proc_values:
     get:
       tags:

@@ -2525,12 +2525,15 @@ public class RequestParameters {
      */
     public Boolean getObservedData() {
         log.traceEntry();
-        if (this.getFirstValue(
-                this.getUrlParametersInstance().getParamObservedData()) == null) {
-            return log.traceExit((Boolean) null);
+        Boolean paramObservedData = this.getFirstValue(
+                this.getUrlParametersInstance().getParamObservedData());
+        if (Boolean.TRUE.equals(paramObservedData)) {
+            return log.traceExit(Boolean.TRUE);
         }
-        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
-                this.getUrlParametersInstance().getParamObservedData())));
+        if (Boolean.FALSE.equals(paramObservedData)) {
+            return log.traceExit(Boolean.FALSE);
+        }
+        return log.traceExit((Boolean) null);
     }
     /**
      * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter

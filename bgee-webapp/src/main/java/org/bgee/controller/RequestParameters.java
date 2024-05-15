@@ -2523,8 +2523,12 @@ public class RequestParameters {
      * @return  {@code true} if it was requested for {@link URLParameters#getParamObservedData()},
      *          {@code false} otherwise.
      */
-    public boolean isObservedData() {
+    public Boolean getObservedData() {
         log.traceEntry();
+        if (this.getFirstValue(
+                this.getUrlParametersInstance().getParamObservedData()) == null) {
+            return log.traceExit((Boolean) null);
+        }
         return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
                 this.getUrlParametersInstance().getParamObservedData())));
     }

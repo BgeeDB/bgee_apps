@@ -1611,10 +1611,10 @@ public class CommandData extends CommandParent {
                     condFilter != null? Set.of(condFilter): null,
                     dataTypes,
                     condParams,
-                    condParams,
-                    this.requestParameters.isObservedData()));
+                    this.requestParameters.getObservedData() == null? null: condParams,
+                    this.requestParameters.getObservedData()));
         } catch (IllegalArgumentException e) {
-            log.catching(Level.DEBUG, e);
+            log.catching(Level.ERROR, e);
             throw log.throwing(new InvalidRequestException("Incorrect parameters"));
         }
     }

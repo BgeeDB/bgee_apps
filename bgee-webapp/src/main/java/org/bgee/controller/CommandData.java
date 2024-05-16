@@ -1397,8 +1397,7 @@ public class CommandData extends CommandParent {
         GeneFilter geneFilter = speciesId == null && filterSpeciesId == null? null:
             new GeneFilter(filterSpeciesId != null? filterSpeciesId: speciesId,
                     this.requestParameters.getGeneIds());
-        boolean onlyPropagatedParam = Boolean.TRUE.equals(this.requestParameters.getFirstValue(
-                this.requestParameters.getUrlParametersInstance().getOnlyPropagated()));
+        boolean onlyPropagatedParam = Boolean.TRUE.equals(this.requestParameters.getOnlyPropagated());
 
         return log.traceExit(new RawDataFilter(
                 geneFilter != null? Collections.singleton(geneFilter): null,

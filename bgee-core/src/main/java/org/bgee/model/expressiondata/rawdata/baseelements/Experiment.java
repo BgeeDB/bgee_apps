@@ -46,17 +46,22 @@ public abstract class Experiment<T extends Comparable<T>> extends NamedEntity<T>
     public XRef getXRef() {
         return this.xRef;
     }
-    public String getdOI() {
+    public String getDOI() {
         return dOI;
     }
+
     @Override
     public String toString() {
-        return "Experiment [dataSource=" + dataSource + ", xRef=" + xRef + ", assayCount=" + assayCount + ", dOI=" + dOI
-                + ", getName()=" + getName() + ", getDescription()=" + getDescription() + ", getId()=" + getId() + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("Experiment [")
+               .append("dataSource=").append(dataSource)
+               .append(", xRef=").append(xRef)
+               .append(", assayCount=").append(assayCount)
+               .append(", dOI=").append(dOI)
+               .append("]");
+        return builder.toString();
     }
 
     //hashCode/equals based on the ID, using hashCode/equals methods of Entity class
-
-    
 
 }

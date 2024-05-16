@@ -125,7 +125,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                         }
                         //otherwise, return a new Filter, with no speciesId
                         return new DAORawDataFilter(f.getGeneIds(), condIds, f.getExperimentIds(),
-                                f.getAssayIds(), f.getExprOrAssayIds(), f.isUsedInPropagatedCalls());
+                                f.getAssayIds(), f.getExprOrAssayIds(), f.getUsedInPropagatedCalls());
                     })
                     //We skip the null filters, as it is because they would have been no result for them
                     .filter(f -> f != null)
@@ -247,7 +247,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 Set<String> expIds = rawDataFilter.getExperimentIds();
                 Set<String> assayIds = rawDataFilter.getAssayIds();
                 Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
-                Boolean usedInPropagatedCalls = rawDataFilter.isUsedInPropagatedCalls();
+                Boolean usedInPropagatedCalls = rawDataFilter.getUsedInPropagatedCalls();
                 Set<U> callTableAssayIds = processedFilters.getFilterToCallTableAssayIds() == null?
                         null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
                 assert(processedFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
@@ -1351,7 +1351,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         Set<String> expOrAssayIds = callTableAssayIds == null && rawDataFilter != null?
             rawDataFilter.getExprOrAssayIds(): new HashSet<>();
         Boolean usedInPropagatedCalls = callTableAssayIds == null && rawDataFilter != null?
-            rawDataFilter.isUsedInPropagatedCalls(): null;
+            rawDataFilter.getUsedInPropagatedCalls(): null;
         //For in situ data, condIds are not used to produce callTableAssayIds,
         //so even if callTableAssayIds were provided, they do not override
         //the rawDataCondIds for in situ data

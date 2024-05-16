@@ -66,7 +66,7 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
                 !e.getExprOrAssayIds().isEmpty() ||
                 // assayIds are also required if filtering on usedInPropagatedCalls and the
                 // datatype can have not propagated calls
-                e.isUsedInPropagatedCalls() != null &&
+                e.getUsedInPropagatedCalls() != null &&
                 (dataType == null  || dataType.isAlwaysPropagated() == false));
         //For in situ data, conditions are not linked to the assays
         this.needConditionId = this.filterToCallTableAssayIds != null &&

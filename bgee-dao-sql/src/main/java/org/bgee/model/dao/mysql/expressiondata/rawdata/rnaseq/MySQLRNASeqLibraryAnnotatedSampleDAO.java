@@ -146,8 +146,8 @@ implements RNASeqLibraryAnnotatedSampleDAO{
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer libraryAnnotatedSampleId = null,  conditionId = null,
-                        allUMIsCount = null, mappedUMIsCount = null, distinctRankCount = null,
-                        time = null;
+                        allUMIsCount = null, mappedUMIsCount = null, distinctRankCount = null;
+                Float time = null;
                 String libraryId = null, barcode = null, cellTypeAuthorAnnotation = null,
                         anatEntityAuthorAnnotation = null, stageAuthorAnnotation = null, timeUnit = null,
                         physiologicalStatus = null;
@@ -231,7 +231,10 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                         stageAuthorAnnotation = currentResultSet.getString(column.getKey());
                     } else if (column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .TIME.getTOFieldName())) {
-                        time = currentResultSet.getInt(column.getKey());
+                        time = currentResultSet.getFloat(column.getKey());
+                        if (currentResultSet.wasNull()) {
+                            time = null;
+                        }
                     } else if (column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .TIME_UNIT.getTOFieldName())) {
                         timeUnit = currentResultSet.getString(column.getKey());

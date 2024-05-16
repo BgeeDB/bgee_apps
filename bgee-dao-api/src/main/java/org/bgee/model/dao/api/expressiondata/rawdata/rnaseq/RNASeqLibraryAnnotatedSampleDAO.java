@@ -252,7 +252,7 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         private final Integer distinctRankCount;
         private final Boolean multipleLibraryIndividualSample;
         private final String barcode;
-        private final Integer time;
+        private final Float time;
         private final String timeUnit;
         private final String physiologicalStatus;
 
@@ -268,7 +268,7 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
                 BigDecimal intergenicRegionsPercentPresent, BigDecimal  pValueThreshold,
                 Integer allUMIsCount, Integer mappedUMIsCount, BigDecimal maxRank,
                 Integer distinctRankCount, Boolean multipleLibraryIndividualSample,
-                Integer time, String timeUnit, String physiologicalStatus) {
+                Float time, String timeUnit, String physiologicalStatus) {
             super(libraryAnnotatedSampleId);
             this.libraryId = libraryId;
             this.conditionId = conditionId;
@@ -359,7 +359,7 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         public Boolean getMultipleLibraryIndividualSample() {
             return multipleLibraryIndividualSample;
         }
-        public Integer getTime() {
+        public Float getTime() {
             return time;
         }
         public String getTimeUnit() {

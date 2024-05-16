@@ -172,7 +172,7 @@ public class DAORawDataFilter extends DAODataFilter2 {
     public Set<String> getExprOrAssayIds() {
         return exprOrAssayIds;
     }
-    public Boolean isUsedInPropagatedCalls() {
+    public Boolean getUsedInPropagatedCalls() {
         return usedInPropagatedCalls;
     }
     @Override

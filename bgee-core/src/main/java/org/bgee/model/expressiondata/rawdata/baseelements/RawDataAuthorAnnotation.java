@@ -15,12 +15,12 @@ public class RawDataAuthorAnnotation {
     private final String anatEntityAuthorAnnotation;
     private final String stageAuthorAnnotation;
     private final String cellTypeAuthorAnnotation;
-    private Integer time;
-    private String timeUnit;
+    private final Float time;
+    private final String timeUnit;
     
     public RawDataAuthorAnnotation(String anatEntityAuthorAnnotation,
             String cellTypeAuthorAnnotation, String stageAuthorAnnotation,
-            Integer time, String timeUnit) {
+            Float time, String timeUnit) {
         this.anatEntityAuthorAnnotation = anatEntityAuthorAnnotation;
         this.cellTypeAuthorAnnotation = cellTypeAuthorAnnotation;
         this.stageAuthorAnnotation = stageAuthorAnnotation;
@@ -37,19 +37,19 @@ public class RawDataAuthorAnnotation {
     public String getCellTypeAuthorAnnotation() {
         return cellTypeAuthorAnnotation;
     }
-    public Integer getTime() {
+    public Float getTime() {
         return time;
     }
     public String getTimeUnit() {
         return timeUnit;
     }
 
+
     @Override
     public int hashCode() {
-        return Objects.hash(anatEntityAuthorAnnotation, cellTypeAuthorAnnotation,
-                stageAuthorAnnotation, time, timeUnit);
+        return Objects.hash(anatEntityAuthorAnnotation, cellTypeAuthorAnnotation, stageAuthorAnnotation,
+                time, timeUnit);
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

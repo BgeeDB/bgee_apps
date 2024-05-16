@@ -47,7 +47,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * <li>{@code MIN_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMinReadLength()}.
      * <li>{@code MAX_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMaxReadLength()}.
      * <li>{@code LIBRARY_TYPE}: corresponds to {@link RNASeqLibraryTO#getLibraryType()}.
-     * <li>{@code USED_IN_PROPAGATED_CALLS}: corresponds to {@link RNASeqLibraryTO#isUsedInPropagatedCalls()}.
+     * <li>{@code USED_IN_PROPAGATED_CALLS}: corresponds to {@link RNASeqLibraryTO#getUsedInPropagatedCalls()}.
 
 
      * </ul>

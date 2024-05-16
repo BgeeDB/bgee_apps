@@ -105,7 +105,7 @@ implements RNASeqExperimentDAO{
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer dataSourceId = null;
                 boolean isTargetBase = false;
-                String id = null, name = null, description = null;
+                String id = null, name = null, description = null, dOI = null;
 
                 for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                     if (column.getValue().equals(RNASeqExperimentDAO.Attribute.ID.getTOFieldName())) {
@@ -119,14 +119,17 @@ implements RNASeqExperimentDAO{
                     } else if(column.getValue().equals(RNASeqExperimentDAO.Attribute.DATA_SOURCE_ID
                             .getTOFieldName())) {
                         dataSourceId = currentResultSet.getInt(column.getKey());
+                    } else if(column.getValue().equals(RNASeqExperimentDAO.Attribute.DOI
+                            .getTOFieldName())) {
+                        dOI = currentResultSet.getString(column.getKey());
                     } else if(column.getValue().equals("isTargetBase")) {
-                        Integer value = currentResultSet.getInt(column.getKey());
                          isTargetBase = currentResultSet.getInt(column.getKey()) == 1? true: false;
                     } else {
                         log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 }
-                return log.traceExit(new RNASeqExperimentTO(id, name, description, dataSourceId, isTargetBase));
+                return log.traceExit(new RNASeqExperimentTO(id, name, description, dataSourceId, isTargetBase,
+                        dOI));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

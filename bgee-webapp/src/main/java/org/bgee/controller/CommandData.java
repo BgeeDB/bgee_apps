@@ -1397,6 +1397,8 @@ public class CommandData extends CommandParent {
         GeneFilter geneFilter = speciesId == null && filterSpeciesId == null? null:
             new GeneFilter(filterSpeciesId != null? filterSpeciesId: speciesId,
                     this.requestParameters.getGeneIds());
+        boolean onlyPropagatedParam = Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                this.requestParameters.getUrlParametersInstance().getOnlyPropagated()));
 
         return log.traceExit(new RawDataFilter(
                 geneFilter != null? Collections.singleton(geneFilter): null,
@@ -1405,7 +1407,9 @@ public class CommandData extends CommandParent {
                         filterExperimentIds: experimentIds,
                 //there is no for parameter for assayId only, so we always use the filter directly
                 filterAssayIds,
-                expOrAssayIds));
+                expOrAssayIds,
+                // for now we do not allow to retrieve only not propagated raw data.
+                onlyPropagatedParam == false ? null: true));
     }
     private ExpressionCallFilter2 loadExprCallFilter(boolean consideringFilters,
             Set<ConditionParameter<?, ?>> condParams, EnumSet<DataType> dataTypes)

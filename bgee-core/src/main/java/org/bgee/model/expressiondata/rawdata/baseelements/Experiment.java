@@ -17,15 +17,17 @@ public abstract class Experiment<T extends Comparable<T>> extends NamedEntity<T>
     private final Source dataSource;
     private final XRef xRef;
     private final int assayCount;
+    private final String dOI;
 
-    protected Experiment(T id, String name, String description, Source dataSource,
+    protected Experiment(T id, String name, String description, String dOI, Source dataSource,
             int assayCount) {
-        this(id, id, name, description, dataSource, assayCount);
+        this(id, id, name, description, dOI, dataSource, assayCount);
     }
-    protected Experiment(T id, T xRefId, String name, String description, Source dataSource,
+    protected Experiment(T id, T xRefId, String name, String description, String dOI, Source dataSource,
             int assayCount) {
         super(id, name, description);
         this.dataSource = dataSource;
+        this.dOI = dOI;
         if (dataSource != null) {
             this.xRef = new XRef(xRefId.toString(), name, dataSource, dataSource.getExperimentUrl());
         } else {
@@ -44,16 +46,13 @@ public abstract class Experiment<T extends Comparable<T>> extends NamedEntity<T>
     public XRef getXRef() {
         return this.xRef;
     }
-
+    public String getdOI() {
+        return dOI;
+    }
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Experiment [")
-               .append("dataSource=").append(dataSource)
-               .append(", xRef=").append(xRef)
-               .append(", assayCount=").append(assayCount)
-               .append("]");
-        return builder.toString();
+        return "Experiment [dataSource=" + dataSource + ", xRef=" + xRef + ", assayCount=" + assayCount + ", dOI=" + dOI
+                + ", getName()=" + getName() + ", getDescription()=" + getDescription() + ", getId()=" + getId() + "]";
     }
 
     //hashCode/equals based on the ID, using hashCode/equals methods of Entity class

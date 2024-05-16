@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * <li>{@code EST}
  * <li>{@code IN_SITU}
  * <li>{@code RNA_SEQ}
- * <li>{@code FULL_LENGTH}
+ * <li>{@code SC_RNA_SEQ}
  * </ul>
  * 
  * @author Freeric Bastian
@@ -30,20 +30,20 @@ public enum DAODataType implements EnumDAOField {
     AFFYMETRIX("affymetrix", "affymetrix", "Affy", "affymetrixMeanRank", "affymetrixGlobalMeanRank",
             "affymetrixMeanRankNorm", "affymetrixGlobalMeanRankNorm", "affymetrixDistinctRankSum",
             "affymetrixGlobalDistinctRankSum", "affymetrixMaxRank", "affymetrixGlobalMaxRank", false,
-            true),
+            true, true),
     EST("est", "est", "Est", "estRank", "estGlobalRank", "estRankNorm", "estGlobalRankNorm",
-            "estMaxRank", "estGlobalMaxRank", "estMaxRank", "estGlobalMaxRank", true, true),
+            "estMaxRank", "estGlobalMaxRank", "estMaxRank", "estGlobalMaxRank", true, true, true),
     IN_SITU("in situ", "inSitu", "InSitu", "inSituRank", "inSituGlobalRank", "inSituRankNorm",
             "inSituGlobalRankNorm", "inSituMaxRank", "inSituGlobalMaxRank",
-            "inSituMaxRank", "inSituGlobalMaxRank", true, false),
+            "inSituMaxRank", "inSituGlobalMaxRank", true, false, true),
     RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq", "rnaSeqMeanRank", "rnaSeqGlobalMeanRank",
             "rnaSeqMeanRankNorm", "rnaSeqGlobalMeanRankNorm", "rnaSeqDistinctRankSum",
-            "rnaSeqGlobalDistinctRankSum", "rnaSeqMaxRank", "rnaSeqGlobalMaxRank", false, true),
+            "rnaSeqGlobalDistinctRankSum", "rnaSeqMaxRank", "rnaSeqGlobalMaxRank", false, true, false),
     SC_RNA_SEQ("single-cell RNA-Seq", "scRnaSeqFullLength", "ScRnaSeqFL",
             "scRnaSeqFullLengthMeanRank", "scRnaSeqFullLengthGlobalMeanRank",
             "scRnaSeqFullLengthMeanRankNorm", "scRnaSeqFullLengthGlobalMeanRankNorm",
             "scRnaSeqFullLengthDistinctRankSum", "scRnaSeqFullLengthGlobalDistinctRankSum",
-            "scRnaSeqFullLengthMaxRank", "scRnaSeqFullLengthGlobalMaxRank", false, true);
+            "scRnaSeqFullLengthMaxRank", "scRnaSeqFullLengthGlobalMaxRank", false, true, false);
 
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 
@@ -102,6 +102,7 @@ public enum DAODataType implements EnumDAOField {
     private final String condGlobalMaxRankFieldName;
     private final boolean rankWeightRelatedToCondition;
     private final boolean assayRelatedToCondition;
+    private final boolean alwaysPropagated;
 
     /**
      * Constructor providing the {@code String} representation of this {@code DataType}.
@@ -116,7 +117,7 @@ public enum DAODataType implements EnumDAOField {
             String globalRankNormFieldName, String rankWeightFieldName,
             String globalRankWeightFieldName, String condMaxRankFieldName,
             String condGlobalMaxRankFieldName, boolean rankWeightRelatedToCondition,
-            boolean assayRelatedToCondition) {
+            boolean assayRelatedToCondition, boolean alwaysPropagated) {
         this.stringRepresentation = stringRepresentation;
         this.fieldNamePrefix = fieldNamePrefix;
         this.fieldNamePart = fieldNamePart;
@@ -130,6 +131,7 @@ public enum DAODataType implements EnumDAOField {
         this.condGlobalMaxRankFieldName = condGlobalMaxRankFieldName;
         this.rankWeightRelatedToCondition = rankWeightRelatedToCondition;
         this.assayRelatedToCondition = assayRelatedToCondition;
+        this.alwaysPropagated = alwaysPropagated;
     }
     @Override
     public String getStringRepresentation() {
@@ -188,4 +190,8 @@ public enum DAODataType implements EnumDAOField {
     public boolean isAssayRelatedToCondition() {
         return assayRelatedToCondition;
     }
+    public boolean isAlwaysPropagated() {
+        return alwaysPropagated;
+    }
+
 }

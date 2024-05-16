@@ -70,6 +70,7 @@ import org.bgee.model.expressiondata.rawdata.baseelements.CellCompartment;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAuthorAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithExperiment;
@@ -647,7 +648,7 @@ public class RawDataLoader extends CommonService {
         if (!affyExpIds.isEmpty()) {
             //we can use a new DAORawDataFilter to retrieve the requested experiments
             expTORS = this.microarrayExperimentDAO.getExperiments(
-                    Set.of(new DAORawDataFilter(affyExpIds, null, null)), null, null,
+                    Set.of(new DAORawDataFilter(affyExpIds, null, null, null)), null, null,
                     !partialInfo? null:
                         Set.of(MicroarrayExperimentDAO.Attribute.ID,
                                MicroarrayExperimentDAO.Attribute.NAME));
@@ -705,7 +706,7 @@ public class RawDataLoader extends CommonService {
                                                     "Missing RawDataCondition ID "
                                                     + to.getConditionId()
                                                     + " for chip ID " + to.getAffymetrixChipId())),
-                                            null, null, null),
+                                            null, null, null, null, null),
                                     null,
                                     to.getDistinctRankCount() == null? null: new AffymetrixChipPipelineSummary(
                                             to.getDistinctRankCount(), to.getMaxRank(), to.getScanDate(),
@@ -891,7 +892,7 @@ public class RawDataLoader extends CommonService {
         Set<String> expIds = new HashSet<>();
         if (!libraryIds.isEmpty() && !(infoType == InformationType.EXPERIMENT && !partialInfo)) {
             //we can use a new DAORawDataFilter to retrieve the requested libraries
-            DAORawDataFilter libFilter = new DAORawDataFilter(null, libraryIds, null);
+            DAORawDataFilter libFilter = new DAORawDataFilter(null, libraryIds, null, null);
             RNASeqLibraryTOResultSet libTORS = this.rnaSeqLibraryDAO.getRnaSeqLibrary(
                     Collections.singleton(libFilter), null, null, null,
                     !partialInfo? null: Set.of(
@@ -912,7 +913,7 @@ public class RawDataLoader extends CommonService {
         //CALLs or ASSAYs.
         if (!expIds.isEmpty()) {
             //we can use a new DAORawDataFilter to retrieve the requested experiments
-            DAORawDataFilter expFilter = new DAORawDataFilter(expIds, null, null);
+            DAORawDataFilter expFilter = new DAORawDataFilter(expIds, null, null, null);
             expTORS = this.rnaSeqExperimentDAO.getExperiments(
                     Collections.singleton(expFilter), null, null, null,
                     !partialInfo? null: Set.of(
@@ -932,7 +933,7 @@ public class RawDataLoader extends CommonService {
                     .collect(Collectors.toMap(
                             to -> to.getId(),
                             to -> new RnaSeqExperiment(to.getId(), to.getName(),
-                                  to.getDescription(),
+                                  to.getDescription(), to.getDOI(),
                                   to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
                                   finalExpSpeciesId == null? null:
                                       getRNASeqExperimentDownloadURL(isSingleCell, to.isTargetBase(),
@@ -996,7 +997,6 @@ public class RawDataLoader extends CommonService {
                     .stream()
                     .collect(Collectors.toMap(
                             to -> to.getId(),
-
                             to -> new RnaSeqLibraryAnnotatedSample(
                                     Optional.ofNullable(libMap.get(to.getLibraryId()))
                                     .orElseThrow(() -> new IllegalStateException(
@@ -1010,7 +1010,10 @@ public class RawDataLoader extends CommonService {
                                                     "Missing RawDataCondition ID "
                                                     + to.getConditionId()
                                                     + " for annotated sample ID " + to.getId())),
-                                            null, null, null),
+                                            new RawDataAuthorAnnotation(to.getAnatEntityAuthorAnnotation(),
+                                                    to.getCellTypeAuthorAnnotation(), to.getStageAuthorAnnotation(),
+                                                    to.getTime(), to.getTimeUnit()),
+                                            to.getPhysiologicalStatus(), null, null, null),
                                     to.getDistinctRankCount() == null? null: new RnaSeqLibraryAnnotatedSamplePipelineSummary(
                                             to.getMeanAbundanceRefIntergenicDistribution(),
                                             to.getSdAbundanceRefIntergenicDistribution(),
@@ -1164,7 +1167,7 @@ public class RawDataLoader extends CommonService {
         if (!estLibraryIds.isEmpty()) {
             assert !partialInfo;
             //Create a new DAORawDataFilter for retrieving libraries based on their ID
-            DAORawDataFilter daoFilter = new DAORawDataFilter(null, estLibraryIds, null);
+            DAORawDataFilter daoFilter = new DAORawDataFilter(null, estLibraryIds, null, null);
             assayTORS = this.estLibraryDAO.getESTLibraries(Set.of(daoFilter), null, null,
                     null);
 
@@ -1211,7 +1214,7 @@ public class RawDataLoader extends CommonService {
                                                 "Missing RawDataCondition ID "
                                                 + to.getConditionId()
                                                 + " for annotated sample ID " + to.getId())),
-                                        null, null, null),
+                                        null, null, null, null, null),
                                 to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId())),
 
                         (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
@@ -1357,7 +1360,7 @@ public class RawDataLoader extends CommonService {
         if (!expIds.isEmpty()) {
             //we can use a new DAORawDataFilter to retrieve the requested experiments
             expTORS = this.inSituExperimentDAO.getInSituExperiments(
-                    Set.of(new DAORawDataFilter(expIds, null, null)), null, null,
+                    Set.of(new DAORawDataFilter(expIds, null, null, null)), null, null,
                     !partialInfo? null: Set.of(
                             InSituExperimentDAO.Attribute.ID,
                             InSituExperimentDAO.Attribute.NAME));
@@ -1427,7 +1430,7 @@ public class RawDataLoader extends CommonService {
                                                     "Missing RawDataCondition ID "
                                                             + to.getConditionId()
                                                             + " for spot ID " + to.getId())),
-                                            null, null, null)),
+                                            null, null, null, null, null)),
 
                             (v1, v2) -> {
                                 //We do nothing special here, it means that an evidence

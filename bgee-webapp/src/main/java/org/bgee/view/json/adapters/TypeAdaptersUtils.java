@@ -99,7 +99,7 @@ public class TypeAdaptersUtils {
             } else {
                 out.value(authorAnnot.getTime());
             }
-            out.name("time unit");
+            out.name("timeUnit");
             if (authorAnnot.getTime() == null) {
                 out.value("NA");
             } else {

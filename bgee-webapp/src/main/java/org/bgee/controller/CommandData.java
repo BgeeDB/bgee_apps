@@ -2006,7 +2006,7 @@ public class CommandData extends CommandParent {
         colDescr.addAll(getConditionColumnDescriptions("result", isSingleCell, true));
         colDescr.add(new ColumnDescription("Physiological status",
                 "Physiological status of the organism at time of sampling",
-                List.of("result.library.annotation.physiologicalStatus"),
+                List.of("result.annotation.physiologicalStatus"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 

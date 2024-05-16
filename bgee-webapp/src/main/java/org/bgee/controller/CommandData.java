@@ -1978,7 +1978,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", false));
+        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.experiment.id", "result.id",
                 null, false));
 
@@ -2003,7 +2003,12 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", isSingleCell));
+        colDescr.addAll(getConditionColumnDescriptions("result", isSingleCell, true));
+        colDescr.add(new ColumnDescription("Physiological status",
+                "Physiological status of the organism at time of sampling",
+                List.of("result.library.annotation.physiologicalStatus"),
+                ColumnDescription.ColumnType.STRING,
+                null, null, true, null, null));
 
         colDescr.add(new ColumnDescription("Technology", null,
                 List.of("result.library.technology.protocolName"),
@@ -2100,7 +2105,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", false));
+        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
         colDescr.add(getAnnotsToProcExprValuesColDesc(null, "result.id",
                 null, false));
 
@@ -2121,7 +2126,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", false));
+        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.experiment.id", "result.id",
                 null, false));
 
@@ -2265,7 +2270,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
 
         return log.traceExit(colDescr);
     }
@@ -2318,7 +2323,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", isSingleCell));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", isSingleCell, false));
 
         return log.traceExit(colDescr);
     }
@@ -2354,7 +2359,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
 
         return log.traceExit(colDescr);
     }
@@ -2385,7 +2390,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
 
         return log.traceExit(colDescr);
     }
@@ -2419,6 +2424,10 @@ public class CommandData extends CommandParent {
                 ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         colDescr.add(new ColumnDescription("Experiment name", null,
                 List.of("result.name"),
+                ColumnDescription.ColumnType.STRING,
+                null, null, true, null, null));
+        colDescr.add(new ColumnDescription("DOI", "DOI of the related publication",
+                List.of("result.dOI"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
         colDescr.add(new ColumnDescription("Description", null,
@@ -2479,8 +2488,8 @@ public class CommandData extends CommandParent {
     }
 
     private static List<ColumnDescription> getConditionColumnDescriptions(String attributeStart,
-            boolean displayCellType) {
-        log.traceEntry("{}, {}", attributeStart, displayCellType);
+            boolean displayCellType, boolean displayAuthorAnnots) {
+        log.traceEntry("{}, {}, {}", attributeStart, displayCellType, displayAuthorAnnots);
         List<ColumnDescription> colDescr = new ArrayList<>();
 
         if (displayCellType) {
@@ -2494,6 +2503,13 @@ public class CommandData extends CommandParent {
                     List.of(attributeStart + ".annotation.rawDataCondition.cellType.name"),
                     ColumnDescription.ColumnType.STRING,
                     null, null, true, null, null));
+            if (displayAuthorAnnots) {
+                colDescr.add(new ColumnDescription("Cell type author annotation",
+                        "Free text annotation of cell type as provided by authors",
+                        List.of(attributeStart + ".annotation.rawDataCondition.cellTypeAuthorAnnotation"),
+                        ColumnDescription.ColumnType.STRING,
+                        null, null, true, null, null));
+            }
         }
         colDescr.add(new ColumnDescription("Anat. entity ID",
                 "ID of the anatomical localization of the sample",
@@ -2505,6 +2521,13 @@ public class CommandData extends CommandParent {
                 List.of(attributeStart + ".annotation.rawDataCondition.anatEntity.name"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+        if (displayAuthorAnnots) {
+            colDescr.add(new ColumnDescription("Anat. entity author annotation",
+                    "Free text annotation of anatomical localization of the sample as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.anatEntityAuthorAnnotation"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Stage ID",
                 "ID of the developmental and life stage of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.devStage.id"),
@@ -2515,6 +2538,13 @@ public class CommandData extends CommandParent {
                 List.of(attributeStart + ".annotation.rawDataCondition.devStage.name"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+        if (displayAuthorAnnots) {
+            colDescr.add(new ColumnDescription("Stage author annotation",
+                    "Free text annotation of the developmental and life stage of the sample as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.devStageAuthorAnnotation"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Sex",
                 "Annotation of the sex of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.sex"),
@@ -2525,6 +2555,19 @@ public class CommandData extends CommandParent {
                 List.of(attributeStart + ".annotation.rawDataCondition.strain"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+
+        if (displayAuthorAnnots) {
+            colDescr.add(new ColumnDescription("Time",
+                    "Free text annotation of the time of sampling as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.time"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+            colDescr.add(new ColumnDescription("Time unit",
+                    "Unit for the time of sampling as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.timeUnit"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Species", null,
                 List.of(attributeStart + ".annotation.rawDataCondition.species.genus",
                         attributeStart + ".annotation.rawDataCondition.species.speciesName"),

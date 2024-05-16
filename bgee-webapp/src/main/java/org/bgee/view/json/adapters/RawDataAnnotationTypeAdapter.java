@@ -29,7 +29,8 @@ public class RawDataAnnotationTypeAdapter extends TypeAdapter<RawDataAnnotation>
         out.beginObject();
 
         out.name("rawDataCondition");
-        this.utils.writeSimplifiedRawDataCondition(out, value.getRawDataCondition());
+        this.utils.writeSimplifiedRawDataCondition(out, value.getRawDataCondition(), value.getAuthorAnnotation());
+        out.name("physiologicalStatus").value(value.getPhysiologicalStatus());
         out.name("annotationSource");
         this.utils.writeSimplifiedSource(out, value.getAnnotationSource());
         out.name("curator").value(value.getCurator());

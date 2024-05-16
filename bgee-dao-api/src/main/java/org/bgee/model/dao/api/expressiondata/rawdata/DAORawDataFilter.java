@@ -139,14 +139,13 @@ public class DAORawDataFilter extends DAODataFilter2 {
         this.exprOrAssayIds = Collections.unmodifiableSet(exprOrAssayIds == null? new HashSet<>() :
             exprOrAssayIds.stream().filter(a -> !StringUtils.isBlank(a)).collect(Collectors.toSet()));
         this.usedInPropagatedCalls = usedInPropagatedCalls;
-        // A not null attribute usedInPropagatedCalls is not sufficient to create a DAORawDataFilter
         if (this.getSpeciesIds().isEmpty() && this.getGeneIds().isEmpty() &&
                 this.getConditionIds().isEmpty() &&
                 this.experimentIds.isEmpty() && this.assayIds.isEmpty() &&
-                this.exprOrAssayIds.isEmpty()) {
+                this.exprOrAssayIds.isEmpty() && usedInPropagatedCalls == null) {
             throw log.throwing(new IllegalArgumentException("At least one attribut among"
-                    + " speciesId, geneIds, rawDataCondIds, experimentIds, assayIds and"
-                    + " exprOrAssayIds should not be null or empty"));
+                    + " speciesId, geneIds, rawDataCondIds, experimentIds, assayIds,"
+                    + " exprOrAssayIds and usedInPropagatedCalls should not be null or empty"));
         }
     }
 

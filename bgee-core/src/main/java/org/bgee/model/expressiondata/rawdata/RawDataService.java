@@ -495,9 +495,15 @@ public class RawDataService extends ExpressionDataService {
                         filter.getExperimentIds(), filter.getAssayIds(),
                         filter.getExperimentOrAssayIds(), filter.getUsedInPropagatedCalls()));
                 log.debug("DAORawDataFilter created with at least some condition IDs");
+            } else if (filter.getUsedInPropagatedCalls() != null) {
+                daoFilters.add(new DAORawDataFilter(null, null, null, null, null,
+                        filter.getUsedInPropagatedCalls()));
+                log.debug("DAORawDataFilter created with only usedInPropagatedCalls");
             } else {
-                assert procConditionPart.getRequestedConditionMap().isEmpty() && !filter.hasExperimentAssayIds();
-                log.debug("No DAORawDataFilter created: no species, no genes, no conds, no exp/assay IDs");
+                assert procConditionPart.getRequestedConditionMap().isEmpty() && !filter.hasExperimentAssayIds() &&
+                    filter.getUsedInPropagatedCalls() == null;
+                log.debug("No DAORawDataFilter created: no species, no genes, no conds, no exp/assay IDs,"
+                        + " no usedInPropagatedCalls");
             }
         } else {
             //XXX: actually I think we could create one DAOFilter for all species at once

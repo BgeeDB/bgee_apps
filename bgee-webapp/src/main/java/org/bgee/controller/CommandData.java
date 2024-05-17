@@ -1018,9 +1018,8 @@ public class CommandData extends CommandParent {
                 .loadRawDataLoader(this.loadRawDataFilter(false));
 
         //We don't know which data type the experiment belongs to,
-        //so we test them all
-        DataType dataTypeWithResults = null;
-        RawDataContainerWithExperiment<?, ?, ?> container = null;
+        //and there can be multiple data types in an experiment
+        Map<DataType, RawDataContainerWithExperiment<?, ?, ?>> dataTypeToContainer = new HashMap<>();
         for (DataType dt: EnumSet.allOf(DataType.class)) {
             RawDataDataType<? extends RawDataContainerWithExperiment<?, ?, ?>, ?> rdt =
                     RawDataDataType.getRawDataDataTypeWithExperiment(dt);
@@ -1029,7 +1028,7 @@ public class CommandData extends CommandParent {
                 continue;
             }
 
-            container = rawDataLoader.loadData(
+            RawDataContainerWithExperiment<?, ?, ?> container = rawDataLoader.loadData(
                     //We want the assays to be displayed on the experiment page,
                     //The experiment itself will be retrieved along the way
                     InformationType.ASSAY,
@@ -1039,39 +1038,37 @@ public class CommandData extends CommandParent {
                     //the max number of assays in an experiment
                     RawDataLoader.LIMIT_MAX);
             if (!container.getAssays().isEmpty()) {
-                //we found our result
-                dataTypeWithResults = dt;
-                //TODO: For now we consider that one experiment can only correspond to
-                // one datatype. It is not always true. One experiment could contain
-                // bulk AND single cell RNASeq (and even both full length and target based).
-                // We have to update both the API and the webapp to manage those cases as it
-                // impact the libraries retrieved but also the download button on the website.
-                // For now, if we have both bulk and single cell RNASeq data we decided to
-                // retrieve only single cell information. We managed that by defining SC_RNA_SEQ
-                // before RNA_SEQ in the enum org.bgee.model.expressiondata.baseelements.Datatype.
-                break;
+                dataTypeToContainer.put(dt, container);
             }
-            //otherwise we continue to search
-            container = null;
         }
-        if (container == null) {
+        if (dataTypeToContainer.isEmpty()) {
             throw log.throwing(new PageNotFoundException("The experiment ID "
                     + this.requestParameters.getExperimentId() + " does not exist in Bgee."));
         }
 
-        if (container.getExperiments().size() != 1) {
+        //We don't use a Set, because the hashCode/equals methods of Experiment is based on their ID,
+        //and here we can retrieve multiple experiments with same ID but different data types
+        List<Experiment<?>> experiments = dataTypeToContainer.values().stream()
+                .flatMap(c -> c.getExperiments().stream())
+                .collect(Collectors.toList());
+        if (experiments.stream().map(e -> e.getId()).collect(Collectors.toSet()).size() != 1) {
             throw log.throwing(new IllegalStateException(
                     "Ambiguous experiment ID, should not happen. Experiments retrieved: "
-                    + container.getExperiments()));
+                    + experiments));
         }
-        assert dataTypeWithResults != null;
-        Experiment<?> experiment = container.getExperiments().iterator().next();
-        LinkedHashSet<Assay> assays = new LinkedHashSet<>(container.getAssays());
+
+        LinkedHashSet<Assay> assays = dataTypeToContainer.values().stream()
+                .flatMap(c -> c.getAssays().stream())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         List<ColumnDescription> colDescr;
+        //For column description, if among the retrieved data types we have SC_RNA_SEQ,
+        //this is the one we use since it uses more columns. Otherwise, use the first one.
+        DataType colDataType = dataTypeToContainer.keySet().contains(DataType.SC_RNA_SEQ)?
+                DataType.SC_RNA_SEQ: dataTypeToContainer.keySet().iterator().next();
         try {
             colDescr = this.getColumnDescriptions(
-                    EXPERIMENT_PAGE_ACTION, EnumSet.of(dataTypeWithResults))
-                    .get(dataTypeWithResults);
+                    EXPERIMENT_PAGE_ACTION, EnumSet.of(colDataType))
+                    .get(colDataType);
         } catch (InvalidRequestException e) {
             //here it means we didn't correctly called the method getColumnDescriptions,
             //it is not an InvalidRequestException
@@ -1079,7 +1076,7 @@ public class CommandData extends CommandParent {
         }
 
         DataDisplay display = viewFactory.getDataDisplay();
-        display.displayExperimentPage(experiment, assays, dataTypeWithResults, colDescr);
+        display.displayExperimentPage(experiments, assays, colDataType, colDescr);
 
         log.traceExit();
     }

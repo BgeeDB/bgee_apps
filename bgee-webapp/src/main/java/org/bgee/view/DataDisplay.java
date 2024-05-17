@@ -37,6 +37,6 @@ public interface DataDisplay {
             List<ColumnDescription> colDescriptions, ExpressionCallResponse callresponse,
             Long callCount, ExpressionCallPostFilter postFilter);
 
-    public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay> assays,
+    public void displayExperimentPage(List<Experiment<?>> experiments, LinkedHashSet<Assay> assays,
             DataType dataType, List<ColumnDescription> columnDescriptions);
 }

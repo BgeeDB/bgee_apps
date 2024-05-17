@@ -72,7 +72,7 @@ public class ExperimentDownloadFile extends DownloadFile {
 
     private final Category category;
     private final DataType dataType;
-    private final boolean isDropletBased;
+    private final boolean sampleMultiplexing;
     private final Species species;
 
     /**
@@ -88,7 +88,7 @@ public class ExperimentDownloadFile extends DownloadFile {
      * @param species               The {@code Species} this download file contains data for.
      */
     public ExperimentDownloadFile(String path, String fileName, String title, Long size,
-            Category category, DataType dataType, boolean isDropletBased, Species species) {
+            Category category, DataType dataType, boolean sampleMultiplexing, Species species) {
         super(path, fileName, title, size);
         if (category == null) {
             throw new IllegalArgumentException("Category must be provided");
@@ -101,7 +101,7 @@ public class ExperimentDownloadFile extends DownloadFile {
         }
         this.category = category;
         this.dataType = dataType;
-        this.isDropletBased = isDropletBased;
+        this.sampleMultiplexing = sampleMultiplexing;
         this.species = species;
     }
 
@@ -111,8 +111,8 @@ public class ExperimentDownloadFile extends DownloadFile {
     public DataType getDataType() {
         return dataType;
     }
-    public boolean isDropletBased() {
-        return isDropletBased;
+    public boolean isSampleMultiplexing() {
+        return sampleMultiplexing;
     }
     public Species getSpecies() {
         return species;
@@ -122,7 +122,7 @@ public class ExperimentDownloadFile extends DownloadFile {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(category, dataType, isDropletBased, species);
+        result = prime * result + Objects.hash(category, dataType, sampleMultiplexing, species);
         return result;
     }
     @Override
@@ -135,7 +135,7 @@ public class ExperimentDownloadFile extends DownloadFile {
             return false;
         ExperimentDownloadFile other = (ExperimentDownloadFile) obj;
         return category == other.category && dataType == other.dataType
-                && isDropletBased == other.isDropletBased && Objects.equals(species, other.species);
+                && sampleMultiplexing == other.sampleMultiplexing && Objects.equals(species, other.species);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class ExperimentDownloadFile extends DownloadFile {
         builder.append("ExperimentDownloadFile [")
                .append("category=").append(category)
                .append(", dataType=").append(dataType)
-               .append(", isDropletBased=").append(isDropletBased)
+               .append(", sampleMultiplexing=").append(sampleMultiplexing)
                .append(", species=").append(species)
                .append(", getPath()=").append(getPath())
                .append(", getFileName()=").append(getFileName())

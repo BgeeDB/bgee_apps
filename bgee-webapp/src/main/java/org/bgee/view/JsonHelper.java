@@ -15,14 +15,14 @@ import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.Condition2;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
-import org.bgee.model.file.DownloadFile;
+import org.bgee.model.file.SpeciesDownloadFile;
 import org.bgee.model.job.Job;
 import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.json.adapters.BgeeTypeAdapterFactory;
 import org.bgee.view.json.adapters.Condition2TypeAdapter;
 import org.bgee.view.json.adapters.ConditionParameterTypeAdapter;
-import org.bgee.view.json.adapters.DownloadFileTypeAdapter;
+import org.bgee.view.json.adapters.SpeciesDownloadFileTypeAdapter;
 import org.bgee.view.json.adapters.ESTCountContainerTypeAdapter;
 import org.bgee.view.json.adapters.ExperimentAssayTypeAdapter;
 import org.bgee.view.json.adapters.ExpressionCallPostFilterTypeAdapter;
@@ -150,7 +150,7 @@ public class JsonHelper {
         //are not dependent of a specific JSON library. 
         this.gson = new GsonBuilder()
                 .addSerializationExclusionStrategy(new Strategy())
-                .registerTypeAdapter(DownloadFile.class, new DownloadFileTypeAdapter(this.props))
+                .registerTypeAdapter(SpeciesDownloadFile.class, new SpeciesDownloadFileTypeAdapter(this.props))
                 .registerTypeAdapter(RequestParameters.class, new RequestParameterTypeAdapter())
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())

@@ -7,7 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.file.DownloadFile;
+import org.bgee.model.file.SpeciesDownloadFile;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
@@ -24,8 +24,8 @@ import com.google.gson.stream.JsonWriter;
  * as stated in the {@code JsonSerializer} javadoc: "New applications should prefer 
  * {@code TypeAdapter}, whose streaming API is more efficient than this interface's tree API. "
  */
-public final class DownloadFileTypeAdapter extends TypeAdapter<DownloadFile> {
-    private static final Logger log = LogManager.getLogger(DownloadFileTypeAdapter.class.getName());
+public final class SpeciesDownloadFileTypeAdapter extends TypeAdapter<SpeciesDownloadFile> {
+    private static final Logger log = LogManager.getLogger(SpeciesDownloadFileTypeAdapter.class.getName());
 
     /**
      * The {@code BgeeProperties} to retrieve parameters from.
@@ -35,12 +35,12 @@ public final class DownloadFileTypeAdapter extends TypeAdapter<DownloadFile> {
     /**
      * @param props The {@code BgeeProperties} to retrieve parameters from.
      */
-    public DownloadFileTypeAdapter(BgeeProperties props) {
+    public SpeciesDownloadFileTypeAdapter(BgeeProperties props) {
         assert props != null;
         this.props = props;
     }
     @Override
-    public void write(JsonWriter out, DownloadFile value) throws IOException {
+    public void write(JsonWriter out, SpeciesDownloadFile value) throws IOException {
         log.traceEntry("{}, {}", out, value);
         if (value == null) {
             out.nullValue();
@@ -49,7 +49,7 @@ public final class DownloadFileTypeAdapter extends TypeAdapter<DownloadFile> {
         out.beginObject();
         
         //values with no modifications
-        out.name("name").value(value.getName());
+        out.name("name").value(value.getFileName());
         out.name("size").value(value.getSize());
         out.name("speciesDataGroupId").value(value.getSpeciesDataGroupId());
         //values with modifications
@@ -72,8 +72,8 @@ public final class DownloadFileTypeAdapter extends TypeAdapter<DownloadFile> {
     }
     
     @Override
-    public DownloadFile read(JsonReader in) throws IOException {
+    public SpeciesDownloadFile read(JsonReader in) throws IOException {
         //for now, we never read JSON values
-        throw log.throwing(new UnsupportedOperationException("No custom JSON reader for DownloadFile."));
+        throw log.throwing(new UnsupportedOperationException("No custom JSON reader for SpeciesDownloadFile."));
     } 
 }

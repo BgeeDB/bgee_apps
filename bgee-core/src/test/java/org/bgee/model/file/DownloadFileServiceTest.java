@@ -16,7 +16,7 @@ import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTOResultSet;
 import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.file.SpeciesDownloadFile.Category;
 import org.junit.Test;
 
 /**
@@ -51,15 +51,15 @@ public class DownloadFileServiceTest extends TestAncestor {
 		
 		//expected values
 		List<DownloadFile> expected = Arrays.asList(
-		        new DownloadFile("/tmp/foo", "NAME", CategoryEnum.AFFY_ANNOT, 42L, 22,
+		        new SpeciesDownloadFile("/tmp/foo", "NAME", null, 42L, Category.AFFY_ANNOT, 22,
 		                Arrays.asList(CallService.Attribute.ANAT_ENTITY_ID)), 
-		        new DownloadFile("/tmp/foo", "NAME2", CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1337L, 22,
+		        new SpeciesDownloadFile("/tmp/foo", "NAME2", null, 1337L, Category.DIFF_EXPR_ANAT_COMPLETE, 22,
 		                Arrays.asList(CallService.Attribute.ANAT_ENTITY_ID,
 		                        CallService.Attribute.DEV_STAGE_ID)));
 		
 		// actual use of the service
 		DownloadFileService service = new DownloadFileService(serviceFactory);
-		List<DownloadFile> files = service.getDownloadFiles(null);
+		List<SpeciesDownloadFile> files = service.getDownloadFiles(null);
 		
 		assertEquals(expected, files);
 	}

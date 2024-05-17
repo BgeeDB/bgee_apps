@@ -355,7 +355,7 @@ public class RawDataLoader extends CommonService {
      * @param rawDataDataType
      * @param offset
      * @param limit
-     * @param partialInfo
+     * @param partialInfo               When {@code true}, only return data necessary for the post-filters.
      * @return
      * @throws IllegalArgumentException
      */

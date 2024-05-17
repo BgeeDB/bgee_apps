@@ -22,7 +22,7 @@ import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpr
 import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.file.SpeciesDownloadFile.Category;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
@@ -122,19 +122,19 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * @since Bgee 13
      */
     public enum SingleSpDiffExprFileType implements DiffExprFileType {
-        DIFF_EXPR_ANATOMY_SIMPLE(CategoryEnum.DIFF_EXPR_ANAT_SIMPLE,
+        DIFF_EXPR_ANATOMY_SIMPLE(Category.DIFF_EXPR_ANAT_SIMPLE,
                 true, ComparisonFactor.ANATOMY),
-        DIFF_EXPR_ANATOMY_COMPLETE(CategoryEnum.DIFF_EXPR_ANAT_COMPLETE,
+        DIFF_EXPR_ANATOMY_COMPLETE(Category.DIFF_EXPR_ANAT_COMPLETE,
                 false, ComparisonFactor.ANATOMY),
-        DIFF_EXPR_DEVELOPMENT_SIMPLE(CategoryEnum.DIFF_EXPR_DEV_SIMPLE,
+        DIFF_EXPR_DEVELOPMENT_SIMPLE(Category.DIFF_EXPR_DEV_SIMPLE,
                 true, ComparisonFactor.DEVELOPMENT),
-        DIFF_EXPR_DEVELOPMENT_COMPLETE(CategoryEnum.DIFF_EXPR_DEV_COMPLETE,
+        DIFF_EXPR_DEVELOPMENT_COMPLETE(Category.DIFF_EXPR_DEV_COMPLETE,
                 false, ComparisonFactor.DEVELOPMENT);
 
         /**
-         * A {@code CategoryEnum} that is the category of files of this type.
+         * A {@code Category} that is the category of files of this type.
          */
-        private final CategoryEnum category;
+        private final Category category;
 
         /**
          * A {@code boolean} defining whether this {@code DiffExprFileType} is a simple file type.
@@ -150,12 +150,12 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         private final ComparisonFactor comparisonFactor;
 
         /**
-         * Constructor providing the {@code CategoryEnum} of this {@code DiffExprFileType},
+         * Constructor providing the {@code Category} of this {@code DiffExprFileType},
          * a {@code boolean} defining whether this {@code DiffExprFileType} is a simple file type, 
          * and a {@code ComparisonFactor} defining what is the experimental factor compared
          * that generated the differential expression calls.
          * 
-         * @param category              A {@code CategoryEnum} corresponding to this
+         * @param category              A {@code Category} corresponding to this
          *                              {@code DiffExprFileType}.
          * @param isSimpleFileType      A {@code boolean} defining whether this
          *                              {@code DiffExprFileType} is a simple file type.
@@ -163,7 +163,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
          *                              experimental factor compared that generated the
          *                              differential expression calls.
          */
-        private SingleSpDiffExprFileType(CategoryEnum category, boolean isSimpleFileType,
+        private SingleSpDiffExprFileType(Category category, boolean isSimpleFileType,
                 ComparisonFactor comparisonFactor) {
             this.category = category;
             this.simpleFileType = isSimpleFileType;
@@ -179,7 +179,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             return this.comparisonFactor;
         }
         @Override
-        public CategoryEnum getCategory() {
+        public Category getCategory() {
             return this.category;
         }
         @Override

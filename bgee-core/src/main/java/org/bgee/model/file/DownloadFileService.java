@@ -259,9 +259,17 @@ public class DownloadFileService extends CommonService {
             case RNASEQ_DATA:
                 return log.traceExit(SpeciesDownloadFile.Category.RNASEQ_DATA);
             case FULL_LENGTH_ANNOT:
-                return log.traceExit(SpeciesDownloadFile.Category.SC_RNA_SEQ_ANNOT);
+                return log.traceExit(SpeciesDownloadFile.Category.FULL_LENGTH_ANNOT);
             case FULL_LENGTH_DATA:
-                return log.traceExit(SpeciesDownloadFile.Category.SC_RNA_SEQ_DATA);
+                return log.traceExit(SpeciesDownloadFile.Category.FULL_LENGTH_DATA);
+            case FULL_LENGTH_H5AD:
+                return log.traceExit(SpeciesDownloadFile.Category.FULL_LENGTH_H5AD);
+            case DROPLET_BASED_ANNOT:
+                return log.traceExit(SpeciesDownloadFile.Category.DROPLET_BASED_ANNOT);
+            case DROPLET_BASED_DATA:
+                return log.traceExit(SpeciesDownloadFile.Category.DROPLET_BASED_DATA);
+            case DROPLET_BASED_H5AD:
+                return log.traceExit(SpeciesDownloadFile.Category.DROPLET_BASED_H5AD);
             default:
                 throw log.throwing(new IllegalArgumentException("Category not supported: " + daoEnum));
         }
@@ -293,10 +301,18 @@ public class DownloadFileService extends CommonService {
                 return log.traceExit(DownloadFileTO.CategoryEnum.RNASEQ_ANNOT);
             case RNASEQ_DATA:
                 return log.traceExit(DownloadFileTO.CategoryEnum.RNASEQ_DATA);
-            case SC_RNA_SEQ_ANNOT:
+            case FULL_LENGTH_ANNOT:
                 return log.traceExit(DownloadFileTO.CategoryEnum.FULL_LENGTH_ANNOT);
-            case SC_RNA_SEQ_DATA:
+            case FULL_LENGTH_DATA:
                 return log.traceExit(DownloadFileTO.CategoryEnum.FULL_LENGTH_DATA);
+            case FULL_LENGTH_H5AD:
+                return log.traceExit(DownloadFileTO.CategoryEnum.FULL_LENGTH_H5AD);
+            case DROPLET_BASED_ANNOT:
+                return log.traceExit(DownloadFileTO.CategoryEnum.DROPLET_BASED_ANNOT);
+            case DROPLET_BASED_DATA:
+                return log.traceExit(DownloadFileTO.CategoryEnum.DROPLET_BASED_DATA);
+            case DROPLET_BASED_H5AD:
+                return log.traceExit(DownloadFileTO.CategoryEnum.DROPLET_BASED_H5AD);
             default:
                 throw log.throwing(new IllegalArgumentException("Category not supported: " + serviceEnum));
         }

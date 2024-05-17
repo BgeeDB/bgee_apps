@@ -32,7 +32,13 @@ public class SpeciesDownloadFile extends DownloadFile {
      *   <li>{@code AFFY_ANNOT} corresponds to an Affymetrix annoations file</li>
      *   <li>{@code AFFY_DATA} corresponds to an Affymetrix signal intensities file</li>
      *   <li>{@code RNASEQ_ANNOT} corresponds to RNA-Seq annotations file</li>
-     *   <li>{@code RNASEQ_DATA} corresponds toRNA-Seq data file</li>
+     *   <li>{@code RNASEQ_DATA} corresponds to RNA-Seq data file</li>
+     *   <li>{@code FULL_LENGTH_ANNOT} corresponds to full length single cell RNA-Seq annotations file</li>
+     *   <li>{@code FULL_LENGTH_DATA} corresponds to full length single cell RNA-Seq data file</li>
+     *   <li>{@code FULL_LENGTH_H5AD} corresponds to full length single cell RNA-Seq  h5ad file</li>
+     *   <li>{@code DROPLET_BASED_ANNOT} corresponds to droplet based single cell RNA-Seq annotations file</li>
+     *   <li>{@code DROPLET_BASED_DATA} corresponds to droplet based single cell RNA-Seq data file</li>
+     *   <li>{@code DROPLET_BASED_H5AD} corresponds to droplet based single cell RNA-Seq  h5ad file</li>
      * </ul>
      *
      * @author  Philippe Moret
@@ -53,8 +59,12 @@ public class SpeciesDownloadFile extends DownloadFile {
         AFFY_DATA("affy_data", false, true),
         RNASEQ_ANNOT("rnaseq_annot", false, true),
         RNASEQ_DATA("rnaseq_data", false, true),
-        SC_RNA_SEQ_ANNOT("full_length_annot", false, true),
-        SC_RNA_SEQ_DATA("full_length_data", false, true);
+        FULL_LENGTH_ANNOT("full_length_annot", false, true),
+        FULL_LENGTH_DATA("full_length_data", false, true),
+        FULL_LENGTH_H5AD("full_length_h5ad", false, true),
+        DROPLET_BASED_ANNOT("droplet_based_annot", false, true),
+        DROPLET_BASED_DATA("droplet_based_data", false, true),
+        DROPLET_BASED_H5AD("droplet_based_h5ad", false, true);
 
         /**
          * A {@code String} that is the string representation.

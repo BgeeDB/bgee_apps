@@ -47,6 +47,9 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
      *                              will also be considered). If {@code null}
      *                              or empty, no filtering will be performed on whether
      *                              the global conditions considered have been observed in annotations.
+     * @param excludeNonInformative A {@code boolean} defining whether to exclude non-informative
+     *                              conditions from results. If {@code true}, non-informative conditions
+     *                              are excluded.
      * @throws IllegalArgumentException 
      */
     //XXX: should we use a Map<ConditionParameter<?, ?>, Boolean> condParamIncludeChildTerms
@@ -54,9 +57,9 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
     public ConditionFilter2(Integer speciesId,
             Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds,
             Collection<ConditionParameter<?, ?>> condParamCombination,
-            Collection<ConditionParameter<?, ?>> observedCondForParams)
-                    throws IllegalArgumentException {
-        super(speciesId, condParamToComposedFilterIds);
+            Collection<ConditionParameter<?, ?>> observedCondForParams,
+            boolean excludeNonInformative) throws IllegalArgumentException {
+        super(speciesId, condParamToComposedFilterIds, excludeNonInformative);
         //Of note, ConditionParameter.copyOf already checks for presence of null elements
         //in the collection
         this.condParamCombination = Collections.unmodifiableSet(
@@ -78,7 +81,7 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
                     "Some filters are defined for a ConditionParameter, but it is not part "
                     + "of the requested ConditionParameter combination"));
         }
-        if (speciesId == null && this.areAllCondParamFiltersEmpty()) {
+        if (speciesId == null && this.areAllFiltersExceptSpeciesEmpty()) {
             throw log.throwing(new IllegalArgumentException("Empty filter"));
         }
     }
@@ -104,9 +107,9 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
     }
 
     @Override
-    public boolean areAllCondParamFiltersEmpty() {
+    public boolean areAllFiltersExceptSpeciesEmpty() {
         log.traceEntry();
-        return log.traceExit(super.areAllCondParamFiltersEmpty() &&
+        return log.traceExit(super.areAllFiltersExceptSpeciesEmpty() &&
                 this.observedCondForParams.isEmpty() &&
                 (this.condParamCombination.isEmpty() ||
                         this.condParamCombination.containsAll(ConditionParameter.allOf())));
@@ -141,6 +144,7 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
                .append(", condParamToFilterIds=").append(getCondParamToComposedFilterIds())
                .append(", condParamCombination=").append(condParamCombination)
                .append(", observedCondForParams=").append(observedCondForParams)
+               .append(", excludeNonInformative=").append(this.isExcludeNonInformative())
                .append("]");
         return builder.toString();
     }

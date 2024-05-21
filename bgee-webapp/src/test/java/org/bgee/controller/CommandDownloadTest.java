@@ -22,10 +22,10 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.file.DownloadFile;
-import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.file.SpeciesDownloadFile.Category;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.file.SpeciesDataGroupService;
+import org.bgee.model.file.SpeciesDownloadFile;
 import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
@@ -117,53 +117,53 @@ public class CommandDownloadTest extends TestAncestor {
         Species spe4 = new Species(7227, "fly", null, "Drosophila", "melanogaster", "dmel1", "assemblyDmel1", new Source(1), 211, null, null, null, null);
         
         //make all file types available for at least one species
-        Set<DownloadFile> dlFileGroup1 = new HashSet<DownloadFile>();
+        Set<SpeciesDownloadFile> dlFileGroup1 = new HashSet<>();
         int i = 0;
-        for (CategoryEnum cat: CategoryEnum.values()) {
-            dlFileGroup1.add(new DownloadFile("my/path/file" + i + ".tsv.zip", "file" + i + ".tsv.zip", 
-                    cat, i * 200L, 11));
+        for (Category cat: Category.values()) {
+            dlFileGroup1.add(new SpeciesDownloadFile("my/path/file" + i + ".tsv.zip", "file" + i + ".tsv.zip", 
+                    null, i * 200L, cat, 11));
             i++;
         }
         //arbitrary files for other groups
-        Set<DownloadFile> dlFileGroup2 = new HashSet<DownloadFile>(Arrays.asList(
-                new DownloadFile("my/path/fileg2_1.tsv.zip", "fileg2_1.tsv.zip", 
-                        CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, 22), 
-                new DownloadFile("my/path/fileg2_2.tsv.zip", "fileg2_2.tsv.zip", 
-                        CategoryEnum.EXPR_CALLS_COMPLETE, 50000L, 22), 
-                new DownloadFile("my/path/fileg2_3.tsv.zip", "fileg2_3.tsv.zip", 
-                        CategoryEnum.RNASEQ_ANNOT, 5000L, 22)
+        Set<SpeciesDownloadFile> dlFileGroup2 = new HashSet<>(Arrays.asList(
+                new SpeciesDownloadFile("my/path/fileg2_1.tsv.zip", "fileg2_1.tsv.zip", 
+                        null, 5000L, Category.EXPR_CALLS_SIMPLE, 22), 
+                new SpeciesDownloadFile("my/path/fileg2_2.tsv.zip", "fileg2_2.tsv.zip", 
+                        null, 50000L, Category.EXPR_CALLS_COMPLETE, 22), 
+                new SpeciesDownloadFile("my/path/fileg2_3.tsv.zip", "fileg2_3.tsv.zip", 
+                        null, 5000L, Category.RNASEQ_ANNOT, 22)
                 ));
-        Set<DownloadFile> dlFileGroup3 = new HashSet<DownloadFile>(Arrays.asList(
-                new DownloadFile("my/path/fileg3_1.tsv.zip", "fileg3_1.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, 500L, 33), 
-                new DownloadFile("my/path/fileg3_2.tsv.zip", "fileg3_2.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 5000L, 33), 
-                new DownloadFile("my/path/fileg3_3.tsv.zip", "fileg3_3.tsv.zip", 
-                        CategoryEnum.AFFY_DATA, 5000L, 33), 
-                new DownloadFile("my/path/fileg3_4.tsv.zip", "fileg3_4.tsv.zip", 
-                        CategoryEnum.AFFY_ANNOT, 5000L, 33)
+        Set<SpeciesDownloadFile> dlFileGroup3 = new HashSet<>(Arrays.asList(
+                new SpeciesDownloadFile("my/path/fileg3_1.tsv.zip", "fileg3_1.tsv.zip", 
+                        null, 500L, Category.DIFF_EXPR_ANAT_SIMPLE, 33), 
+                new SpeciesDownloadFile("my/path/fileg3_2.tsv.zip", "fileg3_2.tsv.zip", 
+                        null, 5000L, Category.DIFF_EXPR_ANAT_COMPLETE, 33), 
+                new SpeciesDownloadFile("my/path/fileg3_3.tsv.zip", "fileg3_3.tsv.zip", 
+                        null, 5000L, Category.AFFY_DATA, 33), 
+                new SpeciesDownloadFile("my/path/fileg3_4.tsv.zip", "fileg3_4.tsv.zip", 
+                        null, 5000L, Category.AFFY_ANNOT, 33)
                 ));
-        Set<DownloadFile> dlFileGroup4 = new HashSet<DownloadFile>(Arrays.asList(
-                new DownloadFile("my/path/fileg4_1.tsv.zip", "fileg4_1.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, 5500L, 44), 
-                new DownloadFile("my/path/fileg4_2.tsv.zip", "fileg4_2.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 55000L, 44), 
-                new DownloadFile("my/path/fileg4_3.tsv.zip", "fileg4_3.tsv.zip", 
-                        CategoryEnum.AFFY_DATA, 55000L, 44), 
-                new DownloadFile("my/path/fileg4_4.tsv.zip", "fileg4_4.tsv.zip", 
-                        CategoryEnum.AFFY_ANNOT, 55000L, 44), 
-                new DownloadFile("my/path/fileg4_5.tsv.zip", "fileg4_5.tsv.zip", 
-                        CategoryEnum.RNASEQ_ANNOT, 55000L, 44), 
-                new DownloadFile("my/path/fileg4_6.tsv.zip", "fileg4_6.tsv.zip", 
-                        CategoryEnum.RNASEQ_DATA, 55000L, 44)
+        Set<SpeciesDownloadFile> dlFileGroup4 = new HashSet<>(Arrays.asList(
+                new SpeciesDownloadFile("my/path/fileg4_1.tsv.zip", "fileg4_1.tsv.zip", 
+                        null, 5500L, Category.DIFF_EXPR_ANAT_SIMPLE, 44), 
+                new SpeciesDownloadFile("my/path/fileg4_2.tsv.zip", "fileg4_2.tsv.zip", 
+                        null, 55000L, Category.DIFF_EXPR_ANAT_COMPLETE, 44), 
+                new SpeciesDownloadFile("my/path/fileg4_3.tsv.zip", "fileg4_3.tsv.zip", 
+                        null, 55000L, Category.AFFY_DATA, 44), 
+                new SpeciesDownloadFile("my/path/fileg4_4.tsv.zip", "fileg4_4.tsv.zip", 
+                        null, 55000L, Category.AFFY_ANNOT, 44), 
+                new SpeciesDownloadFile("my/path/fileg4_5.tsv.zip", "fileg4_5.tsv.zip", 
+                        null, 55000L, Category.RNASEQ_ANNOT, 44), 
+                new SpeciesDownloadFile("my/path/fileg4_6.tsv.zip", "fileg4_6.tsv.zip", 
+                        null, 55000L, Category.RNASEQ_DATA, 44)
                 ));
-        Set<DownloadFile> dlFileGroup5 = new HashSet<DownloadFile>(Arrays.asList(
-                new DownloadFile("my/path/fileg5_1.tsv.zip", "fileg5_1.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, 55000L, 55), 
-                new DownloadFile("my/path/fileg5_2.tsv.zip", "fileg5_2.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 55000L, 55), 
-                new DownloadFile("my/path/fileg5_3.tsv.zip", "fileg5_3.tsv.zip", 
-                        CategoryEnum.ORTHOLOG, 55000L, 55)
+        Set<SpeciesDownloadFile> dlFileGroup5 = new HashSet<>(Arrays.asList(
+                new SpeciesDownloadFile("my/path/fileg5_1.tsv.zip", "fileg5_1.tsv.zip", 
+                        null, 55000L, Category.DIFF_EXPR_ANAT_SIMPLE, 55), 
+                new SpeciesDownloadFile("my/path/fileg5_2.tsv.zip", "fileg5_2.tsv.zip", 
+                        null, 55000L, Category.DIFF_EXPR_ANAT_COMPLETE, 55), 
+                new SpeciesDownloadFile("my/path/fileg5_3.tsv.zip", "fileg5_3.tsv.zip", 
+                        null, 55000L, Category.ORTHOLOG, 55)
                 ));
         
         //groups: 

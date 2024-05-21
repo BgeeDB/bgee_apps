@@ -350,6 +350,7 @@ public class FrontController extends HttpServlet {
                 String url = requestParameters.getRequestURL();
                 log.log(logLevel, "URL requested for Exception: {}", url);
             } catch (Exception eUrl) {
+                eUrl.initCause(realException);
                 realException = eUrl;
                 logLevel = Level.ERROR;
             }

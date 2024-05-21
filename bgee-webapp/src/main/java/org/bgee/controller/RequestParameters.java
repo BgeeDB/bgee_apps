@@ -1154,14 +1154,16 @@ public class RequestParameters {
                     "No key was generated before trying to store the associated parameters.");
         }
         //first check whether these parameters have already been serialized
-        File storageFile = new File(prop.getRequestParametersStorageDirectory() 
-                + this.getFirstValue(this.getKeyParam()));
+        String fileLocation = prop.getRequestParametersStorageDirectory() 
+                + this.getFirstValue(this.getKeyParam());
+        File storageFile = new File(fileLocation);
         if (storageFile.exists()) {
             //file already exists, no need to continue
             return;
         }
         ReentrantReadWriteLock lock = this.getReadWriteLock(this.getFirstValue(
                 this.getKeyParam()));
+        String parametersQuery = null;
         try {
             lock.writeLock().lock();
             while (readWriteLocks.get(this.getDataKey()) == null ||  
@@ -1169,20 +1171,26 @@ public class RequestParameters {
                 lock = this.getReadWriteLock(this.getDataKey());
                 lock.writeLock().lock();
             }
+            //A bit hacky to know where the error occurred in this try block,
+            //rather than having debug logs, we will distinguish between parametersQuery = null
+            //and parametersQuery = ""
+            parametersQuery = "";
             try (BufferedWriter bufferedWriter = new BufferedWriter(
-                    new FileWriter(prop.getRequestParametersStorageDirectory() 
-                            + this.getFirstValue(this.getKeyParam())))) {
+                    new FileWriter(fileLocation))) {
                 // we cannot store an URL-decoded query string, to store encoding-independent values, 
                 // because of cases where, e.g., a parameter value include a character such as '&': 
                 // we couldn't distinguish it anymore from real parameter separators.
-                bufferedWriter.write(generateParametersQuery(null, true, false, "&", null, false));
+                parametersQuery = generateParametersQuery(null, true, false, "&", null, false);
+                bufferedWriter.write(parametersQuery);
             }
         } catch (IOException e) {
             log.catching(e);
+            log.error("Error trying to write requestparameters file {}, parametersQuery: {}",
+                    fileLocation, parametersQuery);
             //delete the file if something went wrong
-            storageFile = new File(prop.getRequestParametersStorageDirectory() 
-                    + this.getFirstValue(this.getKeyParam()));
+            storageFile = new File(fileLocation);
             if (storageFile.exists()) {
+                log.error("File was created, deleting it");
                 if (!storageFile.delete()) {
                     log.error("The file was not deleted before before throwing the exception");
                 }
@@ -2463,6 +2471,17 @@ public class RequestParameters {
         return this.getValues(this.getUrlParametersInstance().getParamAnatEntity());
     }
     /**
+     * Convenient method to retrieve values of the parameter returned by
+     * {@link URLParameters#getParamDiscardAnatEntity()}. Equivalent to calling
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  The {@code List} of {@code String}s that are the values of
+     *          the {@code discard_anat_entity_and_children_id} URL parameter. Can be {@code null}.
+     */
+    public List<String> getDiscardAnatEntity() {
+        return this.getValues(this.getUrlParametersInstance().getParamDiscardAnatEntity());
+    }
+    /**
      * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
      * {@link URLParameters#getParamAnatEntityDescendant()}.
      *
@@ -2496,6 +2515,56 @@ public class RequestParameters {
         log.traceEntry();
         return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
                 this.getUrlParametersInstance().getParamCellTypeDescendant())));
+    }
+    /**
+     * Convenient method to retrieve the value was sent for the URL parameter
+     * {@link URLParameters#getParamObservedData()}.
+     *
+     * @return  {@code true}/{@code false} if it was requested for {@link URLParameters#getParamObservedData()},
+     *          {@code null} otherwise.
+     */
+    public Boolean getObservedData() {
+        log.traceEntry();
+        Boolean paramObservedData = this.getFirstValue(
+                this.getUrlParametersInstance().getParamObservedData());
+        if (Boolean.TRUE.equals(paramObservedData)) {
+            return log.traceExit(Boolean.TRUE);
+        }
+        if (Boolean.FALSE.equals(paramObservedData)) {
+            return log.traceExit(Boolean.FALSE);
+        }
+        return log.traceExit((Boolean) null);
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamExcludeNonInformative()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamExcludeNonInformative()},
+     *          {@code false} otherwise.
+     */
+    public boolean isExcludeNonInformative() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamExcludeNonInformative())));
+    }
+    /**
+     * Convenient method to retrieve which value was sent for the URL parameter
+     * {@link URLParameters#getOnlyPropagated()}.
+     *
+     * @return  {@code true}/{@code false} if it was requested for {@link URLParameters#getOnlyPropagated()},
+     *          {@code null} otherwise.
+     */
+    public Boolean getOnlyPropagated() {
+        log.traceEntry();
+        Boolean onlyPropagated = this.getFirstValue(
+                this.getUrlParametersInstance().getOnlyPropagated());
+        if (Boolean.TRUE.equals(onlyPropagated)) {
+            return log.traceExit(Boolean.TRUE);
+        }
+        if (Boolean.FALSE.equals(onlyPropagated)) {
+            return log.traceExit(Boolean.FALSE);
+        }
+        return log.traceExit((Boolean) null);
     }
     /**
      * Convenient method to retrieve values of the parameter returned by

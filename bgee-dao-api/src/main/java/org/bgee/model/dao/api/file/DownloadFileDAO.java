@@ -108,7 +108,11 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
             RNASEQ_ANNOT("rnaseq_annot"),
             RNASEQ_DATA("rnaseq_data"),
             FULL_LENGTH_ANNOT("full_length_annot"),
-            FULL_LENGTH_DATA("full_length_data");
+            FULL_LENGTH_DATA("full_length_data"),
+            FULL_LENGTH_H5AD("full_length_h5ad"),
+            DROPLET_BASED_ANNOT("droplet_based_annot"),
+            DROPLET_BASED_DATA("droplet_based_data"),
+            DROPLET_BASED_H5AD("droplet_based_h5ad");
 
             /**
              * Constructor

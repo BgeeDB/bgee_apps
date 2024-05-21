@@ -30,7 +30,7 @@ import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCall;
-import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.file.SpeciesDownloadFile.Category;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
@@ -471,13 +471,13 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
      * @since Bgee 13
      */
     public enum MultiSpExprFileType implements FileType {
-        MULTI_EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
-        MULTI_EXPR_COMPLETE(CategoryEnum.EXPR_CALLS_COMPLETE, false);
+        MULTI_EXPR_SIMPLE(Category.EXPR_CALLS_SIMPLE, true),
+        MULTI_EXPR_COMPLETE(Category.EXPR_CALLS_COMPLETE, false);
     
         /**
-         * A {@code CategoryEnum} that is the category of files of this type.
+         * A {@code Category} that is the category of files of this type.
          */
-        private final CategoryEnum category;
+        private final Category category;
         
         /**
          * A {@code boolean} defining whether this {@code MultiSpeciesExprFileType} is a simple 
@@ -486,11 +486,11 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         private final boolean simpleFileType;
     
         /**
-         * Constructor providing the {@code CategoryEnum} of this {@code MultiSpeciesExprFileType},
+         * Constructor providing the {@code Category} of this {@code MultiSpeciesExprFileType},
          * and a {@code boolean} defining whether this {@code MultiSpeciesExprFileType}
          * is a simple file type.
          */
-        private MultiSpExprFileType(CategoryEnum category, boolean simpleFileType) {
+        private MultiSpExprFileType(Category category, boolean simpleFileType) {
             this.category = category;
             this.simpleFileType = simpleFileType;
         }
@@ -508,7 +508,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
             return this.getStringRepresentation();
         }
         @Override
-        public CategoryEnum getCategory() {
+        public Category getCategory() {
             return this.category;
         }
     }

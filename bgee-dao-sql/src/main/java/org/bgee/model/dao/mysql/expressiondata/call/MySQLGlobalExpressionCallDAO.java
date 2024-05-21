@@ -496,26 +496,36 @@ implements GlobalExpressionCallDAO {
             .map(pValOrFilterCollection -> pValOrFilterCollection.stream()
                     .map(pValFilter -> {
                         StringBuilder sb = new StringBuilder();
-                        sb.append(globalExprTableName).append(".");
 
+                        EnumSet<DAODataType> dataTypes =
+                                pValFilter.getPValue().getDataTypes().isEmpty()?
+                                EnumSet.allOf(DAODataType.class):
+                                pValFilter.getPValue().getDataTypes();
+                        String fieldName = getFieldNamePartFromDataTypes(dataTypes);
                         if (pValFilter.getPropagationState().equals(
                                 DAOPropagationState.SELF_AND_DESCENDANT)) {
-                            sb.append(GLOBAL_P_VALUE_FIELD_START);
+                            sb.append(globalExprTableName).append(".")
+                              .append(GLOBAL_P_VALUE_FIELD_START);
                         } else if (pValFilter.getPropagationState().equals(
                                 DAOPropagationState.DESCENDANT)) {
-                            sb.append(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START);
+                            sb.append("(")
+                              .append(globalExprTableName).append(".")
+                              .append(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START)
+                              .append(fieldName).append(" IS NULL OR ")
+                              .append(globalExprTableName).append(".")
+                              .append(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START);
                         } else {
                             throw log.throwing(new IllegalArgumentException(
                                     "Unsupported propagation state in PValueFilter: "
                                     + pValFilter.getPropagationState()));
                         }
-                        EnumSet<DAODataType> dataTypes =
-                                pValFilter.getPValue().getDataTypes().isEmpty()?
-                                EnumSet.allOf(DAODataType.class):
-                                pValFilter.getPValue().getDataTypes();
-                        sb.append(getFieldNamePartFromDataTypes(dataTypes))
+                        sb.append(fieldName)
                           .append(" ").append(pValFilter.getQualifier().getSymbol())
                           .append(" ?");
+                        if (pValFilter.getPropagationState().equals(
+                                DAOPropagationState.DESCENDANT)) {
+                            sb.append(")");
+                        }
 
                         if (pValFilter.isSelfObservationRequired()) {
                             sb.append(dataTypes.stream()
@@ -1145,11 +1155,10 @@ implements GlobalExpressionCallDAO {
                     } else if (colName.startsWith(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START)) {
 
                         Integer descendantConditionId = null;
-                        EnumSet<DAODataType> dataTypesUsedInField = getDataTypesFromFieldName(colName);
                         BigDecimal pVal = currentResultSet.getBigDecimal(colName);
                         if (pVal != null) {
                             bestDescendantPValues.add(new DAOFDRPValue(pVal, descendantConditionId,
-                                dataTypesUsedInField));
+                                    getDataTypesFromFieldName(colName)));
                         }
                     } else if (colName.startsWith(GLOBAL_P_VALUE_FIELD_START)) {
 

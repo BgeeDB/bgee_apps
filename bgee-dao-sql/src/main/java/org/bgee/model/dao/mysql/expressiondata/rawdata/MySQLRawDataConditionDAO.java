@@ -282,7 +282,7 @@ implements RawDataConditionDAO {
         for (DAORawDataConditionFilter condFilter: conditionFilters) {
 
             offsetParamIndex = parameterizeAnatEntityCellTypeWhereFragment(
-                    condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                    condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(), null,
                     stmt, offsetParamIndex);
 
             if (!condFilter.getSpeciesIds().isEmpty()) {
@@ -315,7 +315,7 @@ implements RawDataConditionDAO {
         boolean previousCond = false;
 
         String anatEntityCellTypeWhereClause = generateAnatEntityCellTypeWhereFragment(
-                condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(), null,
                 MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO.Attribute.ANAT_ENTITY_ID.getTOFieldName(),
                 MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO.Attribute.CELL_TYPE_ID.getTOFieldName());
         if (StringUtils.isNotBlank(anatEntityCellTypeWhereClause)) {

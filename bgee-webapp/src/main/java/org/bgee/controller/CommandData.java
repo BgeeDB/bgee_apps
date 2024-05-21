@@ -16,6 +16,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
@@ -28,6 +29,7 @@ import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
@@ -42,6 +44,7 @@ import org.bgee.model.expressiondata.rawdata.RawDataLoader;
 import org.bgee.model.expressiondata.rawdata.RawDataLoader.InformationType;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter.RawDataProcessedFilterConditionPart;
 import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
@@ -413,9 +416,9 @@ public class CommandData extends CommandParent {
         private final DataType dataType;
         private final EnumSet<InformationType> informationTypes;
 
-        public RawDataCacheKey(RawDataFilter processedFilter, DataType dataType,
+        public RawDataCacheKey(RawDataFilter sourceFilter, DataType dataType,
                 EnumSet<InformationType> informationTypes) {
-            this.sourceFilter = processedFilter;
+            this.sourceFilter = sourceFilter;
             this.dataType = dataType;
             this.informationTypes = informationTypes;
         }
@@ -464,9 +467,9 @@ public class CommandData extends CommandParent {
         private final Long offset;
         private final Integer limit;
 
-        public RawDataResultCacheKey(RawDataFilter processedFilter, DataType dataType,
+        public RawDataResultCacheKey(RawDataFilter sourceFilter, DataType dataType,
                 EnumSet<InformationType> informationTypes, Long offset, Integer limit) {
-            super(processedFilter, dataType, informationTypes);
+            super(sourceFilter, dataType, informationTypes);
             this.offset = offset;
             this.limit = limit;
         }
@@ -560,6 +563,66 @@ public class CommandData extends CommandParent {
             return builder.toString();
         }
     }
+    public static class RawDataCondPartProcessingCacheKey {
+        private final Set<RawDataConditionFilter> condFilters;
+        public RawDataCondPartProcessingCacheKey(Set<RawDataConditionFilter> condFilters) {
+            this.condFilters = condFilters;
+        }
+        public Set<RawDataConditionFilter> getCondFilters() {
+            return condFilters;
+        }
+        @Override
+        public int hashCode() {
+            return Objects.hash(condFilters);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            RawDataCondPartProcessingCacheKey other = (RawDataCondPartProcessingCacheKey) obj;
+            return Objects.equals(condFilters, other.condFilters);
+        }
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("RawDataCondPartProcessingCacheKey [condFilters=").append(condFilters).append("]");
+            return builder.toString();
+        }
+    }
+    public static class ExprCallCondPartProcessingCacheKey {
+        private final Set<ConditionFilter2> condFilters;
+        public ExprCallCondPartProcessingCacheKey(Set<ConditionFilter2> condFilters) {
+            this.condFilters = condFilters;
+        }
+        public Set<ConditionFilter2> getCondFilters() {
+            return condFilters;
+        }
+        @Override
+        public int hashCode() {
+            return Objects.hash(condFilters);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            ExprCallCondPartProcessingCacheKey other = (ExprCallCondPartProcessingCacheKey) obj;
+            return Objects.equals(condFilters, other.condFilters);
+        }
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("ExprCallCondPartProcessingCacheKey [condFilters=").append(condFilters).append("]");
+            return builder.toString();
+        }
+    }
 
     /**
      * An {@code int} that is the maximum allowed number of results
@@ -592,22 +655,31 @@ public class CommandData extends CommandParent {
             ExpressionCallFilter2.class, Long.class, CacheType.LRU, 60);
 
     /**
-     * A {@code long} that is the execution time in milliseconds of the processing of a filter
-     * that triggers storing the result in cache. Defined as {@code long}
-     * for convenience when comparing to start and end times provided as {@code long}.
+     * A {@code long} that is the execution time in milliseconds of the processing of
+     * the part of a filter related to condition, that triggers storing the result in cache.
+     * We store the condition part rather than the full processing for more flexibility,
+     * since it is this part that is costly, and can be reused, with, for instance,
+     * different gene filtering parts.
+     * <p>
+     * Defined as {@code long} for convenience when comparing to start and end times
+     * provided as {@code long}.
      *
      * @see #loadRawDataLoader(RawDataFilter)
      * @see #loadExprCallLoader(ExpressionCallFilter2)
      */
-    private final static long COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS = 1000L;
+    private final static long COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS = 1000L;
 
-    private final static CacheDefinition<RawDataFilter, RawDataProcessedFilter>
-    RAW_DATA_PROCESSED_FILTER_CACHE_DEF = new CacheDefinition<>("rawDataProcessedFilterCache",
-            RawDataFilter.class, RawDataProcessedFilter.class, CacheType.LRU, 20);
+    private final static CacheDefinition<RawDataCondPartProcessingCacheKey, RawDataProcessedFilterConditionPart>
+    RAW_DATA_PROCESSED_COND_PART_CACHE_DEF = new CacheDefinition<>("rawDataProcessedCondPartCache",
+            RawDataCondPartProcessingCacheKey.class,
+            RawDataProcessedFilter.RawDataProcessedFilterConditionPart.class,
+            CacheType.LRU, 20);
 
-    private final static CacheDefinition<ExpressionCallFilter2, ExpressionCallProcessedFilter>
-    EXPR_CALL_PROCESSED_FILTER_CACHE_DEF = new CacheDefinition<>("exprCallProcessedFilterCache",
-            ExpressionCallFilter2.class, ExpressionCallProcessedFilter.class, CacheType.LRU, 20);
+    private final static CacheDefinition<ExprCallCondPartProcessingCacheKey, ExpressionCallProcessedFilterConditionPart>
+    EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF = new CacheDefinition<>("exprCallProcessedCondPartCache",
+            ExprCallCondPartProcessingCacheKey.class,
+            ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart.class,
+            CacheType.LRU, 20);
 
     /**
      * A {@code long} that is the execution time in milliseconds of the processing of results
@@ -657,6 +729,21 @@ public class CommandData extends CommandParent {
      * when the URL parameter {@code exp_id} is provided).
      */
     private final static String EXPERIMENT_PAGE_ACTION = "experiment";
+
+    private final static String ID_PARAM_SUMMARY_VALUE = "SUMMARY";
+    private final static Set<String> SUMMARY_ANAT_ENTITY_IDS = Set.of(
+            "UBERON:0001062",
+            "UBERON:0000010", "UBERON:0000211", "UBERON:0000309", "UBERON:0000468",
+            "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007",
+            "UBERON:0001008", "UBERON:0001009", "UBERON:0001015", "UBERON:0001017",
+            "UBERON:0001032", "UBERON:0001434", "UBERON:0002193", "UBERON:0002330",
+            "UBERON:0002384", "UBERON:0002405", "UBERON:0002416", "UBERON:0015204");
+    private final static String SUMMARY_ANAT_ENTITY_ROOT_ID = "UBERON:0001062";
+    private final static Set<String> SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS =
+            Collections.unmodifiableSet(
+                   SUMMARY_ANAT_ENTITY_IDS.stream().filter(id -> !id.equals(SUMMARY_ANAT_ENTITY_ROOT_ID))
+                   .collect(Collectors.toSet()));
+    private final static Set<String> SUMMARY_CELL_TYPE_IDS = Set.of(ConditionDAO.CELL_TYPE_ROOT_ID);
 
     //Static initializer
     {
@@ -931,9 +1018,8 @@ public class CommandData extends CommandParent {
                 .loadRawDataLoader(this.loadRawDataFilter(false));
 
         //We don't know which data type the experiment belongs to,
-        //so we test them all
-        DataType dataTypeWithResults = null;
-        RawDataContainerWithExperiment<?, ?, ?> container = null;
+        //and there can be multiple data types in an experiment
+        Map<DataType, RawDataContainerWithExperiment<?, ?, ?>> dataTypeToContainer = new HashMap<>();
         for (DataType dt: EnumSet.allOf(DataType.class)) {
             RawDataDataType<? extends RawDataContainerWithExperiment<?, ?, ?>, ?> rdt =
                     RawDataDataType.getRawDataDataTypeWithExperiment(dt);
@@ -942,7 +1028,7 @@ public class CommandData extends CommandParent {
                 continue;
             }
 
-            container = rawDataLoader.loadData(
+            RawDataContainerWithExperiment<?, ?, ?> container = rawDataLoader.loadData(
                     //We want the assays to be displayed on the experiment page,
                     //The experiment itself will be retrieved along the way
                     InformationType.ASSAY,
@@ -952,39 +1038,37 @@ public class CommandData extends CommandParent {
                     //the max number of assays in an experiment
                     RawDataLoader.LIMIT_MAX);
             if (!container.getAssays().isEmpty()) {
-                //we found our result
-                dataTypeWithResults = dt;
-                //TODO: For now we consider that one experiment can only correspond to
-                // one datatype. It is not always true. One experiment could contain
-                // bulk AND single cell RNASeq (and even both full length and target based).
-                // We have to update both the API and the webapp to manage those cases as it
-                // impact the libraries retrieved but also the download button on the website.
-                // For now, if we have both bulk and single cell RNASeq data we decided to
-                // retrieve only single cell information. We managed that by defining SC_RNA_SEQ
-                // before RNA_SEQ in the enum org.bgee.model.expressiondata.baseelements.Datatype.
-                break;
+                dataTypeToContainer.put(dt, container);
             }
-            //otherwise we continue to search
-            container = null;
         }
-        if (container == null) {
+        if (dataTypeToContainer.isEmpty()) {
             throw log.throwing(new PageNotFoundException("The experiment ID "
                     + this.requestParameters.getExperimentId() + " does not exist in Bgee."));
         }
 
-        if (container.getExperiments().size() != 1) {
+        //We don't use a Set, because the hashCode/equals methods of Experiment is based on their ID,
+        //and here we can retrieve multiple experiments with same ID but different data types
+        List<Experiment<?>> experiments = dataTypeToContainer.values().stream()
+                .flatMap(c -> c.getExperiments().stream())
+                .collect(Collectors.toList());
+        if (experiments.stream().map(e -> e.getId()).collect(Collectors.toSet()).size() != 1) {
             throw log.throwing(new IllegalStateException(
                     "Ambiguous experiment ID, should not happen. Experiments retrieved: "
-                    + container.getExperiments()));
+                    + experiments));
         }
-        assert dataTypeWithResults != null;
-        Experiment<?> experiment = container.getExperiments().iterator().next();
-        LinkedHashSet<Assay> assays = new LinkedHashSet<>(container.getAssays());
+
+        LinkedHashSet<Assay> assays = dataTypeToContainer.values().stream()
+                .flatMap(c -> c.getAssays().stream())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         List<ColumnDescription> colDescr;
+        //For column description, if among the retrieved data types we have SC_RNA_SEQ,
+        //this is the one we use since it uses more columns. Otherwise, use the first one.
+        DataType colDataType = dataTypeToContainer.keySet().contains(DataType.SC_RNA_SEQ)?
+                DataType.SC_RNA_SEQ: dataTypeToContainer.keySet().iterator().next();
         try {
             colDescr = this.getColumnDescriptions(
-                    EXPERIMENT_PAGE_ACTION, EnumSet.of(dataTypeWithResults))
-                    .get(dataTypeWithResults);
+                    EXPERIMENT_PAGE_ACTION, EnumSet.of(colDataType))
+                    .get(colDataType);
         } catch (InvalidRequestException e) {
             //here it means we didn't correctly called the method getColumnDescriptions,
             //it is not an InvalidRequestException
@@ -992,7 +1076,7 @@ public class CommandData extends CommandParent {
         }
 
         DataDisplay display = viewFactory.getDataDisplay();
-        display.displayExperimentPage(experiment, assays, dataTypeWithResults, colDescr);
+        display.displayExperimentPage(experiments, assays, colDataType, colDescr);
 
         log.traceExit();
     }
@@ -1191,24 +1275,32 @@ public class CommandData extends CommandParent {
         log.traceEntry("{}", filter);
 
         RawDataService rawDataService = this.serviceFactory.getRawDataService();
-        //Try to get the processed filter from the cache.
+        //Try to get the processed condition part of the processed filter from cache
         RawDataProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
-                RAW_DATA_PROCESSED_FILTER_CACHE_DEF,
-                filter,
+                RAW_DATA_PROCESSED_COND_PART_CACHE_DEF,
+                new RawDataCondPartProcessingCacheKey(filter.getConditionFilters()),
                 () -> rawDataService.processRawDataFilter(filter),
-                COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS);
+                pf -> pf.getConditionPart(),
+                condPart -> rawDataService.processRawDataFilter(filter,
+                        null, condPart, null),
+                COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS);
+
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
     }
     private ExpressionCallLoader loadExprCallLoader(ExpressionCallFilter2 filter) {
         log.traceEntry("{}", filter);
 
         ExpressionCallService callService = this.serviceFactory.getExpressionCallService();
-        //Try to get the processed filter from the cache.
+        //Try to get the processed condition part of the processed filter from cache
         ExpressionCallProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
-                EXPR_CALL_PROCESSED_FILTER_CACHE_DEF,
-                filter,
+                EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF,
+                new ExprCallCondPartProcessingCacheKey(filter.getConditionFilters()),
                 () -> callService.processExpressionCallFilter(filter),
-                COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS);
+                pf -> pf.getConditionPart(),
+                condPart -> callService.processExpressionCallFilter(filter,
+                        null, condPart, null),
+                COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS);
+
         return log.traceExit(callService.getCallLoader(processedFilter));
     }
 
@@ -1302,6 +1394,7 @@ public class CommandData extends CommandParent {
         GeneFilter geneFilter = speciesId == null && filterSpeciesId == null? null:
             new GeneFilter(filterSpeciesId != null? filterSpeciesId: speciesId,
                     this.requestParameters.getGeneIds());
+        boolean onlyPropagatedParam = Boolean.TRUE.equals(this.requestParameters.getOnlyPropagated());
 
         return log.traceExit(new RawDataFilter(
                 geneFilter != null? Collections.singleton(geneFilter): null,
@@ -1310,7 +1403,9 @@ public class CommandData extends CommandParent {
                         filterExperimentIds: experimentIds,
                 //there is no for parameter for assayId only, so we always use the filter directly
                 filterAssayIds,
-                expOrAssayIds));
+                expOrAssayIds,
+                // for now we do not allow to retrieve only not propagated raw data.
+                onlyPropagatedParam == false ? null: true));
     }
     private ExpressionCallFilter2 loadExprCallFilter(boolean consideringFilters,
             Set<ConditionParameter<?, ?>> condParams, EnumSet<DataType> dataTypes)
@@ -1356,29 +1451,63 @@ public class CommandData extends CommandParent {
         Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds =
                 new HashMap<>();
 
+        //--------------
+        //Management of "magic" values:
+        //If we receive the magic value "SUMMARY", we'll use a fix list of terms.
+        List<String> anatEntityIds = this.requestParameters.getAnatEntity() == null? new ArrayList<>():
+            new ArrayList<>(this.requestParameters.getAnatEntity());
+        if (anatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            anatEntityIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
+            anatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
+        }
+        List<String> cellTypeIds = this.requestParameters.getCellType() == null? new ArrayList<>():
+            new ArrayList<>(this.requestParameters.getCellType());
+        if (cellTypeIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            cellTypeIds.addAll(SUMMARY_CELL_TYPE_IDS);
+            cellTypeIds.remove(ID_PARAM_SUMMARY_VALUE);
+        }
+        List<String> discardAnatEntityIds = this.requestParameters.getDiscardAnatEntity() == null?
+                new ArrayList<>(): new ArrayList<>(this.requestParameters.getDiscardAnatEntity());
+        if (discardAnatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            discardAnatEntityIds.addAll(SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS);
+            discardAnatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
+        }
+        boolean requestedAnatEntityDescendant = Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                this.requestParameters.getUrlParametersInstance().getParamAnatEntityDescendant()));
+        if (!anatEntityIds.isEmpty() && !discardAnatEntityIds.isEmpty() && !requestedAnatEntityDescendant) {
+            throw log.throwing(new InvalidRequestException("Only when anat. entity descendants are requested "
+                    + "it is possible to exclude anat. entities and their children."));
+        }
+        //And we never include child terms when the parameter comes from a filter.
+        boolean anatEntityDescendant =
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty() ||
+                anatEntityIds.isEmpty()? false:
+                    Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                            this.requestParameters.getUrlParametersInstance()
+                            .getParamAnatEntityDescendant()));
+        //--------------
+
         //ANAT ENTITY AND CELL TYPE
         FilterIds<String> anatEntityFilter = new FilterIds<>(
                 //Filters override the related parameter from the form
                 filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()?
-                        filterAnatEntityCellTypeIds: this.requestParameters.getAnatEntity(),
-                //And we never include child terms when the parameter comes from a filter.
-                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty() ||
-                this.requestParameters.getAnatEntity() == null ||
-                this.requestParameters.getAnatEntity().isEmpty()?
-                        false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
-                                this.requestParameters.getUrlParametersInstance()
-                                .getParamAnatEntityDescendant())));
+                        filterAnatEntityCellTypeIds: anatEntityIds,
+                anatEntityDescendant,
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()?
+                        null: discardAnatEntityIds,
+                null);
         FilterIds<String> cellTypeFilter = new FilterIds<>(
                 //Filters override the related parameter from the form
                 filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()?
-                        filterAnatEntityCellTypeIds: this.requestParameters.getCellType(),
+                        filterAnatEntityCellTypeIds: cellTypeIds,
                 //And we never include child terms when the parameter comes from a filter.
                 filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty() ||
-                this.requestParameters.getCellType() == null ||
-                this.requestParameters.getCellType().isEmpty()?
+                        cellTypeIds.isEmpty()?
                         false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
                                 this.requestParameters.getUrlParametersInstance()
                                 .getParamCellTypeDescendant())));
+
+
         List<FilterIds<String>> composedFilterIds = new ArrayList<>(List.of(anatEntityFilter));
         //In case we used the filters, anatEntityFilter and cellTypeFilter should be equal,
         //and we thus don't use the cellTypeFilter
@@ -1433,8 +1562,9 @@ public class CommandData extends CommandParent {
             condFilter = new ConditionFilter2(speciesId,
                     condParamToComposedFilterIds,
                     condParams,
-                    null);
-            if (condFilter.areAllCondParamFiltersEmpty()) {
+                    null,
+                    this.requestParameters.isExcludeNonInformative());
+            if (condFilter.areAllFiltersExceptSpeciesEmpty()) {
                 //To request a species a GeneFilter is mandatory,
                 //so if there are no other filters, we can discard this ConditionFilter
                 condFilter = null;
@@ -1481,9 +1611,10 @@ public class CommandData extends CommandParent {
                     condFilter != null? Set.of(condFilter): null,
                     dataTypes,
                     condParams,
-                    null, null));
+                    this.requestParameters.getObservedData() == null? null: condParams,
+                    this.requestParameters.getObservedData()));
         } catch (IllegalArgumentException e) {
-            log.catching(Level.DEBUG, e);
+            log.catching(Level.ERROR, e);
             throw log.throwing(new InvalidRequestException("Incorrect parameters"));
         }
     }
@@ -1844,7 +1975,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", false));
+        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.experiment.id", "result.id",
                 null, false));
 
@@ -1869,7 +2000,12 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", isSingleCell));
+        colDescr.addAll(getConditionColumnDescriptions("result", isSingleCell, true));
+        colDescr.add(new ColumnDescription("Physiological status",
+                "Physiological status of the organism at time of sampling",
+                List.of("result.annotation.physiologicalStatus"),
+                ColumnDescription.ColumnType.STRING,
+                null, null, true, null, null));
 
         colDescr.add(new ColumnDescription("Technology", null,
                 List.of("result.library.technology.protocolName"),
@@ -1966,7 +2102,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", false));
+        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
         colDescr.add(getAnnotsToProcExprValuesColDesc(null, "result.id",
                 null, false));
 
@@ -1987,7 +2123,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", false));
+        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.experiment.id", "result.id",
                 null, false));
 
@@ -2131,7 +2267,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
 
         return log.traceExit(colDescr);
     }
@@ -2184,7 +2320,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", isSingleCell));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", isSingleCell, false));
 
         return log.traceExit(colDescr);
     }
@@ -2220,7 +2356,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
 
         return log.traceExit(colDescr);
     }
@@ -2251,7 +2387,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
 
         return log.traceExit(colDescr);
     }
@@ -2285,6 +2421,10 @@ public class CommandData extends CommandParent {
                 ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         colDescr.add(new ColumnDescription("Experiment name", null,
                 List.of("result.name"),
+                ColumnDescription.ColumnType.STRING,
+                null, null, true, null, null));
+        colDescr.add(new ColumnDescription("DOI", "DOI of the related publication",
+                List.of("result.dOI"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
         colDescr.add(new ColumnDescription("Description", null,
@@ -2345,8 +2485,8 @@ public class CommandData extends CommandParent {
     }
 
     private static List<ColumnDescription> getConditionColumnDescriptions(String attributeStart,
-            boolean displayCellType) {
-        log.traceEntry("{}, {}", attributeStart, displayCellType);
+            boolean displayCellType, boolean displayAuthorAnnots) {
+        log.traceEntry("{}, {}, {}", attributeStart, displayCellType, displayAuthorAnnots);
         List<ColumnDescription> colDescr = new ArrayList<>();
 
         if (displayCellType) {
@@ -2360,6 +2500,13 @@ public class CommandData extends CommandParent {
                     List.of(attributeStart + ".annotation.rawDataCondition.cellType.name"),
                     ColumnDescription.ColumnType.STRING,
                     null, null, true, null, null));
+            if (displayAuthorAnnots) {
+                colDescr.add(new ColumnDescription("Cell type author annotation",
+                        "Free text annotation of cell type as provided by authors",
+                        List.of(attributeStart + ".annotation.rawDataCondition.cellTypeAuthorAnnotation"),
+                        ColumnDescription.ColumnType.STRING,
+                        null, null, true, null, null));
+            }
         }
         colDescr.add(new ColumnDescription("Anat. entity ID",
                 "ID of the anatomical localization of the sample",
@@ -2371,6 +2518,13 @@ public class CommandData extends CommandParent {
                 List.of(attributeStart + ".annotation.rawDataCondition.anatEntity.name"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+        if (displayAuthorAnnots) {
+            colDescr.add(new ColumnDescription("Anat. entity author annotation",
+                    "Free text annotation of anatomical localization of the sample as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.anatEntityAuthorAnnotation"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Stage ID",
                 "ID of the developmental and life stage of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.devStage.id"),
@@ -2381,6 +2535,13 @@ public class CommandData extends CommandParent {
                 List.of(attributeStart + ".annotation.rawDataCondition.devStage.name"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+        if (displayAuthorAnnots) {
+            colDescr.add(new ColumnDescription("Stage author annotation",
+                    "Free text annotation of the developmental and life stage of the sample as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.devStageAuthorAnnotation"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Sex",
                 "Annotation of the sex of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.sex"),
@@ -2391,6 +2552,19 @@ public class CommandData extends CommandParent {
                 List.of(attributeStart + ".annotation.rawDataCondition.strain"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+
+        if (displayAuthorAnnots) {
+            colDescr.add(new ColumnDescription("Time",
+                    "Free text annotation of the time of sampling as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.time"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+            colDescr.add(new ColumnDescription("Time unit",
+                    "Unit for the time of sampling as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.timeUnit"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Species", null,
                 List.of(attributeStart + ".annotation.rawDataCondition.species.genus",
                         attributeStart + ".annotation.rawDataCondition.species.speciesName"),

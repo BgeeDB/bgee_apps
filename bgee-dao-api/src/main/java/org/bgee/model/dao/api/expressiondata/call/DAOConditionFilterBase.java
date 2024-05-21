@@ -44,13 +44,17 @@ public class DAOConditionFilterBase<T extends Enum<T>> extends DAOBaseConditionF
      *                              will also be considered). If {@code null}
      *                              or empty, no filtering will be performed on whether
      *                              the global conditions considered have been observed in annotations.
+     * @param excludedAnatEntityCellTypeIds  A {@code Collection} of {@code String}s that are the IDs
+     *                                      of the anatomical entities and cell types that this
+     *                                      {@code DAOConditionFilter} will specify to discard.
      * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs 
      *                                  are provided. 
      */
     public DAOConditionFilterBase(Collection<String> anatEntitieIds, Collection<String> devStageIds,
             Collection<String> cellTypeIds, Collection<String> sexIds, Collection<String> strainIds,
-            Collection<T> observedCondForParams, Class<T> condParamType) throws IllegalArgumentException {
-        super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds);
+            Collection<T> observedCondForParams, Class<T> condParamType,
+            Collection<String> excludedAnatEntityCellTypeIds) throws IllegalArgumentException {
+        super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds, excludedAnatEntityCellTypeIds);
         if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
                 (devStageIds == null || devStageIds.isEmpty()) &&
                 (cellTypeIds == null || cellTypeIds.isEmpty()) &&
@@ -147,12 +151,15 @@ public class DAOConditionFilterBase<T extends Enum<T>> extends DAOBaseConditionF
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("DAOConditionFilter [anatEntityIds=").append(getAnatEntityIds())
+        builder.append("DAOConditionFilter [")
+               .append("anatEntityIds=").append(getAnatEntityIds())
+               .append(", excludedAnatEntityCellTypeIds=").append(getExcludedAnatEntityCellTypeIds())
                .append(", devStageIds=").append(getDevStageIds())
                .append(", cellTypeIds=").append(getCellTypeIds())
                .append(", sexIds=").append(getSexIds())
                .append(", strainIds=").append(getStrainIds())
-               .append(", observedCondForParams=").append(observedCondForParams).append("]");
+               .append(", observedCondForParams=").append(observedCondForParams)
+               .append("]");
         return builder.toString();
     }
 

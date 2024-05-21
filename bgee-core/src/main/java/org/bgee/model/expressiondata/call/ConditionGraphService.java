@@ -366,7 +366,7 @@ public class ConditionGraphService extends CommonService {
             //by the method loadNonInformativeAnatEntitiesBySpeciesIds.
             Set<AnatEntity> nonInformativeAnatEntities = propagateToInformativeAnatEntitiesOnly?
                     this.getServiceFactory().getAnatEntityService()
-                    .loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(speciesId))
+                    .loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(speciesId), false)
                     .collect(Collectors.toSet()):
                         new HashSet<>();
             AnatEntity rootAnatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);

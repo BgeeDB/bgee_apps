@@ -123,23 +123,29 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
     private final Set<String> experimentIds;
     private final Set<String> assayIds;
     private final Set<String> experimentOrAssayIds;
+    private final Boolean usedInPropagatedCalls;
 
     public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters) {
-        this(geneFilters, conditionFilters, null, null, null);
+        this(geneFilters, conditionFilters, null, null, null, null);
     }
     /**
-     * @param geneFilters           A {@code Collection} of {@code GeneFilter}s specifying
-     *                              the species to target, or some specific genes to target.
-     * @param conditionFilters      A {@code Collection} of {@code RawDataConditionFilter}s specifying
-     *                              the species to target, or some specific conditions to target.
-     * @param experimentIds         A {@code Collection} of {@code String}s that are IDs of experiments
-     *                              to consider. Only results part of these experiments will be returned.
-     * @param assayIds              A {@code Collection} of {@code String}s that are IDs of assays
-     *                              to consider. Only results part of these assays will be returned.
-     * @param experimentOrAssayIds  A {@code Collection} of {@code String}s that are IDs of either
-     *                              experiments or assays, in case it is not known which {@code String}s
-     *                              are experiment IDs, and which are assay IDs.
-     *                              Only results part of these experiments and/or assays will be returned.
+     * @param geneFilters               A {@code Collection} of {@code GeneFilter}s specifying
+     *                                  the species to target, or some specific genes to target.
+     * @param conditionFilters          A {@code Collection} of {@code RawDataConditionFilter}s specifying
+     *                                  the species to target, or some specific conditions to target.
+     * @param experimentIds             A {@code Collection} of {@code String}s that are IDs of experiments
+     *                                  to consider. Only results part of these experiments will be returned.
+     * @param assayIds                  A {@code Collection} of {@code String}s that are IDs of assays
+     *                                  to consider. Only results part of these assays will be returned.
+     * @param experimentOrAssayIds      A {@code Collection} of {@code String}s that are IDs of either
+     *                                  experiments or assays, in case it is not known which {@code String}s
+     *                                  are experiment IDs, and which are assay IDs.
+     *                                  Only results part of these experiments and/or assays will be returned.
+     * @param usedInPropagatedCalls     A {@code Boolean} allowing to specify if the library has to be used
+     *                                  to generate propagated calls. If <strong>true</strong> only libraries used to
+     *                                  generate calls are retrieved. If <strong>false</strong> only libraries
+     *                                  not used to generate calls are retrieved. If <strong>null</strong> then
+     *                                  no filtering on generation of calls is applied to retrieve libraries.
      * @throws IllegalArgumentException If a RawDataConditionFilter queries all conditions in a species,
                                         while another RawDataConditionFilter queries
                                         some more specific conditions in that species.
@@ -148,7 +154,8 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
                                         and {@code conditionFilters}.
      */
     public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters,
-            Collection<String> experimentIds, Collection<String> assayIds, Collection<String> experimentOrAssayIds)
+            Collection<String> experimentIds, Collection<String> assayIds, Collection<String> experimentOrAssayIds,
+            Boolean usedInPropagatedCalls)
                     throws IllegalArgumentException {
         super(geneFilters, conditionFilters,
                 checkAndLoadSpeciesIdsConsidered(geneFilters, conditionFilters));
@@ -159,6 +166,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
             new HashSet<>(assayIds));
         this.experimentOrAssayIds = Collections.unmodifiableSet(experimentOrAssayIds == null? new HashSet<>():
             new HashSet<>(experimentOrAssayIds));
+        this.usedInPropagatedCalls = usedInPropagatedCalls;
     }
 
     /**
@@ -195,12 +203,21 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
     public Set<String> getExperimentOrAssayIds() {
         return experimentOrAssayIds;
     }
-
+    /**
+     * @return  A {@code Boolean} allowing to specify if the library has to be used
+     *          to generate calls. If <strong>true</strong> only libraries used to
+     *          generate calls are retrieved. If <strong>false</strong> only libraries
+     *          not used to generate calls are retrieved. If <strong>null</strong> then
+     *          no filtering on generation of calls is applied to retrieve libraries.
+     */
+    public Boolean getUsedInPropagatedCalls() {
+        return usedInPropagatedCalls;
+    }
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(assayIds, experimentIds, experimentOrAssayIds);
+        result = prime * result + Objects.hash(assayIds, experimentIds, experimentOrAssayIds, usedInPropagatedCalls);
         return result;
     }
     @Override
@@ -213,7 +230,8 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
             return false;
         RawDataFilter other = (RawDataFilter) obj;
         return Objects.equals(assayIds, other.assayIds) && Objects.equals(experimentIds, other.experimentIds)
-                && Objects.equals(experimentOrAssayIds, other.experimentOrAssayIds);
+                && Objects.equals(experimentOrAssayIds, other.experimentOrAssayIds)
+                && Objects.equals(usedInPropagatedCalls, other.usedInPropagatedCalls);
     }
     @Override
     public String toString() {
@@ -224,6 +242,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
                .append(", assayIds=").append(assayIds)
                .append(", experimentOrAssayIds=").append(experimentOrAssayIds)
                .append(", speciesIdsConsidered=").append(getSpeciesIdsConsidered())
+               .append(", usedInPropagatedCalls=").append(usedInPropagatedCalls)
                .append("]");
         return builder.toString();
     }

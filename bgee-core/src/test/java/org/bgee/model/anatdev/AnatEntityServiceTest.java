@@ -136,7 +136,7 @@ public class AnatEntityServiceTest extends TestAncestor {
 
         AnatEntityTOResultSet mockAnatEntRs1 = 
                 getMockResultSet(AnatEntityTOResultSet.class, anatEntityTOs);
-        when(dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds,
+        when(dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds, false,
                 EnumSet.of(AnatEntityDAO.Attribute.ID)))
         .thenReturn(mockAnatEntRs1);
         
@@ -146,7 +146,8 @@ public class AnatEntityServiceTest extends TestAncestor {
                 new AnatEntity("UBERON:0011606", null, null));
         AnatEntityService service = new AnatEntityService(serviceFactory);
         assertEquals("Incorrect anat. entities", expectedAnatEntity,
-                service.loadNonInformativeAnatEntitiesBySpeciesIds(speciesIds).collect(Collectors.toList()));
+                service.loadNonInformativeAnatEntitiesBySpeciesIds(speciesIds, false)
+                .collect(Collectors.toList()));
     }
     
 //    /**

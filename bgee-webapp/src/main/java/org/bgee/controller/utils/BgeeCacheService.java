@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
@@ -159,6 +160,14 @@ public class BgeeCacheService implements Closeable {
             Supplier<U> computeResults, Long computeTimeForCacheInMs) {
         log.traceEntry("{}, {}, {}, {}", cacheDefinition, cacheKey, computeResults,
                 computeTimeForCacheInMs);
+        return log.traceExit(this.useCacheNonAtomic(cacheDefinition, cacheKey,
+                computeResults, x -> x, x -> x, computeTimeForCacheInMs));
+    }
+    public <T, U, V> V useCacheNonAtomic(CacheDefinition<T, U> cacheDefinition, T cacheKey,
+            Supplier<V> computeIfCacheMiss, Function<V, U> getCacheFromCompute,
+            Function<U, V> computeWithCacheHit, Long computeTimeForCacheInMs) {
+        log.traceEntry("{}, {}, {}, {}", cacheDefinition, cacheKey, computeIfCacheMiss,
+                getCacheFromCompute, computeWithCacheHit, computeTimeForCacheInMs);
 
         log.debug("Cache search for: {}", cacheDefinition);
         Map<T, U> cache = this.registerCache(cacheDefinition);
@@ -169,19 +178,21 @@ public class BgeeCacheService implements Closeable {
         //since we simply used Collections.synchronizedMap to make the cache thread-safe.
         //It is a simple optimization, we don't care so much if several threads
         //are computing the same results.
-        U results = cache.get(cacheKey);
+        U hit = cache.get(cacheKey);
         log.debug("Entries in the cache before: {}", cache.size());
 
-        if (results == null) {
+        V compute = null;
+        if (hit == null) {
             log.debug("Cache miss for cache key: {}", cacheKey);
             long startTime = System.currentTimeMillis();
-            results = computeResults.get();
+            compute = computeIfCacheMiss.get();
+            hit = getCacheFromCompute.apply(compute);
             long executionTime = System.currentTimeMillis() - startTime;
             if (computeTimeForCacheInMs == null || executionTime > computeTimeForCacheInMs) {
                 log.debug("Computation to store in cache, execution time: {}",
                         executionTime);
                 log.trace("Cache before: {}", cache);
-                cache.putIfAbsent(cacheKey, results);
+                cache.putIfAbsent(cacheKey, hit);
                 log.trace("Cache after: {}", cache);
             } else {
                 log.debug("Computation fast enough, not stored in cache, execution time: {}",
@@ -189,10 +200,12 @@ public class BgeeCacheService implements Closeable {
             }
         } else {
             log.debug("Cache hit for cache key: {}", cacheKey);
-            log.trace("Value: {}", results);
+            log.trace("Hit: {}", hit);
+            compute = computeWithCacheHit.apply(hit);
+            log.trace("computed with cache hit: {}", hit);
         }
         log.debug("Entries in the cache after: {}", cache.size());
-        return log.traceExit(results);
+        return log.traceExit(compute);
     }
 
     @Override

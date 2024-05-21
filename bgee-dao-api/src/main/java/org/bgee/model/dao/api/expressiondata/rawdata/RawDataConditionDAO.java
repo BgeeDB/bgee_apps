@@ -104,7 +104,7 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
             Collection<Attribute> attributes) throws DAOException;
 
     /**
-     * Retrieves distinct Affymetrix raw conditions used in data annotations for requested raw data filters.
+     * Retrieves distinct raw conditions used in data annotations for requested raw data filters.
      * The conditions are retrieved and returned as a {@code RawDataConditionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results
      * are retrieved.

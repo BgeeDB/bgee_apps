@@ -8,7 +8,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToGroupOrderingAttribute;
-import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.file.SpeciesDownloadFile.Category;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.junit.Assert;
@@ -56,11 +56,11 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
         Set<Species> species = new HashSet<>();
 		species.add(v1);
 		species.add(v2);
-		DownloadFile df1 = new DownloadFile("/tmp/foo", "NAME", CategoryEnum.AFFY_ANNOT, 42L, 22);
-		DownloadFile df2 = new DownloadFile("/tmp/foo2", "NAME2", CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1337L, 22);
-        DownloadFile df3 = new DownloadFile("/tmp/foo3", "NAME", CategoryEnum.AFFY_ANNOT, 42L, 42);
+		SpeciesDownloadFile df1 = new SpeciesDownloadFile("/tmp/foo", "NAME", null, 42L, Category.AFFY_ANNOT, 22);
+		SpeciesDownloadFile df2 = new SpeciesDownloadFile("/tmp/foo2", "NAME2", null, 1337L, Category.DIFF_EXPR_ANAT_COMPLETE, 22);
+		SpeciesDownloadFile df3 = new SpeciesDownloadFile("/tmp/foo3", "NAME", null, 42L, Category.AFFY_ANNOT, 42);
 
-        List<DownloadFile> downloadFiles = Arrays.asList(df1,df2,df3);
+        List<SpeciesDownloadFile> downloadFiles = Arrays.asList(df1,df2,df3);
 
 
 		// DAO return values
@@ -91,13 +91,13 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
         when(managerMock.getSpeciesDataGroupDAO()).thenReturn(dao);
 
         when(speciesService.loadSpeciesInDataGroups(false)).thenReturn(species);
-        when(downloadFileService.getDownloadFiles(EnumSet.allOf(DownloadFile.CategoryEnum.class)))
+        when(downloadFileService.getDownloadFiles(EnumSet.allOf(SpeciesDownloadFile.Category.class)))
         .thenReturn(downloadFiles);
 
 		//expected values
-        Set<DownloadFile> groupFiles1 = new HashSet<>(Arrays.asList(df1,df2));
+        Set<SpeciesDownloadFile> groupFiles1 = new HashSet<>(Arrays.asList(df1,df2));
         SpeciesDataGroup g1 = new SpeciesDataGroup(22, "group1", "the group 1", Arrays.asList(v1,v2), groupFiles1);
-        Set<DownloadFile> groupFiles2 = new HashSet<>(Arrays.asList(df3));
+        Set<SpeciesDownloadFile> groupFiles2 = new HashSet<>(Arrays.asList(df3));
         SpeciesDataGroup g2 = new SpeciesDataGroup(42, "group2","group2", Arrays.asList(v2), groupFiles2);
         List<SpeciesDataGroup> expDataGroups = Arrays.asList(g1,g2);
 

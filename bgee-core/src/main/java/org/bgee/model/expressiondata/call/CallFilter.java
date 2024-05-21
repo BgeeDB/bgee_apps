@@ -281,8 +281,8 @@ V> extends DataFilter<V> {
      *
      * @author  Frederic Bastian
      * @author  Valentine Rech de Laval
-     * @version Bgee 14, Mar. 2017
-     * @since   Bgee 13
+     * @version Bgee 15.0, Nov. 2022
+     * @since Bgee 15.0, Nov. 2022
      */
     public static class ExpressionCallFilter2
     extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary, ConditionFilter2> {
@@ -528,10 +528,11 @@ V> extends DataFilter<V> {
                     //so that null species IDs are replaced with the same species as in the gene filter
                     geneFilter == null || conditionFilters == null? conditionFilters:
                         conditionFilters.stream()
-                        .filter(f -> !f.areAllCondParamFiltersEmpty())
+                        .filter(f -> !f.areAllFiltersExceptSpeciesEmpty())
                         .map(f -> f.getSpeciesId() != null? f: new ConditionFilter2(
                                 geneFilter.getSpeciesId(), f.getCondParamToComposedFilterIds(),
-                                f.getCondParamCombination(), f.getObservedCondForParams()))
+                                f.getCondParamCombination(), f.getObservedCondForParams(),
+                                f.isExcludeNonInformative()))
                         .collect(Collectors.toSet()),
                     dataTypeFilter, SummaryCallType.ExpressionSummary.class,
                     geneFilter == null? Set.of(): Set.of(geneFilter.getSpeciesId()));

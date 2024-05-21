@@ -378,6 +378,14 @@ public class URLParameters {
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
+     * A {@code Parameter<String>} that contains the anatomical entities to discard including their children.
+     * Corresponds to the URL parameter "discard_anat_entity_and_children_id".
+     */
+    private static final Parameter<String> DISCARD_ANAT_ENTITY_ID = new Parameter<>(
+            "discard_anat_entity_and_children_id",
+            true, false, null, true, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
      * A {@code Parameter<String>} that contains the cell type IDs to be used.
      * Cell types are also anatomical entities (see {@link #ANAT_ENTITY}),
      * and can be requested as such, but it is sometimes important to make the distinction.
@@ -499,6 +507,25 @@ public class URLParameters {
      */
     private static final Parameter<Boolean> CELL_TYPE_DESCENDANT = new Parameter<Boolean>(
             "cell_type_descendant", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} defining whether to retrieve observed expression calls only.
+     * Corresponds to the URL parameter "observed_data".
+     */
+    private static final Parameter<Boolean> OBSERVED_DATA = new Parameter<Boolean>(
+            "observed_data", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} defining whether to exclude results for non-informative conditions.
+     * Corresponds to the URL parameter "exclude_non_informative".
+     */
+    private static final Parameter<Boolean> EXCLUDE_NON_INFORMATIVE = new Parameter<Boolean>(
+            "exclude_non_informative", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
+
+    /**
+     * A {@code Parameter<Boolean>} used to define whether to retrieve all raw data or only
+     * raw data used to generate propagated calls.
+     */
+    private static final Parameter<Boolean> ONLY_PROPAGATED = new Parameter<Boolean>(
+            "only_propagated", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
 
     /**
      * A {@code Parameter<String>} that contains the propagation to be used.
@@ -774,6 +801,7 @@ public class URLParameters {
 
             ANAT_ENTITY,
             FILTER_ANAT_ENTITY,
+            DISCARD_ANAT_ENTITY_ID,
             CELL_TYPE,
             FILTER_CELL_TYPE,
             DEV_STAGE,
@@ -785,6 +813,9 @@ public class URLParameters {
             ANAT_ENTITY_DESCENDANT,
             CELL_TYPE_DESCENDANT,
             STAGE_DESCENDANT,
+            OBSERVED_DATA,
+            EXCLUDE_NON_INFORMATIVE,
+            ONLY_PROPAGATED,
             EXP_ASSAY_ID,
             EXPERIMENT_ID,
             FILTER_EXPERIMENT_ID,
@@ -1038,6 +1069,14 @@ public class URLParameters {
         return FILTER_ANAT_ENTITY;
     }
     /**
+     * @return  A {@code Parameter<String>} defining IDs of anatomical entities to discard,
+     *          including their children.
+     *          Corresponds to the URL parameter "discard_anat_entity_and_children_id".
+     */
+    public Parameter<String> getParamDiscardAnatEntity() {
+        return DISCARD_ANAT_ENTITY_ID;
+    }
+    /**
      * @return  A {@code Parameter<String>} defining a cell type ID.
      * Corresponds to the URL parameter "cell_type_id".
      */
@@ -1105,6 +1144,29 @@ public class URLParameters {
      */
     public Parameter<Boolean> getParamCellTypeDescendant(){
         return CELL_TYPE_DESCENDANT;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} defining whether to retrieve observed expression calls only.
+     *          Corresponds to the URL parameter "observed_data".
+     */
+    public Parameter<Boolean> getParamObservedData(){
+        return OBSERVED_DATA;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} defining whether to exclude results
+     *          for non-informative conditions.
+     *          Corresponds to the URL parameter "exclude_non_informative".
+     */
+    public Parameter<Boolean> getParamExcludeNonInformative(){
+        return EXCLUDE_NON_INFORMATIVE;
+    }
+
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to retrieve all raw data
+     *          or only raw data used to generate propagated calls
+     */
+    public Parameter<Boolean> getOnlyPropagated(){
+        return ONLY_PROPAGATED;
     }
 
     /**

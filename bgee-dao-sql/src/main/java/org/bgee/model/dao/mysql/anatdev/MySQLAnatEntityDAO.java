@@ -172,8 +172,8 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     
     @Override
     public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds,
-            Collection<AnatEntityDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}", speciesIds, attributes);
+            boolean evenIfUsedInAnnots, Collection<AnatEntityDAO.Attribute> attributes) throws DAOException {
+        log.traceEntry("{}, {}, {}", speciesIds, evenIfUsedInAnnots, attributes);
 
         Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
                 .map(c -> new HashSet<>(c)).orElse(null);
@@ -201,11 +201,13 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                    BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()) + 
                    "))";
         }
-        sql += " AND NOT EXISTS (SELECT 1 FROM " + condTabName
-                        + " WHERE " + condTabName + ".anatEntityId = " + tableName + ".anatEntityId "
-                        + "OR " + condTabName + ".cellTypeId = " + tableName + ".anatEntityId)"
-             + " AND NOT EXISTS (SELECT 1 FROM " + similarityTabName
-                        + " WHERE " + similarityTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
+        if (!evenIfUsedInAnnots) {
+            sql += " AND NOT EXISTS (SELECT 1 FROM " + condTabName
+                    + " WHERE " + condTabName + ".anatEntityId = " + tableName + ".anatEntityId "
+                    + "OR " + condTabName + ".cellTypeId = " + tableName + ".anatEntityId)"
+                    + " AND NOT EXISTS (SELECT 1 FROM " + similarityTabName
+                    + " WHERE " + similarityTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
+        }
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.

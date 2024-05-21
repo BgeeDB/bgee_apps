@@ -29,6 +29,9 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
      * <li>{@code LIBRARY_ANNOTATED_ID}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getLibraryAnnotatedSampleId()}.
      * <li>{@code LIBRARY_ID}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getLibraryId()}.
      * <li>{@code CONDITION_ID}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getConditionId()}.
+     * <li>{@code CELLTYPE_AUTHOR_ANNOTATION}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getConditionId()}.
+     * <li>{@code ANATENTITY_AUTHOR_ANNOTATION}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getConditionId()}.
+     * <li>{@code STAGE_AUTHOR_ANNOTATION}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getConditionId()}.
      * <li>{@code ABUNDANCE_UNIT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getAbundanceUnit()}.
      * <li>{@code MEAN_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMeanRefIntergenicDistribution()}.
      * <li>{@code SD_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getSdRefIntergenicDistribution()}.
@@ -44,11 +47,16 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
      * <li>{@code DISTINCT_RANK_COUNT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getDistinctRankCount()}.
      * <li>{@code MULTIPLE_INDIVIDUAL_SAMPLE}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getMultipleIndividualSample()}.
      * <li>{@code BARCODE}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getBarcode()}.
+     * <li>{@code TIME}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getTime()}.
+     * <li>{@code TIME_UNIT}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getTimeUnit()}.
+     * <li>{@code PHYSIOLOGICAL_STATUS}: corresponds to {@link RNASeqLibraryAnnotatedSampleTO#getPhysiologicalStatus()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
         ID("rnaSeqLibraryAnnotatedSampleId"), RNASEQ_LIBRARY_ID("rnaSeqLibraryId"),
-        CONDITION_ID("conditionId"), ABUNDANCE_UNIT("abundanceUnit"),
+        CONDITION_ID("conditionId"), CELLTYPE_AUTHOR_ANNOTATION("cellTypeAuthorAnnotation"),
+        ANATENTITY_AUTHOR_ANNOTATION("anatEntityAuthorAnnotation"),
+        STAGE_AUTHOR_ANNOTATION("stageAuthorAnnotation"), ABUNDANCE_UNIT("abundanceUnit"),
         MEAN_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION("meanAbundanceReferenceIntergenicDistribution"),
         SD_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION("sdAbundanceReferenceIntergenicDistribution"), TMM_FACTOR("tmmFactor"),
         ABUNDANCE_THRESHOLD("abundanceThreshold"), ALL_GENES_PERCENT_PRESENT("allGenesPercentPresent"),
@@ -57,7 +65,8 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         PVALUE_THRESHOLD("pValueThreshold"), ALL_UMIS_COUNT("allUMIsCount"),
         MAPPED_UMIS_COUNT("mappedUMIsCount"), MAX_RANK("rnaSeqLibraryAnnotatedSampleMaxRank"),
         DISTINCT_RANK_COUNT("rnaSeqLibraryAnnotatedSampleDistinctRankCount"),
-        MULTIPLE_INDIVIDUAL_SAMPLE("multipleLibraryIndividualSample"), BARCODE("barcode");
+        MULTIPLE_INDIVIDUAL_SAMPLE("multipleLibraryIndividualSample"), BARCODE("barcode"),
+        TIME("time"), TIME_UNIT("timeUnit"), PHYSIOLOGICAL_STATUS("physiologicalStatus");
         
         /**
          * A {@code String} that is the corresponding field name in {@code ESTTO} class.
@@ -197,6 +206,9 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
 
         private final String libraryId;
         private final Integer conditionId;
+        private final String cellTypeAuthorAnnotation;
+        private final String anatEntityAuthorAnnotation;
+        private final String stageAuthorAnnotation;
         private final AbundanceUnit abundanceUnit;
         private final BigDecimal meanAbundanceRefIntergenicDistribution;
         private final BigDecimal sdAbundanceRefIntergenicDistribution;
@@ -240,20 +252,29 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         private final Integer distinctRankCount;
         private final Boolean multipleLibraryIndividualSample;
         private final String barcode;
+        private final Float time;
+        private final String timeUnit;
+        private final String physiologicalStatus;
+
 
         /**
          * Default constructor. 
          */
-        public RNASeqLibraryAnnotatedSampleTO(Integer libraryAnnotatedSampleId,String libraryId, Integer conditionId,   String barcode,
-                AbundanceUnit unit, BigDecimal meanAbundanceRefIntergenicDistribution,
+        public RNASeqLibraryAnnotatedSampleTO(Integer libraryAnnotatedSampleId,String libraryId, Integer conditionId,   
+                String cellTypeAuthorAnnotation, String anatEntityAuthorAnnotation, String stageAuthorAnnotation,
+                String barcode, AbundanceUnit unit, BigDecimal meanAbundanceRefIntergenicDistribution,
                 BigDecimal sdAbundanceRefIntergenicDistribution, BigDecimal tmmFactor, BigDecimal abundanceThreshold,
                 BigDecimal allGenesPercentPresent, BigDecimal proteinCodingGenesPercentPresent,
                 BigDecimal intergenicRegionsPercentPresent, BigDecimal  pValueThreshold,
                 Integer allUMIsCount, Integer mappedUMIsCount, BigDecimal maxRank,
-                Integer distinctRankCount, Boolean multipleLibraryIndividualSample) {
+                Integer distinctRankCount, Boolean multipleLibraryIndividualSample,
+                Float time, String timeUnit, String physiologicalStatus) {
             super(libraryAnnotatedSampleId);
             this.libraryId = libraryId;
             this.conditionId = conditionId;
+            this.cellTypeAuthorAnnotation = cellTypeAuthorAnnotation;
+            this.anatEntityAuthorAnnotation = anatEntityAuthorAnnotation;
+            this.stageAuthorAnnotation = stageAuthorAnnotation;
             this.barcode = barcode;
             this.abundanceUnit = unit;
             this.meanAbundanceRefIntergenicDistribution = meanAbundanceRefIntergenicDistribution;
@@ -269,6 +290,9 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
             this.maxRank = maxRank;
             this.distinctRankCount = distinctRankCount;
             this.multipleLibraryIndividualSample = multipleLibraryIndividualSample;
+            this.time = time;
+            this.timeUnit = timeUnit;
+            this.physiologicalStatus = physiologicalStatus;
         }
         
         public String getLibraryId() {
@@ -323,10 +347,33 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         public String getBarcode() {
             return barcode;
         }
+        public String getCellTypeAuthorAnnotation() {
+            return cellTypeAuthorAnnotation;
+        }
+        public String getAnatEntityAuthorAnnotation() {
+            return anatEntityAuthorAnnotation;
+        }
+        public String getStageAuthorAnnotation() {
+            return stageAuthorAnnotation;
+        }
+        public Boolean getMultipleLibraryIndividualSample() {
+            return multipleLibraryIndividualSample;
+        }
+        public Float getTime() {
+            return time;
+        }
+        public String getTimeUnit() {
+            return timeUnit;
+        }
+        public String getPhysiologicalStatus() {
+            return physiologicalStatus;
+        }
 
         @Override
         public String toString() {
             return "RNASeqLibraryAnnotatedSampleTO [libraryId=" + libraryId + ", conditionId=" + conditionId
+                    + ", cellTypeAuthorAnnotation=" + cellTypeAuthorAnnotation + ", anatEntityAuthorAnnotation="
+                    + anatEntityAuthorAnnotation + ", stageAuthorAnnotation=" + stageAuthorAnnotation
                     + ", abundanceUnit=" + abundanceUnit + ", meanAbundanceRefIntergenicDistribution="
                     + meanAbundanceRefIntergenicDistribution + ", sdAbundanceRefIntergenicDistribution="
                     + sdAbundanceRefIntergenicDistribution + ", tmmFactor=" + tmmFactor + ", abundanceThreshold="
@@ -336,8 +383,9 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
                     + pValueThreshold + ", allUMIsCount=" + allUMIsCount + ", mappedUMIsCount=" + mappedUMIsCount
                     + ", maxRank=" + maxRank + ", distinctRankCount=" + distinctRankCount
                     + ", multipleLibraryIndividualSample=" + multipleLibraryIndividualSample + ", barcode=" + barcode
-                    + "]";
+                    + ", time=" + time + ", timeUnit=" + timeUnit + ", physiologicalStatus=" + physiologicalStatus + "]";
         }
+
 
     }
 }

@@ -28,11 +28,13 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
      * <li>{@code NAME}: corresponds to {@link RNASeqExperimentTO#getName()}.
      * <li>{@code DESCRIPTION}: corresponds to {@link RNASeqExperimentTO#getDescription()}.
      * <li>{@code DATA_SOURCE_ID}: corresponds to {@link RNASeqExperimentTO#getDataSourceId()}.
+     * <li>{@code DOI}: corresponds to {@link RNASeqExperimentTO#getDOI()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
         ID("rnaSeqExperimentId"), NAME("rnaSeqExperimentName"),
-        DESCRIPTION("rnaSeqExperimentDescription"), DATA_SOURCE_ID("dataSourceId");
+        DESCRIPTION("rnaSeqExperimentDescription"), DATA_SOURCE_ID("dataSourceId"),
+        DOI("DOI");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTTO} class.
@@ -105,8 +107,8 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
         private boolean isTargetBase;
 
         public RNASeqExperimentTO(String id, String name, String description,
-                Integer dataSourceId, boolean isTargetBase) {
-            super(id, name, description, dataSourceId);
+                Integer dataSourceId, boolean isTargetBase, String dOI) {
+            super(id, name, description, dataSourceId, dOI);
             this.isTargetBase = isTargetBase;
         }
         public boolean isTargetBase() {
@@ -115,8 +117,8 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
         @Override
         public String toString() {
             return "RNASeqExperimentTO [isTargetBase=" + isTargetBase + ", getDataSourceId()=" + getDataSourceId()
-                    + ", getName()=" + getName() + ", getDescription()=" + getDescription() + ", getId()=" + getId()
-                    + "]";
+                    + ", getName()=" + getName() + ", getDescription()=" + getDescription() + ", getDOI()=" + getDOI() 
+                    + ", getId()=" + getId() + "]";
         }
     }
 }

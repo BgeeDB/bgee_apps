@@ -3,10 +3,14 @@ package org.bgee.view.json;
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -21,6 +25,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
+import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentWithDataDownload;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithExperiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
@@ -144,15 +149,32 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
         log.traceExit();
     }
 
-    public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay> assays,
+    @Override
+    public void displayExperimentPage(List<Experiment<?>> experiments, LinkedHashSet<Assay> assays,
             DataType dataType, List<ColumnDescription> columnDescriptions) {
-        log.traceEntry("{}, {}, {}, {}", experiment, assays, dataType, columnDescriptions);
+        log.traceEntry("{}, {}, {}, {}", experiments, assays, dataType, columnDescriptions);
 
         LinkedHashMap<String, Object> responseMap = new LinkedHashMap<String, Object>();
         responseMap.put("dataType", dataType);
         responseMap.put("columnDescriptions", columnDescriptions);
-        responseMap.put("experiment", experiment);
+        responseMap.put("experiment", experiments.iterator().next());
         responseMap.put("assays", assays);
+
+        //Quick and dirty way to provide downloadUrls
+        List<Map<String, String>> downloadUrls = experiments.stream().flatMap(e -> {
+            if (e instanceof ExperimentWithDataDownload) {
+                ExperimentWithDataDownload<?> expDataDownload = (ExperimentWithDataDownload<?>) e;
+                return expDataDownload.getDownloadFiles().stream().map(file -> {
+                    Map<String, String> downloadFile = new HashMap<>();
+                    downloadFile.put("text", file.getTitle());
+                    downloadFile.put("title", file.getFileName());
+                    downloadFile.put("href", file.getPath() + file.getFileName());
+                    return downloadFile;
+                });
+            }
+            return Stream.of();
+        }).collect(Collectors.toList());
+        responseMap.put("downloadUrls", downloadUrls);
 
         this.sendResponse("Experiment page", responseMap);
         log.traceExit();

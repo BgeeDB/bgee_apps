@@ -110,8 +110,8 @@ public class DownloadFileService extends CommonService {
                                     s.getSpeciesFullNameWithoutSpace() + "/",
                             s.getSpeciesFullNameWithoutSpace() +
                                     "_Affymetrix_probesets_" + experimentId + ".tar.gz",
-                            "Affymetrix processed expression values for species " + s.getScientificName() +
-                                    " in experiment " + experimentId,
+                            "Affymetrix processed expression values in " + s.getScientificName()/* +
+                                    " in experiment " + experimentId*/,
                             //Since we don't store yet this info to database, we don't have access to the file size
                             0L,
                             ExperimentDownloadFile.Category.ANNOTATED_SAMPLES,
@@ -160,8 +160,8 @@ public class DownloadFileService extends CommonService {
                     return Stream.of(new ExperimentDownloadFile(
                             path,
                             fileName,
-                            "Processed expression values for bulk RNA-Seq for species " +
-                            spe.getScientificName() + " in experiment " + experimentId,
+                            "Bulk RNA-Seq processed expression values in " +
+                            spe.getScientificName()/* + " in experiment " + experimentId*/,
                             //Since we don't store yet this info to database, we don't have access to the file size
                             0L,
                             ExperimentDownloadFile.Category.ANNOTATED_SAMPLES,
@@ -187,10 +187,11 @@ public class DownloadFileService extends CommonService {
                                         (multiplexing?
                                                 "_" + experimentId + "_droplet_based.h5ad":
                                                 "_" + experimentId + "_full_length.h5ad"));
-                        String fileTitle = (cat.equals(ExperimentDownloadFile.Category.ANNOTATED_SAMPLES)?
-                                "Processed expression values": "Data in H5AD") + " for " +
-                                (multiplexing? "droplet-based data": "full-length data") + " for species " +
-                                spe.getScientificName() + " in experiment " + experimentId;
+                        String fileTitle = (multiplexing? "scRNA-Seq droplet-based ": "scRNA-Seq full-length ") +
+                                (cat.equals(ExperimentDownloadFile.Category.ANNOTATED_SAMPLES)?
+                                "processed expression values per cell population": "H5AD data per cell") +
+                                " in " +
+                                spe.getScientificName()/* + " in experiment " + experimentId*/;
                         return new ExperimentDownloadFile(
                                 path,
                                 fileName,

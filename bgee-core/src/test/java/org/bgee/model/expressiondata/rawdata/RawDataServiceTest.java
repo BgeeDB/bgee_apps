@@ -109,9 +109,9 @@ public class RawDataServiceTest extends TestAncestor {
         RawDataProcessedFilter expectedPrepProcessedInfo = new RawDataProcessedFilter(
                 filter,
                 Set.of(
-                        new DAORawDataFilter(Set.of(1, 2), null),
-                        new DAORawDataFilter(Set.of(3), null, null, null),
-                        new DAORawDataFilter(null, Set.of(6))
+                        new DAORawDataFilter(Set.of(1, 2), null, null),
+                        new DAORawDataFilter(Set.of(3), null, null, null, null),
+                        new DAORawDataFilter(null, Set.of(6), null)
                         ),
                 new RawDataProcessedFilterGeneSpeciesPart(
                         filter.getGeneFilters(),

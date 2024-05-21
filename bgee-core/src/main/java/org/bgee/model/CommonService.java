@@ -331,6 +331,31 @@ public class CommonService extends Service {
         }
     }
 
+    //Methods shouldn't be public, but it's a quick fix to avoid code duplication,
+    //since it is used in CallServiceUtils
+    public static DAODataType convertDataTypeToDAODataType(DataType dt)
+            throws IllegalStateException{
+        log.traceEntry("{}", dt);
+        
+        if (dt == null) {
+            return log.traceExit((DAODataType) null);
+        }
+        switch(dt) {
+        case AFFYMETRIX: 
+            return log.traceExit(DAODataType.AFFYMETRIX);
+        case EST: 
+            return log.traceExit(DAODataType.EST);
+        case IN_SITU: 
+            return log.traceExit(DAODataType.IN_SITU);
+        case RNA_SEQ: 
+            return log.traceExit(DAODataType.RNA_SEQ);
+        case SC_RNA_SEQ: 
+            return log.traceExit(DAODataType.SC_RNA_SEQ);
+        default: 
+            throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + dt));
+        }
+    }
+
 
     protected static DAORawDataSex convertRawDataSexToDAORawDataSex(RawDataSex sex) {
         log.traceEntry("{}", sex);

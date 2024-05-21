@@ -9,9 +9,8 @@ public class InSituExperiment extends Experiment<String> {
 
     public InSituExperiment(String id, String name, String description, Source dataSource,
             int assayCount) {
-        super(id,
-              getXRefId(id),
-              name, description, dataSource, assayCount);
+        //DOI is set to null as it is not yet provided for in Situ data
+        super(id, getXRefId(id), name, description, null, dataSource, assayCount);
     }
 
     private static String getXRefId(String id) {

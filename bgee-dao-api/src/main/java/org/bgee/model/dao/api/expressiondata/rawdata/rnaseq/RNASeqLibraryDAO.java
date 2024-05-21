@@ -47,6 +47,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * <li>{@code MIN_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMinReadLength()}.
      * <li>{@code MAX_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMaxReadLength()}.
      * <li>{@code LIBRARY_TYPE}: corresponds to {@link RNASeqLibraryTO#getLibraryType()}.
+     * <li>{@code USED_IN_PROPAGATED_CALLS}: corresponds to {@link RNASeqLibraryTO#getUsedInPropagatedCalls()}.
 
 
      * </ul>
@@ -59,7 +60,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         SEQUENCED_TRANSCRIPT_PART("sequencedTranscriptPart"), FRAGMENTATION("fragmentation"),
         POPULATION_CAPTURE_ID("rnaSeqPopulationCaptureId"), GENOTYPE("genotype"), ALL_READ_COUNT("allReadsCount"),
         MAPPED_READ_COUNT("mappedReadsCount"), MIN_READ_LENGTH("minReadLength"),
-        MAX_READ_LENGTH("maxReadLength"),LIBRARY_TYPE("libraryType");
+        MAX_READ_LENGTH("maxReadLength"),LIBRARY_TYPE("libraryType"), USED_IN_PROPAGATED_CALLS("usedInPropagatedCalls");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTTO} class.
@@ -360,6 +361,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
          */
         private final Integer maxReadLength;
         private final LibraryType libraryType;
+        private final Boolean usedInPropagatedCalls;
 
         public RNASeqLibraryTO(String rnaSeqLibraryId, String rnaSeqExperimentId, String sequencerName,
                 String technologyName, Boolean singleCell, Boolean sampleMultiplexing,
@@ -367,7 +369,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
                 CellCompartment cellCompartment, SequencedTrancriptPart seqTranscriptPart,
                 Integer fragmentation, String populationCaptureId, String genotype,
                 Integer allReadCount, Integer mappedReadCount, Integer minReadLength,
-                Integer maxReadLength, LibraryType libType) {
+                Integer maxReadLength, LibraryType libType, Boolean usedInPropagatedCalls) {
             super(rnaSeqLibraryId);
             this.rnaSeqExperimentId = rnaSeqExperimentId;
             this.sequencerName = sequencerName;
@@ -386,6 +388,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
             this.minReadLength = minReadLength;
             this.maxReadLength = maxReadLength;
             this.libraryType = libType;
+            this.usedInPropagatedCalls = usedInPropagatedCalls;
         }
 
         public String getExperimentId() {
@@ -439,17 +442,21 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         public LibraryType getLibraryType() {
             return libraryType;
         }
+        public Boolean getUsedInPropagatedCalls() {
+            return usedInPropagatedCalls;
+        }
 
         @Override
         public String toString() {
-            return "RNASeqLibraryTO [rnaSeqLibraryId=" + getId() + ", rnaSeqExperimentId=" + rnaSeqExperimentId + ", sequencerName=" + sequencerName
+            return "RNASeqLibraryTO [rnaSeqExperimentId=" + rnaSeqExperimentId + ", sequencerName=" + sequencerName
                     + ", technologyName=" + technologyName + ", singleCell=" + singleCell + ", sampleMultiplexing="
                     + sampleMultiplexing + ", libraryMultiplexing=" + libraryMultiplexing + ", strandSelection="
                     + strandSelection + ", cellCompartment=" + cellCompartment + ", sequencedTranscriptPart="
                     + sequencedTranscriptPart + ", fragmentation=" + fragmentation + ", populationCaptureId="
                     + populationCaptureId + ", genotype=" + genotype + ", allReadCount=" + allReadCount
                     + ", mappedReadCount=" + mappedReadCount + ", minReadLength=" + minReadLength + ", maxReadLength="
-                    + maxReadLength + ", libraryType=" + libraryType + "]";
+                    + maxReadLength + ", libraryType=" + libraryType + ", usedInPropagatedCalls=" + usedInPropagatedCalls
+                    + "]";
         }
 
     }

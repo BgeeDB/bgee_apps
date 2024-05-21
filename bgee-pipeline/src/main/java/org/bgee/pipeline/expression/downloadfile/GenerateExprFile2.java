@@ -44,7 +44,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.file.SpeciesDownloadFile.Category;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
@@ -96,13 +96,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @since Bgee 13
      */
     public enum SingleSpExprFileType2 implements FileType {
-        EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
-        EXPR_ADVANCED(CategoryEnum.EXPR_CALLS_COMPLETE, false);
+        EXPR_SIMPLE(Category.EXPR_CALLS_SIMPLE, true),
+        EXPR_ADVANCED(Category.EXPR_CALLS_COMPLETE, false);
 
         /**
-         * A {@code CategoryEnum} that is the category of files of this type.
+         * A {@code Category} that is the category of files of this type.
          */
-        private final CategoryEnum category;
+        private final Category category;
 
         /**
          * A {@code boolean} defining whether this {@code ExprFileType} is a simple file
@@ -111,10 +111,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         private final boolean simpleFileType;
 
         /**
-         * Constructor providing the {@code CategoryEnum} of this {@code ExprFileType},
+         * Constructor providing the {@code Category} of this {@code ExprFileType},
          * and a {@code boolean} defining whether this {@code ExprFileType} is a simple file type.
          */
-        private SingleSpExprFileType2(CategoryEnum category, boolean simpleFileType) {
+        private SingleSpExprFileType2(Category category, boolean simpleFileType) {
             this.category = category;
             this.simpleFileType = simpleFileType;
         }
@@ -124,7 +124,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             return this.category.getStringRepresentation();
         }
         @Override
-        public CategoryEnum getCategory() {
+        public Category getCategory() {
             return this.category;
         }
         @Override

@@ -20,7 +20,7 @@ import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.file.SpeciesDownloadFile.Category;
 import org.bgee.pipeline.MySQLDAOUser;
 
 
@@ -527,9 +527,9 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
         public String getStringRepresentation();
     
         /**
-         * @return   A {@code CategoryEnum} that is the category of files of this type.
+         * @return   A {@code Category} that is the category of files of this type.
          */
-        public CategoryEnum getCategory();
+        public Category getCategory();
 
         /**
          * @return   A {@code boolean} defining whether this {@code FileType} is a simple file type.

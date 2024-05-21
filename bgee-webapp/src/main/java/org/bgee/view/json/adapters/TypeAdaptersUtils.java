@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
@@ -24,6 +25,7 @@ import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAuthorAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
@@ -35,9 +37,10 @@ public class TypeAdaptersUtils {
 
     private static final Logger log = LogManager.getLogger(TypeAdaptersUtils.class.getName());
 
-    public void writeSimplifiedRawDataCondition(JsonWriter out, RawDataCondition cond)
+    public void writeSimplifiedRawDataCondition(JsonWriter out, RawDataCondition cond,
+            RawDataAuthorAnnotation authorAnnot)
             throws IOException {
-        log.traceEntry("{}, {}}", out, cond);
+        log.traceEntry("{}, {}, {}", out, cond, authorAnnot);
         if (cond == null) {
             out.nullValue();
             log.traceExit(); return;
@@ -46,20 +49,63 @@ public class TypeAdaptersUtils {
 
         out.name("anatEntity");
         writeSimplifiedNamedEntity(out, cond.getAnatEntity());
+        if (authorAnnot != null) {
+            out.name("anatEntityAuthorAnnotation");
+            if (StringUtils.isBlank(authorAnnot.getAnatEntityAuthorAnnotation())) {
+                out.value("NA");
+            } else {
+                out.value(authorAnnot.getAnatEntityAuthorAnnotation());
+            }
+        }
 
         out.name("cellType");
         if (cond.getCellType() == null) {
             out.value("NA");
+            if (authorAnnot != null) {
+                out.name("cellTypeAuthorAnnotation");
+                out.value("NA");
+            }
         } else {
             writeSimplifiedNamedEntity(out, cond.getCellType());
+            if (authorAnnot != null) {
+                out.name("cellTypeAuthorAnnotation");
+                if (StringUtils.isBlank(authorAnnot.getCellTypeAuthorAnnotation())) {
+                    out.value("NA");
+                } else {
+                    out.value(authorAnnot.getCellTypeAuthorAnnotation());
+                }
+            }
         }
 
         out.name("devStage");
         writeSimplifiedNamedEntity(out, cond.getDevStage());
+        if (authorAnnot != null) {
+            out.name("devStageAuthorAnnotation");
+            if (StringUtils.isBlank(authorAnnot.getStageAuthorAnnotation())) {
+                out.value("NA");
+            } else {
+                out.value(authorAnnot.getStageAuthorAnnotation());
+            }
+        }
 
         out.name("sex").value(cond.getSex().getStringRepresentation());
 
         out.name("strain").value(cond.getStrain());
+
+        if (authorAnnot != null) {
+            out.name("time");
+            if (authorAnnot.getTime() == null) {
+                out.value("NA");
+            } else {
+                out.value(authorAnnot.getTime());
+            }
+            out.name("timeUnit");
+            if (authorAnnot.getTime() == null) {
+                out.value("NA");
+            } else {
+                out.value(authorAnnot.getTimeUnit());
+            }
+        }
 
         out.name("species");
         writeSimplifiedSpecies(out, cond.getSpecies(), false, null);

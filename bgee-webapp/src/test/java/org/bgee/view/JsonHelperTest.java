@@ -22,9 +22,9 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.file.DownloadFile;
-import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.file.SpeciesDownloadFile.Category;
 import org.bgee.model.file.SpeciesDataGroup;
+import org.bgee.model.file.SpeciesDownloadFile;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatController;
@@ -75,8 +75,8 @@ public class JsonHelperTest extends TestAncestor {
                 Arrays.asList(new Species(9606, "human", null, "Homo", "sapiens",
                         "hsap1", "assemblyHsap1", new Source(1), null, null, null, null, null)),
                 new HashSet<>(Arrays.asList(
-                        new DownloadFile("my/path/fileg1_1.tsv.zip", "fileg1_1.tsv.zip", 
-                        CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, 1))));
+                        new SpeciesDownloadFile("my/path/fileg1_1.tsv.zip", "fileg1_1.tsv.zip", 
+                        null, 5000L, Category.EXPR_CALLS_SIMPLE, 1))));
         
         BgeeProperties props = mock(BgeeProperties.class);
         when(props.getDownloadRootDirectory()).thenReturn("/myrootpath/");

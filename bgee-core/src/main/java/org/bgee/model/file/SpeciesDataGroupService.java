@@ -90,12 +90,12 @@ public class SpeciesDataGroupService extends Service {
         if (!withFilesRelatedToExprCalls && !withFilesRelatedToProcessedExprValues) {
             throw log.throwing(new IllegalArgumentException("At least one type of download file must be requested"));
         }
-        final Map<Integer, Set<DownloadFile>> groupIdToDownloadFilesMap = buildDownloadFileMap(
+        final Map<Integer, Set<SpeciesDownloadFile>> groupIdToDownloadFilesMap = buildDownloadFileMap(
                 this.getServiceFactory().getDownloadFileService().getDownloadFiles(
-                        EnumSet.allOf(DownloadFile.CategoryEnum.class).stream()
+                        EnumSet.allOf(SpeciesDownloadFile.Category.class).stream()
                                 .filter(c -> withFilesRelatedToExprCalls && c.isRelatedToExprCallFile() ||
                                     withFilesRelatedToProcessedExprValues && c.isRelatedToProcessedExprValueFile())
-                                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DownloadFile.CategoryEnum.class)))));
+                                .collect(Collectors.toCollection(() -> EnumSet.noneOf(SpeciesDownloadFile.Category.class)))));
         
         LinkedHashMap<SpeciesToGroupOrderingAttribute, DAO.Direction> orderAttrs = new LinkedHashMap<>();
         orderAttrs.put(SpeciesToGroupOrderingAttribute.DATA_GROUP_ID, DAO.Direction.ASC);
@@ -155,11 +155,11 @@ public class SpeciesDataGroupService extends Service {
      * @return              A {@code Map} where keys are {@code String}s corresponding to data group IDs, 
      *                      associated to the {@code Set} of {@code DownloadFile} they contain as value. 
      */
-    private static Map<Integer, Set<DownloadFile>> buildDownloadFileMap(
-            Collection<DownloadFile> downloadFiles) {
+    private static Map<Integer, Set<SpeciesDownloadFile>> buildDownloadFileMap(
+            Collection<SpeciesDownloadFile> downloadFiles) {
         log.traceEntry("{}", downloadFiles);
         return log.traceExit(downloadFiles.stream()
-                .collect(Collectors.groupingBy(DownloadFile::getSpeciesDataGroupId, Collectors.toSet())));
+                .collect(Collectors.groupingBy(SpeciesDownloadFile::getSpeciesDataGroupId, Collectors.toSet())));
     }
 
     /**
@@ -167,11 +167,11 @@ public class SpeciesDataGroupService extends Service {
      * and the the {@code List} of associated {@code Species} and {@code DownloadFile}
      * @param groupTO   the {@code SpeciesDataGroupTO}
      * @param species   the {@code List} of associated {@code Species}
-     * @param files     the {@code Set} of associated {@code DownloadFile}
+     * @param files     the {@code Set} of associated {@code SpeciesDownloadFile}
      * @return          a (newly allocated) {@code SpeciesDataGroup}
      */
     private static SpeciesDataGroup newSpeciesDataGroup(SpeciesDataGroupDAO.SpeciesDataGroupTO groupTO, 
-            List<Species> species, Set<DownloadFile> files) {
+            List<Species> species, Set<SpeciesDownloadFile> files) {
         log.traceEntry("{}, {}, {}", groupTO, species, files);
         return log.traceExit(newSpeciesDataGroup(groupTO.getId(), groupTO.getName(), groupTO.getDescription(), 
                 species, files));
@@ -185,14 +185,14 @@ public class SpeciesDataGroupService extends Service {
      * @param name          the name of the {@code SpeciesDataGroup}
      * @param description   the description of the {@code SpeciesDataGroup}
      * @param species       the {@code List} of associated {@code Species}
-     * @param files         the {@code Set} of associated {@code DownloadFile}s
+     * @param files         the {@code Set} of associated {@code SpeciesDownloadFile}s
      * @return a (newly allocated) {@code SpeciesDataGroup}
      */
     private static SpeciesDataGroup newSpeciesDataGroup(Integer id, String name, String description, 
-            List<Species> species, Set<DownloadFile> files) {
+            List<Species> species, Set<SpeciesDownloadFile> files) {
         log.traceEntry("{}, {}, {}, {}, {}", id, name, description, species, files);
 //        files = new HashSet<DownloadFile>();
-//        files.add(new DownloadFile("path", "my_name", DownloadFile.CategoryEnum.AFFY_ANNOT, 100L, id));
+//        files.add(new DownloadFile("path", "my_name", DownloadFile.Category.AFFY_ANNOT, 100L, id));
         return log.traceExit(new SpeciesDataGroup(id, name, description, species, files));
     }
 

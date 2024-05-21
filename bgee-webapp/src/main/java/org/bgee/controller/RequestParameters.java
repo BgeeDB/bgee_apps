@@ -2517,11 +2517,11 @@ public class RequestParameters {
                 this.getUrlParametersInstance().getParamCellTypeDescendant())));
     }
     /**
-     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * Convenient method to retrieve the value was sent for the URL parameter
      * {@link URLParameters#getParamObservedData()}.
      *
-     * @return  {@code true} if it was requested for {@link URLParameters#getParamObservedData()},
-     *          {@code false} otherwise.
+     * @return  {@code true}/{@code false} if it was requested for {@link URLParameters#getParamObservedData()},
+     *          {@code null} otherwise.
      */
     public Boolean getObservedData() {
         log.traceEntry();
@@ -2546,6 +2546,25 @@ public class RequestParameters {
         log.traceEntry();
         return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
                 this.getUrlParametersInstance().getParamExcludeNonInformative())));
+    }
+    /**
+     * Convenient method to retrieve which value was sent for the URL parameter
+     * {@link URLParameters#getOnlyPropagated()}.
+     *
+     * @return  {@code true}/{@code false} if it was requested for {@link URLParameters#getOnlyPropagated()},
+     *          {@code null} otherwise.
+     */
+    public Boolean getOnlyPropagated() {
+        log.traceEntry();
+        Boolean onlyPropagated = this.getFirstValue(
+                this.getUrlParametersInstance().getOnlyPropagated());
+        if (Boolean.TRUE.equals(onlyPropagated)) {
+            return log.traceExit(Boolean.TRUE);
+        }
+        if (Boolean.FALSE.equals(onlyPropagated)) {
+            return log.traceExit(Boolean.FALSE);
+        }
+        return log.traceExit((Boolean) null);
     }
     /**
      * Convenient method to retrieve values of the parameter returned by

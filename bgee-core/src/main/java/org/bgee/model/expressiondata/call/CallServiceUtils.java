@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.CommonService;
 import org.bgee.model.ComposedEntity;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
@@ -59,22 +60,9 @@ public class CallServiceUtils {
         return log.traceExit(
                 //We create an EnumSet not to iterate over potentially redundant elements
                 EnumSet.copyOf(dts).stream()
-                .map(dt -> {
-                    switch(dt) {
-                    case AFFYMETRIX: 
-                        return log.traceExit(DAODataType.AFFYMETRIX);
-                    case EST: 
-                        return log.traceExit(DAODataType.EST);
-                    case IN_SITU: 
-                        return log.traceExit(DAODataType.IN_SITU);
-                    case RNA_SEQ: 
-                        return log.traceExit(DAODataType.RNA_SEQ);
-                    case SC_RNA_SEQ: 
-                        return log.traceExit(DAODataType.SC_RNA_SEQ);
-                    default: 
-                        throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + dt));
-                    }
-                }).collect(Collectors.toCollection(() -> EnumSet.noneOf(DAODataType.class))));
+                //XXX: we shouldn't use a static method here, every dependency should be injected.
+                .map(dt -> CommonService.convertDataTypeToDAODataType(dt))
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAODataType.class))));
     }
 
     public EnumSet<ConditionDAO.ConditionParameter> convertCondParamsToDAOCondParams(

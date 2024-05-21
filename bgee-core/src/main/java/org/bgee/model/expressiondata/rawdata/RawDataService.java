@@ -487,16 +487,23 @@ public class RawDataService extends ExpressionDataService {
 
             if (procConditionPart.getRequestedConditionMap().isEmpty() && filter.hasExperimentAssayIds()) {
                 daoFilters.add(new DAORawDataFilter(filter.getExperimentIds(),
-                    filter.getAssayIds(), filter.getExperimentOrAssayIds()));
+                    filter.getAssayIds(), filter.getExperimentOrAssayIds(),
+                    filter.getUsedInPropagatedCalls()));
                 log.debug("DAORawDataFilter created for any species");
             } else if (!procConditionPart.getRequestedConditionMap().isEmpty()) {
                 daoFilters.add(new DAORawDataFilter(null, procConditionPart.getRequestedConditionMap().keySet(),
                         filter.getExperimentIds(), filter.getAssayIds(),
-                        filter.getExperimentOrAssayIds()));
+                        filter.getExperimentOrAssayIds(), filter.getUsedInPropagatedCalls()));
                 log.debug("DAORawDataFilter created with at least some condition IDs");
+            } else if (filter.getUsedInPropagatedCalls() != null) {
+                daoFilters.add(new DAORawDataFilter(null, null, null, null, null,
+                        filter.getUsedInPropagatedCalls()));
+                log.debug("DAORawDataFilter created with only usedInPropagatedCalls");
             } else {
-                assert procConditionPart.getRequestedConditionMap().isEmpty() && !filter.hasExperimentAssayIds();
-                log.debug("No DAORawDataFilter created: no species, no genes, no conds, no exp/assay IDs");
+                assert procConditionPart.getRequestedConditionMap().isEmpty() && !filter.hasExperimentAssayIds() &&
+                    filter.getUsedInPropagatedCalls() == null;
+                log.debug("No DAORawDataFilter created: no species, no genes, no conds, no exp/assay IDs,"
+                        + " no usedInPropagatedCalls");
             }
         } else {
             //XXX: actually I think we could create one DAOFilter for all species at once
@@ -516,11 +523,13 @@ public class RawDataService extends ExpressionDataService {
                             log.debug("DAORawDataFilter created without genes nor cond. for species ID: {}",
                                     speciesId);
                             return new DAORawDataFilter(Set.of(speciesId), filter.getExperimentIds(),
-                                    filter.getAssayIds(), filter.getExperimentOrAssayIds());
+                                    filter.getAssayIds(), filter.getExperimentOrAssayIds(),
+                                    filter.getUsedInPropagatedCalls());
                         }
                         log.debug("Complete DAORawDataFilter created for species ID: {}", speciesId);
                         return new DAORawDataFilter(bgeeGeneIds, rawCondIds, filter.getExperimentIds(),
-                                filter.getAssayIds(), filter.getExperimentOrAssayIds());
+                                filter.getAssayIds(), filter.getExperimentOrAssayIds(),
+                                filter.getUsedInPropagatedCalls());
                     })
                     .collect(Collectors.toSet()));
         }

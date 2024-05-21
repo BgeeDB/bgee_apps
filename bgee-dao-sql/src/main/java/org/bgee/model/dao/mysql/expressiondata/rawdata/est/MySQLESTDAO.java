@@ -64,7 +64,7 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
                                Set.of(ESTLibraryDAO.Attribute.ID))
                        .stream()
                        .map(to -> to.getId())
-                    .  collect(Collectors.toSet()),
+                       .collect(Collectors.toSet()),
                 String.class, DAODataType.EST, null);
         if (processedFilters == null) {
             try {

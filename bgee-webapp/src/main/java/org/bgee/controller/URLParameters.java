@@ -521,6 +521,13 @@ public class URLParameters {
             "exclude_non_informative", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
 
     /**
+     * A {@code Parameter<Boolean>} used to define whether to retrieve all raw data or only
+     * raw data used to generate propagated calls.
+     */
+    private static final Parameter<Boolean> ONLY_PROPAGATED = new Parameter<Boolean>(
+            "only_propagated", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
+
+    /**
      * A {@code Parameter<String>} that contains the propagation to be used.
      * Corresponds to the URL parameter "propagation".
      */
@@ -808,6 +815,7 @@ public class URLParameters {
             STAGE_DESCENDANT,
             OBSERVED_DATA,
             EXCLUDE_NON_INFORMATIVE,
+            ONLY_PROPAGATED,
             EXP_ASSAY_ID,
             EXPERIMENT_ID,
             FILTER_EXPERIMENT_ID,
@@ -1151,6 +1159,14 @@ public class URLParameters {
      */
     public Parameter<Boolean> getParamExcludeNonInformative(){
         return EXCLUDE_NON_INFORMATIVE;
+    }
+
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to retrieve all raw data
+     *          or only raw data used to generate propagated calls
+     */
+    public Parameter<Boolean> getOnlyPropagated(){
+        return ONLY_PROPAGATED;
     }
 
     /**

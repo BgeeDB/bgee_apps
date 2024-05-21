@@ -2,6 +2,7 @@ package org.bgee.view.json.adapters;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
@@ -29,7 +30,13 @@ public class RawDataAnnotationTypeAdapter extends TypeAdapter<RawDataAnnotation>
         out.beginObject();
 
         out.name("rawDataCondition");
-        this.utils.writeSimplifiedRawDataCondition(out, value.getRawDataCondition());
+        this.utils.writeSimplifiedRawDataCondition(out, value.getRawDataCondition(), value.getAuthorAnnotation());
+        out.name("physiologicalStatus");
+        if (StringUtils.isBlank(value.getPhysiologicalStatus())) {
+            out.value("NA");
+        } else {
+            out.value(value.getPhysiologicalStatus());
+        }
         out.name("annotationSource");
         this.utils.writeSimplifiedSource(out, value.getAnnotationSource());
         out.name("curator").value(value.getCurator());

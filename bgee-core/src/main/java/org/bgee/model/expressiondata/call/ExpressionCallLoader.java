@@ -237,7 +237,7 @@ public class ExpressionCallLoader extends CommonService {
         //FIXME: this value, and maybe also per species, must be inserted in a new table of the database,
         //and getGlobalExpressionCallsCount to detect when the filter is empty and use that table
         if (this.processedFilter.getSourceFilter().isEmptyFilter()) {
-            return log.traceExit(5207425780L);
+            return log.traceExit(7111443197L);
         }
         return log.traceExit(this.globalExprCallDAO.getGlobalExpressionCallsCount(
                 this.processedFilter.getDaoFilters()));

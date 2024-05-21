@@ -1018,9 +1018,8 @@ public class CommandData extends CommandParent {
                 .loadRawDataLoader(this.loadRawDataFilter(false));
 
         //We don't know which data type the experiment belongs to,
-        //so we test them all
-        DataType dataTypeWithResults = null;
-        RawDataContainerWithExperiment<?, ?, ?> container = null;
+        //and there can be multiple data types in an experiment
+        Map<DataType, RawDataContainerWithExperiment<?, ?, ?>> dataTypeToContainer = new HashMap<>();
         for (DataType dt: EnumSet.allOf(DataType.class)) {
             RawDataDataType<? extends RawDataContainerWithExperiment<?, ?, ?>, ?> rdt =
                     RawDataDataType.getRawDataDataTypeWithExperiment(dt);
@@ -1029,7 +1028,7 @@ public class CommandData extends CommandParent {
                 continue;
             }
 
-            container = rawDataLoader.loadData(
+            RawDataContainerWithExperiment<?, ?, ?> container = rawDataLoader.loadData(
                     //We want the assays to be displayed on the experiment page,
                     //The experiment itself will be retrieved along the way
                     InformationType.ASSAY,
@@ -1039,39 +1038,37 @@ public class CommandData extends CommandParent {
                     //the max number of assays in an experiment
                     RawDataLoader.LIMIT_MAX);
             if (!container.getAssays().isEmpty()) {
-                //we found our result
-                dataTypeWithResults = dt;
-                //TODO: For now we consider that one experiment can only correspond to
-                // one datatype. It is not always true. One experiment could contain
-                // bulk AND single cell RNASeq (and even both full length and target based).
-                // We have to update both the API and the webapp to manage those cases as it
-                // impact the libraries retrieved but also the download button on the website.
-                // For now, if we have both bulk and single cell RNASeq data we decided to
-                // retrieve only single cell information. We managed that by defining SC_RNA_SEQ
-                // before RNA_SEQ in the enum org.bgee.model.expressiondata.baseelements.Datatype.
-                break;
+                dataTypeToContainer.put(dt, container);
             }
-            //otherwise we continue to search
-            container = null;
         }
-        if (container == null) {
+        if (dataTypeToContainer.isEmpty()) {
             throw log.throwing(new PageNotFoundException("The experiment ID "
                     + this.requestParameters.getExperimentId() + " does not exist in Bgee."));
         }
 
-        if (container.getExperiments().size() != 1) {
+        //We don't use a Set, because the hashCode/equals methods of Experiment is based on their ID,
+        //and here we can retrieve multiple experiments with same ID but different data types
+        List<Experiment<?>> experiments = dataTypeToContainer.values().stream()
+                .flatMap(c -> c.getExperiments().stream())
+                .collect(Collectors.toList());
+        if (experiments.stream().map(e -> e.getId()).collect(Collectors.toSet()).size() != 1) {
             throw log.throwing(new IllegalStateException(
                     "Ambiguous experiment ID, should not happen. Experiments retrieved: "
-                    + container.getExperiments()));
+                    + experiments));
         }
-        assert dataTypeWithResults != null;
-        Experiment<?> experiment = container.getExperiments().iterator().next();
-        LinkedHashSet<Assay> assays = new LinkedHashSet<>(container.getAssays());
+
+        LinkedHashSet<Assay> assays = dataTypeToContainer.values().stream()
+                .flatMap(c -> c.getAssays().stream())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         List<ColumnDescription> colDescr;
+        //For column description, if among the retrieved data types we have SC_RNA_SEQ,
+        //this is the one we use since it uses more columns. Otherwise, use the first one.
+        DataType colDataType = dataTypeToContainer.keySet().contains(DataType.SC_RNA_SEQ)?
+                DataType.SC_RNA_SEQ: dataTypeToContainer.keySet().iterator().next();
         try {
             colDescr = this.getColumnDescriptions(
-                    EXPERIMENT_PAGE_ACTION, EnumSet.of(dataTypeWithResults))
-                    .get(dataTypeWithResults);
+                    EXPERIMENT_PAGE_ACTION, EnumSet.of(colDataType))
+                    .get(colDataType);
         } catch (InvalidRequestException e) {
             //here it means we didn't correctly called the method getColumnDescriptions,
             //it is not an InvalidRequestException
@@ -1079,7 +1076,7 @@ public class CommandData extends CommandParent {
         }
 
         DataDisplay display = viewFactory.getDataDisplay();
-        display.displayExperimentPage(experiment, assays, dataTypeWithResults, colDescr);
+        display.displayExperimentPage(experiments, assays, colDataType, colDescr);
 
         log.traceExit();
     }
@@ -1397,6 +1394,7 @@ public class CommandData extends CommandParent {
         GeneFilter geneFilter = speciesId == null && filterSpeciesId == null? null:
             new GeneFilter(filterSpeciesId != null? filterSpeciesId: speciesId,
                     this.requestParameters.getGeneIds());
+        boolean onlyPropagatedParam = Boolean.TRUE.equals(this.requestParameters.getOnlyPropagated());
 
         return log.traceExit(new RawDataFilter(
                 geneFilter != null? Collections.singleton(geneFilter): null,
@@ -1405,7 +1403,9 @@ public class CommandData extends CommandParent {
                         filterExperimentIds: experimentIds,
                 //there is no for parameter for assayId only, so we always use the filter directly
                 filterAssayIds,
-                expOrAssayIds));
+                expOrAssayIds,
+                // for now we do not allow to retrieve only not propagated raw data.
+                onlyPropagatedParam == false ? null: true));
     }
     private ExpressionCallFilter2 loadExprCallFilter(boolean consideringFilters,
             Set<ConditionParameter<?, ?>> condParams, EnumSet<DataType> dataTypes)
@@ -1975,7 +1975,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", false));
+        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.experiment.id", "result.id",
                 null, false));
 
@@ -2000,7 +2000,12 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", isSingleCell));
+        colDescr.addAll(getConditionColumnDescriptions("result", isSingleCell, true));
+        colDescr.add(new ColumnDescription("Physiological status",
+                "Physiological status of the organism at time of sampling",
+                List.of("result.annotation.physiologicalStatus"),
+                ColumnDescription.ColumnType.STRING,
+                null, null, true, null, null));
 
         colDescr.add(new ColumnDescription("Technology", null,
                 List.of("result.library.technology.protocolName"),
@@ -2097,7 +2102,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", false));
+        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
         colDescr.add(getAnnotsToProcExprValuesColDesc(null, "result.id",
                 null, false));
 
@@ -2118,7 +2123,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result", false));
+        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.experiment.id", "result.id",
                 null, false));
 
@@ -2262,7 +2267,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
 
         return log.traceExit(colDescr);
     }
@@ -2315,7 +2320,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", isSingleCell));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", isSingleCell, false));
 
         return log.traceExit(colDescr);
     }
@@ -2351,7 +2356,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
 
         return log.traceExit(colDescr);
     }
@@ -2382,7 +2387,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
 
         return log.traceExit(colDescr);
     }
@@ -2416,6 +2421,10 @@ public class CommandData extends CommandParent {
                 ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         colDescr.add(new ColumnDescription("Experiment name", null,
                 List.of("result.name"),
+                ColumnDescription.ColumnType.STRING,
+                null, null, true, null, null));
+        colDescr.add(new ColumnDescription("DOI", "DOI of the related publication",
+                List.of("result.dOI"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
         colDescr.add(new ColumnDescription("Description", null,
@@ -2476,8 +2485,8 @@ public class CommandData extends CommandParent {
     }
 
     private static List<ColumnDescription> getConditionColumnDescriptions(String attributeStart,
-            boolean displayCellType) {
-        log.traceEntry("{}, {}", attributeStart, displayCellType);
+            boolean displayCellType, boolean displayAuthorAnnots) {
+        log.traceEntry("{}, {}, {}", attributeStart, displayCellType, displayAuthorAnnots);
         List<ColumnDescription> colDescr = new ArrayList<>();
 
         if (displayCellType) {
@@ -2491,6 +2500,13 @@ public class CommandData extends CommandParent {
                     List.of(attributeStart + ".annotation.rawDataCondition.cellType.name"),
                     ColumnDescription.ColumnType.STRING,
                     null, null, true, null, null));
+            if (displayAuthorAnnots) {
+                colDescr.add(new ColumnDescription("Cell type author annotation",
+                        "Free text annotation of cell type as provided by authors",
+                        List.of(attributeStart + ".annotation.rawDataCondition.cellTypeAuthorAnnotation"),
+                        ColumnDescription.ColumnType.STRING,
+                        null, null, true, null, null));
+            }
         }
         colDescr.add(new ColumnDescription("Anat. entity ID",
                 "ID of the anatomical localization of the sample",
@@ -2502,6 +2518,13 @@ public class CommandData extends CommandParent {
                 List.of(attributeStart + ".annotation.rawDataCondition.anatEntity.name"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+        if (displayAuthorAnnots) {
+            colDescr.add(new ColumnDescription("Anat. entity author annotation",
+                    "Free text annotation of anatomical localization of the sample as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.anatEntityAuthorAnnotation"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Stage ID",
                 "ID of the developmental and life stage of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.devStage.id"),
@@ -2512,6 +2535,13 @@ public class CommandData extends CommandParent {
                 List.of(attributeStart + ".annotation.rawDataCondition.devStage.name"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+        if (displayAuthorAnnots) {
+            colDescr.add(new ColumnDescription("Stage author annotation",
+                    "Free text annotation of the developmental and life stage of the sample as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.devStageAuthorAnnotation"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Sex",
                 "Annotation of the sex of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.sex"),
@@ -2522,6 +2552,19 @@ public class CommandData extends CommandParent {
                 List.of(attributeStart + ".annotation.rawDataCondition.strain"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+
+        if (displayAuthorAnnots) {
+            colDescr.add(new ColumnDescription("Time",
+                    "Free text annotation of the time of sampling as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.time"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+            colDescr.add(new ColumnDescription("Time unit",
+                    "Unit for the time of sampling as provided by authors",
+                    List.of(attributeStart + ".annotation.rawDataCondition.timeUnit"),
+                    ColumnDescription.ColumnType.STRING,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Species", null,
                 List.of(attributeStart + ".annotation.rawDataCondition.species.genus",
                         attributeStart + ".annotation.rawDataCondition.species.speciesName"),

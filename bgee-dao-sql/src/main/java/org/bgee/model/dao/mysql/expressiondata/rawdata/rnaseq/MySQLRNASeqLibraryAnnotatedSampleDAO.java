@@ -147,7 +147,10 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer libraryAnnotatedSampleId = null,  conditionId = null,
                         allUMIsCount = null, mappedUMIsCount = null, distinctRankCount = null;
-                String libraryId = null, barcode = null;
+                Float time = null;
+                String libraryId = null, barcode = null, cellTypeAuthorAnnotation = null,
+                        anatEntityAuthorAnnotation = null, stageAuthorAnnotation = null, timeUnit = null,
+                        physiologicalStatus = null;
                 BigDecimal meanRefIntergenicDistribution = null, sdRefIntergenicDistribution = null,
                         tmmFactor = null, abundanceThreshold = null, allGenesPercentPresent = null,
                         proteinCodingGenesPercentPresent = null, 
@@ -217,16 +220,38 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .TMM_FACTOR.getTOFieldName())) {
                         tmmFactor = currentResultSet.getBigDecimal(column.getKey());
+                    } else if (column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
+                            .CELLTYPE_AUTHOR_ANNOTATION.getTOFieldName())) {
+                        cellTypeAuthorAnnotation = currentResultSet.getString(column.getKey());
+                    } else if (column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
+                            .ANATENTITY_AUTHOR_ANNOTATION.getTOFieldName())) {
+                        anatEntityAuthorAnnotation = currentResultSet.getString(column.getKey());
+                    } else if (column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
+                            .STAGE_AUTHOR_ANNOTATION.getTOFieldName())) {
+                        stageAuthorAnnotation = currentResultSet.getString(column.getKey());
+                    } else if (column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
+                            .TIME.getTOFieldName())) {
+                        time = currentResultSet.getFloat(column.getKey());
+                        if (currentResultSet.wasNull()) {
+                            time = null;
+                        }
+                    } else if (column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
+                            .TIME_UNIT.getTOFieldName())) {
+                        timeUnit = currentResultSet.getString(column.getKey());
+                    } else if (column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
+                            .PHYSIOLOGICAL_STATUS.getTOFieldName())) {
+                        physiologicalStatus = currentResultSet.getString(column.getKey());
                     } else {
                         log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 }
                 return log.traceExit(new RNASeqLibraryAnnotatedSampleTO(libraryAnnotatedSampleId,
-                        libraryId, conditionId, barcode, unit,
-                        meanRefIntergenicDistribution, sdRefIntergenicDistribution, tmmFactor,
+                        libraryId, conditionId, cellTypeAuthorAnnotation, anatEntityAuthorAnnotation,
+                        stageAuthorAnnotation, barcode, unit, meanRefIntergenicDistribution, sdRefIntergenicDistribution, tmmFactor,
                         abundanceThreshold, allGenesPercentPresent, proteinCodingGenesPercentPresent,
                         intergenicRegionsPercentPresent, pValueThreshold, allUMIsCount,
-                        mappedUMIsCount, maxRank, distinctRankCount, multipleLibraryIndividualSample));
+                        mappedUMIsCount, maxRank, distinctRankCount, multipleLibraryIndividualSample,
+                        time, timeUnit, physiologicalStatus));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

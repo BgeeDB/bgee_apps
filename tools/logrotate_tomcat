@@ -1,0 +1,64 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use diagnostics;
+use Carp;
+
+use Time::localtime;
+
+
+#Tomcat log directory
+my $LOGDIR='/var/log/tomcat9/';
+chdir $LOGDIR;
+
+#Current date
+my $date = sprintf("%04d%02d%02d", (localtime()->[5] + 1900), (localtime()->[4] + 1), localtime()->[3]);
+
+
+
+###Remove old archived log files
+for my $archive ( glob("*.gz") ){
+    unlink($archive) if ( -f "$archive" && -M "$archive" > 366 ); # Older than 1 year
+}
+
+
+
+###Define special log files, with infinite writting
+my $special_log = {'catalina.out'              => 1,
+    #               'mod_jk.log'                => 1,
+    #               'exampleMydasLog_log4j.log' => 1,
+    #               'mydasLog_log4j.log'        => 1,
+    #               'stop.log'                  => 1,
+    #               'start.log'                 => 1,
+};
+#for my $bgee_log ( glob("bgee_*.log") ){
+#    $special_log->{$bgee_log} = 1;
+#}
+
+
+###Log rotation
+#for special log files
+for my $special_log ( keys(%$special_log) ){
+    if ( -f "$special_log" && -s "$special_log" > 1_000_000 ){# On a daily basis
+        system("cp -f $special_log $special_log-$date && cat /dev/null > $special_log");
+        system("xz -9 $special_log-$date");
+    }
+}
+
+#NOTE regular tomcat logrotate takes care of those ones!
+##for other log files
+#my @log_files = ( glob("*.log"), glob("*.txt"), glob("*.log.1") );
+#for my $log ( @log_files ){
+#    if ( -f "$log" && -M "$log" > 2 ){ # Older than 2 days
+#        if ( -z "$log" && !$special_log->{$log} ){
+#            unlink("$log");
+#        }
+#        else {
+#            system("xz -9 $log") if ( !$special_log->{$log} );
+#        }
+#    }
+#}
+
+exit 0;
+

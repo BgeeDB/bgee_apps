@@ -345,13 +345,13 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         private final String populationCaptureId;
         private final String genotype;
         /**
-         * An {@code int} representing the count of reads present in this library.
+         * A {@code Long} representing the count of reads present in this library.
          */
-        private final Integer allReadCount;
+        private final Long allReadCount;
         /**
-         * An {@code int} representing the count of reads mapped to anything.
+         * A {@code Long} representing the count of reads mapped to anything.
          */
-        private final Integer mappedReadCount;
+        private final Long mappedReadCount;
         /**
          * An {@code int} representing the minimum length in bases of reads aligned in this library.
          */
@@ -368,7 +368,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
                 Boolean libraryMultiplexing, StrandSelection strandSelection,
                 CellCompartment cellCompartment, SequencedTrancriptPart seqTranscriptPart,
                 Integer fragmentation, String populationCaptureId, String genotype,
-                Integer allReadCount, Integer mappedReadCount, Integer minReadLength,
+                Long allReadCount, Long mappedReadCount, Integer minReadLength,
                 Integer maxReadLength, LibraryType libType, Boolean usedInPropagatedCalls) {
             super(rnaSeqLibraryId);
             this.rnaSeqExperimentId = rnaSeqExperimentId;
@@ -427,10 +427,10 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         public String getGenotype() {
             return genotype;
         }
-        public Integer getAllReadCount() {
+        public Long getAllReadCount() {
             return allReadCount;
         }
-        public Integer getMappedReadCount() {
+        public Long getMappedReadCount() {
             return mappedReadCount;
         }
         public Integer getMinReadLength() {

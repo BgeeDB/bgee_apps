@@ -5,12 +5,12 @@ import java.util.Objects;
 public class RnaSeqLibraryPipelineSummary {
 
 
-    private final Integer allReadsCount;
-    private final Integer mappedReadsCount;
+    private final Long allReadsCount;
+    private final Long mappedReadsCount;
     private final Integer minReadLength;
     private final Integer maxReadLength;
 
-    public RnaSeqLibraryPipelineSummary (Integer allReadsCount, Integer mappedReadsCount,
+    public RnaSeqLibraryPipelineSummary (Long allReadsCount, Long mappedReadsCount,
            Integer minReadLength, Integer maxReadLength) {
         this.allReadsCount = allReadsCount;
         this.mappedReadsCount = mappedReadsCount;
@@ -18,10 +18,10 @@ public class RnaSeqLibraryPipelineSummary {
         this.maxReadLength = maxReadLength;
     }
 
-    public Integer getAllReadsCount() {
+    public Long getAllReadsCount() {
         return allReadsCount;
     }
-    public Integer getMappedReadsCount() {
+    public Long getMappedReadsCount() {
         return mappedReadsCount;
     }
     public Integer getMinReadLength() {

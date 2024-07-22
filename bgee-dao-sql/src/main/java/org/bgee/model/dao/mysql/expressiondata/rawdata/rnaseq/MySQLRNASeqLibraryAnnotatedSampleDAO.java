@@ -145,8 +145,8 @@ implements RNASeqLibraryAnnotatedSampleDAO{
             log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                Integer libraryAnnotatedSampleId = null,  conditionId = null,
-                        allUMIsCount = null, mappedUMIsCount = null, distinctRankCount = null;
+                Integer libraryAnnotatedSampleId = null,  conditionId = null, distinctRankCount = null;
+                Long allUMIsCount = null, mappedUMIsCount = null;
                 Float time = null;
                 String libraryId = null, barcode = null, cellTypeAuthorAnnotation = null,
                         anatEntityAuthorAnnotation = null, stageAuthorAnnotation = null, timeUnit = null,
@@ -178,7 +178,7 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                         barcode = currentResultSet.getString(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .ALL_UMIS_COUNT.getTOFieldName())) {
-                        allUMIsCount = currentResultSet.getInt(column.getKey());
+                        allUMIsCount = currentResultSet.getLong(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .CONDITION_ID.getTOFieldName())) {
                         conditionId = currentResultSet.getInt(column.getKey());
@@ -191,7 +191,7 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                                 .getBigDecimal(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .MAPPED_UMIS_COUNT.getTOFieldName())) {
-                        mappedUMIsCount = currentResultSet.getInt(column.getKey());
+                        mappedUMIsCount = currentResultSet.getLong(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryAnnotatedSampleDAO.Attribute
                             .MAX_RANK.getTOFieldName())) {
                         maxRank = currentResultSet.getBigDecimal(column.getKey());

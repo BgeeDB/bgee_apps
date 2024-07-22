@@ -10,12 +10,12 @@ public class RnaSeqLibraryAnnotatedSamplePipelineSummary extends RawDataPipeline
     private final BigDecimal meanRefIntergenicDistribution;
     private final BigDecimal sdRefIntergenicDistribution;
     private final BigDecimal pValueThreshold;
-    private final Integer allUMIsCount;
-    private final Integer mappedUMIsCount;
+    private final Long allUMIsCount;
+    private final Long mappedUMIsCount;
 
     public RnaSeqLibraryAnnotatedSamplePipelineSummary (BigDecimal meanRefIntergenicDistribution,
             BigDecimal sdRefIntergenicDistribution, BigDecimal pValueThreshold,
-            Integer allUMIsCount, Integer mappedUMIsCount,
+            Long allUMIsCount, Long mappedUMIsCount,
             BigDecimal libraryMaxRank, Integer libraryDistinctRankCount) {
         super(libraryDistinctRankCount, libraryMaxRank);
         this.meanRefIntergenicDistribution = meanRefIntergenicDistribution;
@@ -34,10 +34,10 @@ public class RnaSeqLibraryAnnotatedSamplePipelineSummary extends RawDataPipeline
     public BigDecimal getpValueThreshold() {
         return pValueThreshold;
     }
-    public Integer getAllUMIsCount() {
+    public Long getAllUMIsCount() {
         return allUMIsCount;
     }
-    public Integer getMappedUMIsCount() {
+    public Long getMappedUMIsCount() {
         return mappedUMIsCount;
     }
 

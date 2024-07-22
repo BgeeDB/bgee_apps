@@ -240,11 +240,11 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         /**
          * An {@code int} representing the count of UMIs present in this library.
          */
-        private final Integer allUMIsCount;
+        private final Long allUMIsCount;
         /**
          * An {@code int} representing the count of UMIs mapped to anything.
          */
-        private final Integer mappedUMIsCount;
+        private final Long mappedUMIsCount;
         /**
          * A {@code LibraryType} representing the type of this library.
          */
@@ -266,7 +266,7 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
                 BigDecimal sdAbundanceRefIntergenicDistribution, BigDecimal tmmFactor, BigDecimal abundanceThreshold,
                 BigDecimal allGenesPercentPresent, BigDecimal proteinCodingGenesPercentPresent,
                 BigDecimal intergenicRegionsPercentPresent, BigDecimal  pValueThreshold,
-                Integer allUMIsCount, Integer mappedUMIsCount, BigDecimal maxRank,
+                Long allUMIsCount, Long mappedUMIsCount, BigDecimal maxRank,
                 Integer distinctRankCount, Boolean multipleLibraryIndividualSample,
                 Float time, String timeUnit, String physiologicalStatus) {
             super(libraryAnnotatedSampleId);
@@ -329,10 +329,10 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
         public BigDecimal getpValueThreshold() {
             return pValueThreshold;
         }
-        public Integer getAllUMIsCount() {
+        public Long getAllUMIsCount() {
             return allUMIsCount;
         }
-        public Integer getMappedUMIsCount() {
+        public Long getMappedUMIsCount() {
             return mappedUMIsCount;
         }
         public BigDecimal getMaxRank() {

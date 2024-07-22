@@ -114,8 +114,8 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                 CellCompartment cellCompartment = null;
                 SequencedTrancriptPart seqTranscriptPart = null;
                 LibraryType libType = null;
-                Integer fragmentation = null, allReadCount = null, mappedReadCount = null,
-                        maxReadLength = null, minReadLength = null;
+                Integer fragmentation = null, maxReadLength = null, minReadLength = null;
+                Long allReadCount = null, mappedReadCount = null;
 
                 for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                     if (column.getValue().equals(RNASeqLibraryDAO.Attribute.ID.getTOFieldName())) {
@@ -164,10 +164,10 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                         genotype = currentResultSet.getString(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
                             .ALL_READ_COUNT.getTOFieldName())) {
-                        allReadCount = currentResultSet.getInt(column.getKey());
+                        allReadCount = currentResultSet.getLong(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
                             .MAPPED_READ_COUNT.getTOFieldName())) {
-                        mappedReadCount = currentResultSet.getInt(column.getKey());
+                        mappedReadCount = currentResultSet.getLong(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
                             .MAX_READ_LENGTH.getTOFieldName())) {
                         maxReadLength = currentResultSet.getInt(column.getKey());

@@ -437,6 +437,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             serviceOrdering.put(CallService.OrderingAttribute.STRAIN_ID, Service.Direction.ASC);
             callsCondParameters.add(CallService.Attribute.STRAIN_ID);
         }
+        // The callObservedDataFilter is used to filter only observed data (if the Boolean associated
+        // to the combination of condition parameter is true) or only non observed data (if the Boolean associated
+        // to the combination of condition parameter is false). If the Boolean associated
+        // to the combination of condition parameter is false please remember that observed data
+        // are not retrieved. If all data (both observed and non observed) have to be retrieved
+        // then the filter itself has to be null :
+        //      Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = null;
         Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = new HashMap<>();
         callObservedDataFilter.put(callsCondParameters, true);
 

@@ -194,7 +194,7 @@ public class ExpressionLevelInfo {
      */
     public String getFormattedExpressionScore() {
         log.traceEntry();
-        return log.traceExit(String.format("%,.2f", this.expressionScore.setScale(2, RoundingMode.HALF_UP)));
+        return log.traceExit(String.format(Locale.US, "%,.2f", this.expressionScore.setScale(2, RoundingMode.HALF_UP)));
     }
     /**
      * @return  The {@code BigDecimal} corresponding to the max expression rank,

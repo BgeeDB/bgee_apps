@@ -21,9 +21,10 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 public class DAOFDRPValueFilter extends DAOFDRPValueFilterBase<ConditionDAO.Attribute> {
 
     public DAOFDRPValueFilter(BigDecimal fdrPValue, Collection<DAODataType> dataTypes,
-            Qualifier qualifier, DAOPropagationState daoPropagationState, boolean selfObservationRequired,
+            Qualifier qualifier, DAOPropagationState daoPropagationState,
+            boolean selfObservationRequired, boolean noDataAllowed,
             Collection<ConditionDAO.Attribute> condParams) {
-        super(fdrPValue, dataTypes, qualifier, daoPropagationState, selfObservationRequired,
+        super(fdrPValue, dataTypes, qualifier, daoPropagationState, selfObservationRequired, noDataAllowed,
                 condParams == null || condParams.isEmpty()?
                         EnumSet.allOf(ConditionDAO.Attribute.class).stream()
                             .filter(a -> a.isConditionParameter())
@@ -34,8 +35,8 @@ public class DAOFDRPValueFilter extends DAOFDRPValueFilterBase<ConditionDAO.Attr
     //dependency injection of DAOFDRPValue rather than inheritance
     public DAOFDRPValueFilter(DAOFDRPValue fdrPValue, Qualifier qualifier,
             DAOPropagationState propagationState, boolean selfObservationRequired,
-            Collection<ConditionDAO.Attribute> condParams) throws IllegalArgumentException {
-        super(fdrPValue, qualifier, propagationState, selfObservationRequired,
+            boolean noDataAllowed, Collection<ConditionDAO.Attribute> condParams) throws IllegalArgumentException {
+        super(fdrPValue, qualifier, propagationState, selfObservationRequired, noDataAllowed,
                 condParams == null || condParams.isEmpty()?
                         EnumSet.allOf(ConditionDAO.Attribute.class).stream()
                             .filter(a -> a.isConditionParameter())

@@ -88,22 +88,23 @@ public class DAOFDRPValueFilterBase<T extends Enum<T>> implements Comparable<DAO
     private final Qualifier qualifier;
     private final DAOPropagationState propagationState;
     private final boolean selfObservationRequired;
+    private final boolean noDataAllowed;
     //The following attribute is necessary only if selfObservationRequired is true
     private final EnumSet<T> condParams;
     private final Class<T> condParamType;
 
     public DAOFDRPValueFilterBase(BigDecimal fdrPValue, Collection<DAODataType> dataTypes,
             Qualifier qualifier, DAOPropagationState daoPropagationState, boolean selfObservationRequired,
-            Collection<T> condParams, Class<T> condParamType) {
+            boolean noDataAllowed, Collection<T> condParams, Class<T> condParamType) {
         this(new DAOFDRPValue(fdrPValue, dataTypes), qualifier, daoPropagationState,
-                selfObservationRequired, condParams, condParamType);
+                selfObservationRequired, noDataAllowed, condParams, condParamType);
     }
     //dependency injection of DAOFDRPValue rather than inheritance
     public DAOFDRPValueFilterBase(DAOFDRPValue fdrPValue, Qualifier qualifier,
             DAOPropagationState propagationState, boolean selfObservationRequired,
-            Collection<T> condParams, Class<T> condParamType) throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", fdrPValue, qualifier, propagationState, selfObservationRequired,
-                condParams, condParamType);
+            boolean noDataAllowed, Collection<T> condParams, Class<T> condParamType) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", fdrPValue, qualifier, propagationState, selfObservationRequired,
+                noDataAllowed, condParams, condParamType);
 
         if (fdrPValue == null || qualifier == null) {
             throw log.throwing(new IllegalArgumentException("No argument can be null"));
@@ -126,6 +127,7 @@ public class DAOFDRPValueFilterBase<T extends Enum<T>> implements Comparable<DAO
         this.qualifier = qualifier;
         this.propagationState = propagationState;
         this.selfObservationRequired = selfObservationRequired;
+        this.noDataAllowed = noDataAllowed;
         this.condParams = condParams == null || condParams.isEmpty()?
                 EnumSet.allOf(condParamType): EnumSet.copyOf(condParams);
         this.condParamType = condParamType;
@@ -170,6 +172,13 @@ public class DAOFDRPValueFilterBase<T extends Enum<T>> implements Comparable<DAO
     public boolean isSelfObservationRequired() {
         return selfObservationRequired;
     }
+    /**
+     * @return  A {@code boolean} defining whether this filter can be satisfied also when no data
+     *          are available for the requested data types, condition parameters, and propagation state.
+     */
+    public boolean isNoDataAllowed() {
+        return noDataAllowed;
+    }
 
     /**
      * @return  An {@code EnumSet} of condition parameters,
@@ -182,8 +191,8 @@ public class DAOFDRPValueFilterBase<T extends Enum<T>> implements Comparable<DAO
 
     @Override
     public int hashCode() {
-        return Objects.hash(condParams, fdrPValue,
-                propagationState, qualifier, selfObservationRequired);
+        return Objects.hash(fdrPValue, qualifier, propagationState,
+                selfObservationRequired, noDataAllowed, condParams);
     }
     @Override
     public boolean equals(Object obj) {
@@ -194,20 +203,23 @@ public class DAOFDRPValueFilterBase<T extends Enum<T>> implements Comparable<DAO
         if (getClass() != obj.getClass())
             return false;
         DAOFDRPValueFilterBase<?> other = (DAOFDRPValueFilterBase<?>) obj;
-        return Objects.equals(condParams, other.condParams)
-                && Objects.equals(fdrPValue, other.fdrPValue)
-                && propagationState == other.propagationState
+        return Objects.equals(fdrPValue, other.fdrPValue)
                 && qualifier == other.qualifier
-                && selfObservationRequired == other.selfObservationRequired;
+                && propagationState == other.propagationState
+                && selfObservationRequired == other.selfObservationRequired
+                && noDataAllowed == other.noDataAllowed
+                && Objects.equals(condParams, other.condParams);
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("DAOFDRPValueFilter [qualifier=").append(qualifier)
-               .append(", FDRPValue=").append(fdrPValue)
+        builder.append("DAOFDRPValueFilter [")
+               .append("FDRPValue=").append(fdrPValue)
+               .append(", qualifier=").append(qualifier)
                .append(", propagationState=").append(propagationState)
                .append(", selfObservationRequired=").append(selfObservationRequired)
+               .append(", noDataAllowed=").append(noDataAllowed)
                .append(", condParams=").append(condParams)
                .append("]");
         return builder.toString();
@@ -238,6 +250,12 @@ public class DAOFDRPValueFilterBase<T extends Enum<T>> implements Comparable<DAO
             return log.traceExit(-1);
         }
         if (!this.isSelfObservationRequired() && o.isSelfObservationRequired()) {
+            return log.traceExit(+1);
+        }
+        if (this.isNoDataAllowed() && !o.isNoDataAllowed()) {
+            return log.traceExit(-1);
+        }
+        if (!this.isNoDataAllowed() && o.isNoDataAllowed()) {
             return log.traceExit(+1);
         }
         if (!this.getCondParams().equals(o.getCondParams())) {

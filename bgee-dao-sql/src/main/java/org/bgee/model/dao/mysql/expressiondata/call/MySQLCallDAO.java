@@ -286,29 +286,29 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
                                 pValFilter.getPValue().getDataTypes().isEmpty()?
                                 EnumSet.allOf(DAODataType.class):
                                 pValFilter.getPValue().getDataTypes();
-                        String fieldName = getFieldNamePartFromDataTypes(dataTypes);
+                        String fieldNamePart = getFieldNamePartFromDataTypes(dataTypes);
+                        String fieldName = null;
                         if (pValFilter.getPropagationState().equals(
                                 DAOPropagationState.SELF_AND_DESCENDANT)) {
-                            sb.append(MySQLGlobalExpressionCallDAO.TABLE_NAME).append(".")
-                              .append(GLOBAL_P_VALUE_FIELD_START);
+                            fieldName = MySQLGlobalExpressionCallDAO.TABLE_NAME + "."
+                                + GLOBAL_P_VALUE_FIELD_START + fieldNamePart;
                         } else if (pValFilter.getPropagationState().equals(
                                 DAOPropagationState.DESCENDANT)) {
-                            sb.append("(")
-                              .append(MySQLGlobalExpressionCallDAO.TABLE_NAME).append(".")
-                              .append(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START)
-                              .append(fieldName).append(" IS NULL OR ")
-                              .append(MySQLGlobalExpressionCallDAO.TABLE_NAME).append(".")
-                              .append(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START);
+                            fieldName = MySQLGlobalExpressionCallDAO.TABLE_NAME + "."
+                                + GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START + fieldNamePart;
                         } else {
                             throw log.throwing(new IllegalArgumentException(
                                     "Unsupported propagation state in PValueFilter: "
                                     + pValFilter.getPropagationState()));
                         }
+
+                        if (pValFilter.isNoDataAllowed()) {
+                            sb.append("(").append(fieldName).append(" IS NULL OR ");
+                        }
                         sb.append(fieldName)
                           .append(" ").append(pValFilter.getQualifier().getSymbol())
                           .append(" ?");
-                        if (pValFilter.getPropagationState().equals(
-                                DAOPropagationState.DESCENDANT)) {
+                        if (pValFilter.isNoDataAllowed()) {
                             sb.append(")");
                         }
 

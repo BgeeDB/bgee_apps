@@ -173,7 +173,7 @@ public class CallServiceUtils {
                                     daoDataTypes,
                                     DAOFDRPValueFilter2.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false, daoCondParams)));
+                                    false, false, daoCondParams)));
                 } else {
                     //If minimum SILVER is requested, we want calls with FDR-corrected p-value <= 0.05,
                     //we'll get calls SILVER or GOLD
@@ -182,19 +182,24 @@ public class CallServiceUtils {
                                     daoDataTypes,
                                     DAOFDRPValueFilter2.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false, daoCondParams)));
+                                    false, false, daoCondParams)));
                     //Then, if minimum BRONZE is requested, we also accept calls that are SILVER or GOLD
                     //in a descendant condition. We end up with the following conditions:
                     // * FDR-corrected p-value in condition including sub-conditions <= 0.05
                     //   (SILVER or GOLD)
                     // * OR FDR-corrected p-value in at least one sub-condition <= 0.05 (BRONZE)
+                    //
+                    // We don't accept absence of data in sub-conditions because of the OR,
+                    // this would lead to return any data:
+                    // FDR-corrected p-value in condition including sub-conditions <= 0.05
+                    // OR (FDR-corrected p-value in at least one sub-condition <= 0.05 OR NO DATA)
                     if (qual.equals(SummaryQuality.BRONZE)) {
                         pValFilters.add(Collections.singleton(
                                 new DAOFDRPValueFilter2(presentLowThreshold,
                                         daoDataTypes,
                                         DAOFDRPValueFilter2.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                         DAOPropagationState.DESCENDANT,
-                                        false, daoCondParams)));
+                                        false, false, daoCondParams)));
                     }
                 }
 
@@ -220,27 +225,27 @@ public class CallServiceUtils {
                                         daoDataTypes,
                                         DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                         DAOPropagationState.SELF_AND_DESCENDANT,
-                                        true, daoCondParams));
+                                        true, false, daoCondParams));
                 } else {
                     if (qual.equals(SummaryQuality.GOLD)) {
                         absentAndFilters.add(new DAOFDRPValueFilter2(absentHighThreshold,
                                 daoDataTypes,
                                 DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true, daoCondParams));
+                                true, false, daoCondParams));
                         //we want the same condition without considering
                         //the data types that we don't trust to produce absent calls
                         absentAndFilters.add(new DAOFDRPValueFilter2(absentHighThreshold,
                                 daoDataTypesTrustedForNotExpressed,
                                 DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true, daoCondParams));
+                                true, false, daoCondParams));
                     } else {
                         absentAndFilters.add(new DAOFDRPValueFilter2(absentLowThreshold,
                                 daoDataTypes,
                                 DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true, daoCondParams));
+                                true, false, daoCondParams));
                         //Unless we request BRONZE quality, we want the same condition without considering
                         //the data types that we don't trust to produce absent calls
                         if (qual.equals(SummaryQuality.SILVER)) {
@@ -248,7 +253,7 @@ public class CallServiceUtils {
                                     daoDataTypesTrustedForNotExpressed,
                                     DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    true, daoCondParams));
+                                    true, false, daoCondParams));
                         }
                     }
                     //in all cases, we don't want PRESENT calls in a sub-condition
@@ -256,7 +261,7 @@ public class CallServiceUtils {
                             daoDataTypes,
                             DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                             DAOPropagationState.DESCENDANT,
-                            false, daoCondParams));
+                            false, true, daoCondParams));
                     //And unless we request BRONZE, we want the same to hold true
                     //with only the data types we trust to produce ABSENT calls
                     if (!qual.equals(SummaryQuality.BRONZE)) {
@@ -264,7 +269,7 @@ public class CallServiceUtils {
                                 daoDataTypesTrustedForNotExpressed,
                                 DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                 DAOPropagationState.DESCENDANT,
-                                false, daoCondParams));
+                                false, true, daoCondParams));
                     }
                 }
                 pValFilters.add(absentAndFilters);

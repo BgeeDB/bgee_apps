@@ -65,7 +65,15 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         CELL_TYPE(),
         STAGE(),
         SEX(),
-        STRAIN()
+        STRAIN();
+
+        public static final List<EnumSet<ConditionParameter>> getAllPossibleCondParamCombinations() {
+            return DAO.getAllPossibleEnumCombinations(ConditionParameter.class, EnumSet.allOf(ConditionParameter.class));
+        }
+        public static final List<EnumSet<ConditionParameter>> getAllPossibleCondParamCombinations(
+                Collection<ConditionParameter> params) {
+            return DAO.getAllPossibleEnumCombinations(ConditionParameter.class, params);
+        }
     }
     /**
      * {@code Enum} used to define the attributes to populate in the {@code ConditionTO}s 
@@ -92,21 +100,21 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         SEX_ID("sex", "Sex", SEX_ROOT_ID, true),
         STRAIN_ID("strain", "Strain", STRAIN_ROOT_ID, true);
 
-        public static final List<EnumSet<Attribute>> ALL_COND_PARAM_COMBINATIONS =
-                getAllPossibleCondParamCombinations();
-
-        private static final List<EnumSet<Attribute>> getAllPossibleCondParamCombinations() {
-            return DAO.getAllPossibleEnumCombinations(Attribute.class, getCondParams());
-        }
-        public static final List<EnumSet<Attribute>> getAllPossibleCondParamCombinations(
-                Collection<Attribute> attrs) {
-            return DAO.getAllPossibleEnumCombinations(Attribute.class, attrs);
-        }
-
         public static EnumSet<Attribute> getCondParams() {
             return Arrays.stream(Attribute.values()).filter(a -> a.isConditionParameter())
             .collect(Collectors.toCollection(() -> EnumSet.noneOf(Attribute.class)));
         }
+        public static final List<EnumSet<Attribute>> getAllPossibleCondParamCombinations() {
+            return DAO.getAllPossibleEnumCombinations(Attribute.class, getCondParams());
+        }
+        public static final List<EnumSet<Attribute>> getAllPossibleCondParamCombinations(
+                Collection<Attribute> attrs) {
+            if (attrs.stream().anyMatch(a -> !a.isConditionParameter())) {
+                throw new IllegalArgumentException("Argument contains non-condition parameters: " + attrs);
+            }
+            return DAO.getAllPossibleEnumCombinations(Attribute.class, attrs);
+        }
+
         /**
          * A {@code String} that is the corresponding field name in {@code ConditionTO} class.
          * @see {@link Attribute#getTOFieldName()}

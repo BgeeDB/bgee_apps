@@ -1266,17 +1266,17 @@ V> {
         }
 
         /**
-         * @return  A {@code Set} of {@code FDRPValueCondition}s storing the best FDR-corrected p-value
+         * @return  A {@code Set} of {@code FDRPValueCondition2}s storing the best FDR-corrected p-value
          *          over all descendant conditions of the condition considered
          *          in this {@code ExpressionCall}, for different combination of {@code DataType}s.
          *          It means that depending on the combination of {@code DataType}s,
          *          maybe the best FDR-corrected p-values could come from different descendant conditions.
          *          The {@code Condition} where the p-value comes from can be retrieved from
-         *          the returned {@code FDRPValueCondition}s.
+         *          the returned {@code FDRPValueCondition2}s.
          *          These FDR-corrected p-values are produced by correcting all p-values
          *          resulting from tests to detect active signal of expression of a gene
          *          in a condition and its descendant conditions, using the {@code DataType}s
-         *          stored in the {@code FDRPValueCondition} instance.
+         *          stored in the {@code FDRPValueCondition2} instance.
          *          Most likely, only one combination of {@code DataType}s will have been requested,
          *          so that this {@code Set} will contain only one value.
          */
@@ -1284,7 +1284,7 @@ V> {
             return bestDescendantPValues;
         }
         /**
-         * @return  Return one {@code FDRPValueCondition} from the {@code Set} returned by
+         * @return  Return one {@code FDRPValueCondition2} from the {@code Set} returned by
          *          {@link #getBestDescendantPValues()}. Useful when we know that
          *          only one combination of {@code DataType}s was requested
          *          to retrieve FDR-corrected p-values associated to calls.
@@ -1300,8 +1300,8 @@ V> {
          *                  the {@code FDRPValueCondition} produced by using exactly this combination
          *                  of {@code DataType}s among the {@code FDRPValueCondition}s returned by
          *                  {@link #getBestDescendantPValues()}. Cannot be {@code null} or empty.
-         * @return          the {@code FDRPValueCondition} produced by using exactly this combination
-         *                  of {@code DataType}s among the {@code FDRPValueCondition}s returned by
+         * @return          the {@code FDRPValueCondition2} produced by using exactly this combination
+         *                  of {@code DataType}s among the {@code FDRPValueCondition2}s returned by
          *                  {@link #getBestDescendantPValues()}. {@code null}
          *                  if no FDR-corrected p-value was produced using
          *                  this exact combination of {@code DataType}s.

@@ -54,7 +54,7 @@ class CallMapping {
     ExpressionCall2 mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
             Map<Integer, Gene> geneMap, Map<Integer, Condition2> condMap,
             ExpressionCallFilter2 callFilter, Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
-            Set<CallService.Attribute> attrs) {
+            Set<ExpressionCallLoader.Attribute> attrs) {
         log.traceEntry("{}, {}, {}, {}, {}, {}", globalCallTO, geneMap, condMap, callFilter, 
                 maxRankPerSpecies, attrs);
 
@@ -69,12 +69,12 @@ class CallMapping {
         // Gene and Condition
         //***********************************
         Condition2 cond = condMap.get(globalCallTO.getConditionId());
-        if (cond == null && attrs.stream().anyMatch(c -> c.isConditionParameter())) {
+        if (cond == null && attrs.contains(ExpressionCallLoader.Attribute.CONDITION)) {
             throw log.throwing(new IllegalStateException("Could not find Condition for globalConditionId: "
                 + globalCallTO.getConditionId() + " for callTO: " + globalCallTO));
         }
         Gene gene = geneMap.get(globalCallTO.getBgeeGeneId());
-        if (gene == null && attrs.contains(CallService.Attribute.GENE)) {
+        if (gene == null && attrs.contains(ExpressionCallLoader.Attribute.GENE)) {
             throw log.throwing(new IllegalStateException("Could not find Gene for bgeeGeneId: "
                     + globalCallTO.getBgeeGeneId() + " for callTO: " + globalCallTO));
         }
@@ -83,9 +83,9 @@ class CallMapping {
         // Info needed for expression score
         //***********************************
         assert cond == null || gene == null || cond.getSpeciesId() == gene.getSpecies().getId();
-        assert (attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.EXPRESSION_SCORE)) &&
+        assert (attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.EXPRESSION_SCORE)) &&
         maxRankPerSpecies != null && !maxRankPerSpecies.isEmpty() ||
-                attrs != null && !attrs.isEmpty() && !attrs.contains(CallService.Attribute.EXPRESSION_SCORE);
+                attrs != null && !attrs.isEmpty() && !attrs.contains(ExpressionCallLoader.Attribute.EXPRESSION_SCORE);
         ConditionRankInfoTO maxRankInfo = null;
         if (maxRankPerSpecies != null) {
             if (maxRankPerSpecies.size() == 1) {
@@ -104,11 +104,10 @@ class CallMapping {
 
         //Retrieve mean rank for the requested data types if needed
         BigDecimal meanRank = null;
-        if (attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.EXPRESSION_SCORE) ||
-                attrs.contains(CallService.Attribute.MEAN_RANK) ||
-                attrs.contains(CallService.Attribute.EXPRESSION_SCORE) ||
-                attrs.contains(CallService.Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
-                attrs.contains(CallService.Attribute.GENE_QUAL_EXPR_LEVEL)) {
+        if (attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.EXPRESSION_SCORE)/* ||
+                attrs.contains(ExpressionCallLoader.Attribute.MEAN_RANK) ||
+                attrs.contains(ExpressionCallLoader.Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
+                attrs.contains(ExpressionCallLoader.Attribute.GENE_QUAL_EXPR_LEVEL)*/) {
             meanRank = globalCallTO.getMeanRanks()
                     .stream().filter(r -> r.getDataTypes().equals(requestedDAODataTypes))
                     .map(r -> r.getMeanRank())
@@ -117,7 +116,7 @@ class CallMapping {
         }
         //Compute expression score
         BigDecimal expressionScore = attrs == null || attrs.isEmpty() ||
-                attrs.contains(CallService.Attribute.EXPRESSION_SCORE)?
+                attrs.contains(ExpressionCallLoader.Attribute.EXPRESSION_SCORE)?
                         computeExpressionScore(meanRank,
                                 this.processedFilter.isUseGlobalRank()?
                                         maxRankInfo.getGlobalMaxRank(): maxRankInfo.getMaxRank()):
@@ -127,18 +126,18 @@ class CallMapping {
         // FDR-corrected p-values, ExpressionSummary and SummaryQuality
         //***********************************
         Set<FDRPValue> fdrPValues = attrs == null || attrs.isEmpty() ||
-                attrs.contains(CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
-                attrs.contains(CallService.Attribute.CALL_TYPE) ||
-                attrs.contains(CallService.Attribute.DATA_QUALITY)?
+                attrs.contains(ExpressionCallLoader.Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
+                attrs.contains(ExpressionCallLoader.Attribute.CALL_TYPE) ||
+                attrs.contains(ExpressionCallLoader.Attribute.DATA_QUALITY)?
                         globalCallTO.getPValues().stream()
                         .map(p -> new FDRPValue(p.getFdrPValue(),
                                 mapDAODataTypeToDataType(p.getDataTypes(), dataTypeFilters)))
                         .collect(Collectors.toSet()):
                         null;
        Set<FDRPValueCondition2> bestDescendantFdrPValues = attrs == null || attrs.isEmpty() ||
-               attrs.contains(CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
-               attrs.contains(CallService.Attribute.CALL_TYPE) ||
-               attrs.contains(CallService.Attribute.DATA_QUALITY)?
+               attrs.contains(ExpressionCallLoader.Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
+               attrs.contains(ExpressionCallLoader.Attribute.CALL_TYPE) ||
+               attrs.contains(ExpressionCallLoader.Attribute.DATA_QUALITY)?
                        globalCallTO.getBestDescendantPValues().stream()
                        .map(p -> new FDRPValueCondition2(p.getFdrPValue(),
                                mapDAODataTypeToDataType(p.getDataTypes(), dataTypeFilters),
@@ -147,8 +146,8 @@ class CallMapping {
                        null;
         ExpressionSummary exprSummary = null;
         SummaryQuality summaryQual = null;
-        if (attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.CALL_TYPE) ||
-                attrs.contains(CallService.Attribute.DATA_QUALITY)) {
+        if (attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.CALL_TYPE) ||
+                attrs.contains(ExpressionCallLoader.Attribute.DATA_QUALITY)) {
             Entry<ExpressionSummary, SummaryQuality> callQual = inferSummaryCallTypeAndQuality(
                     fdrPValues, bestDescendantFdrPValues, dataTypeFilters);
             if (callQual == null) {
@@ -157,9 +156,9 @@ class CallMapping {
                         + fdrPValues + ", bestDescendantFdrPValues: " + bestDescendantFdrPValues
                         + ", requestedDataTypes: " + dataTypeFilters));
             }
-            exprSummary = attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.CALL_TYPE)?
+            exprSummary = attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.CALL_TYPE)?
                     callQual.getKey(): null;
-            summaryQual = attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.DATA_QUALITY)?
+            summaryQual = attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.DATA_QUALITY)?
                     callQual.getValue(): null;
         }
 
@@ -167,27 +166,27 @@ class CallMapping {
        // Build new ExpressionCall
        //***********************************
         return log.traceExit(new ExpressionCall2(
-            attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.GENE)?
+            attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.GENE)?
                     gene: null,
-            attrs == null || attrs.isEmpty() || attrs.stream().anyMatch(a -> a.isConditionParameter())?
+            attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.CONDITION)?
                     cond: null,
-            attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.OBSERVED_DATA)?
+            attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.OBSERVED_DATA)?
                     computeDataPropagation(callData): null,
-            attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES)?
+            attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.P_VALUE_INFO_ALL_DATA_TYPES)?
                     fdrPValues: null,
-            attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES)?
+            attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.P_VALUE_INFO_ALL_DATA_TYPES)?
                     bestDescendantFdrPValues: null,
             exprSummary,
             summaryQual,
-            attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.DATA_TYPE_RANK_INFO) ||
-            attrs.contains(CallService.Attribute.OBSERVED_DATA) ||
-            attrs.contains(CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE) ||
-            attrs.contains(CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES)?
+            attrs == null || attrs.isEmpty() || /*attrs.contains(ExpressionCallLoader.Attribute.DATA_TYPE_RANK_INFO) ||*/
+            attrs.contains(ExpressionCallLoader.Attribute.OBSERVED_DATA) ||
+            attrs.contains(ExpressionCallLoader.Attribute.P_VALUE_INFO_EACH_DATA_TYPE) ||
+            attrs.contains(ExpressionCallLoader.Attribute.P_VALUE_INFO_ALL_DATA_TYPES)?
                     callData: null,
-            attrs == null || attrs.isEmpty() || attrs.contains(CallService.Attribute.MEAN_RANK) ||
-            attrs.contains(CallService.Attribute.EXPRESSION_SCORE) ||
-            attrs.contains(CallService.Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
-            attrs.contains(CallService.Attribute.GENE_QUAL_EXPR_LEVEL)?
+            attrs == null || attrs.isEmpty() || attrs.contains(ExpressionCallLoader.Attribute.EXPRESSION_SCORE)/* ||
+            attrs.contains(ExpressionCallLoader.Attribute.MEAN_RANK) ||
+            attrs.contains(ExpressionCallLoader.Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
+            attrs.contains(ExpressionCallLoader.Attribute.GENE_QUAL_EXPR_LEVEL)*/?
                     loadExpressionLevelInfo(exprSummary, meanRank, expressionScore,
                             maxRankInfo == null? null:
                                 this.processedFilter.isUseGlobalRank()?
@@ -195,7 +194,7 @@ class CallMapping {
     }
 
     private static Set<ExpressionCallData2> mapGlobalCallTOToExpressionCallData(
-            GlobalExpressionCallTO globalCallTO, Set<CallService.Attribute> attrs,
+            GlobalExpressionCallTO globalCallTO, Set<ExpressionCallLoader.Attribute> attrs,
             Set<DataType> requestedDataTypes, Set<ConditionParameter<?, ?>> condParamComb) {
         log.traceEntry("{}, {}, {}, {}", globalCallTO, attrs, requestedDataTypes, condParamComb);
         
@@ -208,21 +207,21 @@ class CallMapping {
             DataType dt = mapDAODataTypeToDataType(Collections.singleton(cdTO.getDataType()),
                     requestedDataTypes).iterator().next();
 
-            boolean getRankInfo = attrs == null || attrs.isEmpty() ||
-                    attrs.contains(CallService.Attribute.DATA_TYPE_RANK_INFO);
+            boolean getRankInfo = false /*attrs == null || attrs.isEmpty() ||
+                    attrs.contains(ExpressionCallLoader.Attribute.DATA_TYPE_RANK_INFO)*/;
             //This info of FDR-corrected p-values is stored in the ExpressionCall,
             //but when we also have the p-values per data type, we also store them
             //in the related ExpressionCallData objet.
             //And since we could use P_VALUE_INFO_ALL_DATA_TYPES, but request only one data type,
             //we also accept this attribute
             boolean getPValues = attrs == null || attrs.isEmpty() ||
-                    attrs.contains(CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE);
+                    attrs.contains(ExpressionCallLoader.Attribute.P_VALUE_INFO_EACH_DATA_TYPE);
             boolean getObsCount = attrs == null || attrs.isEmpty() ||
-                    attrs.contains(CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE) ||
-                    attrs.contains(CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
-                    attrs.contains(CallService.Attribute.CALL_TYPE) ||
-                    attrs.contains(CallService.Attribute.DATA_QUALITY) ||
-                    attrs.contains(CallService.Attribute.OBSERVED_DATA);
+                    attrs.contains(ExpressionCallLoader.Attribute.P_VALUE_INFO_EACH_DATA_TYPE) ||
+                    attrs.contains(ExpressionCallLoader.Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
+                    attrs.contains(ExpressionCallLoader.Attribute.CALL_TYPE) ||
+                    attrs.contains(ExpressionCallLoader.Attribute.DATA_QUALITY) ||
+                    attrs.contains(ExpressionCallLoader.Attribute.OBSERVED_DATA);
             assert !getRankInfo || cdTO.getRank() != null && cdTO.getRankNorm() != null &&
                     cdTO.getWeightForMeanRank() != null;
             assert !getObsCount || cdTO.getSelfObservationCount() != null &&

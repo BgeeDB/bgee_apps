@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
+import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
@@ -44,6 +45,62 @@ import org.bgee.model.species.Species;
 
 public class ExpressionCallLoader extends CommonService {
     private final static Logger log = LogManager.getLogger(ExpressionCallLoader.class.getName());
+
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code ExpressionCall2}s 
+     * obtained from this {@code ExpressionCallLoader}.
+     * <ul>
+     * <li>{@code GENE}: corresponds to {@link ExpressionCall2#getGene()}.
+     * <li>{@code CONDITION}: corresponds to {@link ExpressionCall2#getCondition()}.
+     * <li>{@code CALL_TYPE}: corresponds to {@link ExpressionCall2#getSummaryCallType()}.
+     * <li>{@code DATA_QUALITY}: corresponds to {@link ExpressionCall2#getSummaryQuality()}.
+     * <li>{@code EXPRESSION_SCORE}: corresponds to {@link ExpressionCall2#getExpressionScore()}.
+     * <li>{@code OBSERVED_DATA}: corresponds to {@link ExpressionCall2#getDataPropagation()}, as well as
+     *     {@link ExpressionCallData2#getDataPropagation()} in the objects returned by
+     *     {@link ExpressionCall2#getCallData()} for each requested data type.
+     *
+     * <li>{@code P_VALUE_INFO_ALL_DATA_TYPES}: retrieve FDR-corrected p-values and observation counts
+     *     computed from the set of requested data types. corresponds to {@link ExpressionCall2#getPValues()}
+     *     and {@link ExpressionCall2#getBestDescendantPValues()}, with FDR-corrected p-values:
+     *   <ul>
+     *   <li>computed from the p-values from the set of requested data types in the condition itself
+     *       and its sub-conditions (stored in {@link ExpressionCall2#getPValues()}).
+     *   <li>computed from the p-values from only the set of requested data types that are trusted
+     *       for producing ABSENT expression calls, in the condition itself and its sub-conditions
+     *       (stored in {@link ExpressionCall2#getPValues()}). This mechanism is used to determine
+     *       whether an ABSENT call is indeed supported by data types trusted for ABSENT calls.
+     *   <li>that is the best FDR-corrected p-value among the sub-conditions of the condition
+     *       of the call, computed from the p-values from the set of requested data types
+     *       (stored in {@link ExpressionCall2#getBestDescendantPValues()}).
+     *   <li>that is the best FDR-corrected p-value among the sub-conditions of the condition
+     *       of the call, computed from the p-values from only the set of requested data types that are trusted
+     *       for producing ABSENT expression calls (stored in
+     *       {@link ExpressionCall2#getBestDescendantPValues()}). This mechanism is used to determine
+     *       whether an ABSENT call is indeed supported by data types trusted for ABSENT calls.
+     *   </ul>
+     *     Also, in the {@code ExpressionCallData2} objects returned by {@link ExpressionCall2#getCallData()}
+     *     for each data type, in the {@code DataPropagation2} object returned by
+     *     {@link CallData.ExpressionCallData2#getDataPropagation()}, {@code #getSelfObservationCount()}
+     *     and {@code #getDescendantObservationCount()} will be populated. This is notably needed
+     *     to determine which data types had data supporting the call.
+     *
+     * <li>{@code P_VALUE_INFO_EACH_DATA_TYPE}: retrieve FDR-corrected p-values and observation counts
+     *     for each individual data types. As a result, in the {@code ExpressionCallData2} objects
+     *     returned by {@link ExpressionCall2#getCallData()} for each data type,
+     *     in the {@code DataPropagation2} object returned by {@link CallData.ExpressionCallData2#getDataPropagation()}:
+     *   <ul>
+     *   <li>{@code #getSelfObservationCount()} and {@code #getDescendantObservationCount()} will be populated
+     *       (as when using the attribute {@code P_VALUE_INFO_ALL_DATA_TYPES}).
+     *       This is notably useful to determine which data types had data supporting the call.
+     *   <li>{@code #getPValue()} and {@code #getBestDescendantPValue()} will be populated
+     *       (unlike when using the attribute {@code P_VALUE_INFO_ALL_DATA_TYPES}).
+     *   </ul>
+     * </ul>
+     */
+    public static enum Attribute implements Service.Attribute {
+        GENE, CONDITION, CALL_TYPE, DATA_QUALITY, EXPRESSION_SCORE, OBSERVED_DATA,
+        P_VALUE_INFO_EACH_DATA_TYPE, P_VALUE_INFO_ALL_DATA_TYPES;
+    }
 
     /**
      * An {@code int} that is the maximum allowed number of results
@@ -188,13 +245,14 @@ public class ExpressionCallLoader extends CommonService {
 
         //We obtain the results from the data source
         ExpressionCallFilter2 callFilter = this.processedFilter.getSourceFilter();
-        EnumSet<CallService.Attribute> attrs = this.getAttributes(callFilter);
+        //TODO: Until we change the signature of the method, we  use all Attributes of this loader
+        EnumSet<Attribute> attrs = EnumSet.allOf(Attribute.class);
         GlobalExpressionCallTOResultSet rs = this.globalExprCallDAO
                 .getGlobalExpressionCalls2(
                         this.processedFilter.getDaoFilters(),
                         convertServiceAttrToGlobalExprDAOAttr(attrs, callFilter),
                         //for now we always order by bgeeGeneId, conditionId
-                        convertServiceOrderingAttrToGlobalExprDAOOrderingAttr(callFilter),
+                        loadGlobalExprDAOOrderingAttr(),
                         newOffset,
                         newLimit);
 
@@ -432,45 +490,8 @@ public class ExpressionCallLoader extends CommonService {
         log.traceExit(); return;
     }
 
-    private EnumSet<CallService.Attribute> getAttributes(ExpressionCallFilter2 callFilter) {
-        log.traceEntry("{}", callFilter);
-      //For now we define the attributes ourselves, and we still use the Attributes
-        //from the CallService
-        //TODO: implement Attributes in ExpressionCallLoader
-        EnumSet<CallService.Attribute> attributes = EnumSet.of(
-                CallService.Attribute.GENE,
-                CallService.Attribute.CALL_TYPE,
-                CallService.Attribute.DATA_QUALITY,
-                CallService.Attribute.EXPRESSION_SCORE,
-                //to know how the propagation status of the call
-                CallService.Attribute.OBSERVED_DATA,
-                //We need the p-value info per data type to know which data types
-                //produced the calls
-                CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE,
-                //We also want to know the global FDR-corrected p-value
-                CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
-        attributes.addAll(callFilter.getCondParamCombination().stream()
-                .flatMap(param -> {
-                    //Any condition parameter attribute would do to retrieve the condition IDs,
-                    //but we map properly anyway.
-                    if (ConditionParameter.ANAT_ENTITY_CELL_TYPE.equals(param)) {
-                        return Stream.of(CallService.Attribute.ANAT_ENTITY_ID,
-                                CallService.Attribute.CELL_TYPE_ID);
-                    } else if (ConditionParameter.DEV_STAGE.equals(param)) {
-                        return Stream.of(CallService.Attribute.DEV_STAGE_ID);
-                    } else if (ConditionParameter.SEX.equals(param)) {
-                        return Stream.of(CallService.Attribute.SEX_ID);
-                    } else if (ConditionParameter.STRAIN.equals(param)) {
-                        return Stream.of(CallService.Attribute.STRAIN_ID);
-                    }
-                    throw log.throwing(new UnsupportedOperationException(
-                            "Unsupported ConditionParameter: " + param));
-                })
-                .collect(Collectors.toSet()));
-        return log.traceExit(attributes);
-    }
     private Set<GlobalExpressionCallDAO.AttributeInfo> convertServiceAttrToGlobalExprDAOAttr(
-            EnumSet<CallService.Attribute> attributes, ExpressionCallFilter2 callFilter) {
+            EnumSet<Attribute> attributes, ExpressionCallFilter2 callFilter) {
         log.traceEntry("{}, {}", attributes, callFilter);
 
         EnumSet<DAODataType> daoDataTypes = this.utils.convertDataTypeToDAODataType(callFilter == null? null:
@@ -479,18 +500,24 @@ public class ExpressionCallLoader extends CommonService {
                 this.utils.convertTrustedAbsentDataTypesToDAODataTypes(callFilter == null? null:
                     callFilter.getDataTypeFilters());
         //TODO to upate to use ConditionDAO.ConditionParameter
-        EnumSet<ConditionDAO.Attribute> daoCondParamComb = this.utils
-                .convertCondParamsToDAOCondAttributes(callFilter.getCondParamCombination());
+        //XXX: actually are we sure? What's the point, there's only CONDITION_ID and SPECIES_ID as other Attributes.
+        //Actually what would be probably better, instead of using  ConditionDAO.getAllPossibleCondParamCombinations in DAO,
+//      //to simply generate the combination in bgee-core and just convert them to ConditionDAO.Attributes.
+        //OK, we also have GlobalExpressionCallDAO.AttributeInfo needing to be provided with Condition parameters,
+        //so maybe for this it would be nice to have ConditionDAO.ConditionParameters separated from ConditionDAO.Attributes.
+        //Or maybe it could even be GlobalExpressionCallDAO.ConditionParameters
+        EnumSet<ConditionDAO.ConditionParameter> daoCondParamComb = this.utils
+                .convertCondParamsToDAOCondParams(callFilter.getCondParamCombination());
 
         return log.traceExit(attributes.stream().flatMap(attr -> {
-            if (attr.isConditionParameter()) {
+            if (attr.equals(Attribute.CONDITION)) {
 
                 return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
                         GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID));
 
-            } else if (attr.equals(CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
-                    attr.equals(CallService.Attribute.CALL_TYPE) ||
-                    attr.equals(CallService.Attribute.DATA_QUALITY)) {
+            } else if (attr.equals(Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
+                    attr.equals(Attribute.CALL_TYPE) ||
+                    attr.equals(Attribute.DATA_QUALITY)) {
 
                 Set<GlobalExpressionCallDAO.AttributeInfo> pValAttributes = new HashSet<>();
                 pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
@@ -509,7 +536,7 @@ public class ExpressionCallLoader extends CommonService {
                 }
                 return pValAttributes.stream();
 
-            } else if (attr.equals(CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE)) {
+            } else if (attr.equals(Attribute.P_VALUE_INFO_EACH_DATA_TYPE)) {
 
                 return daoDataTypes.stream()
                         .flatMap(dt -> Stream.of(
@@ -520,24 +547,22 @@ public class ExpressionCallLoader extends CommonService {
                                         GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
                                         EnumSet.of(dt), null)));
 
-            } else if (attr.equals(CallService.Attribute.GENE)) {
+            } else if (attr.equals(Attribute.GENE)) {
 
                 return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
                         GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID));
 
-            } else if (attr.equals(CallService.Attribute.OBSERVED_DATA)) {
-
-                //TODO: actually why do we use getAllPossibleCondParamCombinations in DAO?
-                //We could generate the combination in bgee-core and just convert them
-                return ConditionDAO.Attribute.getAllPossibleCondParamCombinations(daoCondParamComb)
-                        .stream().map(comb -> new GlobalExpressionCallDAO.AttributeInfo(
-                                GlobalExpressionCallDAO.Attribute.DATA_TYPE_OBSERVATION_COUNT_INFO,
-                                daoDataTypes, comb));
-
-            } else if (attr.equals(CallService.Attribute.MEAN_RANK) ||
-                    attr.equals(CallService.Attribute.EXPRESSION_SCORE) ||
-                    attr.equals(CallService.Attribute.GENE_QUAL_EXPR_LEVEL) ||
-                    attr.equals(CallService.Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL)) {
+            } 
+//            else if (attr.equals(Attribute.OBSERVED_DATA)) {
+//
+//                //TODO: to continue here
+//                return ConditionDAO.ConditionParameter.getAllPossibleCondParamCombinations(daoCondParamComb)
+//                        .stream().map(comb -> new GlobalExpressionCallDAO.AttributeInfo(
+//                                GlobalExpressionCallDAO.Attribute.DATA_TYPE_OBSERVATION_COUNT_INFO,
+//                                daoDataTypes, comb));
+//
+//            } 
+            else if (attr.equals(Attribute.EXPRESSION_SCORE)) {
 
                 Set<GlobalExpressionCallDAO.AttributeInfo> rankAttributes = new HashSet<>();
                 rankAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
@@ -545,33 +570,25 @@ public class ExpressionCallLoader extends CommonService {
                         daoDataTypes, null));
                 //We need to know the species to compute expression scores,
                 //in order to retrieve the max rank in that species.
-                if (attr.equals(CallService.Attribute.EXPRESSION_SCORE)) {
+                if (attr.equals(Attribute.EXPRESSION_SCORE)) {
                     //The species info can be retrieved either from the gene or from the condition
-                    if (!attributes.contains(CallService.Attribute.GENE) &&
-                            Collections.disjoint(attributes,
-                                    CallService.Attribute.getAllConditionParameters())) {
+                    if (!attributes.contains(Attribute.GENE) && !attributes.contains(Attribute.CONDITION)) {
                         rankAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
                                 GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID));
                     }
                 }
                 return rankAttributes.stream();
 
-            } else if (attr.equals(CallService.Attribute.DATA_TYPE_RANK_INFO)) {
-
-                return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.DATA_TYPE_RANK_INFO,
-                        daoDataTypes, null));
-
             } else {
                 throw log.throwing(new IllegalStateException(
-                        "Unsupported Attributes from CallService: " + attr));
+                        "Unsupported Attributes from ExpressionCallLoader: " + attr));
             }
         }).collect(Collectors.toSet()));
     }
 
     private LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction>
-    convertServiceOrderingAttrToGlobalExprDAOOrderingAttr(ExpressionCallFilter2 callFilter) {
-        log.traceEntry("{}", callFilter);
+    loadGlobalExprDAOOrderingAttr() {
+        log.traceEntry();
         //for now we always order by bgeeGeneId, conditionId
         LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> orderAttrs =
                 new LinkedHashMap<>();

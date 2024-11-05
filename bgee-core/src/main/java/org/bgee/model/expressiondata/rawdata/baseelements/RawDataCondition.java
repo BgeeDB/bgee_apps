@@ -1,5 +1,6 @@
 package org.bgee.model.expressiondata.rawdata.baseelements;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -9,6 +10,8 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.BaseCondition;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition;
 import org.bgee.model.species.Species;
 
 /**
@@ -73,6 +76,10 @@ public class RawDataCondition extends BaseCondition<RawDataCondition> implements
      */
     public String getStrain() {
         return strain;
+    }
+
+    public Condition toCondition(Collection<CallService.Attribute> condParameters) {
+        
     }
 
     //*********************************

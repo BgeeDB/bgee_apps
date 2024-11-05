@@ -206,7 +206,7 @@ public class RawDataLoader extends CommonService {
      * to be able to retrieve at once all assays part of one specific experiment
      * (specified through {@link RawDataFilter#getExperimentIds()}).
      */
-    public static int LIMIT_MAX = 10000;
+    public static int LIMIT_MAX = 1000000;
     /**
      * An {@code int} that is the maximum number of elements
      * in {@link #rawDataConditionMap} and {@link #geneMap} before starting

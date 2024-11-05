@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata.call;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -219,6 +220,15 @@ public class ConditionGraph {
         }
         
         log.traceExit();
+    }
+
+
+
+    public List<Condition> getDeepFirstOrderedConditions(Condition startCond) {
+        log.traceEntry();
+
+        this.getDescendantConditions(startCond, true);
+        return log.traceExit(xx);
     }
     
     /**

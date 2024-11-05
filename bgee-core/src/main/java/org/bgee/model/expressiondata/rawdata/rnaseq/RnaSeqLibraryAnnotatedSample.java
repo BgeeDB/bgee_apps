@@ -5,13 +5,11 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 
 // The ID of RNASeqLibraryAnnotatedSampleTO is internal to Bgee, it is not meant to
 // be available in bgee-core, thus this class does not extend Entity.
-public class RnaSeqLibraryAnnotatedSample
-        implements AssayPartOfExp<RnaSeqExperiment>, RawDataAnnotated {
+public class RnaSeqLibraryAnnotatedSample implements AssayPartOfExp<RnaSeqExperiment> {
     private final static Logger log = LogManager.getLogger(RnaSeqLibraryAnnotatedSample.class.getName());
 
     private final RnaSeqLibrary library;

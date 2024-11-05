@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
 import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 
 //Note that in the database, inSituEvidence are not associated with a condition,
@@ -14,8 +13,7 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 //But for convenience, we want this class to be associated with conditions,
 //so we generally retrieve the spots associated to an evidence, and create
 //one object InSituEvidence per evidence and condition.
-public class InSituEvidence extends Entity<String>
-implements AssayPartOfExp<InSituExperiment>, RawDataAnnotated {
+public class InSituEvidence extends Entity<String> implements AssayPartOfExp<InSituExperiment> {
     private final static Logger log = LogManager.getLogger(InSituEvidence.class.getName());
 
     private final InSituExperiment experiment;

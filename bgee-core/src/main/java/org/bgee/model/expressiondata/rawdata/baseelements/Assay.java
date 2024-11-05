@@ -12,4 +12,5 @@ package org.bgee.model.expressiondata.rawdata.baseelements;
 //Assays do not always have an ID, as for RnaSeqLibraryAnnotatedSample,
 //so we removed the getId() method from this interface
 public interface Assay {
+    public RawDataAnnotation getAnnotation();
 }

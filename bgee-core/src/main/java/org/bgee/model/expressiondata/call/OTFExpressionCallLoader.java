@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -200,8 +201,30 @@ public class OTFExpressionCallLoader extends CommonService {
 
     static BigDecimal computeMedian(List<BigDecimal> pValues) {
         log.traceEntry("{}", pValues);
+        // Return a pValue if the list is empty
+        if (pValues.size() == 1) {
+            return pValues.get(0);
+        }
 
-        
-        return null;
+        // Sort the list
+        Collections.sort(pValues);
+
+        // Find the median
+        int size = pValues.size();
+        BigDecimal median;
+        if (size % 2 == 1) {
+            // Odd size: take the middle element
+            median = pValues.get(size / 2);
+        } else {
+            // Even size: average the two middle elements
+            BigDecimal middle1 = pValues.get(size / 2 - 1);
+            BigDecimal middle2 = pValues.get(size / 2);
+            median = middle1.add(middle2).divide(BigDecimal.valueOf(2));
+        }
+
+        // Multiply the median by 2 and cap the result at 1
+        BigDecimal result = median.multiply(BigDecimal.valueOf(2));
+        return log.traceExit(result.compareTo(BigDecimal.ONE) > 0 ? BigDecimal.ONE : result);
     }
 }
+

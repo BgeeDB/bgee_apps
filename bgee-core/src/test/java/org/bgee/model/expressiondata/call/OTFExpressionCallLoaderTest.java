@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -158,4 +160,34 @@ public class OTFExpressionCallLoaderTest {
         assertTrue(affCallsCond2.equals(List.of(call1)));
         log.info("TransformedMap: {}", transformedMap);
     }
+    
+    @Test
+    public void testcomputeMedian() {
+        // Test with an odd-sized list
+        List<BigDecimal> oddList = Arrays.asList(
+            new BigDecimal("0.6"), new BigDecimal("0.5"), new BigDecimal("0.4"), new BigDecimal("0.3"), new BigDecimal("0.2")
+        );
+        BigDecimal result = OTFExpressionCallLoader.computeMedian(oddList);
+        assertEquals("The median multiplied by 2 for odd-sized list should be 0.8", new BigDecimal("0.8"), result);
+
+        // Test with an even-sized list
+        List<BigDecimal> evenList = Arrays.asList(
+            new BigDecimal("0.01"), new BigDecimal("0.07"), new BigDecimal("0.002"), new BigDecimal("0.01")
+        );
+        result = OTFExpressionCallLoader.computeMedian(evenList);
+        assertEquals("The median multiplied by 2 for even-sized list should be 0.02", new BigDecimal("0.02"), result);
+        
+     // Test with an odd-sized list
+        List<BigDecimal> bigPvalueList = Arrays.asList(
+            new BigDecimal("0.9"), new BigDecimal("0.9"), new BigDecimal("0.8"), new BigDecimal("0.9"), new BigDecimal("0.7")
+        );
+        result = OTFExpressionCallLoader.computeMedian(bigPvalueList);
+        assertEquals("The median calculation should return 1 and not above when pValues are too large", new BigDecimal("1"), result);
+        
+        // Test with a single-element list
+        List<BigDecimal> singleElementList = Collections.singletonList(new BigDecimal("0.05"));
+        result = OTFExpressionCallLoader.computeMedian(singleElementList);
+        assertEquals("The median calculation on a single pValue list should return the same pValue", new BigDecimal("0.05"), result);
+    } 
 }
+

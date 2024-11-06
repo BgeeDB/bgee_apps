@@ -6,6 +6,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCallSource;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
@@ -27,7 +28,6 @@ import org.bgee.model.gene.Gene;
 
 public class OTFExpressionCallLoader extends CommonService {
     private static final Logger log = LogManager.getLogger(OTFExpressionCallLoader.class.getName());
-
     /**
      * A {@code BigDecimal} representing the minimum value that can take an expression score.
      */
@@ -53,7 +53,7 @@ public class OTFExpressionCallLoader extends CommonService {
 
         //For faster computation, we want to retrieve the raw data per Condition,
         //keeping info of data type
-        Map<Condition, Map<DataType, List<RawCall>>> rawCallsPerCond = transformToRawDataPerCondition(
+        Map<Condition, Map<DataType, List<RawCallSource<?>>>> rawCallsPerCond = transformToRawDataPerCondition(
                 rawDataCondsToConds, rawDataContainers);
 
         //Retrieve roots of conditionGraph
@@ -71,7 +71,9 @@ public class OTFExpressionCallLoader extends CommonService {
             if (!childConds.isEmpty() && !callPerCond.keySet().containsAll(childConds)) {
                 throw log.throwing(new IllegalStateException("All children should have data and have been visited."));
             }
-            OTFExpressionCall call = loadOTFExpressionCall(rawCallsPerCond.get(cond),
+            Map<DataType, List<RawCallSource<?>>> condRawData = rawCallsPerCond.get(cond);
+            OTFExpressionCall call = loadOTFExpressionCall(gene, cond,
+                    condRawData == null? Map.of(): condRawData,
                     childConds.stream().map(childCond -> callPerCond.get(childCond)).collect(Collectors.toSet()));
             callPerCond.put(cond, call);
         }
@@ -79,44 +81,100 @@ public class OTFExpressionCallLoader extends CommonService {
         return null;
     }
 
-    static OTFExpressionCall loadOTFExpressionCall(Map<DataType, List<RawCall>> rawData,
-            Set<OTFExpressionCall> callsInChildConds) {
+    static OTFExpressionCall loadOTFExpressionCall(Gene gene, Condition cond,
+            Map<DataType, List<RawCallSource<?>>> rawData, Set<OTFExpressionCall> callsInChildConds) {
         log.traceEntry("{}, {}", rawData, callsInChildConds);
-        //rawData can be null if no raw data in the cond
-        //first, compute information from data in the condition itself
-//        List<BigDecimal> trustedDataType
+        if (rawData.isEmpty() && callsInChildConds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Raw data or child calls must be provided"));
+        }
+
+        //rawData can be empty if no raw data in the cond
+        //first, compute information from data in the condition itself.
+        //We use Lists not to loose equals PValues
+        List<BigDecimal> allDataTypePValues = new ArrayList<>();
+        List<BigDecimal> trustedDataTypePValues = new ArrayList<>();
+        BigDecimal scoreByWeightSum = new BigDecimal(0);
+        BigDecimal weightSum = new BigDecimal(0);
+        EnumSet<DataType> supportingDataTypes = EnumSet.noneOf(DataType.class);
+
+        for (Entry<DataType, List<RawCallSource<?>>> dataTypeRawData: rawData.entrySet()) {
+            DataType dataType = dataTypeRawData.getKey();
+            List<RawCallSource<?>> calls = dataTypeRawData.getValue();
+            List<BigDecimal> pValues = new ArrayList<>();
+            supportingDataTypes.add(dataType);
+
+            for (RawCallSource<?> call: calls) {
+                pValues.add(call.getRawCall().getPValue());
+                BigDecimal expressionScore = computeExpressionScore(call.getRawCall().getRank(),
+                        call.getAssay().getPipelineSummary().getMaxRank());
+                BigDecimal weight = BigDecimal.valueOf(call.getAssay().getPipelineSummary().getDistinctRankCount());
+                BigDecimal scoreByWeight = expressionScore.multiply(weight);
+                scoreByWeightSum = scoreByWeightSum.add(scoreByWeight);
+                weightSum = weightSum.add(weight);
+            }
+            allDataTypePValues.addAll(pValues);
+            if (dataType.isTrustedForAbsentCalls()) {
+                trustedDataTypePValues.addAll(pValues);
+            }
+//            BigDecimal stepScore = calls.
+        }
+
+        if (!callsInChildConds.isEmpty()) {
+            List<BigDecimal> childPValues = new ArrayList<>();
+            List<BigDecimal> childTrustedDataTypePValues = new ArrayList<>();
+            for (OTFExpressionCall childCall: callsInChildConds) {
+                supportingDataTypes.addAll(childCall.getSupportingDataTypes());
+                childPValues.add(childCall.getAllDataTypePValue());
+                childTrustedDataTypePValues.add(childCall.getTrustedDataTypePValue());
+                BigDecimal scoreByWeight = childCall.getExpressionScoreWeight().multiply(childCall.getExpressionScore());
+                scoreByWeightSum = scoreByWeightSum.add(scoreByWeight);
+                weightSum = weightSum.add(childCall.getExpressionScoreWeight());
+            }
+            BigDecimal fdrChildPValue = computeFDRCorrectedPValue(childPValues);
+            allDataTypePValues.add(fdrChildPValue);
+            BigDecimal fdrChildTrustedDataTypePValue = computeFDRCorrectedPValue(childTrustedDataTypePValues);
+            trustedDataTypePValues.add(fdrChildTrustedDataTypePValue);
+        }
+
+        BigDecimal ultimateAllDataTypePValue = computeMedian(allDataTypePValues);
+        BigDecimal ultimateTrustedDataTypePValue = computeMedian(trustedDataTypePValues);
+        BigDecimal weightedAverageExpressionScoreForVincent = scoreByWeightSum.divide(weightSum);
         
-        //callsInChildConds can be empty if no child conditions
-        return null;
+        return new OTFExpressionCall(gene, cond, supportingDataTypes,
+                ultimateTrustedDataTypePValue, ultimateAllDataTypePValue,
+                BigDecimal bestDescendantTrustedDataTypePValue, BigDecimal bestDescendantAllDataTypePValue,
+                BigDecimal expressionScoreWeight, BigDecimal expressionScore,
+                BigDecimal bestDescendantExpressionScoreWeight, BigDecimal bestDescendantExpressionScore,
+                PropagationState dataPropagation)
     }
 
-    static Map<Condition, Map<DataType, List<RawCall>>> transformToRawDataPerCondition(
+    static Map<Condition, Map<DataType, List<RawCallSource<?>>>> transformToRawDataPerCondition(
             Map<RawDataCondition, Condition> rawDataCondsToConds,
             Map<RawDataDataType<?, ?>, RawDataContainer<?, ?>> rawDataContainers) {
         log.traceEntry("{}, {}", rawDataCondsToConds, rawDataContainers);
         //For faster computation, we want to retrieve the raw data per Condition,
         //keeping info of data type
-        Map<Condition, Map<DataType, List<RawCall>>> condToData =
+        Map<Condition, Map<DataType, List<RawCallSource<?>>>> condToData =
                 //Start doing the grouping for each data type
                 rawDataContainers.entrySet().stream()
-                //here, obtain an Entry<DataType,  Map<Condition, List<RawCall>>>
+                //here, obtain an Entry<DataType,  Map<Condition, List<RawCallSource>>>
                 .map(e -> {
-                    Map<Condition, List<RawCall>> condToCalls = e.getValue().getCalls()
+                    Map<Condition, List<RawCallSource<?>>> condToCalls = e.getValue().getCalls()
                             .stream().collect(Collectors.toMap(
                                     rawCallSource -> rawDataCondsToConds.get(
                                             rawCallSource.getAssay().getAnnotation().getRawDataCondition()),
-                                    //Use a List because RawCall implements hashCode/equals
+                                    //Use a List because RawCallSource implements hashCode/equals
                                     //and maybe it was a bad idea, we don't want to "loose" calls
                                     rawCallSource -> {
                                         //We need a mutable List, so we don't use List.of()
-                                        List<RawCall> calls = new ArrayList<>();
-                                        calls.add(rawCallSource.getRawCall());
+                                        List<RawCallSource<?>> calls = new ArrayList<>();
+                                        calls.add(rawCallSource);
                                         return calls;
                                     },
                                     (v1, v2) -> {v1.addAll(v2); return v1;}));
                     return new AbstractMap.SimpleEntry<>(e.getKey().getDataType(), condToCalls);
                 })
-                //Here obtain a Stream of Entry<Condition, Entry<DataType, List<RawCall>>>
+                //Here obtain a Stream of Entry<Condition, Entry<DataType, List<RawCallSource>>>
                 .flatMap(e -> e.getValue().entrySet().stream()
                     .map(ePerCond -> new AbstractMap.SimpleEntry<>(
                             ePerCond.getKey(),
@@ -126,7 +184,7 @@ public class OTFExpressionCallLoader extends CommonService {
                         e -> e.getKey(),
                         e -> {
                             //We need a mutable Map, so we don't use Map.of()
-                            Map<DataType, List<RawCall>> dataTypeToCalls = new HashMap<>();
+                            Map<DataType, List<RawCallSource<?>>> dataTypeToCalls = new HashMap<>();
                             dataTypeToCalls.put(e.getValue().getKey(), e.getValue().getValue());
                             return dataTypeToCalls;
                         },

@@ -51,9 +51,8 @@ public class OTFExpressionCallLoader extends CommonService {
 
         //For faster computation, we want to retrieve the raw data per Condition,
         //keeping info of data type
-        
-                
-                
+        Map<Condition, Map<RawDataDataType<?, ?>, List<RawCall>>> rawCallsPerCond = transformToRawDataPerCondition(
+                rawDataCondsToConds, rawDataContainers);
 
         //Retrieve roots of conditionGraph
         Set<Condition> rootConditions = conditionGraph.getRootConditions();
@@ -64,7 +63,25 @@ public class OTFExpressionCallLoader extends CommonService {
         //Retrieve ordered List of Conditions for DFS
         List<Condition> conds = conditionGraph.loadDeepFirstOrderedConditions(rootConditions.iterator().next());
 
+        Map<Condition, OTFExpressionCall> callPerCond = new HashMap<>();
+        for (Condition cond: conds) {
+            Set<Condition> childConds = conditionGraph.getDescendantConditions(cond, true);
+            if (!childConds.isEmpty() && !callPerCond.keySet().containsAll(childConds)) {
+                throw log.throwing(new IllegalStateException("All children should have data and have been visited."));
+            }
+            OTFExpressionCall call = loadOTFExpressionCall(rawCallsPerCond.get(cond),
+                    childConds.stream().map(childCond -> callPerCond.get(childCond)).collect(Collectors.toSet()));
+            callPerCond.put(cond, call);
+        }
+
         return null;
+    }
+
+    static OTFExpressionCall loadOTFExpressionCall(Map<RawDataDataType<?, ?>, List<RawCall>> rawData,
+            Set<OTFExpressionCall> callsInChildConds) {
+        log.traceEntry("{}, {}", rawData, callsInChildConds);
+        //rawData can be null if no raw data in the cond
+        //callsInChildConds can be empty if no child conditions
     }
 
     static Map<Condition, Map<RawDataDataType<?, ?>, List<RawCall>>> transformToRawDataPerCondition(

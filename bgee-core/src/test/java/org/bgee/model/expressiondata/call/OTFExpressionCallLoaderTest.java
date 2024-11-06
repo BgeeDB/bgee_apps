@@ -1,15 +1,40 @@
 package org.bgee.model.expressiondata.call;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall.ExclusionReason;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixContainer;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqContainer;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibrary;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
+import org.bgee.model.species.Species;
 import org.junit.Test;
 
 public class OTFExpressionCallLoaderTest {
-    
     private static final Logger log = LogManager.getLogger(OTFExpressionCallLoaderTest.class.getName());
 
     @Test
@@ -37,5 +62,100 @@ public class OTFExpressionCallLoaderTest {
         // Rank = 40 (upper part of the range)
         result = OTFExpressionCallLoader.computeExpressionScore(new BigDecimal(40), maxRank);
         assertEquals("Rank 40 should return a score of around 20", new BigDecimal("21.20408"), result);
+    }
+
+    @Test
+    public void testTransformToRawDataPerCondition() {
+        AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
+        AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
+        AnatEntity cellType = new AnatEntity("cellType");
+        DevStage devStage1 = new DevStage("devStage1");
+        DevStage devStage2 = new DevStage("devStage2");
+        RawDataSex sex = RawDataSex.FEMALE;
+        String strain = "wild-type";
+        Species species = new Species(9606);
+
+        RawDataCondition rawDataCond1 = new RawDataCondition(anatEntity1, devStage1, cellType,
+                sex, strain, species);
+        RawDataCondition rawDataCond2 = new RawDataCondition(anatEntity2, devStage1, cellType,
+                sex, strain, species);
+        RawDataCondition rawDataCond3 = new RawDataCondition(anatEntity1, devStage2, cellType,
+                sex, strain, species);
+
+        Condition cond1 = new Condition(anatEntity1, null, cellType, null, null, species);
+        Condition cond2 = new Condition(anatEntity2, null, cellType, null, null, species);
+
+        Map<RawDataCondition, Condition> rawDataCondToCond = Map.of(
+                rawDataCond1, cond1,
+                rawDataCond2, cond2,
+                rawDataCond3, cond1);
+
+        RawDataAnnotation annot1 = new RawDataAnnotation(rawDataCond1, null, null, null, null, null);
+        RawDataAnnotation annot2 = new RawDataAnnotation(rawDataCond2, null, null, null, null, null);
+        RawDataAnnotation annot3 = new RawDataAnnotation(rawDataCond3, null, null, null, null, null);
+
+        GeneBioType geneBioType = new GeneBioType("geneBioType");
+        Gene gene1 = new Gene("gene1", species, geneBioType);
+        RawCall call1 = new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
+        RawCall call2 = new RawCall(gene1, new BigDecimal(0.05), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
+        RawCall call3 = new RawCall(gene1, new BigDecimal(0.1), DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED);
+
+        AffymetrixExperiment affyExp = new AffymetrixExperiment("AffyExp1", null, null, null, null, 2);
+        AffymetrixChip chip1 = new AffymetrixChip("chip1", affyExp, annot1, null, null);
+        AffymetrixChip chip2 = new AffymetrixChip("chip2", affyExp, annot2, null, null);
+        AffymetrixChip chip3 = new AffymetrixChip("chip3", affyExp, annot3, null, null);
+        AffymetrixProbeset probeset1 = new AffymetrixProbeset("probeset1", chip1, call1,
+                null, null, new BigDecimal(1));
+        AffymetrixProbeset probeset1bis = new AffymetrixProbeset("probeset1bis", chip1, call1,
+                null, null, new BigDecimal(1));
+        AffymetrixProbeset probeset2 = new AffymetrixProbeset("probeset2", chip1, call2,
+                null, null, new BigDecimal(2));
+        AffymetrixProbeset probeset3 = new AffymetrixProbeset("probeset3", chip2, call1,
+                null, null, new BigDecimal(1));
+        AffymetrixProbeset probeset4 = new AffymetrixProbeset("probeset4", chip3, call3,
+                null, null, new BigDecimal(1));
+        AffymetrixContainer affyContainer = new AffymetrixContainer(Set.of(affyExp),
+                Set.of(chip1, chip2, chip3), Set.of(probeset1, probeset1bis, probeset2, probeset3, probeset4));
+
+        RnaSeqExperiment rnaSeqExp = new RnaSeqExperiment("rnaSeqExp", null, null, null, null,
+                null, 1, false);
+        RnaSeqLibrary rnaSeqLib = new RnaSeqLibrary("rnaSeqLib", null, null, rnaSeqExp);
+        RnaSeqLibraryAnnotatedSample sample = new RnaSeqLibraryAnnotatedSample(rnaSeqLib,
+                annot1, null, null);
+        RnaSeqResultAnnotatedSample rnaSeqCall = new RnaSeqResultAnnotatedSample(sample, call1,
+                null, null, new BigDecimal(1), null, null, null);
+        RnaSeqContainer rnaSeqContainer = new RnaSeqContainer(Set.of(rnaSeqExp),
+                Set.of(rnaSeqLib), Set.of(sample), Set.of(rnaSeqCall));
+
+        Map<RawDataDataType<?, ?>, RawDataContainer<?, ?>> rawDataContainers = Map.of(
+                RawDataDataType.AFFYMETRIX, affyContainer,
+                RawDataDataType.BULK_RNA_SEQ, rnaSeqContainer);
+
+        //Cannot just do an assertEquals on this expected Map because we don't care about the order
+        //of the RawCalls in the Lists, we use a List to not loose in a Set the RawCalls that are equal
+//        Map<Condition, Map<RawDataDataType<?, ?>, List<RawCall>>> expectedMap = Map.of(
+//                cond1, Map.of(
+//                        RawDataDataType.AFFYMETRIX, List.of(call1, call1, call2, call3),
+//                        RawDataDataType.BULK_RNA_SEQ, List.of(call1)),
+//                cond2, Map.of(RawDataDataType.AFFYMETRIX, List.of(call1)));
+        Map<Condition, Map<RawDataDataType<?, ?>, List<RawCall>>> transformedMap = OTFExpressionCallLoader
+                .transformToRawDataPerCondition(rawDataCondToCond, rawDataContainers);
+        assertTrue(transformedMap.keySet().equals(Set.of(cond1, cond2)));
+        Map<RawDataDataType<?, ?>, List<RawCall>> dataCond1 = transformedMap.get(cond1);
+        assertTrue(dataCond1.keySet().equals(Set.of(RawDataDataType.AFFYMETRIX, RawDataDataType.BULK_RNA_SEQ)));
+        List<RawCall> affCallsCond1 = dataCond1.get(RawDataDataType.AFFYMETRIX);
+        assertTrue(affCallsCond1.size() == 4 &&
+                affCallsCond1.contains(call1) && affCallsCond1.contains(call2) && affCallsCond1.contains(call3) &&
+                affCallsCond1.stream().filter(c -> c.equals(call1)).count() == 2L);
+        List<RawCall> rnaSeqCond1 = dataCond1.get(RawDataDataType.BULK_RNA_SEQ);
+        assertTrue(rnaSeqCond1.equals(List.of(call1)));
+        Map<RawDataDataType<?, ?>, List<RawCall>> dataCond2 = transformedMap.get(cond2);
+        assertTrue(dataCond2.keySet().equals(Set.of(RawDataDataType.AFFYMETRIX)));
+        List<RawCall> affCallsCond2 = dataCond2.get(RawDataDataType.AFFYMETRIX);
+        assertTrue(affCallsCond2.equals(List.of(call1)));
+        log.info("TransformedMap: {}", transformedMap);
     }
 }

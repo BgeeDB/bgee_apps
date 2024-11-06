@@ -13,4 +13,5 @@ package org.bgee.model.expressiondata.rawdata.baseelements;
 //so we removed the getId() method from this interface
 public interface Assay {
     public RawDataAnnotation getAnnotation();
+    public RawDataPipelineSummary getPipelineSummary();
 }

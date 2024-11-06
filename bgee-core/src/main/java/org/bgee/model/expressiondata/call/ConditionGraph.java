@@ -46,6 +46,11 @@ public class ConditionGraph {
      */
     private final Set<Condition> conditions;
     /**
+     * The {@code Condition}s that are the roots of this {@code ConditionGraph}
+     * (meaning the {@code Condition}s with no ancestors).
+     */
+    private final Set<Condition> rootConditions;
+    /**
      * @see #getAnatEntityOntology()
      */
     private final Ontology<AnatEntity, String> anatEntityOnt;
@@ -190,6 +195,9 @@ public class ConditionGraph {
         this.sexOnt = sexOnt;
         this.inferAncestralConditions = inferAncestralConds;
         this.inferDescendantConditions = inferDescendantConds;
+        this.rootConditions = this.conditions.stream()
+                .filter(c -> this.getAncestorConditions(c).isEmpty())
+                .collect(Collectors.toSet());
         log.traceExit();
     }
     
@@ -536,7 +544,12 @@ public class ConditionGraph {
     public Set<Condition> getConditions() {
         return this.conditions;
     }
-
+    /**
+     * @return  The {@code Set} of {@code Condition}s that are the roots of this {@code ConditionGraph}.
+     */
+    public Set<Condition> getRootConditions() {
+        return this.rootConditions;
+    }
     /**
      * @return  An {@code Ontology} of {@code AnatEntity}s used to infer relations between {@code Condition}s. 
      *          Contains only {@code AnatEntity}s and relations for entities present 

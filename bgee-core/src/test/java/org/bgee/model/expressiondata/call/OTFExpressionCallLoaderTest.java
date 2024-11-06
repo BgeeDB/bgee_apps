@@ -99,26 +99,26 @@ public class OTFExpressionCallLoaderTest {
         GeneBioType geneBioType = new GeneBioType("geneBioType");
         Gene gene1 = new Gene("gene1", species, geneBioType);
         RawCall call1 = new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED);
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal(1));
         RawCall call2 = new RawCall(gene1, new BigDecimal(0.05), DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED);
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal(2));
         RawCall call3 = new RawCall(gene1, new BigDecimal(0.1), DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED);
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal(3));
 
         AffymetrixExperiment affyExp = new AffymetrixExperiment("AffyExp1", null, null, null, null, 2);
         AffymetrixChip chip1 = new AffymetrixChip("chip1", affyExp, annot1, null, null);
         AffymetrixChip chip2 = new AffymetrixChip("chip2", affyExp, annot2, null, null);
         AffymetrixChip chip3 = new AffymetrixChip("chip3", affyExp, annot3, null, null);
         AffymetrixProbeset probeset1 = new AffymetrixProbeset("probeset1", chip1, call1,
-                null, null, new BigDecimal(1));
+                null, null);
         AffymetrixProbeset probeset1bis = new AffymetrixProbeset("probeset1bis", chip1, call1,
-                null, null, new BigDecimal(1));
+                null, null);
         AffymetrixProbeset probeset2 = new AffymetrixProbeset("probeset2", chip1, call2,
-                null, null, new BigDecimal(2));
+                null, null);
         AffymetrixProbeset probeset3 = new AffymetrixProbeset("probeset3", chip2, call1,
-                null, null, new BigDecimal(1));
+                null, null);
         AffymetrixProbeset probeset4 = new AffymetrixProbeset("probeset4", chip3, call3,
-                null, null, new BigDecimal(1));
+                null, null);
         AffymetrixContainer affyContainer = new AffymetrixContainer(Set.of(affyExp),
                 Set.of(chip1, chip2, chip3), Set.of(probeset1, probeset1bis, probeset2, probeset3, probeset4));
 
@@ -128,7 +128,7 @@ public class OTFExpressionCallLoaderTest {
         RnaSeqLibraryAnnotatedSample sample = new RnaSeqLibraryAnnotatedSample(rnaSeqLib,
                 annot1, null, null);
         RnaSeqResultAnnotatedSample rnaSeqCall = new RnaSeqResultAnnotatedSample(sample, call1,
-                null, null, new BigDecimal(1), null, null, null);
+                null, null, null, null, null);
         RnaSeqContainer rnaSeqContainer = new RnaSeqContainer(Set.of(rnaSeqExp),
                 Set.of(rnaSeqLib), Set.of(sample), Set.of(rnaSeqCall));
 
@@ -188,6 +188,26 @@ public class OTFExpressionCallLoaderTest {
         List<BigDecimal> singleElementList = Collections.singletonList(new BigDecimal("0.05"));
         result = OTFExpressionCallLoader.computeMedian(singleElementList);
         assertEquals("The median calculation on a single pValue list should return the same pValue", new BigDecimal("0.05"), result);
-    } 
+    }
+
+    @Test
+    public void testLoadOTFExpressionCall() {
+        Species species = new Species(9606);
+        GeneBioType geneBioType = new GeneBioType("geneBioType");
+        Gene gene1 = new Gene("gene1", species, geneBioType);
+        Map<RawDataDataType<?, ?>, List<RawCall>> rawData = Map.of(
+                RawDataDataType.AFFYMETRIX, List.of(
+                        new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
+                                ExclusionReason.NOT_EXCLUDED, new BigDecimal(1)),
+                        new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
+                                ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))),
+                RawDataDataType.BULK_RNA_SEQ, List.of(
+                        new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
+                                ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))),
+                RawDataDataType.EST, List.of(
+                        new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
+                                ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))));
+        
+    }
 }
 

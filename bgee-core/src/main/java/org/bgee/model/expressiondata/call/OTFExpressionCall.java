@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.util.EnumSet;
 import java.util.Objects;
 
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.gene.Gene;
 
 public class OTFExpressionCall {
@@ -21,14 +21,14 @@ public class OTFExpressionCall {
     private final BigDecimal expressionScore;
     private final BigDecimal bestDescendantExpressionScoreWeight;
     private final BigDecimal bestDescendantExpressionScore;
-    private final DataPropagation dataPropagation;
+    private final PropagationState dataPropagation;
 
     public OTFExpressionCall(Gene gene, Condition condition, EnumSet<DataType> supportingDataTypes,
             BigDecimal trustedDataTypePValue, BigDecimal allDataTypePValue,
             BigDecimal bestDescendantTrustedDataTypePValue, BigDecimal bestDescendantAllDataTypePValue,
             BigDecimal expressionScoreWeight, BigDecimal expressionScore,
             BigDecimal bestDescendantExpressionScoreWeight, BigDecimal bestDescendantExpressionScore,
-            DataPropagation dataPropagation) {
+            PropagationState dataPropagation) {
         this.gene = gene;
         this.condition = condition;
         this.supportingDataTypes = supportingDataTypes;
@@ -76,7 +76,7 @@ public class OTFExpressionCall {
     public BigDecimal getBestDescendantExpressionScore() {
         return bestDescendantExpressionScore;
     }
-    public DataPropagation getDataPropagation() {
+    public PropagationState getDataPropagation() {
         return dataPropagation;
     }
 

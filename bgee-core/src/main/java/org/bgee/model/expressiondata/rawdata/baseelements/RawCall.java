@@ -108,8 +108,13 @@ public class RawCall {
      */
     private final ExclusionReason exclusionReason;
 
+    /**
+     * A {@code BigDecimal} defining the rank of this call.
+     */
+    private final BigDecimal rank;
+
     public RawCall(Gene gene, BigDecimal pValue, DataState expressionConfidence,
-            ExclusionReason exclusionReason) {
+            ExclusionReason exclusionReason, BigDecimal rank) {
         super();
         if (ExclusionReason.NOT_EXCLUDED.equals(exclusionReason)) {
             //In that case we always check the pValue (in PValue constructor)
@@ -121,6 +126,7 @@ public class RawCall {
         this.gene = gene;
         this.expressionConfidence = expressionConfidence;
         this.exclusionReason = exclusionReason;
+        this.rank = rank;
     }
 
     //**************************************
@@ -153,7 +159,6 @@ public class RawCall {
         }
         return this.pValue.getFormattedPValue();
     }
-    
 
     /**
      * @return  the {@code DataState} defining the contribution of data type to the generation of
@@ -170,9 +175,19 @@ public class RawCall {
         return this.exclusionReason;
     }
 
+    public PValue getpValue() {
+        return pValue;
+    }
+
+    public BigDecimal getRank() {
+        return rank;
+    }
+
+
+
     @Override
     public int hashCode() {
-        return Objects.hash(exclusionReason, expressionConfidence, gene, pValue);
+        return Objects.hash(exclusionReason, expressionConfidence, gene, pValue, rank);
     }
 
     @Override
@@ -185,12 +200,14 @@ public class RawCall {
             return false;
         RawCall other = (RawCall) obj;
         return exclusionReason == other.exclusionReason && expressionConfidence == other.expressionConfidence
-                && Objects.equals(gene, other.gene) && Objects.equals(pValue, other.pValue);
+                && Objects.equals(gene, other.gene) && Objects.equals(pValue, other.pValue)
+                && Objects.equals(rank, other.rank);
     }
 
     @Override
     public String toString() {
         return "RawCall [gene=" + gene + ", pValue=" + pValue + ", expressionConfidence="
-                + expressionConfidence + ", exclusionReason=" + exclusionReason + "]";
+                + expressionConfidence + ", exclusionReason=" + exclusionReason + ", rank=" + rank
+                + "]";
     }
 }

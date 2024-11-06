@@ -9,6 +9,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.BaseCondition;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.Condition;
@@ -79,7 +82,26 @@ public class RawDataCondition extends BaseCondition<RawDataCondition> implements
     }
 
     public Condition toCondition(Collection<CallService.Attribute> condParameters) {
+        log.traceEntry("{}", condParameters);
+        if (!CallService.Attribute.getAllConditionParameters().containsAll(condParameters)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "condParamaters should only contain Attributes that are"
+                    + "condition parameters"));
+        }
         
+        Condition cond = new Condition(
+                condParameters.contains(CallService.Attribute.ANAT_ENTITY_ID)?
+                        new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID) : this.getAnatEntity(),
+                condParameters.contains(CallService.Attribute.DEV_STAGE_ID)?
+                        new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID) : this.getDevStage(),
+                condParameters.contains(CallService.Attribute.CELL_TYPE_ID)?
+                           new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID) : this.getCellType(),
+                condParameters.contains(CallService.Attribute.SEX_ID)?
+                          new Sex(ConditionDAO.SEX_ROOT_ID) : new Sex(this.getSex().getStringRepresentation()),
+                condParameters.contains(CallService.Attribute.STRAIN_ID)?
+                        new Strain(ConditionDAO.STRAIN_ROOT_ID) : new Strain(this.getStrain()),
+                this.getSpecies());
+        return log.traceExit(cond);
     }
 
     //*********************************

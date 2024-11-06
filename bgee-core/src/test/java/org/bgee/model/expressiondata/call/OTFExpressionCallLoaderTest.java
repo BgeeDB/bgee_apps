@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
@@ -195,6 +199,16 @@ public class OTFExpressionCallLoaderTest {
         Species species = new Species(9606);
         GeneBioType geneBioType = new GeneBioType("geneBioType");
         Gene gene1 = new Gene("gene1", species, geneBioType);
+
+        AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
+        AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
+        AnatEntity cellType1 = new AnatEntity("cellType1");
+        AnatEntity cellType2 = new AnatEntity("cellType2");
+
+        Condition cond1 = new Condition(anatEntity1, null, cellType1, null, null, species);
+        Condition cond2 = new Condition(anatEntity2, null, cellType1, null, null, species);
+        Condition cond3 = new Condition(anatEntity1, null, cellType2, null, null, species);
+
         Map<RawDataDataType<?, ?>, List<RawCall>> rawData = Map.of(
                 RawDataDataType.AFFYMETRIX, List.of(
                         new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
@@ -207,6 +221,24 @@ public class OTFExpressionCallLoaderTest {
                 RawDataDataType.EST, List.of(
                         new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
                                 ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))));
+
+        OTFExpressionCall childCall1 = new OTFExpressionCall(gene1, cond2,
+                EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
+                new BigDecimal("0.01"), new BigDecimal("0.01"),
+                new BigDecimal("0.01"), new BigDecimal("0.01"),
+                new BigDecimal("10000"), new BigDecimal("50"),
+                new BigDecimal("50000"), new BigDecimal("30"),
+                PropagationState.SELF_AND_DESCENDANT);
+
+        OTFExpressionCall expectedCall = new OTFExpressionCall(gene1, cond2,
+                EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
+                new BigDecimal("0.01"), new BigDecimal("0.01"),
+                new BigDecimal("0.01"), new BigDecimal("0.01"),
+                new BigDecimal("10000"), new BigDecimal("50"),
+                new BigDecimal("50000"), new BigDecimal("30"),
+                PropagationState.SELF_AND_DESCENDANT);
+        OTFExpressionCall testCall = OTFExpressionCallLoader.loadOTFExpressionCall(rawData, Set.of(childCall1));
+        assertEquals(expectedCall, testCall);
         
     }
 }

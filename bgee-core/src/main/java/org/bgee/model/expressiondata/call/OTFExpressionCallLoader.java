@@ -62,7 +62,7 @@ public class OTFExpressionCallLoader extends CommonService {
                   + rootConditions.size()));
         }
         //Retrieve ordered List of Conditions for DFS
-        List<Condition> conds = conditionGraph.getDeepFirstOrderedConditions(rootConditions.iterator().next());
+        List<Condition> conds = conditionGraph.loadDeepFirstOrderedConditions(rootConditions.iterator().next());
 
         return null;
     }
@@ -121,16 +121,19 @@ public class OTFExpressionCallLoader extends CommonService {
             log.debug("Rank is null, cannot compute expression score");
             return log.traceExit((BigDecimal) null);
         }
-        if (rank.compareTo(new BigDecimal("0")) <= 0 || maxRank.compareTo(new BigDecimal("0")) <= 0) {
-            throw log.throwing(new IllegalArgumentException("Rank and max rank cannot be less than or equal to 0"));
+        if (rank.compareTo(BigDecimal.ONE) < 0 || maxRank.compareTo(BigDecimal.ONE) < 0) {
+            throw log.throwing(new IllegalArgumentException("Rank and max rank must be at least 1"));
         }
         if (rank.compareTo(maxRank) > 0) {
             throw log.throwing(new IllegalArgumentException("Rank cannot be greater than maxRank. Rank: " + rank
                     + " - maxRank: " + maxRank));
         }
 
-        BigDecimal invertedRank = maxRank.add(new BigDecimal("1")).subtract(rank);
-        BigDecimal expressionScore = invertedRank.multiply(new BigDecimal("100")).divide(maxRank, 5, RoundingMode.HALF_UP);
+     // Calculate score with the linear transformation
+        BigDecimal range = maxRank.subtract(BigDecimal.ONE);
+        BigDecimal adjustedRank = rank.subtract(BigDecimal.ONE);
+        BigDecimal expressionScore = BigDecimal.valueOf(100).subtract(adjustedRank.multiply(BigDecimal.valueOf(99)).divide(range, 5, RoundingMode.HALF_UP));
+        
         //We want expression score to be at least greater than EXPRESSION_SCORE_MIN_VALUE
         if (expressionScore.compareTo(EXPRESSION_SCORE_MIN_VALUE) < 0) {
             expressionScore = EXPRESSION_SCORE_MIN_VALUE;

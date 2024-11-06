@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCallSource;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
@@ -52,7 +53,7 @@ public class OTFExpressionCallLoader extends CommonService {
 
         //For faster computation, we want to retrieve the raw data per Condition,
         //keeping info of data type
-        Map<Condition, Map<RawDataDataType<?, ?>, List<RawCall>>> rawCallsPerCond = transformToRawDataPerCondition(
+        Map<Condition, Map<DataType, List<RawCall>>> rawCallsPerCond = transformToRawDataPerCondition(
                 rawDataCondsToConds, rawDataContainers);
 
         //Retrieve roots of conditionGraph
@@ -78,23 +79,27 @@ public class OTFExpressionCallLoader extends CommonService {
         return null;
     }
 
-    static OTFExpressionCall loadOTFExpressionCall(Map<RawDataDataType<?, ?>, List<RawCall>> rawData,
+    static OTFExpressionCall loadOTFExpressionCall(Map<DataType, List<RawCall>> rawData,
             Set<OTFExpressionCall> callsInChildConds) {
         log.traceEntry("{}, {}", rawData, callsInChildConds);
         //rawData can be null if no raw data in the cond
+        //first, compute information from data in the condition itself
+//        List<BigDecimal> trustedDataType
+        
         //callsInChildConds can be empty if no child conditions
+        return null;
     }
 
-    static Map<Condition, Map<RawDataDataType<?, ?>, List<RawCall>>> transformToRawDataPerCondition(
+    static Map<Condition, Map<DataType, List<RawCall>>> transformToRawDataPerCondition(
             Map<RawDataCondition, Condition> rawDataCondsToConds,
             Map<RawDataDataType<?, ?>, RawDataContainer<?, ?>> rawDataContainers) {
         log.traceEntry("{}, {}", rawDataCondsToConds, rawDataContainers);
         //For faster computation, we want to retrieve the raw data per Condition,
         //keeping info of data type
-        Map<Condition, Map<RawDataDataType<?, ?>, List<RawCall>>> condToData =
+        Map<Condition, Map<DataType, List<RawCall>>> condToData =
                 //Start doing the grouping for each data type
                 rawDataContainers.entrySet().stream()
-                //here, obtain an Entry<RawDataDataType<?, ?>,  Map<Condition, List<RawCall>>>
+                //here, obtain an Entry<DataType,  Map<Condition, List<RawCall>>>
                 .map(e -> {
                     Map<Condition, List<RawCall>> condToCalls = e.getValue().getCalls()
                             .stream().collect(Collectors.toMap(
@@ -109,9 +114,9 @@ public class OTFExpressionCallLoader extends CommonService {
                                         return calls;
                                     },
                                     (v1, v2) -> {v1.addAll(v2); return v1;}));
-                    return new AbstractMap.SimpleEntry<>(e.getKey(), condToCalls);
+                    return new AbstractMap.SimpleEntry<>(e.getKey().getDataType(), condToCalls);
                 })
-                //Here obtain a Stream of Entry<Condition, Entry<RawDataDataType<?, ?>, List<RawCall>>>
+                //Here obtain a Stream of Entry<Condition, Entry<DataType, List<RawCall>>>
                 .flatMap(e -> e.getValue().entrySet().stream()
                     .map(ePerCond -> new AbstractMap.SimpleEntry<>(
                             ePerCond.getKey(),
@@ -121,7 +126,7 @@ public class OTFExpressionCallLoader extends CommonService {
                         e -> e.getKey(),
                         e -> {
                             //We need a mutable Map, so we don't use Map.of()
-                            Map<RawDataDataType<?, ?>, List<RawCall>> dataTypeToCalls = new HashMap<>();
+                            Map<DataType, List<RawCall>> dataTypeToCalls = new HashMap<>();
                             dataTypeToCalls.put(e.getValue().getKey(), e.getValue().getValue());
                             return dataTypeToCalls;
                         },

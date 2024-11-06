@@ -147,20 +147,20 @@ public class OTFExpressionCallLoaderTest {
 //                        RawDataDataType.AFFYMETRIX, List.of(call1, call1, call2, call3),
 //                        RawDataDataType.BULK_RNA_SEQ, List.of(call1)),
 //                cond2, Map.of(RawDataDataType.AFFYMETRIX, List.of(call1)));
-        Map<Condition, Map<RawDataDataType<?, ?>, List<RawCall>>> transformedMap = OTFExpressionCallLoader
+        Map<Condition, Map<DataType, List<RawCall>>> transformedMap = OTFExpressionCallLoader
                 .transformToRawDataPerCondition(rawDataCondToCond, rawDataContainers);
         assertTrue(transformedMap.keySet().equals(Set.of(cond1, cond2)));
-        Map<RawDataDataType<?, ?>, List<RawCall>> dataCond1 = transformedMap.get(cond1);
-        assertTrue(dataCond1.keySet().equals(Set.of(RawDataDataType.AFFYMETRIX, RawDataDataType.BULK_RNA_SEQ)));
-        List<RawCall> affCallsCond1 = dataCond1.get(RawDataDataType.AFFYMETRIX);
+        Map<DataType, List<RawCall>> dataCond1 = transformedMap.get(cond1);
+        assertTrue(dataCond1.keySet().equals(Set.of(DataType.AFFYMETRIX, DataType.RNA_SEQ)));
+        List<RawCall> affCallsCond1 = dataCond1.get(DataType.AFFYMETRIX);
         assertTrue(affCallsCond1.size() == 4 &&
                 affCallsCond1.contains(call1) && affCallsCond1.contains(call2) && affCallsCond1.contains(call3) &&
                 affCallsCond1.stream().filter(c -> c.equals(call1)).count() == 2L);
-        List<RawCall> rnaSeqCond1 = dataCond1.get(RawDataDataType.BULK_RNA_SEQ);
+        List<RawCall> rnaSeqCond1 = dataCond1.get(DataType.RNA_SEQ);
         assertTrue(rnaSeqCond1.equals(List.of(call1)));
-        Map<RawDataDataType<?, ?>, List<RawCall>> dataCond2 = transformedMap.get(cond2);
-        assertTrue(dataCond2.keySet().equals(Set.of(RawDataDataType.AFFYMETRIX)));
-        List<RawCall> affCallsCond2 = dataCond2.get(RawDataDataType.AFFYMETRIX);
+        Map<DataType, List<RawCall>> dataCond2 = transformedMap.get(cond2);
+        assertTrue(dataCond2.keySet().equals(Set.of(DataType.AFFYMETRIX)));
+        List<RawCall> affCallsCond2 = dataCond2.get(DataType.AFFYMETRIX);
         assertTrue(affCallsCond2.equals(List.of(call1)));
         log.info("TransformedMap: {}", transformedMap);
     }
@@ -209,16 +209,16 @@ public class OTFExpressionCallLoaderTest {
         Condition cond2 = new Condition(anatEntity2, null, cellType1, null, null, species);
         Condition cond3 = new Condition(anatEntity1, null, cellType2, null, null, species);
 
-        Map<RawDataDataType<?, ?>, List<RawCall>> rawData = Map.of(
-                RawDataDataType.AFFYMETRIX, List.of(
+        Map<DataType, List<RawCall>> rawData = Map.of(
+                DataType.AFFYMETRIX, List.of(
                         new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
                                 ExclusionReason.NOT_EXCLUDED, new BigDecimal(1)),
                         new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
                                 ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))),
-                RawDataDataType.BULK_RNA_SEQ, List.of(
+                DataType.RNA_SEQ, List.of(
                         new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
                                 ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))),
-                RawDataDataType.EST, List.of(
+                DataType.EST, List.of(
                         new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
                                 ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))));
 

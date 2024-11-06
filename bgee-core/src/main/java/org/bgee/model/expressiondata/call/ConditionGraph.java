@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -224,12 +227,41 @@ public class ConditionGraph {
 
 
 
-    public List<Condition> getDeepFirstOrderedConditions(Condition startCond) {
+    public List<Condition> loadDeepFirstOrderedConditions(Condition startCond) {
         log.traceEntry();
 
-        this.getDescendantConditions(startCond, true);
-        return log.traceExit(xx);
+        List<Condition> orderedConditions = new ArrayList<>();
+        Set<Condition> visited = new HashSet<>();
+        Deque<Condition> stack = new LinkedList<>();
+        
+        // Start the DFS by pushing the starting node onto the stack
+        stack.push(startCond);
+        
+        while (!stack.isEmpty()) {
+	        // Peek at the top of the stack without removing it
+	        Condition current = stack.peek();
+	
+	        if (!visited.contains(current)) {
+	            // Mark the current node as visited
+	            visited.add(current);
+	
+	            // Push all unvisited children of the current node onto the stack
+	            for (Condition child : getDescendantConditions(current, true)) {
+	                if (!visited.contains(child)) {
+	                    stack.push(child);
+	                }
+	            }
+	        } else {
+	            // All children of the current node are processed, so we pop it from the stack
+	            // and add it to the ordered list
+	            stack.pop();
+	            orderedConditions.add(current);
+	        }
+        }
+        
+        return log.traceExit(orderedConditions);
     }
+    
     
     /**
      * Determines whether the second condition is more precise than the first condition. 

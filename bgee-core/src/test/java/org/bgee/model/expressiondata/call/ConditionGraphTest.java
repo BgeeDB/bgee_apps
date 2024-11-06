@@ -4,10 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +24,8 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
@@ -155,6 +160,64 @@ public class ConditionGraphTest extends TestAncestor {
         }
     }
 
+    @Test
+    public void testLoadDeepFirstOrderedConditions() {
+    	String anatEntityId1 = "anat1";
+        AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
+        String anatEntityId2 = "anat2";
+        AnatEntity anatEntity2 = new AnatEntity(anatEntityId2);
+        String anatEntityId4 = "anat4";
+        AnatEntity anatEntity4 = new AnatEntity(anatEntityId4);
+        String devStageId1 = "stage1";
+        DevStage devStage1 = new DevStage(devStageId1);
+        String devStageId2 = "stage2";
+        DevStage devStage2 = new DevStage(devStageId2);
+        String devStageId3 = "stage3";
+        DevStage devStage3 = new DevStage(devStageId3);
+        String devStageId4 = "stage4";
+        DevStage devStage4 = new DevStage(devStageId4);
+
+        Species sp = new Species(9606);
+        Condition cond1 = new Condition(anatEntity1, devStage1, null, null, null, sp);
+        Condition cond2 = new Condition(anatEntity2, devStage2, null, null, null, sp);
+        Condition cond4 = new Condition(anatEntity2, devStage1, null, null, null, sp);
+        Condition cond5 = new Condition(anatEntity1, devStage3, null, null, null, sp);
+        Condition cond6 = new Condition(anatEntity2, devStage3, null, null, null, sp);
+        Condition cond8 = new Condition(anatEntity4, devStage4, null, null, null, sp);
+
+        @SuppressWarnings("unchecked")
+        Ontology<AnatEntity, String> anatEntityOnt = mock(Ontology.class);
+        when(anatEntityOnt.getElements()).thenReturn(Set.of(anatEntity1, anatEntity2, anatEntity4));
+        @SuppressWarnings("unchecked")
+        Ontology<DevStage, String> devStageOnt = mock(Ontology.class);
+        when(devStageOnt.getElements()).thenReturn(Set.of(devStage1, devStage2, devStage3, devStage4));
+
+        ConditionGraph graph = new ConditionGraph(
+        		Arrays.asList(cond1, cond2, cond4, cond5, cond6, cond8), 
+                false, false,
+                anatEntityOnt, devStageOnt, mock(Ontology.class),
+                mock(Ontology.class), mock(Ontology.class));
+        ConditionGraph spyGraph = spy(graph);
+        doReturn(Set.of(cond2, cond4)).when(spyGraph).getDescendantConditions(cond1, true);
+        doReturn(Set.of(cond5, cond8)).when(spyGraph).getDescendantConditions(cond2, true);
+        doReturn(Set.of(cond6, cond8)).when(spyGraph).getDescendantConditions(cond4, true);
+//        when(spyGraph.getDescendantConditions(cond1, true)).thenReturn(Set.of(cond2, cond4));
+//        when(spyGraph.getDescendantConditions(cond2,true)).thenReturn(Set.of(cond5));
+//        when(spyGraph.getDescendantConditions(cond4, true)).thenReturn(Set.of(cond6, cond8));
+        
+        
+    	List<Condition> orderedConds = spyGraph.loadDeepFirstOrderedConditions(cond1);
+    	
+    	assertTrue(
+                "Conditions not in the right order: a parent node is called before its descendants",
+                orderedConds.indexOf(cond1) > orderedConds.indexOf(cond2) && 
+                orderedConds.indexOf(cond2) > orderedConds.indexOf(cond5) && 
+                orderedConds.indexOf(cond2) > orderedConds.indexOf(cond8) &&
+                orderedConds.indexOf(cond4) > orderedConds.indexOf(cond6) &&
+                orderedConds.indexOf(cond1) > orderedConds.indexOf(cond4)
+            );
+    	log.info("Results: {}", orderedConds);
+    }
     /**
      * Test the method {@link ConditionGraph#isConditionMorePrecise(Condition, Condition)}.
      */

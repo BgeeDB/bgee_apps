@@ -718,8 +718,9 @@ public class RawDataLoader extends CommonService {
                                         to.getPValue(),
                                         to.getExpressionConfidence(),
                                         ExclusionReason.convertToExclusionReason(
-                                                to.getExclusionReason().name())),
-                                to.getNormalizedSignalIntensity(), to.getqValue(), to.getRank()))
+                                                to.getExclusionReason().name()),
+                                        to.getRank()),
+                                to.getNormalizedSignalIntensity(), to.getqValue()))
                         .collect(Collectors.toCollection(LinkedHashSet::new));
             }
         }
@@ -977,7 +978,6 @@ public class RawDataLoader extends CommonService {
                                             to.getpValueThreshold(),
                                             to.getAllUMIsCount(),
                                             to.getMappedUMIsCount(),
-
                                             to.getMaxRank(),
                                             to.getDistinctRankCount()),
                                     to.getBarcode()),
@@ -1002,11 +1002,11 @@ public class RawDataLoader extends CommonService {
                                         to.getPValue(),
                                         to.getExpressionConfidence(),
                                         ExclusionReason.convertToExclusionReason(
-                                                to.getExclusionReason().name())),
+                                                to.getExclusionReason().name()),
+                                        to.getRank()),
                                 AbundanceUnit.convertToAbundanceUnit(
                                         to.getAbundanceUnit().name()),
                                 to.getAbundance(),
-                                to.getRank(),
                                 to.getReadCount(),
                                 to.getUmiCount(),
                                 to.getzScore()))
@@ -1144,7 +1144,11 @@ public class RawDataLoader extends CommonService {
                                                 + to.getConditionId()
                                                 + " for annotated sample ID " + to.getId())),
                                         null, null, null, null, null),
-                                to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId())),
+                                to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
+                                        //TODO: right now we do not have max rank or distinct rank per
+                                        // EST Library inserted in the database. Has to be updated once we will
+                                        // have that info in the database
+                                        null),
 
                         (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                         LinkedHashMap::new));
@@ -1173,7 +1177,10 @@ public class RawDataLoader extends CommonService {
                                     to.getPValue(),
                                     to.getExpressionConfidence(),
                                     ExclusionReason.convertToExclusionReason(
-                                            to.getExclusionReason().name()))))
+                                            to.getExclusionReason().name()),
+                                    //TODO: for now we do not have ranks provided for ESTs
+                                    // because they are not yet stored in the database
+                                    null)))
                     .collect(Collectors.toCollection(LinkedHashSet::new));
         }
 
@@ -1359,7 +1366,11 @@ public class RawDataLoader extends CommonService {
                                                     "Missing RawDataCondition ID "
                                                             + to.getConditionId()
                                                             + " for spot ID " + to.getId())),
-                                            null, null, null, null, null)),
+                                            null, null, null, null, null),
+                                    //TODO: right now we do not have max rank or distinct rank per
+                                    // in situ evidence inserted in the database. Has to be updated once we will
+                                    // have that info in the database
+                                    null),
 
                             (v1, v2) -> {
                                 //We do nothing special here, it means that an evidence
@@ -1382,6 +1393,10 @@ public class RawDataLoader extends CommonService {
                                 "Missing experiment ID "
                                         + idToAssayTO.get(to.getId()).getExperimentId()
                                         + " for assay ID " + to.getId())),
+                        null,
+                        //TODO: right now we do not have max rank or distinct rank per
+                        // in situ evidence inserted in the database. Has to be updated 
+                        // once we will have that info in the database
                         null))
                 .collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
             assert !assayMap.isEmpty() || assayTOs.isEmpty() || partialInfo;
@@ -1403,7 +1418,10 @@ public class RawDataLoader extends CommonService {
                                         to.getPValue(),
                                         to.getExpressionConfidence(),
                                         ExclusionReason.convertToExclusionReason(
-                                                to.getExclusionReason().name()))))
+                                                to.getExclusionReason().name()),
+                                        //TODO: for now we do not provide ranks for insitu data as they are
+                                        // not yet in the database
+                                        null)))
                         .collect(Collectors.toCollection(LinkedHashSet::new));
             }
         }

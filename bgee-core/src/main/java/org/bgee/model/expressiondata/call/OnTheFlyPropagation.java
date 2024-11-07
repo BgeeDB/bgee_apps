@@ -2,6 +2,7 @@ package org.bgee.model.expressiondata.call;
 
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
@@ -29,22 +31,30 @@ import org.bgee.model.gene.GeneService;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
 
-public class OnTheFlyPropagation {
-
+public class OnTheFlyPropagation extends CommonService {
     private final static Logger log = LogManager.getLogger(OnTheFlyPropagation.class.getName());
-    
+
+
     public static void main(String[] args) {
+        OnTheFlyPropagation test = new OnTheFlyPropagation();
+        test.test();
+    }
+
+    public OnTheFlyPropagation() {
+        super(new ServiceFactory());
+    }
+    
+    public void test() {
         
         // init services
-        ServiceFactory serviceFactory = new ServiceFactory();
-        OntologyService ontoService = serviceFactory.getOntologyService();
-        RawDataService rawDataService = serviceFactory.getRawDataService();
-        GeneService geneService = serviceFactory.getGeneService();
-        ConditionGraphService condGraphService = serviceFactory.getConditionGraphService();
+        OntologyService ontoService = this.getServiceFactory().getOntologyService();
+        RawDataService rawDataService = this.getServiceFactory().getRawDataService();
+        GeneService geneService = this.getServiceFactory().getGeneService();
+        ConditionGraphService condGraphService = this.getServiceFactory().getConditionGraphService();
         
         // init objects used for this test
         int speciesId = 9606;
-        Set<String> geneIds = Set.of("ENSG00000000003");
+        Set<String> geneIds = Set.of("ENSG00000163914");
 //        ,
 //                "ENSG00000000005", "ENSG00000000419", "ENSG00000000457", "ENSG00000000460",
 //                "ENSG00000000938", "ENSG00000000971", "ENSG00000001036", "ENSG00000001084",
@@ -61,21 +71,25 @@ public class OnTheFlyPropagation {
                 .collect(Collectors.toSet());
 
         //Retrieve ontologies once for all genes
-
+        log.info("Start retrieval of ontologies");
+        //XXX: can we request only is_a/part_of?
         Ontology<DevStage, String> stageOntology = ontoService
                 .getDevStageOntology(speciesId, null);
-        log.debug("stage {}", stageOntology.getElement("UBERON:0000104"));
-      Ontology<AnatEntity, String> anatEntityOntology = ontoService
+        Ontology<AnatEntity, String> anatEntityOntology = ontoService
               .getAnatEntityOntology(speciesId, null);
-      Ontology<AnatEntity, String> celltypeOntology = ontoService
+        Ontology<AnatEntity, String> celltypeOntology = ontoService
               .getCellTypeOntology(speciesId, null);
         Ontology<Sex, String> sexOntology = ontoService.getSexOntology(speciesId, 
                 Set.of(ConditionDAO.SEX_ROOT_ID), false, true);
         Ontology<Strain, String> strainOntology = ontoService.getStrainOntology(speciesId,
                 Set.of(ConditionDAO.STRAIN_ROOT_ID), false, true);
 
+        OTFExpressionCallLoader loader = new OTFExpressionCallLoader(this.getServiceFactory());
+
         for (Gene gene: genes) {
-            
+
+            log.info("Start retrieval of raw data for gene: {}", gene.getGeneId());
+            long rawDataStartTime = System.currentTimeMillis();
             //Retrieve raw data
             RawDataFilter filter = new RawDataFilter(Set.of(new GeneFilter(speciesId, gene.getGeneId())),
                     null);
@@ -83,24 +97,61 @@ public class OnTheFlyPropagation {
             //XXX: we need rank for each call and rank max for each assay.
             Map<RawDataDataType<?, ?>, RawDataContainer<?, ?>> dataTypeToContainer = OnTheFlyPropagation
                     .loadRawDataPerDatatype(dataTypes, filter, rawDataService);
-            Set<RawDataCondition> rawDataCondition = transformDataTypeToContainersToRawDataCondition(dataTypeToContainer);
+            Set<RawDataCondition> rawDataConditions = transformDataTypeToContainersToRawDataCondition(dataTypeToContainer);
+            log.info("Number of RawDataConditions: {}", rawDataConditions.size());
 
             //Transform raw data conditions to conditions.
             //XXX: we retrieve condition for all condition parameters
-            Map<RawDataCondition, Condition> rawDataConditionToCondition = transformRawCondToCondMap(rawDataCondition,
+            Map<RawDataCondition, Condition> rawDataConditionToCondition = transformRawCondToCondMap(rawDataConditions,
                     CallService.Attribute.getAllConditionParameters());
+            long rawDataEndTime = System.currentTimeMillis();
+            log.info("Time for retrieving raw data: {}ms", rawDataEndTime - rawDataStartTime);
             
             //Instantiate new ConditionGraph from conditions and ontologies
-            ConditionGraph condGraph = condGraphService.loadConditionGraph(rawDataConditionToCondition.values(), true, false,
+            log.info("Start ConditionGraph generation");
+            long condGraphStartTime = System.currentTimeMillis();
+            log.info("Number of conditions: {}",
+                    rawDataConditionToCondition.values().stream().distinct().count());
+            Set<Condition> allConds = new HashSet<>(rawDataConditionToCondition.values());
+            AnatEntity rootAnatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+            DevStage rootDevStage = new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID);
+            AnatEntity rootCellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+            Sex rootSex = new Sex(ConditionDAO.SEX_ROOT_ID);
+            Strain rootStrain = new Strain(ConditionDAO.STRAIN_ROOT_ID);
+            allConds.add(new Condition(
+                    rootAnatEntity,
+                    rootDevStage,
+                    rootCellType,
+                    rootSex,
+                    rootStrain,
+                    gene.getSpecies()));
+            ConditionGraph condGraph = condGraphService.loadConditionGraph(allConds, false, false,
                     anatEntityOntology, stageOntology, celltypeOntology, sexOntology, strainOntology);
-            
-            OTFExpressionCallLoader loader = new OTFExpressionCallLoader(serviceFactory);
+            long condGraphEndTime = System.currentTimeMillis();
+            log.info("ConditionGraph generation time: {}ms", condGraphEndTime - condGraphStartTime);
+
+            log.info("Start propagation");
+            long otfStartTime = System.currentTimeMillis();
             List<OTFExpressionCall> calls = loader.loadOTFExpressionCalls(gene, condGraph,
                     rawDataConditionToCondition, dataTypeToContainer);
-            log.info("YOUHOU: {}", calls.get(0));
+            long otfEndTime = System.currentTimeMillis();
+            log.info("Propagation time: {}ms", otfEndTime - otfStartTime);
+            List<OTFExpressionCall> filteredCalls = calls.stream()
+                    .filter(c -> c.getCondition().getDevStage().equals(rootDevStage) &&
+                            c.getCondition().getSex().equals(rootSex) &&
+                            c.getCondition().getStrain().equals(rootStrain))
+                    .collect(Collectors.toList());
+            filteredCalls.stream().limit(20L).forEach(c -> System.out.println("Call: AnatEntity: "
+                    + c.getCondition().getAnatEntityId() + " - " + c.getCondition().getAnatEntity().getName()
+                    + "; CellType: " + c.getCondition().getCellTypeId() + " - " + c.getCondition().getCellType().getName()
+                    + "; expressionScore: " + c.getExpressionScore() + "; bestDescendantExpressionScore: "
+                    + c.getBestDescendantExpressionScore() + "; pValue: "
+                    + c.getAllDataTypePValue() + "; bestDescendantPValue: "
+                    + c.getBestDescendantAllDataTypePValue() + "; supportingDataType: "
+                    + c.getSupportingDataTypes()));
             
         }
-        serviceFactory.close();
+        this.getServiceFactory().close();
     }
 
     private static Map<RawDataCondition, Condition>
@@ -108,7 +159,7 @@ public class OnTheFlyPropagation {
                 Collection<CallService.Attribute> condParameters) {
         log.traceEntry("{}, {}", rawDataConditions, condParameters);
         return log.traceExit(rawDataConditions.stream()
-                .collect(Collectors.toMap(c -> c, c -> c.toCondition(condParameters))));
+                .collect(Collectors.toMap(c -> c, c -> mapRawDataConditionToCondition(c))));
 
     }
     
@@ -128,7 +179,8 @@ public class OnTheFlyPropagation {
     private static Set<RawDataCondition> transformDataTypeToContainersToRawDataCondition(Map<RawDataDataType<?, ?>, RawDataContainer<?, ?>> dataTypeToContainer) {
         log.traceEntry("{}", dataTypeToContainer);
         return log.traceExit(dataTypeToContainer.values().stream()
-        .map(e -> e.getAssays().stream().map(a -> a.getAnnotation().getRawDataCondition()))
-        .flatMap(s -> s).collect(Collectors.toSet()));
+                .flatMap(e -> e.getAssays().stream()
+                        .map(a -> a.getAnnotation().getRawDataCondition()))
+                .collect(Collectors.toSet()));
     }
 }

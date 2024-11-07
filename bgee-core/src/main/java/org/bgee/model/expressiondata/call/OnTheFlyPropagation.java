@@ -54,7 +54,7 @@ public class OnTheFlyPropagation extends CommonService {
         
         // init objects used for this test
         int speciesId = 9606;
-        Set<String> geneIds = Set.of("ENSG00000163914");
+        Set<String> geneIds = Set.of("ENSG00000163914", "ENSG00000007372", "ENSG00000012048", "ENSG00000065361");
 //        ,
 //                "ENSG00000000005", "ENSG00000000419", "ENSG00000000457", "ENSG00000000460",
 //                "ENSG00000000938", "ENSG00000000971", "ENSG00000001036", "ENSG00000001084",
@@ -64,7 +64,7 @@ public class OnTheFlyPropagation extends CommonService {
 //                "ENSG00000002330", "ENSG00000002549", "ENSG00000002586", "ENSG00000002587",
 //                "ENSG00000002726", "ENSG00000002745", "ENSG00000002746", "ENSG00000002822",
 //                "ENSG00000002834");
-        EnumSet<DataType> dataTypes = EnumSet.of(DataType.RNA_SEQ, DataType.AFFYMETRIX,
+        EnumSet<DataType> dataTypes = EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ,
                 DataType.SC_RNA_SEQ);
         
         Set<Gene> genes = geneService.loadGenes(new GeneFilter(speciesId, geneIds))
@@ -95,6 +95,8 @@ public class OnTheFlyPropagation extends CommonService {
                     null);
             
             //XXX: we need rank for each call and rank max for each assay.
+            //FIXME: in some conditions, all calls are excluded. They should be filtered out
+            //before identifying the conditions to subset.
             Map<RawDataDataType<?, ?>, RawDataContainer<?, ?>> dataTypeToContainer = OnTheFlyPropagation
                     .loadRawDataPerDatatype(dataTypes, filter, rawDataService);
             Set<RawDataCondition> rawDataConditions = transformDataTypeToContainersToRawDataCondition(dataTypeToContainer);
@@ -135,7 +137,7 @@ public class OnTheFlyPropagation extends CommonService {
             List<OTFExpressionCall> calls = loader.loadOTFExpressionCalls(gene, condGraph,
                     rawDataConditionToCondition, dataTypeToContainer);
             long otfEndTime = System.currentTimeMillis();
-            log.info("Propagation time: {}ms", otfEndTime - otfStartTime);
+            log.info("Propagation time: {}ms; number of OTF calls: {}", otfEndTime - otfStartTime, calls.size());
             List<OTFExpressionCall> filteredCalls = calls.stream()
                     .filter(c -> c.getCondition().getDevStage().equals(rootDevStage) &&
                             c.getCondition().getSex().equals(rootSex) &&

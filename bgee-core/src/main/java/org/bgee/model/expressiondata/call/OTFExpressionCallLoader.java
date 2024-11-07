@@ -71,15 +71,22 @@ public class OTFExpressionCallLoader extends CommonService {
             log.debug("Examining condition: {}", cond);
             Set<Condition> childConds = conditionGraph.getDescendantConditions(cond, true);
             log.debug("Descendant conditions: {}", childConds);
-            if (!childConds.isEmpty() && !callPerCond.keySet().containsAll(childConds)) {
-                throw log.throwing(new IllegalStateException("All children should have data and have been visited."));
-            }
+            //XXX: To reenable when ranks null fixed or calls filtered
+//            if (!childConds.isEmpty() && !callPerCond.keySet().containsAll(childConds)) {
+//                throw log.throwing(new IllegalStateException("All children should have data and have been visited."));
+//            }
             Map<DataType, List<RawCallSource<?>>> condRawData = rawCallsPerCond.get(cond);
             OTFExpressionCall call = loadOTFExpressionCall(gene, cond,
                     condRawData == null? Map.of(): condRawData,
-                    childConds.stream().map(childCond -> callPerCond.get(childCond)).collect(Collectors.toSet()));
+                    childConds.stream().map(childCond -> callPerCond.get(childCond))
+                    //XXX: to remove when ranks null fixed or calls filtered
+                    .filter(childCall -> childCall != null)
+                    .collect(Collectors.toSet()));
             log.debug("Produced call: {}", call);
-            callPerCond.put(cond, call);
+            //XXX: to remove when ranks null fixed or calls filtered
+            if (call != null) {
+                callPerCond.put(cond, call);
+            }
         }
 
         return log.traceExit(callPerCond.values().stream()
@@ -111,6 +118,7 @@ public class OTFExpressionCallLoader extends CommonService {
             supportingDataTypes.add(dataType);
 
             for (RawCallSource<?> call: calls) {
+                //XXX: to remove when rank fixed
                 if (call.getRawCall().getRank() == null) {
                     log.warn("Rank is null: {}", call);
                     continue;
@@ -167,6 +175,12 @@ public class OTFExpressionCallLoader extends CommonService {
             if (!childTrustedDataTypePValues.isEmpty()) {
                 trustedDataTypePValues.add(computeFDRCorrectedPValue(childTrustedDataTypePValues));
             }
+        }
+
+        //XXX: to remove when ranks fixed
+        if (allDataTypePValues.isEmpty()) {
+            log.warn("No calls with rank not null for cond: {}", cond);
+            return log.traceExit((OTFExpressionCall) null);
         }
 
         BigDecimal ultimateAllDataTypePValue = computeMedian(allDataTypePValues);

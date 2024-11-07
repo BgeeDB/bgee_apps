@@ -90,39 +90,6 @@ implements Comparable<NestedSetModelEntity<T>> {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + leftBound;
-        result = prime * result + level;
-        result = prime * result + rightBound;
-        return result;
-    }
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        NestedSetModelEntity<?> other = (NestedSetModelEntity<?>) obj;
-        if (leftBound != other.leftBound) {
-            return false;
-        }
-        if (level != other.level) {
-            return false;
-        }
-        if (rightBound != other.rightBound) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(super.toString())

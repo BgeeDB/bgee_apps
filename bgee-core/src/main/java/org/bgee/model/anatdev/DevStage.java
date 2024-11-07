@@ -96,35 +96,6 @@ public class DevStage extends NestedSetModelEntity<String> implements OntologyEl
     }
     
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + (groupingStage ? 1231 : 1237);
-        result = prime * result + (tooGranular ? 1231 : 1237);
-        return result;
-    }
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        DevStage other = (DevStage) obj;
-        if (groupingStage != other.groupingStage) {
-            return false;
-        }
-        if (tooGranular != other.tooGranular) {
-            return false;
-        }
-        return true;
-    }
-    
-    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("DevStage [").append(super.toString())

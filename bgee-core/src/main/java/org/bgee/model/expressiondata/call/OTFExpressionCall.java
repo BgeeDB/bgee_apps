@@ -106,4 +106,24 @@ public class OTFExpressionCall {
                 && Objects.equals(gene, other.gene) && Objects.equals(supportingDataTypes, other.supportingDataTypes)
                 && Objects.equals(trustedDataTypePValue, other.trustedDataTypePValue);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("OTFExpressionCall [")
+               .append("gene=").append(gene)
+               .append(", condition=").append(condition)
+               .append(", supportingDataTypes=").append(supportingDataTypes)
+               .append(", allDataTypePValue=").append(allDataTypePValue)
+               .append(", trustedDataTypePValue=").append(trustedDataTypePValue)
+               .append(", bestDescendantAllDataTypePValue=").append(bestDescendantAllDataTypePValue)
+               .append(", bestDescendantTrustedDataTypePValue=").append(bestDescendantTrustedDataTypePValue)
+               .append(", expressionScoreWeight=").append(expressionScoreWeight)
+               .append(", expressionScore=").append(expressionScore)
+               .append(", bestDescendantExpressionScoreWeight=").append(bestDescendantExpressionScoreWeight)
+               .append(", bestDescendantExpressionScore=").append(bestDescendantExpressionScore)
+               .append(", dataPropagation=").append(dataPropagation)
+               .append("]");
+        return builder.toString();
+    }
 }

@@ -89,6 +89,18 @@ public class CommonService extends Service {
     private final static Logger log = LogManager.getLogger(CommonService.class.getName());
 
     /**
+     * A {@code Set} of {@code String}s storing the IDs of anatomical terms corresponding to
+     * the concept "unknown". To allow a simple blacklisting of "unknown" terms, we will remap them
+     * to the root of the anat. entity ontology.
+     */
+    private final static Set<String> UNKNOWN_ANAT_ENTITY_IDS = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList("XAO:0003003", "ZFA:0001093")));
+    /**
+     * An {@code AnatEntity} that is the root of the anat. entity ontology.
+     */
+    private final static AnatEntity ROOT_ANAT_ENTITY = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+
+    /**
      * @param serviceFactory    The {@code ServiceFactory} that instantiated this {@code Service}.
      * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
@@ -165,6 +177,32 @@ public class CommonService extends Service {
                     + condTO.getCellTypeId()));
         }
         log.traceExit(); return;
+    }
+    protected static Condition mapRawDataConditionToCondition(RawDataCondition rawCond) {
+        log.traceEntry("{}", rawCond);
+        if (rawCond == null) {
+            return log.traceExit((Condition) null);
+        }
+        //All the elements must be non-null, otherwise the propagation will end up
+        //with not comparable conditions between elements mapped to the root
+        //and element mapped to null.
+        assert rawCond.getAnatEntity() != null;
+        assert rawCond.getDevStage() != null;
+        assert rawCond.getCellType() != null;
+        assert rawCond.getSex() != null;
+        assert rawCond.getStrain() != null;
+        AnatEntity anatEntityToUse = rawCond.getAnatEntity();
+        //Quick and dirty blacklisting of "unknown" terms, we remap them to the root of the anatEntities
+        if (UNKNOWN_ANAT_ENTITY_IDS.contains(anatEntityToUse.getId()) || anatEntityToUse == null) {
+            anatEntityToUse = ROOT_ANAT_ENTITY;
+        }
+        return log.traceExit(new Condition(
+                anatEntityToUse,
+                rawCond.getDevStage() != null? rawCond.getDevStage(): new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID),
+                rawCond.getCellType() != null? rawCond.getCellType(): new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID),
+                mapRawDataSexToSex(rawCond.getSex()),
+                mapRawDataStrainToStrain(rawCond.getStrain()),
+                rawCond.getSpecies()));
     }
     /**
      * Map {@code ConditionTO} to a {@code Condition}.
@@ -404,7 +442,7 @@ public class CommonService extends Service {
     protected static Sex mapRawDataSexToSex(RawDataSex daoRawDataSex) {
         log.traceEntry("{}", daoRawDataSex);
         if (daoRawDataSex == null) {
-            log.traceExit(); return null;
+            return log.traceExit(new Sex(SexEnum.ANY.getStringRepresentation()));
         }
         switch(daoRawDataSex) {
         case NOT_ANNOTATED:
@@ -1056,7 +1094,7 @@ public class CommonService extends Service {
     protected static Strain mapRawDataStrainToStrain(String strain) {
         log.traceEntry("{}", strain);
         if (StringUtils.isBlank(strain)) {
-            log.traceExit(); return null;
+            return log.traceExit(new Strain(ConditionDAO.STRAIN_ROOT_ID));
         }
         Function<String, String> replacement = s -> s
                 .toLowerCase()

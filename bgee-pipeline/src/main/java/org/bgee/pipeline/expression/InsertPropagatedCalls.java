@@ -3164,29 +3164,6 @@ public class InsertPropagatedCalls extends CallService {
                 Collections.singleton(callTO)));
     }
 
-    private static Condition mapRawDataConditionToCondition(RawDataCondition rawCond) {
-        log.traceEntry("{}", rawCond);
-        if (rawCond == null) {
-            return log.traceExit((Condition) null);
-        }
-        //All the elements must be non-null, otherwise the propagation will end up
-        //with not comparable conditions between elements mapped to the root
-        //and element mapped to null.
-        assert rawCond.getAnatEntity() != null;
-        assert rawCond.getDevStage() != null;
-        assert rawCond.getCellType() != null;
-        assert rawCond.getSex() != null;
-        assert rawCond.getStrain() != null;
-        AnatEntity anatEntityToUse = rawCond.getAnatEntity();
-        //Quick and dirty blacklisting of "unknown" terms, we remap them to the root of the anatEntities
-        if (UNKNOWN_ANAT_ENTITY_IDS.contains(anatEntityToUse.getId())) {
-            anatEntityToUse = ROOT_ANAT_ENTITY;
-        }
-        return log.traceExit(new Condition(anatEntityToUse, rawCond.getDevStage(),
-                rawCond.getCellType(), mapRawDataSexToSex(rawCond.getSex()),
-                mapRawDataStrainToStrain(rawCond.getStrain()), rawCond.getSpecies()));
-    }
-
 
     //*************************************************************************
     // METHODS COUTING EXPERIMENTS FOR DIFFERENT CALL TYPES

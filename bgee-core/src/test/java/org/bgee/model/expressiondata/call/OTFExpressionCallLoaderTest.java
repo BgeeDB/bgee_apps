@@ -192,42 +192,82 @@ public class OTFExpressionCallLoaderTest {
         result = OTFExpressionCallLoader.computeMedian(singleElementList);
         assertEquals("The median calculation on a single pValue list should return the same pValue", new BigDecimal("0.05"), result);
     }
-
+    
     @Test
     public void testLoadOTFExpressionCall() {
-        Species species = new Species(9606);
-        GeneBioType geneBioType = new GeneBioType("geneBioType");
-        Gene gene1 = new Gene("gene1", species, geneBioType);
-
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
         AnatEntity cellType1 = new AnatEntity("cellType1");
         AnatEntity cellType2 = new AnatEntity("cellType2");
+        DevStage devStage1 = new DevStage("devStage1");
+        RawDataSex sex = RawDataSex.FEMALE;
+        String strain = "wild-type";
+        Species species = new Species(9606);
+
+        RawDataCondition rawDataCond1 = new RawDataCondition(anatEntity1, devStage1, cellType1,
+                sex, strain, species);
+        
+        GeneBioType geneBioType = new GeneBioType("geneBioType");
+        Gene gene1 = new Gene("gene1", species, geneBioType);
+        
 
         Condition cond1 = new Condition(anatEntity1, null, cellType1, null, null, species);
         Condition cond2 = new Condition(anatEntity2, null, cellType1, null, null, species);
         Condition cond3 = new Condition(anatEntity1, null, cellType2, null, null, species);
 
-        Map<DataType, List<RawCall>> rawData = Map.of(
-                DataType.AFFYMETRIX, List.of(
-                        new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
-                                ExclusionReason.NOT_EXCLUDED, new BigDecimal(1)),
-                        new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
-                                ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))),
-                DataType.RNA_SEQ, List.of(
-                        new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
-                                ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))),
-                DataType.EST, List.of(
-                        new RawCall(gene1, new BigDecimal(0.01), DataState.HIGHQUALITY,
-                                ExclusionReason.NOT_EXCLUDED, new BigDecimal(1))));
+        RawDataAnnotation annot1 = new RawDataAnnotation(rawDataCond1, null, null, null, null, null);
 
+        // Initialize raw calls
+        RawCall RCaffymetrix = new RawCall(gene1, new BigDecimal("0.10"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("300"));
+        RawCall RCrnaseq1 = new RawCall(gene1, new BigDecimal("0.10"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("300"));
+        RawCall RCrnaseq2 = new RawCall(gene1, new BigDecimal("0.10"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("300"));
+
+        // Initialize experiments and samples
+        AffymetrixExperiment affyExp = new AffymetrixExperiment("AffyExp1", null, null, null, null, 2);
+        AffymetrixChip chip1 = new AffymetrixChip("chip1", affyExp, null, null, null);
+
+        RnaSeqExperiment rnaSeqExp1 = new RnaSeqExperiment("rnaSeqExp1", null, null, null, null, null, 1, false);
+        RnaSeqLibrary rnaSeqLib1 = new RnaSeqLibrary("rnaSeqLib1", null, null, rnaSeqExp1);
+        RnaSeqLibraryAnnotatedSample sample1 = new RnaSeqLibraryAnnotatedSample(rnaSeqLib1, annot1, null, null);
+
+        RnaSeqExperiment rnaSeqExp2 = new RnaSeqExperiment("rnaSeqExp2", null, null, null, null, null, 1, false);
+        RnaSeqLibrary rnaSeqLib2 = new RnaSeqLibrary("rnaSeqLib2", null, null, rnaSeqExp2);
+        RnaSeqLibraryAnnotatedSample sample2 = new RnaSeqLibraryAnnotatedSample(rnaSeqLib2, annot1, null, null);
+
+        // Initialize raw data map
+        Map<DataType, List<RawCallSource<?>>> rawData = Map.of(
+            DataType.AFFYMETRIX, List.of(
+                new AffymetrixProbeset("probeset1", chip1, RCaffymetrix, null, null)
+            ),
+            DataType.RNA_SEQ, List.of(
+                new RnaSeqResultAnnotatedSample(sample1, RCrnaseq1, null, null, null, null, null),
+                new RnaSeqResultAnnotatedSample(sample2, RCrnaseq2, null, null, null, null, null)
+            )
+        );
+        
+       
         OTFExpressionCall childCall1 = new OTFExpressionCall(gene1, cond2,
                 EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
-                new BigDecimal("0.01"), new BigDecimal("0.01"),
-                new BigDecimal("0.01"), new BigDecimal("0.01"),
+                new BigDecimal("0.10"), new BigDecimal("0.15"),
+                new BigDecimal("0.001"), new BigDecimal("0.003"),
                 new BigDecimal("10000"), new BigDecimal("50"),
                 new BigDecimal("50000"), new BigDecimal("30"),
                 PropagationState.SELF_AND_DESCENDANT);
+        
+        OTFExpressionCall childCall2 = new OTFExpressionCall(gene1, cond3,
+                EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
+                new BigDecimal("0.50"), new BigDecimal("0.70"),
+                new BigDecimal("0.25"), new BigDecimal("0.35"),
+                new BigDecimal("10000"), new BigDecimal("50"),
+                new BigDecimal("50000"), new BigDecimal("30"),
+                PropagationState.SELF_AND_DESCENDANT);
+
+        //Gene gene, Condition condition, EnumSet<DataType> supportingDataTypes, 
+        //BigDecimal trustedDataTypePValue, BigDecimal allDataTypePValue, 
+        //BigDecimal bestDescendantTrustedDataTypePValue, BigDecimal bestDescendantAllDataTypePValue, 
+        //BigDecimal expressionScoreWeight, BigDecimal expressionScore, 
+        //BigDecimal bestDescendantExpressionScoreWeight, BigDecimal bestDescendantExpressionScore, 
+        //PropagationState dataPropagation)
 
         OTFExpressionCall expectedCall = new OTFExpressionCall(gene1, cond1,
                 EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
@@ -236,8 +276,10 @@ public class OTFExpressionCallLoaderTest {
                 new BigDecimal("10000"), new BigDecimal("50"),
                 new BigDecimal("50000"), new BigDecimal("30"),
                 PropagationState.SELF_AND_DESCENDANT);
-//        OTFExpressionCall testCall = OTFExpressionCallLoader.loadOTFExpressionCall(rawData, Set.of(childCall1));
-//        assertEquals(expectedCall, testCall);
+
+        OTFExpressionCall testCall = OTFExpressionCallLoader.loadOTFExpressionCall(gene1, cond1, rawData, Set.of(childCall1, childCall2));
+        assertEquals(expectedCall, testCall);
+
         
     }
 }

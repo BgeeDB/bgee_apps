@@ -67,7 +67,9 @@ public class OTFExpressionCallLoader extends CommonService {
 
         Map<Condition, OTFExpressionCall> callPerCond = new HashMap<>();
         for (Condition cond: conds) {
+            log.debug("Examining condition: {}", cond);
             Set<Condition> childConds = conditionGraph.getDescendantConditions(cond, true);
+            log.debug("Descendant conditions: {}", childConds);
             if (!childConds.isEmpty() && !callPerCond.keySet().containsAll(childConds)) {
                 throw log.throwing(new IllegalStateException("All children should have data and have been visited."));
             }
@@ -75,6 +77,7 @@ public class OTFExpressionCallLoader extends CommonService {
             OTFExpressionCall call = loadOTFExpressionCall(gene, cond,
                     condRawData == null? Map.of(): condRawData,
                     childConds.stream().map(childCond -> callPerCond.get(childCond)).collect(Collectors.toSet()));
+            log.debug("Produced call: {}", call);
             callPerCond.put(cond, call);
         }
 
@@ -107,6 +110,10 @@ public class OTFExpressionCallLoader extends CommonService {
             supportingDataTypes.add(dataType);
 
             for (RawCallSource<?> call: calls) {
+                if (call.getRawCall().getRank() == null) {
+                    log.warn("Rank is null: {}", call);
+                    continue;
+                }
                 pValues.add(call.getRawCall().getPValue());
                 BigDecimal expressionScore = computeExpressionScore(call.getRawCall().getRank(),
                         call.getAssay().getPipelineSummary().getMaxRank());
@@ -145,12 +152,12 @@ public class OTFExpressionCallLoader extends CommonService {
                         childCall.getTrustedDataTypePValue(), childCall.getBestDescendantTrustedDataTypePValue());
 
                 if (bestDescendantExpressionScore == null ||
-                        childCall.getExpressionScore().compareTo(bestDescendantExpressionScore) < 0) {
+                        childCall.getExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
                     bestDescendantExpressionScore = childCall.getExpressionScore();
                     bestDescendantExpressionScoreWeight = childCall.getExpressionScoreWeight();
                 }
                 if (childCall.getBestDescendantExpressionScore() != null &&
-                        childCall.getBestDescendantExpressionScore().compareTo(bestDescendantExpressionScore) < 0) {
+                        childCall.getBestDescendantExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
                     bestDescendantExpressionScore = childCall.getBestDescendantExpressionScore();
                     bestDescendantExpressionScoreWeight = childCall.getBestDescendantExpressionScoreWeight();
                 }

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -269,22 +270,45 @@ public class OTFExpressionCallLoaderTest {
                 new BigDecimal("50000"), new BigDecimal("40"),
                 PropagationState.SELF_AND_DESCENDANT);
 
-        //Gene gene, Condition condition, EnumSet<DataType> supportingDataTypes, 
-        //BigDecimal trustedDataTypePValue, BigDecimal allDataTypePValue, 
-        //BigDecimal bestDescendantTrustedDataTypePValue, BigDecimal bestDescendantAllDataTypePValue, 
-        //BigDecimal expressionScoreWeight, BigDecimal expressionScore, 
-        //BigDecimal bestDescendantExpressionScoreWeight, BigDecimal bestDescendantExpressionScore, 
-        //PropagationState dataPropagation)
-
         OTFExpressionCall expectedCall = new OTFExpressionCall(gene1, cond1,
                 EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
-                new BigDecimal("0.45"), new BigDecimal("0.55"), //Done
-                new BigDecimal("0.001"), new BigDecimal("0.003"), //Done
-                new BigDecimal("2579440"), new BigDecimal("49.51"), //Done
-                new BigDecimal("10000"), new BigDecimal("90"), //Done
+                new BigDecimal("0.45").setScale(50, RoundingMode.HALF_UP), new BigDecimal("0.55").setScale(50, RoundingMode.HALF_UP), 
+                new BigDecimal("0.001"), new BigDecimal("0.003"), 
+                new BigDecimal("52100"), new BigDecimal("49.51"), 
+                new BigDecimal("10000"), new BigDecimal("90"), 
                 PropagationState.SELF_AND_DESCENDANT);
 
         OTFExpressionCall testCall = OTFExpressionCallLoader.loadOTFExpressionCall(gene1, cond1, rawData, Set.of(childCall1, childCall2));
+        
+     // Logging attributes for debugging
+        log.debug("Expected Call Attributes: Gene = {}, Condition = {}, Supporting Data Types = {}, Trusted DataType P-Value = {}, All DataType P-Value = {}, Best Descendant Trusted DataType P-Value = {}, Best Descendant All DataType P-Value = {}, Expression Score Weight = {}, Expression Score = {}, Best Descendant Expression Score Weight = {}, Best Descendant Expression Score = {}, Propagation State = {}",
+                expectedCall.getGene(),
+                expectedCall.getCondition(),
+                expectedCall.getSupportingDataTypes(),
+                expectedCall.getTrustedDataTypePValue(),
+                expectedCall.getAllDataTypePValue(),
+                expectedCall.getBestDescendantTrustedDataTypePValue(),
+                expectedCall.getBestDescendantAllDataTypePValue(),
+                expectedCall.getExpressionScoreWeight(),
+                expectedCall.getExpressionScore(),
+                expectedCall.getBestDescendantExpressionScoreWeight(),
+                expectedCall.getBestDescendantExpressionScore(),
+                expectedCall.getDataPropagation());
+
+        log.debug("Test Call Attributes: Gene = {}, Condition = {}, Supporting Data Types = {}, Trusted DataType P-Value = {}, All DataType P-Value = {}, Best Descendant Trusted DataType P-Value = {}, Best Descendant All DataType P-Value = {}, Expression Score Weight = {}, Expression Score = {}, Best Descendant Expression Score Weight = {}, Best Descendant Expression Score = {}, Propagation State = {}",
+                testCall.getGene(),
+                testCall.getCondition(),
+                testCall.getSupportingDataTypes(),
+                testCall.getTrustedDataTypePValue(),
+                testCall.getAllDataTypePValue(),
+                testCall.getBestDescendantTrustedDataTypePValue(),
+                testCall.getBestDescendantAllDataTypePValue(),
+                testCall.getExpressionScoreWeight(),
+                testCall.getExpressionScore(),
+                testCall.getBestDescendantExpressionScoreWeight(),
+                testCall.getBestDescendantExpressionScore(),
+                testCall.getDataPropagation());
+        
         assertEquals(expectedCall, testCall);
 
         

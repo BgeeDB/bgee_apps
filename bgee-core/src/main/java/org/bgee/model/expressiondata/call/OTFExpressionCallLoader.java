@@ -59,6 +59,7 @@ public class OTFExpressionCallLoader extends CommonService {
         //Retrieve roots of conditionGraph
         Set<Condition> rootConditions = conditionGraph.getRootConditions();
         if (rootConditions.size() != 1) {
+            log.error("Roots found: {}", rootConditions);
             throw log.throwing(new IllegalStateException("Incorrect number of roots: "
                   + rootConditions.size()));
         }

@@ -8,6 +8,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.call.OnTheFlyPropagation;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
@@ -191,6 +192,9 @@ public class CommandRunner {
 
         //now choose the class to dispatch the work
         switch(args[0]) {
+        case "OTFPropagation":
+            OnTheFlyPropagation.main(null);
+            break;
 
         //---------- species and taxonomy -----------
         case "GenerateTaxonOntology": 

@@ -220,9 +220,9 @@ public class OTFExpressionCallLoaderTest {
         RawDataAnnotation annot1 = new RawDataAnnotation(rawDataCond1, null, null, null, null, null);
 
         // Initialize raw calls
-        RawCall RCaffymetrix = new RawCall(gene1, new BigDecimal("0.10"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("200"));
-        RawCall RCrnaseq1 = new RawCall(gene1, new BigDecimal("0.10"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1000"));
-        RawCall RCrnaseq2 = new RawCall(gene1, new BigDecimal("0.10"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("30"));
+        RawCall RCaffymetrix = new RawCall(gene1, new BigDecimal("0.20"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("200"));
+        RawCall RCrnaseq1 = new RawCall(gene1, new BigDecimal("0.25"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1000"));
+        RawCall RCrnaseq2 = new RawCall(gene1, new BigDecimal("0.40"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("30"));
 
         AffymetrixChipPipelineSummary affysummary = new AffymetrixChipPipelineSummary(100, new BigDecimal(200), strain, strain, null, new BigDecimal(0.7));
         
@@ -258,7 +258,7 @@ public class OTFExpressionCallLoaderTest {
                 new BigDecimal("0.10"), new BigDecimal("0.15"),
                 new BigDecimal("0.001"), new BigDecimal("0.003"),
                 new BigDecimal("20000"), new BigDecimal("12"),
-                new BigDecimal("10000"), new BigDecimal("2"),
+                new BigDecimal("10000"), new BigDecimal("90"),
                 PropagationState.SELF_AND_DESCENDANT);
         
         OTFExpressionCall childCall2 = new OTFExpressionCall(gene1, cond3,
@@ -266,7 +266,7 @@ public class OTFExpressionCallLoaderTest {
                 new BigDecimal("0.50"), new BigDecimal("0.70"),
                 new BigDecimal("0.25"), new BigDecimal("0.35"),
                 new BigDecimal("10000"), new BigDecimal("15"),
-                new BigDecimal("50000"), new BigDecimal("300"),
+                new BigDecimal("50000"), new BigDecimal("40"),
                 PropagationState.SELF_AND_DESCENDANT);
 
         //Gene gene, Condition condition, EnumSet<DataType> supportingDataTypes, 
@@ -278,10 +278,10 @@ public class OTFExpressionCallLoaderTest {
 
         OTFExpressionCall expectedCall = new OTFExpressionCall(gene1, cond1,
                 EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
-                new BigDecimal("0.01"), new BigDecimal("0.01"),
-                new BigDecimal("0.01"), new BigDecimal("0.01"),
-                new BigDecimal("10000"), new BigDecimal("50"),
-                new BigDecimal("50000"), new BigDecimal("2"),
+                new BigDecimal("0.45"), new BigDecimal("0.55"), //Done
+                new BigDecimal("0.001"), new BigDecimal("0.003"), //Done
+                new BigDecimal("2579440"), new BigDecimal("49.51"), //Done
+                new BigDecimal("10000"), new BigDecimal("90"), //Done
                 PropagationState.SELF_AND_DESCENDANT);
 
         OTFExpressionCall testCall = OTFExpressionCallLoader.loadOTFExpressionCall(gene1, cond1, rawData, Set.of(childCall1, childCall2));

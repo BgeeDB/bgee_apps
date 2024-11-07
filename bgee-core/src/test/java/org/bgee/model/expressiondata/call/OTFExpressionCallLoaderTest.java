@@ -230,8 +230,8 @@ public class OTFExpressionCallLoaderTest {
         AffymetrixExperiment affyExp = new AffymetrixExperiment("AffyExp1", null, null, null, null, 1);
         AffymetrixChip chip1 = new AffymetrixChip("chip1", affyExp, null, null, affysummary);
         
-        RnaSeqLibraryAnnotatedSamplePipelineSummary rnaseqsummary1 = new RnaSeqLibraryAnnotatedSamplePipelineSummary(new BigDecimal("0.0003"),new BigDecimal("0.01"), new BigDecimal("0.001"), 100000, 95000, new BigDecimal("5000"), 4500);
-        RnaSeqLibraryAnnotatedSamplePipelineSummary rnaseqsummary2 = new RnaSeqLibraryAnnotatedSamplePipelineSummary(new BigDecimal("0.0003"),new BigDecimal("0.01"), new BigDecimal("0.001"), 100000, 95000, new BigDecimal("5000"), 17500);
+        RnaSeqLibraryAnnotatedSamplePipelineSummary rnaseqsummary1 = new RnaSeqLibraryAnnotatedSamplePipelineSummary(new BigDecimal("0.0003"),new BigDecimal("0.01"), new BigDecimal("0.001"), 100000, 95000, new BigDecimal("50000"), 4500);
+        RnaSeqLibraryAnnotatedSamplePipelineSummary rnaseqsummary2 = new RnaSeqLibraryAnnotatedSamplePipelineSummary(new BigDecimal("0.0003"),new BigDecimal("0.01"), new BigDecimal("0.001"), 100000, 95000, new BigDecimal("30000"), 17500);
         
         RnaSeqExperiment rnaSeqExp1 = new RnaSeqExperiment("rnaSeqExp1", null, null, null, null, null, 1, false);
         RnaSeqLibrary rnaSeqLib1 = new RnaSeqLibrary("rnaSeqLib1", null, null, rnaSeqExp1);

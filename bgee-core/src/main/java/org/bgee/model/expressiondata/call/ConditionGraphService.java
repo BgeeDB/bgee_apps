@@ -330,7 +330,7 @@ public class ConditionGraphService extends CommonService {
                 this.getServiceFactory().getOntologyService().getDevStageOntology(
                     speciesId, entities.getDevStageIds(), inferAncestralConds, inferDescendantConds);
         if (anatEntityOntToUse != null && devStageOntToUse != null 
-                && anatEntityOntToUse.getSpeciesId() != devStageOntToUse.getSpeciesId()) {
+                && !anatEntityOntToUse.getSpeciesId().equals(devStageOntToUse.getSpeciesId())) {
             throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
         }
         final Ontology<AnatEntity, String> cellTypeOntToUse = entities.getCellTypeIds().isEmpty()? null:
@@ -339,7 +339,7 @@ public class ConditionGraphService extends CommonService {
                     speciesId, entities.getCellTypeIds(), EnumSet.of(RelationType.ISA_PARTOF), 
                     inferAncestralConds, inferDescendantConds);
         if (anatEntityOntToUse != null && cellTypeOntToUse != null 
-                && anatEntityOntToUse.getSpeciesId() != cellTypeOntToUse.getSpeciesId()) {
+                && !anatEntityOntToUse.getSpeciesId().equals(cellTypeOntToUse.getSpeciesId())) {
             throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
         }
         final Ontology<Sex, String> sexOntToUse = entities.getSexIds().isEmpty()? null:
@@ -347,7 +347,7 @@ public class ConditionGraphService extends CommonService {
                 this.getServiceFactory().getOntologyService().getSexOntology(speciesId, 
                         entities.getSexIds(), inferAncestralConds, inferDescendantConds);
         if (anatEntityOntToUse != null && sexOntToUse != null 
-                && anatEntityOntToUse.getSpeciesId() != sexOntToUse.getSpeciesId()) {
+                && !anatEntityOntToUse.getSpeciesId().equals(sexOntToUse.getSpeciesId())) {
             throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
         }
         final Ontology<Strain, String> strainOntToUse = entities.getStrainIds().isEmpty()? null:
@@ -355,7 +355,7 @@ public class ConditionGraphService extends CommonService {
                 this.getServiceFactory().getOntologyService().getStrainOntology(speciesId, 
                         entities.getStrainIds(), inferAncestralConds, inferDescendantConds);
         if (anatEntityOntToUse != null && strainOntToUse != null 
-                && anatEntityOntToUse.getSpeciesId() != strainOntToUse.getSpeciesId()) {
+                && !anatEntityOntToUse.getSpeciesId().equals(strainOntToUse.getSpeciesId())) {
             throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
         }
         

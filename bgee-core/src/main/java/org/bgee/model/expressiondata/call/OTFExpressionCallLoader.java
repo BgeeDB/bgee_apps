@@ -78,17 +78,19 @@ public class OTFExpressionCallLoader extends CommonService {
             callPerCond.put(cond, call);
         }
 
-        return null;
+        return log.traceExit(callPerCond.values().stream()
+                .sorted((c1, c2) -> c2.getExpressionScore().compareTo(c1.getExpressionScore()))
+                .collect(Collectors.toList()));
     }
 
     static OTFExpressionCall loadOTFExpressionCall(Gene gene, Condition cond,
             Map<DataType, List<RawCallSource<?>>> rawData, Set<OTFExpressionCall> callsInChildConds) {
-        log.traceEntry("{}, {}", rawData, callsInChildConds);
+        log.traceEntry("{}, {}, {}, {}", gene, cond, rawData, callsInChildConds);
         if (rawData.isEmpty() && callsInChildConds.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("Raw data or child calls must be provided"));
+            throw log.throwing(new IllegalArgumentException("Raw data and child calls cannot be both empty"));
         }
 
-        //rawData can be empty if no raw data in the cond
+        //rawData can be empty if no raw data in the condition itself.
         //first, compute information from data in the condition itself.
         //We use Lists not to loose equals PValues
         List<BigDecimal> allDataTypePValues = new ArrayList<>();
@@ -96,6 +98,7 @@ public class OTFExpressionCallLoader extends CommonService {
         BigDecimal scoreByWeightSum = new BigDecimal(0);
         BigDecimal weightSum = new BigDecimal(0);
         EnumSet<DataType> supportingDataTypes = EnumSet.noneOf(DataType.class);
+        PropagationState dataPropagation = rawData.isEmpty()? null: PropagationState.SELF;
 
         for (Entry<DataType, List<RawCallSource<?>>> dataTypeRawData: rawData.entrySet()) {
             DataType dataType = dataTypeRawData.getKey();
@@ -116,36 +119,78 @@ public class OTFExpressionCallLoader extends CommonService {
             if (dataType.isTrustedForAbsentCalls()) {
                 trustedDataTypePValues.addAll(pValues);
             }
-//            BigDecimal stepScore = calls.
         }
 
+        BigDecimal bestDescendantAllDataTypePValue = null;
+        BigDecimal bestDescendantTrustedDataTypePValue = null;
+        BigDecimal bestDescendantExpressionScore = null;
+        BigDecimal bestDescendantExpressionScoreWeight = null;
         if (!callsInChildConds.isEmpty()) {
-            List<BigDecimal> childPValues = new ArrayList<>();
+            dataPropagation = dataPropagation == null? PropagationState.DESCENDANT: PropagationState.SELF_AND_DESCENDANT;
+            List<BigDecimal> childAllDataTypePValues = new ArrayList<>();
             List<BigDecimal> childTrustedDataTypePValues = new ArrayList<>();
             for (OTFExpressionCall childCall: callsInChildConds) {
                 supportingDataTypes.addAll(childCall.getSupportingDataTypes());
-                childPValues.add(childCall.getAllDataTypePValue());
-                childTrustedDataTypePValues.add(childCall.getTrustedDataTypePValue());
+                childAllDataTypePValues.add(childCall.getAllDataTypePValue());
+                if (childCall.getTrustedDataTypePValue() != null) {
+                    childTrustedDataTypePValues.add(childCall.getTrustedDataTypePValue());
+                }
                 BigDecimal scoreByWeight = childCall.getExpressionScoreWeight().multiply(childCall.getExpressionScore());
                 scoreByWeightSum = scoreByWeightSum.add(scoreByWeight);
                 weightSum = weightSum.add(childCall.getExpressionScoreWeight());
+
+                bestDescendantAllDataTypePValue = getBestDescendantValue(bestDescendantAllDataTypePValue,
+                        childCall.getAllDataTypePValue(), childCall.getBestDescendantAllDataTypePValue());
+                bestDescendantTrustedDataTypePValue = getBestDescendantValue(bestDescendantTrustedDataTypePValue,
+                        childCall.getTrustedDataTypePValue(), childCall.getBestDescendantTrustedDataTypePValue());
+
+                if (bestDescendantExpressionScore == null ||
+                        childCall.getExpressionScore().compareTo(bestDescendantExpressionScore) < 0) {
+                    bestDescendantExpressionScore = childCall.getExpressionScore();
+                    bestDescendantExpressionScoreWeight = childCall.getExpressionScoreWeight();
+                }
+                if (childCall.getBestDescendantExpressionScore() != null &&
+                        childCall.getBestDescendantExpressionScore().compareTo(bestDescendantExpressionScore) < 0) {
+                    bestDescendantExpressionScore = childCall.getBestDescendantExpressionScore();
+                    bestDescendantExpressionScoreWeight = childCall.getBestDescendantExpressionScoreWeight();
+                }
             }
-            BigDecimal fdrChildPValue = computeFDRCorrectedPValue(childPValues);
-            allDataTypePValues.add(fdrChildPValue);
-            BigDecimal fdrChildTrustedDataTypePValue = computeFDRCorrectedPValue(childTrustedDataTypePValues);
-            trustedDataTypePValues.add(fdrChildTrustedDataTypePValue);
+            allDataTypePValues.add(computeFDRCorrectedPValue(childAllDataTypePValues));
+            if (!childTrustedDataTypePValues.isEmpty()) {
+                trustedDataTypePValues.add(computeFDRCorrectedPValue(childTrustedDataTypePValues));
+            }
         }
 
         BigDecimal ultimateAllDataTypePValue = computeMedian(allDataTypePValues);
-        BigDecimal ultimateTrustedDataTypePValue = computeMedian(trustedDataTypePValues);
-        BigDecimal weightedAverageExpressionScoreForVincent = scoreByWeightSum.divide(weightSum);
+        BigDecimal ultimateTrustedDataTypePValue = null;
+        if (!trustedDataTypePValues.isEmpty()) {
+            ultimateTrustedDataTypePValue = computeMedian(trustedDataTypePValues);
+        }
+        assert((new BigDecimal(0)).compareTo(weightSum) != 0);
+        log.debug("weightSum: {}, scoreByWeightSum: {}", weightSum, scoreByWeightSum);
+        BigDecimal weightedAverageExpressionScore = scoreByWeightSum.divide(weightSum, 2, RoundingMode.HALF_UP);
         
         return new OTFExpressionCall(gene, cond, supportingDataTypes,
-                ultimateTrustedDataTypePValue, ultimateAllDataTypePValue,
-                BigDecimal bestDescendantTrustedDataTypePValue, BigDecimal bestDescendantAllDataTypePValue,
-                BigDecimal expressionScoreWeight, BigDecimal expressionScore,
-                BigDecimal bestDescendantExpressionScoreWeight, BigDecimal bestDescendantExpressionScore,
-                PropagationState dataPropagation)
+                ultimateAllDataTypePValue, ultimateTrustedDataTypePValue,
+                bestDescendantAllDataTypePValue, bestDescendantTrustedDataTypePValue,
+                weightSum, weightedAverageExpressionScore,
+                bestDescendantExpressionScoreWeight, bestDescendantExpressionScore,
+                dataPropagation);
+    }
+
+    private static BigDecimal getBestDescendantValue(BigDecimal currentBestDescendantValue,
+            BigDecimal descendantValue, BigDecimal descendantBestDescendantValue) {
+        log.traceEntry("{}, {}, {}", currentBestDescendantValue, descendantValue, descendantBestDescendantValue);
+
+        if (descendantValue != null && (currentBestDescendantValue == null ||
+                descendantValue.compareTo(currentBestDescendantValue) < 0)) {
+            currentBestDescendantValue = descendantValue;
+        }
+        if (descendantBestDescendantValue != null && (currentBestDescendantValue == null ||
+                descendantBestDescendantValue.compareTo(currentBestDescendantValue) < 0)) {
+            currentBestDescendantValue = descendantBestDescendantValue;
+        }
+        return log.traceExit(currentBestDescendantValue);
     }
 
     static Map<Condition, Map<DataType, List<RawCallSource<?>>>> transformToRawDataPerCondition(
@@ -213,7 +258,7 @@ public class OTFExpressionCallLoader extends CommonService {
      // Calculate score with the linear transformation
         BigDecimal range = maxRank.subtract(BigDecimal.ONE);
         BigDecimal adjustedRank = rank.subtract(BigDecimal.ONE);
-        BigDecimal expressionScore = BigDecimal.valueOf(100).subtract(adjustedRank.multiply(BigDecimal.valueOf(99)).divide(range, 5, RoundingMode.HALF_UP));
+        BigDecimal expressionScore = BigDecimal.valueOf(100).subtract(adjustedRank.multiply(BigDecimal.valueOf(99)).divide(range, 2, RoundingMode.HALF_UP));
         
         //We want expression score to be at least greater than EXPRESSION_SCORE_MIN_VALUE
         if (expressionScore.compareTo(EXPRESSION_SCORE_MIN_VALUE) < 0) {
@@ -282,7 +327,7 @@ public class OTFExpressionCallLoader extends CommonService {
             // Even size: average the two middle elements
             BigDecimal middle1 = pValues.get(size / 2 - 1);
             BigDecimal middle2 = pValues.get(size / 2);
-            median = middle1.add(middle2).divide(BigDecimal.valueOf(2));
+            median = middle1.add(middle2).divide(BigDecimal.valueOf(2), 50, RoundingMode.HALF_UP);
         }
 
         // Multiply the median by 2 and cap the result at 1

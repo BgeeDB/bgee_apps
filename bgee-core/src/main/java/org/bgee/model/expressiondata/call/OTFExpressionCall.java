@@ -13,10 +13,10 @@ public class OTFExpressionCall {
     private final Gene gene;
     private final Condition condition;
     private final EnumSet<DataType> supportingDataTypes;
-    private final BigDecimal trustedDataTypePValue;
     private final BigDecimal allDataTypePValue;
-    private final BigDecimal bestDescendantTrustedDataTypePValue;
+    private final BigDecimal trustedDataTypePValue;
     private final BigDecimal bestDescendantAllDataTypePValue;
+    private final BigDecimal bestDescendantTrustedDataTypePValue;
     private final BigDecimal expressionScoreWeight;
     private final BigDecimal expressionScore;
     private final BigDecimal bestDescendantExpressionScoreWeight;
@@ -24,18 +24,18 @@ public class OTFExpressionCall {
     private final PropagationState dataPropagation;
 
     public OTFExpressionCall(Gene gene, Condition condition, EnumSet<DataType> supportingDataTypes,
-            BigDecimal trustedDataTypePValue, BigDecimal allDataTypePValue,
-            BigDecimal bestDescendantTrustedDataTypePValue, BigDecimal bestDescendantAllDataTypePValue,
+            BigDecimal allDataTypePValue, BigDecimal trustedDataTypePValue,
+            BigDecimal bestDescendantAllDataTypePValue, BigDecimal bestDescendantTrustedDataTypePValue,
             BigDecimal expressionScoreWeight, BigDecimal expressionScore,
             BigDecimal bestDescendantExpressionScoreWeight, BigDecimal bestDescendantExpressionScore,
             PropagationState dataPropagation) {
         this.gene = gene;
         this.condition = condition;
         this.supportingDataTypes = supportingDataTypes;
-        this.trustedDataTypePValue = trustedDataTypePValue;
         this.allDataTypePValue = allDataTypePValue;
-        this.bestDescendantTrustedDataTypePValue = bestDescendantTrustedDataTypePValue;
+        this.trustedDataTypePValue = trustedDataTypePValue;
         this.bestDescendantAllDataTypePValue = bestDescendantAllDataTypePValue;
+        this.bestDescendantTrustedDataTypePValue = bestDescendantTrustedDataTypePValue;
         this.expressionScoreWeight = expressionScoreWeight;
         this.expressionScore = expressionScore;
         this.bestDescendantExpressionScoreWeight = bestDescendantExpressionScoreWeight;
@@ -52,17 +52,17 @@ public class OTFExpressionCall {
     public EnumSet<DataType> getSupportingDataTypes() {
         return supportingDataTypes;
     }
-    public BigDecimal getTrustedDataTypePValue() {
-        return trustedDataTypePValue;
-    }
     public BigDecimal getAllDataTypePValue() {
         return allDataTypePValue;
     }
-    public BigDecimal getBestDescendantTrustedDataTypePValue() {
-        return bestDescendantTrustedDataTypePValue;
+    public BigDecimal getTrustedDataTypePValue() {
+        return trustedDataTypePValue;
     }
     public BigDecimal getBestDescendantAllDataTypePValue() {
         return bestDescendantAllDataTypePValue;
+    }
+    public BigDecimal getBestDescendantTrustedDataTypePValue() {
+        return bestDescendantTrustedDataTypePValue;
     }
     public BigDecimal getExpressionScoreWeight() {
         return expressionScoreWeight;

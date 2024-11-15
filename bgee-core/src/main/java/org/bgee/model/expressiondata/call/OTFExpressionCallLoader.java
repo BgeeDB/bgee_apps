@@ -40,6 +40,22 @@ public class OTFExpressionCallLoader extends CommonService {
     private final static BigDecimal ABOVE_ZERO_BIGDECIMAL = new BigDecimal("0.000000000000000000000000000001");
     private final static BigDecimal MIN_FDR_BIGDECIMAL = new BigDecimal("0.00000000000001");
 
+    public long rawDataMappingTime = 0L;
+    public long dfsOrderingTime = 0L;
+    public long callOrderingTime = 0L;
+
+    public List<Long> retrievingChildCondTimes = new ArrayList<>();
+    public List<Long> dataPreparationTimes = new ArrayList<>();
+    public List<Long> loadExpressionCallTimes = new ArrayList<>();
+    public List<Long> selfCallComputeTimes = new ArrayList<>();
+    public List<Long> allChildrenComputeTimes = new ArrayList<>();
+    public List<Long> finishingBusinessTimes = new ArrayList<>();
+    public List<Long> bestDescentComputeTimes = new ArrayList<>();
+    public List<Long> expressionScoreComputeTimes = new ArrayList<>();
+    public List<Long> fdrComputeTimes = new ArrayList<>();
+    public List<Long> medianComputeTimes = new ArrayList<>();
+
+
     protected OTFExpressionCallLoader() {
         this(null);
     }
@@ -53,8 +69,11 @@ public class OTFExpressionCallLoader extends CommonService {
 
         //For faster computation, we want to retrieve the raw data per Condition,
         //keeping info of data type
+        long startTime = System.currentTimeMillis();
         Map<Condition, Map<DataType, List<RawCallSource<?>>>> rawCallsPerCond = transformToRawDataPerCondition(
                 rawDataCondsToConds, rawDataContainers);
+        long endTime = System.currentTimeMillis();
+        this.rawDataMappingTime = endTime - startTime;
 
         //Retrieve roots of conditionGraph
         Set<Condition> rootConditions = conditionGraph.getRootConditions();
@@ -64,24 +83,40 @@ public class OTFExpressionCallLoader extends CommonService {
                   + rootConditions.size()));
         }
         //Retrieve ordered List of Conditions for DFS
+        startTime = System.currentTimeMillis();
         List<Condition> conds = conditionGraph.loadDeepFirstOrderedConditions(rootConditions.iterator().next());
+        endTime = System.currentTimeMillis();
+        this.dfsOrderingTime = endTime - startTime;
 
         Map<Condition, OTFExpressionCall> callPerCond = new HashMap<>();
         for (Condition cond: conds) {
+            startTime = System.currentTimeMillis();
             log.debug("Examining condition: {}", cond);
             Set<Condition> childConds = conditionGraph.getDescendantConditions(cond, true);
             log.debug("Descendant conditions: {}", childConds);
+            endTime = System.currentTimeMillis();
+            this.retrievingChildCondTimes.add(endTime - startTime);
+            
             //XXX: To reenable when ranks null fixed or calls filtered
 //            if (!childConds.isEmpty() && !callPerCond.keySet().containsAll(childConds)) {
 //                throw log.throwing(new IllegalStateException("All children should have data and have been visited."));
 //            }
+            //Data preparation
+            startTime = System.currentTimeMillis();
             Map<DataType, List<RawCallSource<?>>> condRawData = rawCallsPerCond.get(cond);
-            OTFExpressionCall call = loadOTFExpressionCall(gene, cond,
-                    condRawData == null? Map.of(): condRawData,
-                    childConds.stream().map(childCond -> callPerCond.get(childCond))
+            Set<OTFExpressionCall> childCalls = childConds.stream().map(childCond -> callPerCond.get(childCond))
                     //XXX: to remove when ranks null fixed or calls filtered
                     .filter(childCall -> childCall != null)
-                    .collect(Collectors.toSet()));
+                    .collect(Collectors.toSet());
+            endTime = System.currentTimeMillis();
+            this.dataPreparationTimes.add(endTime - startTime);
+
+            startTime = System.currentTimeMillis();
+            OTFExpressionCall call = loadOTFExpressionCall(gene, cond,
+                    condRawData == null? Map.of(): condRawData,
+                    childCalls);
+            endTime = System.currentTimeMillis();
+            this.loadExpressionCallTimes.add(endTime - startTime);
             log.debug("Produced call: {}", call);
             //XXX: to remove when ranks null fixed or calls filtered
             if (call != null) {
@@ -89,12 +124,17 @@ public class OTFExpressionCallLoader extends CommonService {
             }
         }
 
-        return log.traceExit(callPerCond.values().stream()
+        startTime = System.currentTimeMillis();
+        List<OTFExpressionCall> orderedCalls = callPerCond.values().stream()
                 .sorted((c1, c2) -> c2.getExpressionScore().compareTo(c1.getExpressionScore()))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
+        endTime = System.currentTimeMillis();
+        this.callOrderingTime = endTime - startTime;
+        
+        return log.traceExit(orderedCalls);
     }
 
-    static OTFExpressionCall loadOTFExpressionCall(Gene gene, Condition cond,
+    OTFExpressionCall loadOTFExpressionCall(Gene gene, Condition cond,
             Map<DataType, List<RawCallSource<?>>> rawData, Set<OTFExpressionCall> callsInChildConds) {
         log.traceEntry("{}, {}, {}, {}", gene, cond, rawData, callsInChildConds);
         if (rawData.isEmpty() && callsInChildConds.isEmpty()) {
@@ -111,6 +151,7 @@ public class OTFExpressionCallLoader extends CommonService {
         EnumSet<DataType> supportingDataTypes = EnumSet.noneOf(DataType.class);
         PropagationState dataPropagation = rawData.isEmpty()? null: PropagationState.SELF;
 
+        long startTime = System.currentTimeMillis();
         for (Entry<DataType, List<RawCallSource<?>>> dataTypeRawData: rawData.entrySet()) {
             DataType dataType = dataTypeRawData.getKey();
             List<RawCallSource<?>> calls = dataTypeRawData.getValue();
@@ -136,12 +177,17 @@ public class OTFExpressionCallLoader extends CommonService {
                 trustedDataTypePValues.addAll(pValues);
             }
         }
+        long endTime = System.currentTimeMillis();
+        if (!rawData.isEmpty()) {
+            this.selfCallComputeTimes.add(endTime - startTime);
+        }
 
         BigDecimal bestDescendantAllDataTypePValue = null;
         BigDecimal bestDescendantTrustedDataTypePValue = null;
         BigDecimal bestDescendantExpressionScore = null;
         BigDecimal bestDescendantExpressionScoreWeight = null;
         if (!callsInChildConds.isEmpty()) {
+            startTime = System.currentTimeMillis();
             dataPropagation = dataPropagation == null? PropagationState.DESCENDANT: PropagationState.SELF_AND_DESCENDANT;
             List<BigDecimal> childAllDataTypePValues = new ArrayList<>();
             List<BigDecimal> childTrustedDataTypePValues = new ArrayList<>();
@@ -155,6 +201,7 @@ public class OTFExpressionCallLoader extends CommonService {
                 scoreByWeightSum = scoreByWeightSum.add(scoreByWeight);
                 weightSum = weightSum.add(childCall.getExpressionScoreWeight());
 
+                long bestDescentStartTime = System.currentTimeMillis();
                 bestDescendantAllDataTypePValue = getBestDescendantValue(bestDescendantAllDataTypePValue,
                         childCall.getAllDataTypePValue(), childCall.getBestDescendantAllDataTypePValue());
                 bestDescendantTrustedDataTypePValue = getBestDescendantValue(bestDescendantTrustedDataTypePValue,
@@ -170,11 +217,15 @@ public class OTFExpressionCallLoader extends CommonService {
                     bestDescendantExpressionScore = childCall.getBestDescendantExpressionScore();
                     bestDescendantExpressionScoreWeight = childCall.getBestDescendantExpressionScoreWeight();
                 }
+                long bestDescentEndTime = System.currentTimeMillis();
+                this.bestDescentComputeTimes.add(bestDescentEndTime - bestDescentStartTime);
             }
             allDataTypePValues.add(computeFDRCorrectedPValue(childAllDataTypePValues));
             if (!childTrustedDataTypePValues.isEmpty()) {
                 trustedDataTypePValues.add(computeFDRCorrectedPValue(childTrustedDataTypePValues));
             }
+            endTime = System.currentTimeMillis();
+            this.allChildrenComputeTimes.add(endTime - startTime);
         }
 
         //XXX: to remove when ranks fixed
@@ -183,6 +234,7 @@ public class OTFExpressionCallLoader extends CommonService {
             return log.traceExit((OTFExpressionCall) null);
         }
 
+        startTime = System.currentTimeMillis();
         BigDecimal ultimateAllDataTypePValue = computeMedian(allDataTypePValues);
         BigDecimal ultimateTrustedDataTypePValue = null;
         if (!trustedDataTypePValues.isEmpty()) {
@@ -191,13 +243,17 @@ public class OTFExpressionCallLoader extends CommonService {
         assert((new BigDecimal(0)).compareTo(weightSum) != 0);
         log.debug("weightSum: {}, scoreByWeightSum: {}", weightSum, scoreByWeightSum);
         BigDecimal weightedAverageExpressionScore = scoreByWeightSum.divide(weightSum, 2, RoundingMode.HALF_UP);
-        
-        return new OTFExpressionCall(gene, cond, supportingDataTypes,
+
+        OTFExpressionCall resultingCall = new OTFExpressionCall(gene, cond, supportingDataTypes,
                 ultimateAllDataTypePValue, ultimateTrustedDataTypePValue,
                 bestDescendantAllDataTypePValue, bestDescendantTrustedDataTypePValue,
                 weightSum, weightedAverageExpressionScore,
                 bestDescendantExpressionScoreWeight, bestDescendantExpressionScore,
                 dataPropagation);
+        endTime = System.currentTimeMillis();
+        this.finishingBusinessTimes.add(endTime - startTime);
+
+        return log.traceExit(resultingCall);
     }
 
     private static BigDecimal getBestDescendantValue(BigDecimal currentBestDescendantValue,
@@ -260,7 +316,7 @@ public class OTFExpressionCallLoader extends CommonService {
         return log.traceExit(condToData);
     }
 
-    static BigDecimal computeExpressionScore(BigDecimal rank, BigDecimal maxRank) {
+    protected BigDecimal computeExpressionScore(BigDecimal rank, BigDecimal maxRank) {
         log.traceEntry("{}, {}", rank, maxRank);
         if (maxRank == null) {
             throw log.throwing(new IllegalArgumentException("Max rank must be provided"));
@@ -276,6 +332,7 @@ public class OTFExpressionCallLoader extends CommonService {
             throw log.throwing(new IllegalArgumentException("Rank cannot be greater than maxRank. Rank: " + rank
                     + " - maxRank: " + maxRank));
         }
+        long startTime = System.currentTimeMillis();
 
      // Calculate score with the linear transformation
         BigDecimal range = maxRank.subtract(BigDecimal.ONE);
@@ -292,12 +349,15 @@ public class OTFExpressionCallLoader extends CommonService {
                     + EXPRESSION_SCORE_MAX_VALUE + ".");
             expressionScore = EXPRESSION_SCORE_MAX_VALUE;
         }
+        long endTime = System.currentTimeMillis();
+        this.expressionScoreComputeTimes.add(endTime - startTime);
         return log.traceExit(expressionScore);
     }
 
-    static BigDecimal computeFDRCorrectedPValue(List<BigDecimal> pValues) {
+    protected BigDecimal computeFDRCorrectedPValue(List<BigDecimal> pValues) {
         log.traceEntry("{}", pValues);
 
+        long startTime = System.currentTimeMillis();
         int m = pValues.size();
         Double[] pValuesDouble = 
                 pValues.stream()
@@ -326,15 +386,18 @@ public class OTFExpressionCallLoader extends CommonService {
         if (fdr.compareTo(MIN_FDR_BIGDECIMAL) < 0) {
             fdr = MIN_FDR_BIGDECIMAL;
         }
+        long endTime = System.currentTimeMillis();
+        this.fdrComputeTimes.add(endTime - startTime);
         return log.traceExit(fdr);
     }
 
-    static BigDecimal computeMedian(List<BigDecimal> pValues) {
+    protected BigDecimal computeMedian(List<BigDecimal> pValues) {
         log.traceEntry("{}", pValues);
         // Return a pValue if the list is empty
         if (pValues.size() == 1) {
             return pValues.get(0);
         }
+        long startTime = System.currentTimeMillis();
 
         // Sort the list
         Collections.sort(pValues);
@@ -354,7 +417,11 @@ public class OTFExpressionCallLoader extends CommonService {
 
         // Multiply the median by 2 and cap the result at 1
         BigDecimal result = median.multiply(BigDecimal.valueOf(2));
-        return log.traceExit(result.compareTo(BigDecimal.ONE) > 0 ? BigDecimal.ONE : result);
+        result = result.compareTo(BigDecimal.ONE) > 0 ? BigDecimal.ONE : result;
+
+        long endTime = System.currentTimeMillis();
+        this.medianComputeTimes.add(endTime - startTime);
+        return log.traceExit(result);
     }
 }
 

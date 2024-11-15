@@ -53,23 +53,24 @@ public class OTFExpressionCallLoaderTest {
 
         // Test cases for edge ranks and mid-ranks
         // Rank = 1 (should return 100)
-        BigDecimal result = OTFExpressionCallLoader.computeExpressionScore(BigDecimal.ONE, maxRank);
+        OTFExpressionCallLoader loader = new OTFExpressionCallLoader();
+        BigDecimal result = loader.computeExpressionScore(BigDecimal.ONE, maxRank);
         assertEquals("Rank 1 should return a score of 100", new BigDecimal("100.00000"), result);
 
         // Rank = maxRank (should return 1)
-        result = OTFExpressionCallLoader.computeExpressionScore(maxRank, maxRank);
+        result = loader.computeExpressionScore(maxRank, maxRank);
         assertEquals("Max rank should return a score of 1", new BigDecimal("1.00000"), result);
 
         // Rank = 25 (middle rank in this case, should return around 50)
-        result = OTFExpressionCallLoader.computeExpressionScore(new BigDecimal(25), maxRank);
+        result = loader.computeExpressionScore(new BigDecimal(25), maxRank);
         assertEquals("Middle rank should return a score of around 50", new BigDecimal("51.51020"), result);
         
         // Rank = 10 (lower part of the range)
-        result = OTFExpressionCallLoader.computeExpressionScore(new BigDecimal(10), maxRank);
+        result = loader.computeExpressionScore(new BigDecimal(10), maxRank);
         assertEquals("Rank 10 should return a score of around 82", new BigDecimal("81.81633"), result);
 
         // Rank = 40 (upper part of the range)
-        result = OTFExpressionCallLoader.computeExpressionScore(new BigDecimal(40), maxRank);
+        result = loader.computeExpressionScore(new BigDecimal(40), maxRank);
         assertEquals("Rank 40 should return a score of around 20", new BigDecimal("21.20408"), result);
     }
 
@@ -169,30 +170,31 @@ public class OTFExpressionCallLoaderTest {
     
     @Test
     public void testcomputeMedian() {
+        OTFExpressionCallLoader loader = new OTFExpressionCallLoader();
         // Test with an odd-sized list
         List<BigDecimal> oddList = Arrays.asList(
             new BigDecimal("0.6"), new BigDecimal("0.5"), new BigDecimal("0.4"), new BigDecimal("0.3"), new BigDecimal("0.2")
         );
-        BigDecimal result = OTFExpressionCallLoader.computeMedian(oddList);
+        BigDecimal result = loader.computeMedian(oddList);
         assertEquals("The median multiplied by 2 for odd-sized list should be 0.8", new BigDecimal("0.8"), result);
 
         // Test with an even-sized list
         List<BigDecimal> evenList = Arrays.asList(
             new BigDecimal("0.01"), new BigDecimal("0.07"), new BigDecimal("0.002"), new BigDecimal("0.01")
         );
-        result = OTFExpressionCallLoader.computeMedian(evenList);
+        result = loader.computeMedian(evenList);
         assertEquals("The median multiplied by 2 for even-sized list should be 0.02", new BigDecimal("0.02"), result);
         
      // Test with an odd-sized list
         List<BigDecimal> bigPvalueList = Arrays.asList(
             new BigDecimal("0.9"), new BigDecimal("0.9"), new BigDecimal("0.8"), new BigDecimal("0.9"), new BigDecimal("0.7")
         );
-        result = OTFExpressionCallLoader.computeMedian(bigPvalueList);
+        result = loader.computeMedian(bigPvalueList);
         assertEquals("The median calculation should return 1 and not above when pValues are too large", new BigDecimal("1"), result);
         
         // Test with a single-element list
         List<BigDecimal> singleElementList = Collections.singletonList(new BigDecimal("0.05"));
-        result = OTFExpressionCallLoader.computeMedian(singleElementList);
+        result = loader.computeMedian(singleElementList);
         assertEquals("The median calculation on a single pValue list should return the same pValue", new BigDecimal("0.05"), result);
     }
     
@@ -278,7 +280,8 @@ public class OTFExpressionCallLoaderTest {
                 new BigDecimal("10000"), new BigDecimal("90"), 
                 PropagationState.SELF_AND_DESCENDANT);
 
-        OTFExpressionCall testCall = OTFExpressionCallLoader.loadOTFExpressionCall(gene1, cond1, rawData, Set.of(childCall1, childCall2));
+        OTFExpressionCallLoader loader = new OTFExpressionCallLoader();
+        OTFExpressionCall testCall = loader.loadOTFExpressionCall(gene1, cond1, rawData, Set.of(childCall1, childCall2));
         
      // Logging attributes for debugging
         log.debug("Expected Call Attributes: Gene = {}, Condition = {}, Supporting Data Types = {}, Trusted DataType P-Value = {}, All DataType P-Value = {}, Best Descendant Trusted DataType P-Value = {}, Best Descendant All DataType P-Value = {}, Expression Score Weight = {}, Expression Score = {}, Best Descendant Expression Score Weight = {}, Best Descendant Expression Score = {}, Propagation State = {}",

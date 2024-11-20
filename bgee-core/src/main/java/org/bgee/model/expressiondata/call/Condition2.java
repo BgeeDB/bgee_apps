@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.ComposedEntity;
-import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.BaseCondition2;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -21,14 +19,14 @@ public class Condition2 extends BaseCondition2 {
     private final Map<DataType, BigDecimal> maxRanksByDataType;
     private final Map<DataType, BigDecimal> globalMaxRanksByDataType;
 
-    public Condition2(Map<ConditionParameter<?, ?>, ComposedEntity<?>> conditionParameterObjects,
+    public Condition2(Map<ConditionParameter<?, ?>, ConditionParameterValue> conditionParameterObjects,
             Species species) {
         this(conditionParameterObjects, species, null, null);
     }
     //XXX: maybe create a new Map implementation to make sure the generic type
     //of ConditionParameter and of ComposedEntity are consistent,
     //to raise an exception at compilation and not only at runtime?
-    public Condition2(Map<ConditionParameter<?, ?>, ComposedEntity<?>> conditionParameterObjects,
+    public Condition2(Map<ConditionParameter<?, ?>, ConditionParameterValue> conditionParameterObjects,
             Species species, Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) {
         super(//we'll check correct types in this constructor.
@@ -38,17 +36,16 @@ public class Condition2 extends BaseCondition2 {
                   .collect(Collectors.toMap(
                           param -> param,
                           param -> {
-                              ComposedEntity<?> compEnt = conditionParameterObjects.get(param);
+                              ConditionParameterValue compEnt = conditionParameterObjects.get(param);
                               if (compEnt == null) {
-                                  return new ComposedEntity<>(param.getCondValueType());
+                                  return param.getCondValueRoot();
                               }
                               return compEnt;
                           })),
                   species);
         if (this.conditionParameterObjects.entrySet().stream()
-                .anyMatch(e -> !ComposedEntity.class.isInstance(e.getValue()) ||
-                        !e.getKey().getCondValueType().isAssignableFrom(
-                                ((ComposedEntity<?>) e.getValue()).getEntityType()))) {
+                .anyMatch(e -> !ConditionParameterValue.class.isInstance(e.getValue()) ||
+                        !e.getKey().getCondValueType().isAssignableFrom(e.getValue().getClass()))) {
             throw log.throwing(new IllegalArgumentException(
                     "Incorrect object for the associated condition parameter: "
                     + this.conditionParameterObjects));
@@ -69,24 +66,18 @@ public class Condition2 extends BaseCondition2 {
         }
     }
 
-    //Suppress unchecked because we make the verification of proper casting
-    //in the constructor
-    @SuppressWarnings("unchecked")
-    public <T extends NamedEntity<?>> ComposedEntity<T> getConditionParameterValue(
+    public <T extends ConditionParameterValue> T getConditionParameterValue(
             ConditionParameter<T, ?> condParam) {
         log.traceEntry("{}", condParam);
         Object value = this.conditionParameterObjects.get(condParam);
-        if (value == null) {
-            return log.traceExit((ComposedEntity<T>) null);
-        }
-        return log.traceExit((ComposedEntity<T>) value);
+        return log.traceExit(condParam.getCondValueType().cast(value));
     }
 
     @Override
-    public <T extends NamedEntity<?>, U> String getConditionParameterId(
+    public <T extends ConditionParameterValue, U> String getConditionParameterId(
             ConditionParameter<T, U> condParam) {
         log.traceEntry("{}", condParam);
-        ComposedEntity<T> value = this.getConditionParameterValue(condParam);
+        ConditionParameterValue value = this.getConditionParameterValue(condParam);
         if (value == null) {
             return log.traceExit((String) null);
         }

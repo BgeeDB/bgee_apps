@@ -253,11 +253,13 @@ public class ExpressionCallLoader extends CommonService {
 
         Function<Collection<ConditionDAO.Attribute>, ConditionTOResultSet> condRequestFun = (attrs) ->
         this.condDAO.getGlobalConditionsFromCallFilters(this.getProcessedFilter().getDaoFilters(), attrs);
-        Map<ConditionParameter<?, ?>, Set<? extends Object>> condParamEntities = new HashMap<>();
+        Map<ConditionParameter<? extends ConditionParameterValue, ?>, Set<? extends ConditionParameterValue>> condParamEntities = new HashMap<>();
 
         // retrieve anatEntities and cell types
         if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
-                .contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
+                .contains(ConditionParameter.ANAT_ENTITY) ||
+            this.getProcessedFilter().getSourceFilter().getCondParamCombination()
+                .contains(ConditionParameter.CELL_TYPE)) {
             Set<String> anatEntityIds = condRequestFun.apply(
                     Set.of(ConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
                     .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
@@ -271,10 +273,13 @@ public class ExpressionCallLoader extends CommonService {
                     .collect(Collectors.toSet());
             Set<String> anatEntityCellTypeIds = new HashSet<>(anatEntityIds);
             anatEntityCellTypeIds.addAll(cellTypeIds);
-            Set<AnatEntity> anatEntityCellTypes = anatEntityCellTypeIds.isEmpty()?
-                    new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityCellTypeIds, false)
-                    .collect(Collectors.toSet());
-            condParamEntities.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatEntityCellTypes);
+            Map<String, AnatEntity> anatEntityCellTypes = anatEntityCellTypeIds.isEmpty()?
+                    new HashMap<>() : anatEntityService.loadAnatEntities(anatEntityCellTypeIds, false)
+                    .collect(Collectors.toMap(ae -> ae.getId(), ae -> ae));
+            condParamEntities.put(ConditionParameter.ANAT_ENTITY, anatEntityIds.stream()
+                    .map(id ->anatEntityCellTypes.get(id)).collect(Collectors.toSet()));
+            condParamEntities.put(ConditionParameter.CELL_TYPE, cellTypeIds.stream()
+                    .map(id ->anatEntityCellTypes.get(id)).collect(Collectors.toSet()));
         }
 
         //retrieve dev. stages
@@ -450,18 +455,19 @@ public class ExpressionCallLoader extends CommonService {
                 //We also want to know the global FDR-corrected p-value
                 CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
         attributes.addAll(callFilter.getCondParamCombination().stream()
-                .flatMap(param -> {
+                .map(param -> {
                     //Any condition parameter attribute would do to retrieve the condition IDs,
                     //but we map properly anyway.
-                    if (ConditionParameter.ANAT_ENTITY_CELL_TYPE.equals(param)) {
-                        return Stream.of(CallService.Attribute.ANAT_ENTITY_ID,
-                                CallService.Attribute.CELL_TYPE_ID);
+                    if (ConditionParameter.ANAT_ENTITY.equals(param)) {
+                        return CallService.Attribute.ANAT_ENTITY_ID;
+                    } else if (ConditionParameter.CELL_TYPE.equals(param)) {
+                        return CallService.Attribute.CELL_TYPE_ID;
                     } else if (ConditionParameter.DEV_STAGE.equals(param)) {
-                        return Stream.of(CallService.Attribute.DEV_STAGE_ID);
+                        return CallService.Attribute.DEV_STAGE_ID;
                     } else if (ConditionParameter.SEX.equals(param)) {
-                        return Stream.of(CallService.Attribute.SEX_ID);
+                        return CallService.Attribute.SEX_ID;
                     } else if (ConditionParameter.STRAIN.equals(param)) {
-                        return Stream.of(CallService.Attribute.STRAIN_ID);
+                        return CallService.Attribute.STRAIN_ID;
                     }
                     throw log.throwing(new UnsupportedOperationException(
                             "Unsupported ConditionParameter: " + param));

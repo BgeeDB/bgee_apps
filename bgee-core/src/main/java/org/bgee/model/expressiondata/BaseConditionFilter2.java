@@ -2,13 +2,11 @@ package org.bgee.model.expressiondata;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
@@ -218,133 +216,25 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
             return builder.toString();
         }
     }
-    
-    public static class ComposedFilterIds<T extends Comparable<T>> {
-        private final List<FilterIds<T>> composedFilterIds;
-
-        /**
-         * Creates an empty {@code ComposedFilterIds}.
-         */
-        public ComposedFilterIds() {
-            this((List<FilterIds<T>>) null);
-        }
-        /**
-         * Convenient constructor when no composition is required.
-         *
-         * @param filterIds         A {@code Collection} of {@code T}s to configure a filter.
-         *                          Can be {@code null} or empty for no filtering.
-         */
-        public ComposedFilterIds(FilterIds<T> filterIds) {
-            this(filterIds == null || filterIds.isEmpty()? null:
-                //new HashSet is tolerant to null element, Set.of is not.
-                //Checks on null elements will be performed in the main constructor
-                List.of(filterIds));
-        }
-        /**
-         * Constructor allowing to create a composed filter.
-         *
-         * @param composedFilterIds A {@code List} of {@code FilterIds}s of {@code T}s,
-         *                          used to create a composed filter. Each {@code FilterIds} element
-         *                          itself contains potentially multiple IDs, seen as "OR" conditions
-         *                          between them, while this {@code ComposedFilterIds} generates
-         *                          "AND" condition between the {@code FilterIds}s.
-         *                          The {@code List} can be {@code null} or empty for no filtering.
-         *                          The inner {@code FilterIds}s cannot be null, or empty
-         *                          according to their {@code isEmpty()} method, otherwise an
-         *                          {@code IllegalArgumentException} is thrown.
-         */
-        public ComposedFilterIds(List<FilterIds<T>> composedFilterIds) {
-            if (composedFilterIds != null && composedFilterIds.stream()
-                    .anyMatch(c -> c == null || c.isEmpty())) {
-                throw log.throwing(new IllegalArgumentException(
-                        "Invalid inner FilterIds"));
-            }
-            //List.of and List.copyOf already returns immutable Lists
-            this.composedFilterIds = composedFilterIds == null? List.of():
-                List.copyOf(composedFilterIds);
-        }
-
-        public List<FilterIds<T>> getComposedFilterIds() {
-            return composedFilterIds;
-        }
-        /**
-         * Returns the {@code FilterIds} of {@code T}s at the index provided,
-         * from the {@code List} returns by {@link #getComposedFilterIds()}.
-         * Unlike the method {@code List.get(int)}, this method returns {@code null}
-         * if the index is out of bond, instead of throwing an {@code IndexOutOfBoundsException}.
-         *
-         * @param index The {@code int} that is the index of the {@code FilterIds} to return.
-         * @return      The {@code FilterIds} of {@code T}s at the specified position
-         *              in the composed filter list.
-         */
-        public FilterIds<T> getFilterIds(int index) {
-            log.traceEntry();
-            try {
-                return log.traceExit(composedFilterIds.get(index));
-            } catch (IndexOutOfBoundsException e) {
-                log.catching(Level.DEBUG, e);
-                return log.traceExit((FilterIds<T>) null);
-            }
-        }
-        public Set<T> getIds(int index) {
-            log.traceEntry();
-            FilterIds<T> filterIds = this.getFilterIds(index);
-            if (filterIds == null) {
-                return log.traceExit((Set<T>) null);
-            }
-            return log.traceExit(filterIds.getIds());
-        }
-        public boolean isComposed() {
-            return getComposedFilterIds().size() > 1;
-        }
-        public boolean isEmpty() {
-            return composedFilterIds.isEmpty();
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(composedFilterIds);
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ComposedFilterIds<?> other = (ComposedFilterIds<?>) obj;
-            return Objects.equals(composedFilterIds, other.composedFilterIds);
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("ComposedFilterIds [")
-                   .append("composedFilterIds=").append(composedFilterIds)
-                   .append("]");
-            return builder.toString();
-        }
-    }
 
     private final Integer speciesId;
     //We could still another generic type to ConditionParameter if we wanted to specify
     //the type of ID of each condition parameter value
-    private final Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds;
+    private final Map<ConditionParameter<?, ?>, FilterIds<String>> condParamToFilterIds;
     private final boolean excludeNonInformative;
 
     /**
      * @param speciesId                     An {@code Integer} that is the ID of the species
      *                                      that this {@code ConditionFilter} will specify to use.
      *                                      Can be {@code null}.
-     * @param condParamToComposedFilterIds  A {@code Map} where keys are {@code ConditionParameter},
-     *                                      the associated value being a {@code ComposedFilterIds}s
+     * @param condParamToFilterIds  A {@code Map} where keys are {@code ConditionParameter},
+     *                                      the associated value being a {@code FilterIds}
      *                                      to specify the requested IDs for the related condition parameter.
      *                                      For instance, to retrieve conditions having an anat. entity ID
      *                                      equals to "ID1", this {@code Map} will contain the key
      *                                      {@code ConditionParameter.ANAT_ENTITY}, associated with
-     *                                      a {@code ComposedFilterIds} that could have been created by calling
-     *                                      {@code ComposedFilterIds.of(Set.of("ID1"))}.
+     *                                      a {@code FilterIds} that could have been created by calling
+     *                                      {@code FilterIds.of(Set.of("ID1"))}.
      *                                      The provided argument can be null, or empty, or not contain
      *                                      all {@code ConditionParameter}s, or have {@code null} values.
      *                                      It should not contain {@code null} keys.
@@ -354,30 +244,30 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
      * @throws IllegalArgumentException
      */
     protected BaseConditionFilter2(Integer speciesId,
-            Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds,
+            Map<ConditionParameter<?, ?>, FilterIds<String>> condParamToFilterIds,
             boolean excludeNonInformative) throws IllegalArgumentException {
         if (speciesId != null && speciesId < 1) {
             throw log.throwing(new IllegalArgumentException("No species ID can be less than 1"));
         }
         this.speciesId = speciesId;
 
-        if (condParamToComposedFilterIds != null &&
+        if (condParamToFilterIds != null &&
                 //Cannot call containsKey(null) if the Map does not accept null values
-                condParamToComposedFilterIds.keySet().stream().anyMatch(k -> k == null)) {
+                condParamToFilterIds.keySet().stream().anyMatch(k -> k == null)) {
             throw log.throwing(new IllegalArgumentException(
-                    "condParamToComposedFilterIds cannot contain null keys."));
+                    "condParamToFilterIds cannot contain null keys."));
         }
-        this.condParamToComposedFilterIds = Collections.unmodifiableMap(
+        this.condParamToFilterIds = Collections.unmodifiableMap(
                 ConditionParameter.allOf().stream()
                 .collect(Collectors.toMap(
                         c -> c,
                         c -> {
-                            if (condParamToComposedFilterIds == null) {
-                                return new ComposedFilterIds<>();
+                            if (condParamToFilterIds == null) {
+                                return new FilterIds<>();
                             }
-                            ComposedFilterIds<String> f = condParamToComposedFilterIds.get(c);
+                            FilterIds<String> f = condParamToFilterIds.get(c);
                             if (f == null) {
-                                return new ComposedFilterIds<>();
+                                return new FilterIds<>();
                             }
                             return f;
                         })));
@@ -393,24 +283,24 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
     }
     /**
      * @return  A {@code Map} where keys are {@code ConditionParameter},
-     *          the associated value being a {@code ComposedFilterIds}s
+     *          the associated value being a {@code FilterIds}
      *          to specify the requested IDs for the related condition parameter.
      *          For instance, to retrieve conditions having an anat. entity ID
      *          equals to "ID1", this {@code Map} will contain the key
      *          {@code ConditionParameter.ANAT_ENTITY}, associated with
-     *          a {@code ComposedFilterIds} that could have been created by calling
-     *          {@code ComposedFilterIds.of(Set.of("ID1"))}.
+     *          a {@code FilterIds} that could have been created by calling
+     *          {@code FilterIds.of(Set.of("ID1"))}.
      *          The returned {@code Map} is unmodifiable.
      *          It is guaranteed to contain an entry for each {@code ConditionParameter},
-     *          (although associated with a {@code ComposedFilterIds} object that returns {@code true}
-     *          when calling {@code ComposedFilterIds#isEmpty()}, when no filtering
+     *          (although associated with a {@code FilterIds} object that returns {@code true}
+     *          when calling {@code FilterIds#isEmpty()}, when no filtering
      *          is requested for the associated condition parameter).
      */
-    public Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> getCondParamToComposedFilterIds() {
-        return condParamToComposedFilterIds;
+    public Map<ConditionParameter<?, ?>, FilterIds<String>> getCondParamToFilterIds() {
+        return condParamToFilterIds;
     }
-    public ComposedFilterIds<String> getComposedFilterIds(ConditionParameter<?, ?> condParam) {
-        return condParamToComposedFilterIds.get(condParam);
+    public FilterIds<String> getFilterIds(ConditionParameter<?, ?> condParam) {
+        return condParamToFilterIds.get(condParam);
     }
     /**
      * @return  A {@code boolean} defining whether to exclude non-informative
@@ -424,8 +314,8 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
     public boolean areAllFiltersExceptSpeciesEmpty() {
         log.traceEntry();
         return log.traceExit(!this.isExcludeNonInformative() &&
-                this.getCondParamToComposedFilterIds().values().stream()
-                .allMatch(composedIds -> composedIds.isEmpty()));
+                this.getCondParamToFilterIds().values().stream()
+                .allMatch(filterIds -> filterIds.isEmpty()));
     }
 
     public String toParamString() {
@@ -433,14 +323,12 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
         StringBuilder sb = new StringBuilder();
 
         sb.append(ConditionParameter.allOf().stream()
-                .map(param -> this.getCondParamToComposedFilterIds().get(param))
-                .filter(composedIds -> !composedIds.isEmpty())
-                .map(composedIds -> composedIds.getComposedFilterIds().stream()
-                        .map(filterIds -> filterIds.getIds().stream().sorted()
+                .map(param -> this.getCondParamToFilterIds().get(param))
+                .filter(filterIds -> !filterIds.isEmpty())
+                .map(filterIds -> filterIds.getIds().stream().sorted()
                                 .collect(Collectors.joining("_"))
+                                .replaceAll(" ", "_").replaceAll(":", "_")
                                 + (filterIds.isIncludeChildTerms()? "_with_child_terms": ""))
-                        .collect(Collectors.joining("_"))
-                        .replaceAll(" ", "_").replaceAll(":", "_"))
                 .collect(Collectors.joining("_")));
 
         if (getSpeciesId() != null) {
@@ -460,7 +348,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(condParamToComposedFilterIds, excludeNonInformative, speciesId);
+        return Objects.hash(condParamToFilterIds, excludeNonInformative, speciesId);
     }
     @Override
     public boolean equals(Object obj) {
@@ -471,7 +359,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
         if (getClass() != obj.getClass())
             return false;
         BaseConditionFilter2<?> other = (BaseConditionFilter2<?>) obj;
-        return Objects.equals(condParamToComposedFilterIds, other.condParamToComposedFilterIds)
+        return Objects.equals(condParamToFilterIds, other.condParamToFilterIds)
                 && excludeNonInformative == other.excludeNonInformative
                 && Objects.equals(speciesId, other.speciesId);
     }

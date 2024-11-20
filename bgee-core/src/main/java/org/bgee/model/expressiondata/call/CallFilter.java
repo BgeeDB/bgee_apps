@@ -530,7 +530,7 @@ V> extends DataFilter<V> {
                         conditionFilters.stream()
                         .filter(f -> !f.areAllFiltersExceptSpeciesEmpty())
                         .map(f -> f.getSpeciesId() != null? f: new ConditionFilter2(
-                                geneFilter.getSpeciesId(), f.getCondParamToComposedFilterIds(),
+                                geneFilter.getSpeciesId(), f.getCondParamToFilterIds(),
                                 f.getCondParamCombination(), f.getObservedCondForParams(),
                                 f.isExcludeNonInformative()))
                         .collect(Collectors.toSet()),

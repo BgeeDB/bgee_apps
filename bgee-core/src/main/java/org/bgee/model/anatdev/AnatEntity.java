@@ -1,6 +1,8 @@
 package org.bgee.model.anatdev;
 
 import org.bgee.model.NamedEntity;
+import org.bgee.model.expressiondata.call.ConditionParameterValue;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataConditionParameterValue;
 import org.bgee.model.ontology.OntologyElement;
 
 /**
@@ -10,7 +12,8 @@ import org.bgee.model.ontology.OntologyElement;
  * @version Bgee 13.1
  *
  */
-public class AnatEntity extends NamedEntity<String> implements OntologyElement<AnatEntity, String> {
+public class AnatEntity extends NamedEntity<String>
+implements OntologyElement<AnatEntity, String>, ConditionParameterValue, RawDataConditionParameterValue {
     private final Boolean isCellType;
 
     /**

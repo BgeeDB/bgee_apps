@@ -23,20 +23,20 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
      *                              unless {@code condParamIncludeChildTerms} is not empty,
      *                              in which case it is mandatory to provide a species ID,
      *                              otherwise an {@code IllegalArgumentException} is thrown.
-     * @param condParamToComposedFilterIds  A {@code Map} where keys are {@code ConditionParameter},
-     *                                      the associated value being a {@code ComposedFilterIds}s
-     *                                      to specify the requested IDs for the related condition parameter.
-     *                                      For instance, to retrieve conditions having an anat. entity ID
-     *                                      equals to "ID1", this {@code Map} will contain the key
-     *                                      {@code ConditionParameter.ANAT_ENTITY}, associated with
-     *                                      a {@code ComposedFilterIds} that could have been created by calling
-     *                                      {@code ComposedFilterIds.of(Set.of("ID1"))}.
-     *                                      The provided argument can be null, or empty, or not contain
-     *                                      all {@code ConditionParameter}s, or have {@code null} values.
-     *                                      It should not contain {@code null} keys.
-     * @param condParamCombination          TODO javadoc: the cond parameter combination targeted
-     * @param observedCondForParams A {@code Collection} of
-     *                              {@code ExpressionCallService.ConditionParameter}s specifying
+     * @param condParamToFilterIds  A {@code Map} where keys are {@code ConditionParameter},
+     *                              the associated value being a {@code FilterIds}
+     *                              to specify the requested IDs for the related condition parameter.
+     *                              For instance, to retrieve conditions having an anat. entity ID
+     *                              equals to "ID1", this {@code Map} will contain the key
+     *                              {@code ConditionParameter.ANAT_ENTITY}, associated with
+     *                              a {@code FilterIds} that could have been created by calling
+     *                              {@code FilterIds.of(Set.of("ID1"))}.
+     *                              The provided argument can be null, or empty, or not contain
+     *                              all {@code ConditionParameter}s, or have {@code null} values.
+     *                              It should not contain {@code null} keys.
+     * @param condParamCombination  A {@code Collection} of {@code ConditionParameter}s that is the condition parameter
+     *                              combination targeted.
+     * @param observedCondForParams A {@code Collection} of {@code ConditionParameter}s specifying
      *                              that the conditions considered should have been observed
      *                              in data annotations (not created only from propagation),
      *                              using the specified condition parameters to perform the check.
@@ -55,11 +55,11 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
     //XXX: should we use a Map<ConditionParameter<?, ?>, Boolean> condParamIncludeChildTerms
     //or something like that ("Direction" instead of Boolean) to allow to request for the parent terms?
     public ConditionFilter2(Integer speciesId,
-            Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds,
+            Map<ConditionParameter<?, ?>, FilterIds<String>> condParamToFilterIds,
             Collection<ConditionParameter<?, ?>> condParamCombination,
             Collection<ConditionParameter<?, ?>> observedCondForParams,
             boolean excludeNonInformative) throws IllegalArgumentException {
-        super(speciesId, condParamToComposedFilterIds, excludeNonInformative);
+        super(speciesId, condParamToFilterIds, excludeNonInformative);
         //Of note, ConditionParameter.copyOf already checks for presence of null elements
         //in the collection
         this.condParamCombination = Collections.unmodifiableSet(
@@ -68,14 +68,13 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
         this.observedCondForParams = Collections.unmodifiableSet(
                 observedCondForParams == null || observedCondForParams.isEmpty()?
                 ConditionParameter.noneOf(): ConditionParameter.copyOf(observedCondForParams));
-        if (speciesId == null && this.getCondParamToComposedFilterIds().values().stream()
-                .anyMatch(compo -> compo.getComposedFilterIds().stream()
-                        .anyMatch(f -> f.isIncludeChildTerms()))) {
+        if (speciesId == null && this.getCondParamToFilterIds().values().stream()
+                .anyMatch(filterIds -> filterIds.isIncludeChildTerms())) {
             throw log.throwing(new IllegalArgumentException(
                     "A species ID must be provided if children terms of specified terms are requested."));
         }
         if (ConditionParameter.allOf().stream()
-                .anyMatch(param -> !this.getComposedFilterIds(param).isEmpty() &&
+                .anyMatch(param -> !this.getFilterIds(param).isEmpty() &&
                         !this.condParamCombination.contains(param))) {
             throw log.throwing(new IllegalArgumentException(
                     "Some filters are defined for a ConditionParameter, but it is not part "
@@ -141,7 +140,7 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
         StringBuilder builder = new StringBuilder();
         builder.append("ConditionFilter2 [")
                .append("speciesId=").append(getSpeciesId())
-               .append(", condParamToFilterIds=").append(getCondParamToComposedFilterIds())
+               .append(", condParamToFilterIds=").append(getCondParamToFilterIds())
                .append(", condParamCombination=").append(condParamCombination)
                .append(", observedCondForParams=").append(observedCondForParams)
                .append(", excludeNonInformative=").append(this.isExcludeNonInformative())

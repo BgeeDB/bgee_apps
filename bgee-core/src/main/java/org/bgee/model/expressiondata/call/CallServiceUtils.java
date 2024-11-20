@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,7 +17,6 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
-import org.bgee.model.ComposedEntity;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
@@ -80,16 +78,17 @@ public class CallServiceUtils {
         }
 
         return log.traceExit(condParams.stream()
-                .flatMap(param -> {
-                    if (ConditionParameter.ANAT_ENTITY_CELL_TYPE.equals(param)) {
-                        return Stream.of(ConditionDAO.ConditionParameter.ANAT_ENTITY,
-                                ConditionDAO.ConditionParameter.CELL_TYPE);
+                .map(param -> {
+                    if (ConditionParameter.ANAT_ENTITY.equals(param)) {
+                        return ConditionDAO.ConditionParameter.ANAT_ENTITY;
+                    } else if (ConditionParameter.CELL_TYPE.equals(param)) {
+                        return ConditionDAO.ConditionParameter.CELL_TYPE;
                     } else if (ConditionParameter.DEV_STAGE.equals(param)) {
-                        return Stream.of(ConditionDAO.ConditionParameter.STAGE);
+                        return ConditionDAO.ConditionParameter.STAGE;
                     } else if (ConditionParameter.SEX.equals(param)) {
-                        return Stream.of(ConditionDAO.ConditionParameter.SEX);
+                        return ConditionDAO.ConditionParameter.SEX;
                     } else if (ConditionParameter.STRAIN.equals(param)) {
-                        return Stream.of(ConditionDAO.ConditionParameter.STRAIN);
+                        return ConditionDAO.ConditionParameter.STRAIN;
                     }
                     throw log.throwing(new UnsupportedOperationException(
                             "Condition parameter not supported: " + param));
@@ -112,16 +111,17 @@ public class CallServiceUtils {
         }
 
         return log.traceExit(condParams.stream()
-                .flatMap(param -> {
-                    if (ConditionParameter.ANAT_ENTITY_CELL_TYPE.equals(param)) {
-                        return Stream.of(ConditionDAO.Attribute.ANAT_ENTITY_ID,
-                                ConditionDAO.Attribute.CELL_TYPE_ID);
+                .map(param -> {
+                    if (ConditionParameter.ANAT_ENTITY.equals(param)) {
+                        return ConditionDAO.Attribute.ANAT_ENTITY_ID;
+                    } else if (ConditionParameter.CELL_TYPE.equals(param)) {
+                        return ConditionDAO.Attribute.CELL_TYPE_ID;
                     } else if (ConditionParameter.DEV_STAGE.equals(param)) {
-                        return Stream.of(ConditionDAO.Attribute.STAGE_ID);
+                        return ConditionDAO.Attribute.STAGE_ID;
                     } else if (ConditionParameter.SEX.equals(param)) {
-                        return Stream.of(ConditionDAO.Attribute.SEX_ID);
+                        return ConditionDAO.Attribute.SEX_ID;
                     } else if (ConditionParameter.STRAIN.equals(param)) {
-                        return Stream.of(ConditionDAO.Attribute.STRAIN_ID);
+                        return ConditionDAO.Attribute.STRAIN_ID;
                     }
                     throw log.throwing(new UnsupportedOperationException(
                             "Condition parameter not supported: " + param));
@@ -309,10 +309,8 @@ public class CallServiceUtils {
             //For the time being, we still use the DAOConditionFilter using different arguments
             //for anat. entity and cell type. For now we will consider that the first FilterIds
             //in the new ComposedFilterIds are the anatEntityIds, and the second FilterIds the cellTypeIds.
-            FilterIds<String> anatEntityFilterIds = filter.getComposedFilterIds(
-                    ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(0);
-            FilterIds<String> cellTypeFilterIds = filter.getComposedFilterIds(
-                    ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(1);
+            FilterIds<String> anatEntityFilterIds = filter.getFilterIds(ConditionParameter.ANAT_ENTITY);
+            FilterIds<String> cellTypeFilterIds = filter.getFilterIds(ConditionParameter.CELL_TYPE);
             if (anatEntityFilterIds != null && anatEntityFilterIds.isIncludeChildTerms()) {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(anatEntityFilterIds.getIds());
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(anatEntityFilterIds.getExcludeTermsAndChildrenIds());
@@ -323,10 +321,7 @@ public class CallServiceUtils {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(cellTypeFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithAnatCellChildrenRequested.add(filter.getSpeciesId());
             }
-            //For now we consider there is no composition for dev. stages
-            assert !filter.getComposedFilterIds(ConditionParameter.DEV_STAGE).isComposed();
-            FilterIds<String> devStageFilterIds = filter.getComposedFilterIds(
-                    ConditionParameter.DEV_STAGE).getFilterIds(0);
+            FilterIds<String> devStageFilterIds = filter.getFilterIds(ConditionParameter.DEV_STAGE);
             if (devStageFilterIds != null && devStageFilterIds.isIncludeChildTerms()) {
                 devStageIdsWithChildrenRequested.addAll(devStageFilterIds.getIds());
                 devStageIdsWithChildrenRequested.addAll(devStageFilterIds.getExcludeTermsAndChildrenIds());
@@ -366,13 +361,8 @@ public class CallServiceUtils {
             Set<String> devStageIds = new HashSet<>();
             Set<String> cellTypeIds = new HashSet<>();
 
-            //For the time being, we still use the DAOConditionFilter using different arguments
-            //for anat. entity and cell type. For now we will consider that the first FilterIds
-            //in the new ComposedFilterIds are the anatEntityIds, and the second FilterIds the cellTypeIds.
-            FilterIds<String> anatEntityFilterIds = filter.getComposedFilterIds(
-                    ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(0);
-            FilterIds<String> cellTypeFilterIds = filter.getComposedFilterIds(
-                    ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(1);
+            FilterIds<String> anatEntityFilterIds = filter.getFilterIds(ConditionParameter.ANAT_ENTITY);
+            FilterIds<String> cellTypeFilterIds = filter.getFilterIds(ConditionParameter.CELL_TYPE);
             if (anatEntityFilterIds != null) {
                 anatEntityIds.addAll(anatEntityFilterIds.getIds());
                 if (anatEntityFilterIds.isIncludeChildTerms()) {
@@ -431,10 +421,7 @@ public class CallServiceUtils {
                 }
             }
 
-            //For now we consider there is no composition for dev. stages
-            assert !filter.getComposedFilterIds(ConditionParameter.DEV_STAGE).isComposed();
-            FilterIds<String> devStageFilterIds = filter.getComposedFilterIds(
-                    ConditionParameter.DEV_STAGE).getFilterIds(0);
+            FilterIds<String> devStageFilterIds = filter.getFilterIds(ConditionParameter.DEV_STAGE);
             if (devStageFilterIds != null) {
                 devStageIds.addAll(devStageFilterIds.getIds());
                 if (devStageFilterIds.isIncludeChildTerms()) {
@@ -465,9 +452,6 @@ public class CallServiceUtils {
                 }
             }
 
-            //For now we consider there is no composition for sexes and strains
-            assert !filter.getComposedFilterIds(ConditionParameter.SEX).isComposed();
-            assert !filter.getComposedFilterIds(ConditionParameter.STRAIN).isComposed();
             Set<ConditionParameter<?, ?>> condParamComb = filter.getCondParamCombination();
             DAOConditionFilter2 daoCondFilter = new DAOConditionFilter2(
                     //consideredSpeciesIds might itself be null, but it could have
@@ -475,21 +459,21 @@ public class CallServiceUtils {
                     //only in those species
                     filter.getSpeciesId() == null? consideredSpeciesIds:
                         Collections.singleton(filter.getSpeciesId()),
-                    !condParamComb.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)?
+                    !condParamComb.contains(ConditionParameter.ANAT_ENTITY)?
                             Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID):
                                 anatEntityIds,
                     !condParamComb.contains(ConditionParameter.DEV_STAGE)?
                             Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID):
                                 devStageIds,
-                    !condParamComb.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)?
+                    !condParamComb.contains(ConditionParameter.CELL_TYPE)?
                             Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID):
                                 cellTypeIds,
                     !condParamComb.contains(ConditionParameter.SEX)?
                             Collections.singleton(ConditionDAO.SEX_ROOT_ID):
-                                filter.getComposedFilterIds(ConditionParameter.SEX).getIds(0),
+                                filter.getFilterIds(ConditionParameter.SEX).getIds(),
                     !condParamComb.contains(ConditionParameter.STRAIN)?
                             Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
-                                filter.getComposedFilterIds(ConditionParameter.STRAIN).getIds(0),
+                                filter.getFilterIds(ConditionParameter.STRAIN).getIds(),
 
                     convertCondParamsToDAOCondParams(filter.getObservedCondForParams()),
 
@@ -641,7 +625,7 @@ public class CallServiceUtils {
                 .collect(Collectors.toMap(
                         cTO -> cTO.getId(), 
                         cTO -> {
-                            Map<ConditionParameter<?, ?>, ComposedEntity<?>> condParamEntities =
+                            Map<ConditionParameter<?, ?>, ConditionParameterValue> condParamEntities =
                                     new HashMap<>();
 
                             AnatEntity anatEntity = cTO.getAnatEntityId() == null? null:
@@ -652,16 +636,11 @@ public class CallServiceUtils {
                                 Optional.ofNullable(anatAndCellMap.get(cTO.getCellTypeId()))
                                 .orElseThrow(() -> new IllegalStateException(
                                         "Anat. entity not found: " + cTO.getCellTypeId()));
-                            LinkedHashSet<AnatEntity> anatEntitiesCellTypes = new LinkedHashSet<>();
                             if (cellType != null) {
-                                anatEntitiesCellTypes.add(cellType);
+                                condParamEntities.put(ConditionParameter.CELL_TYPE, cellType);
                             }
                             if (anatEntity != null) {
-                                anatEntitiesCellTypes.add(anatEntity);
-                            }
-                            if (!anatEntitiesCellTypes.isEmpty()) {
-                                condParamEntities.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
-                                        new ComposedEntity<>(anatEntitiesCellTypes, AnatEntity.class));
+                                condParamEntities.put(ConditionParameter.ANAT_ENTITY, anatEntity);
                             }
 
                             DevStage stage = cTO.getStageId() == null? null:
@@ -669,8 +648,7 @@ public class CallServiceUtils {
                                 .orElseThrow(() -> new IllegalStateException("Stage not found: "
                                                 + cTO.getStageId()));
                             if (stage != null) {
-                                condParamEntities.put(ConditionParameter.DEV_STAGE,
-                                        new ComposedEntity<>(stage, DevStage.class));
+                                condParamEntities.put(ConditionParameter.DEV_STAGE, stage);
                             }
 
                             Sex sex = cTO.getSex() == null? null:
@@ -678,8 +656,7 @@ public class CallServiceUtils {
                                 .orElseThrow(() -> new IllegalStateException("sex not found: "
                                             + cTO.getSex().getStringRepresentation()));
                             if (sex != null) {
-                                condParamEntities.put(ConditionParameter.SEX,
-                                        new ComposedEntity<>(sex, Sex.class));
+                                condParamEntities.put(ConditionParameter.SEX, sex);
                             }
 
                             Strain strain = cTO.getStrainId() == null? null:
@@ -687,8 +664,7 @@ public class CallServiceUtils {
                                 .orElseThrow(() -> new IllegalStateException("strain not found: "
                                             + cTO.getStrainId()));
                             if (strain != null) {
-                                condParamEntities.put(ConditionParameter.STRAIN,
-                                        new ComposedEntity<>(strain, Strain.class));
+                                condParamEntities.put(ConditionParameter.STRAIN, strain);
                             }
 
                             return new Condition2(condParamEntities,

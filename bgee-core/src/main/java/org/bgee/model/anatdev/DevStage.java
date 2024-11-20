@@ -3,6 +3,8 @@ package org.bgee.model.anatdev;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NestedSetModelEntity;
+import org.bgee.model.expressiondata.call.ConditionParameterValue;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataConditionParameterValue;
 import org.bgee.model.ontology.OntologyElement;
 
 /**
@@ -13,7 +15,8 @@ import org.bgee.model.ontology.OntologyElement;
  * @version Bgee 13, Nov. 2015
  * @since   Bgee 13
  */ 
-public class DevStage extends NestedSetModelEntity<String> implements OntologyElement<DevStage, String> {
+public class DevStage extends NestedSetModelEntity<String>
+implements OntologyElement<DevStage, String>, ConditionParameterValue, RawDataConditionParameterValue {
     private final static Logger log = LogManager.getLogger(DevStage.class.getName());
     
     /**

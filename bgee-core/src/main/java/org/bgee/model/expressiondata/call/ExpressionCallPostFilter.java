@@ -9,11 +9,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 
 public class ExpressionCallPostFilter {
-    private final LinkedHashMap<ConditionParameter<?, ?>, Set<Object>> conditionParameterEntities;
+    private final LinkedHashMap<ConditionParameter<? extends ConditionParameterValue, ?>, Set<? extends ConditionParameterValue>>
+    conditionParameterEntities;
 
     //Species are unnecessary, we allow filtering only when one species is selected
 //    private final Set<Species> species;
@@ -21,7 +21,8 @@ public class ExpressionCallPostFilter {
     public ExpressionCallPostFilter() {
         this(null);
     }
-    public ExpressionCallPostFilter(Map<ConditionParameter<?, ?>, Set<? extends Object>> conditionParameterEntities) {
+    public ExpressionCallPostFilter(Map<ConditionParameter<? extends ConditionParameterValue, ?>,
+            Set<? extends ConditionParameterValue>> conditionParameterEntities) {
         
         if (conditionParameterEntities != null && conditionParameterEntities.entrySet().stream()
                 .anyMatch(e -> e.getKey() == null || e.getValue() == null || e.getValue().stream()
@@ -50,7 +51,7 @@ public class ExpressionCallPostFilter {
      * @return          A {@code LinkedHashSet} containing the requested entities sorted.
      *                  This {@code LinkedHashSet} can be safely modified.
      */
-    public <T extends NamedEntity<?>> LinkedHashSet<T> getEntities(ConditionParameter<T, ?> param) {
+    public <T extends ConditionParameterValue> LinkedHashSet<T> getEntities(ConditionParameter<T, ?> param) {
         //need to iterate the values to cast
         return this.conditionParameterEntities.get(param).stream()
                 .map(o -> param.getCondValueType().cast(o))

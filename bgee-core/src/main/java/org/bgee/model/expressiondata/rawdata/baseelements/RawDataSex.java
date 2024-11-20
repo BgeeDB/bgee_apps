@@ -2,7 +2,7 @@ package org.bgee.model.expressiondata.rawdata.baseelements;
 
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 
-public enum RawDataSex implements BgeeEnumField {
+public enum RawDataSex implements BgeeEnumField, RawDataConditionParameterValue {
     NOT_ANNOTATED("not annotated"), HERMAPHRODITE("hermaphrodite"), FEMALE("female"), MALE("male"),
     MIXED("mixed"), NA("NA");
     
@@ -15,5 +15,10 @@ public enum RawDataSex implements BgeeEnumField {
     @Override
     public String getStringRepresentation() {
         return this.representation;
+    }
+
+    @Override
+    public String getId() {
+        return this.getStringRepresentation().replaceAll(" ", "_");
     }
 }

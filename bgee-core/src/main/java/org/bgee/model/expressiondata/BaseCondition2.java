@@ -8,8 +8,9 @@ import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.NamedEntity;
+import org.bgee.model.expressiondata.baseelements.BaseConditionParameterValue;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.call.ConditionParameterValue;
 import org.bgee.model.species.Species;
 
 public abstract class BaseCondition2 implements Comparable<BaseCondition2> {
@@ -28,10 +29,10 @@ public abstract class BaseCondition2 implements Comparable<BaseCondition2> {
             .thenComparing(c -> c.getSpecies().getId(), Comparator.nullsLast(Integer::compareTo));
 
 
-    protected final Map<ConditionParameter<?, ?>, ? extends Object> conditionParameterObjects;
+    protected final Map<ConditionParameter<?, ?>, ? extends BaseConditionParameterValue> conditionParameterObjects;
     private final Species species;
 
-    public BaseCondition2(Map<ConditionParameter<?, ?>, ? extends Object> conditionParameterObjects,
+    public BaseCondition2(Map<ConditionParameter<?, ?>, ? extends BaseConditionParameterValue> conditionParameterObjects,
             Species species) {
         if (conditionParameterObjects == null || conditionParameterObjects.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
@@ -55,12 +56,12 @@ public abstract class BaseCondition2 implements Comparable<BaseCondition2> {
 
     //Subclasses will have to override this method to use the correct generic type
     //of ConditionParameter for having the proper returned class in method signature
-    public Object getUncastConditionParameterValue(ConditionParameter<?, ?> condParam) {
+    public BaseConditionParameterValue getUncastConditionParameterValue(ConditionParameter<?, ?> condParam) {
         return conditionParameterObjects.get(condParam);
     }
     //We could still another generic type to ConditionParameter if we wanted to specify
     //the type of ID of each condition parameter value
-    public abstract <T extends NamedEntity<?>, U> String getConditionParameterId(
+    public abstract <T extends ConditionParameterValue, U> String getConditionParameterId(
             ConditionParameter<T, U> condParam);
 
     public Species getSpecies() {

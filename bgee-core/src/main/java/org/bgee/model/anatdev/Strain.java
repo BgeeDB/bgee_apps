@@ -1,6 +1,7 @@
 package org.bgee.model.anatdev;
 
 import org.bgee.model.NamedEntity;
+import org.bgee.model.expressiondata.call.ConditionParameterValue;
 import org.bgee.model.ontology.OntologyElement;
 
 /**
@@ -10,7 +11,7 @@ import org.bgee.model.ontology.OntologyElement;
  * @version Bgee 15.0
  *
  */
-public class Strain extends NamedEntity<String> implements OntologyElement<Strain, String> {
+public class Strain extends NamedEntity<String> implements OntologyElement<Strain, String>, ConditionParameterValue {
     /**
      * Constructor providing the ID of this {@code Strain}. 
      * {@code id} cannot be blank, otherwise an {@code IllegalArgumentException} is thrown. 

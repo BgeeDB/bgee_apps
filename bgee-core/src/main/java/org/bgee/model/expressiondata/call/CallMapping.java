@@ -295,11 +295,11 @@ class CallMapping {
         log.traceEntry("{}", daoAttr);
         switch (daoAttr) {
             case ANAT_ENTITY_ID:
-                return log.traceExit(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+                return log.traceExit(ConditionParameter.ANAT_ENTITY);
             case STAGE_ID:
                 return log.traceExit(ConditionParameter.DEV_STAGE);
             case CELL_TYPE_ID:
-                return log.traceExit(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+                return log.traceExit(ConditionParameter.CELL_TYPE);
             case SEX_ID:
                 return log.traceExit(ConditionParameter.SEX);
             case STRAIN_ID:

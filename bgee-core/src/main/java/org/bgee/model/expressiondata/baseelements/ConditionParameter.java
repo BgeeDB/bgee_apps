@@ -11,11 +11,13 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.anatdev.Strain;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.call.ConditionParameterValue;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataSex;
 
 /**
@@ -41,19 +43,28 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataSex;
  *              the method {@code BaseCondition2#getCondParamValue(ConditionParameter)}
  *              using this {@code ConditionParameter}.
  */
-public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
+public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
     private final static Logger log = LogManager.getLogger(ConditionParameter.class.getName());
 
     public static class AnatEntityCondParam extends ConditionParameter<AnatEntity, AnatEntity> {
         private AnatEntityCondParam() {
-            super(AnatEntity.class, AnatEntity.class, (o) -> o.getId(), (o) -> o.getId(),
+            super(AnatEntity.class, new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID), AnatEntity.class,
+                    (o) -> o.getId(), (o) -> o.getId(),
+                    "anatEntity", "Anat. entity and cell type", "anat_entity",
+                    "anat_entity_id", "filter_anat_entity_id", true);
+        }
+    }
+    public static class CellTypeCondParam extends ConditionParameter<AnatEntity, AnatEntity> {
+        private CellTypeCondParam() {
+            super(AnatEntity.class, new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID), AnatEntity.class,
+                    (o) -> o.getId(), (o) -> o.getId(),
                     "anatEntity", "Anat. entity and cell type", "anat_entity",
                     "anat_entity_id", "filter_anat_entity_id", true);
         }
     }
     public static class DevStageCondParam extends ConditionParameter<DevStage, DevStage> {
         private DevStageCondParam() {
-            super(DevStage.class, DevStage.class,
+            super(DevStage.class, new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID), DevStage.class,
                     (o) -> o.getId(), (o) -> o.getId(),
                     "devStage", "Developmental and life stage", "dev_stage",
                     "stage_id", "filter_stage_id", true);
@@ -61,14 +72,16 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
     }
     public static class SexCondParam extends ConditionParameter<Sex, RawDataSex> {
         private SexCondParam() {
-            super(Sex.class, RawDataSex.class,
+            super(Sex.class, new Sex(SexEnum.ANY.getStringRepresentation()), RawDataSex.class,
                     (o) -> o.getId(), (o) -> o.getStringRepresentation(),
                     "sex", "Sex", "sex", "sex", "filter_sex", false);
         }
     }
+    //XXX: This String for raw data strain is the only reason why we cannot constraint this ConditionParameter
+    //to be ConditionParameter<T extends ConditionAttribute, U extends RawDataConditionAttribute>
     public static class StrainCondParam extends ConditionParameter<Strain, String> {
         private StrainCondParam() {
-            super(Strain.class, String.class,
+            super(Strain.class, new Strain(ConditionDAO.STRAIN_ROOT_ID), String.class,
                     (o) -> o.getId(), (o) -> o,
                     "strain", "Strain", "strain", "strain", "filter_strain", false);
         }
@@ -76,29 +89,31 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
 
 
     //XXX: this one might be simply call ANAT_ENTITY, or ANAT_STRUCTURE_CELL_TYPE
-    public static final AnatEntityCondParam ANAT_ENTITY_CELL_TYPE = new AnatEntityCondParam();
-    public static final DevStageCondParam   DEV_STAGE             = new DevStageCondParam();
-    public static final SexCondParam        SEX                   = new SexCondParam();
-    public static final StrainCondParam     STRAIN                = new StrainCondParam();
+    public static final AnatEntityCondParam ANAT_ENTITY = new AnatEntityCondParam();
+    public static final CellTypeCondParam   CELL_TYPE   = new CellTypeCondParam();
+    public static final DevStageCondParam   DEV_STAGE   = new DevStageCondParam();
+    public static final SexCondParam        SEX         = new SexCondParam();
+    public static final StrainCondParam     STRAIN      = new StrainCondParam();
     private final static LinkedHashSet<ConditionParameter<?, ?>> ALL_OF =
             new LinkedHashSet<>(Arrays.asList(
-                    ANAT_ENTITY_CELL_TYPE,
+                    ANAT_ENTITY,
+                    CELL_TYPE,
                     DEV_STAGE,
                     SEX,
                     STRAIN));
-    private final static Set<LinkedHashSet<ConditionParameter<?, ?>>> ALL_COND_PARAM_COMBINATIONS =
+    private final static Set<LinkedHashSet<ConditionParameter<? extends ConditionParameterValue, ?>>> ALL_COND_PARAM_COMBINATIONS =
           getAllPossibleCombinations(ALL_OF);
 
 
     /**
      * @return  The returned {@code LinkedHashSet} can be safely modified.
      */
-    public static final LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>> allOf() {
+    public static final LinkedHashSet<ConditionParameter<? extends ConditionParameterValue, ?>> allOf() {
         log.traceEntry();
         //defensive copying, we don't want to return an unmodifiable Set
         return log.traceExit(new LinkedHashSet<>(ALL_OF));
     }
-    public static final LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>> noneOf() {
+    public static final LinkedHashSet<ConditionParameter<? extends ConditionParameterValue, ?>> noneOf() {
         log.traceEntry();
         return log.traceExit(new LinkedHashSet<>());
     }
@@ -114,7 +129,7 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
      * @throws NullPointerException     if {@code c} is {@code null}
      *                                  or contains a {@code null} element.
      */
-    public static final LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>> copyOf(
+    public static final LinkedHashSet<ConditionParameter<? extends ConditionParameterValue, ?>> copyOf(
             Collection<ConditionParameter<?, ?>> c) {
         log.traceEntry("{}", c);
         //to mimic the behavior of EnumSet.copyOf
@@ -132,7 +147,7 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
                 .filter(param -> c.contains(param))
                 .collect(Collectors.toCollection(() -> new LinkedHashSet<>())));
     }
-    public static final LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>> getCondParams(
+    public static final LinkedHashSet<ConditionParameter<? extends ConditionParameterValue, ?>> getCondParams(
             Collection<ConditionParameter<?, ?>> c) {
         log.traceEntry("{}", c);
         if (c == null || c.isEmpty()) {
@@ -141,13 +156,13 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
         return log.traceExit(copyOf(c));
     }
 
-    public static final Set<LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>>> getAllPossibleCombinations() {
+    public static final Set<LinkedHashSet<ConditionParameter<? extends ConditionParameterValue, ?>>> getAllPossibleCombinations() {
         //defensive copying
         return ALL_COND_PARAM_COMBINATIONS.stream()
                 .map(s -> copyOf(s))
                 .collect(Collectors.toSet());
     }
-    public static final Set<LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>>> getAllPossibleCombinations(
+    public static final Set<LinkedHashSet<ConditionParameter<? extends ConditionParameterValue, ?>>> getAllPossibleCombinations(
             Collection<ConditionParameter<?, ?>> condParams) {
         log.traceEntry("{}", condParams);
         if (condParams == null || condParams.isEmpty()) {
@@ -191,6 +206,7 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
 
 
     private final Class<T> condValueType;
+    private final T condValueRoot;
     private final Class<U> rawDataCondValueType;
     //We could still add two other generic types if we wanted to specify
     //a type of ID different from String
@@ -203,12 +219,13 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
     private final String requestFilterParameterName;
     private final boolean informativeId;
 
-    private ConditionParameter(Class<T> condValueType, Class<U> rawDataCondValueType,
+    private ConditionParameter(Class<T> condValueType, T condValueRoot, Class<U> rawDataCondValueType,
             Function<T, String> condValueIdFun, Function<U, String> rawDataCondValueIdFun,
             String attributeName, String displayName, String parameterName,
             String requestParameterName, String requestFilterParameterName,
             boolean informativeId) {
         this.condValueType = condValueType;
+        this.condValueRoot = condValueRoot;
         this.rawDataCondValueType = rawDataCondValueType;
         this.condValueIdFun = condValueIdFun;
         this.rawDataCondValueIdFun = rawDataCondValueIdFun;
@@ -222,6 +239,9 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
 
     public Class<T> getCondValueType() {
         return condValueType;
+    }
+    public T getCondValueRoot() {
+        return condValueRoot;
     }
     public Class<U> getRawDataCondValueType() {
         return rawDataCondValueType;

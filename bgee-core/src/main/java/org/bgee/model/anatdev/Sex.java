@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.NamedEntity;
+import org.bgee.model.expressiondata.call.ConditionParameterValue;
 import org.bgee.model.ontology.OntologyElement;
 
 /**
@@ -18,7 +19,7 @@ import org.bgee.model.ontology.OntologyElement;
  * @version Bgee 15.0
  *
  */
-public class Sex extends NamedEntity<String> implements OntologyElement<Sex, String> {
+public class Sex extends NamedEntity<String> implements OntologyElement<Sex, String>, ConditionParameterValue {
     private final static Logger log = LogManager.getLogger(Sex.class.getName());
 
     /**

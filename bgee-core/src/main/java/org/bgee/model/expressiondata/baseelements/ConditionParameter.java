@@ -50,7 +50,7 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
         private AnatEntityCondParam() {
             super(AnatEntity.class, new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID), AnatEntity.class,
                     (o) -> o.getId(), (o) -> o.getId(),
-                    "anatEntity", "Anat. entity and cell type", "anat_entity",
+                    "anatEntity", "Anat. entity", "anat_entity",
                     "anat_entity_id", "filter_anat_entity_id", true);
         }
     }
@@ -58,8 +58,8 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
         private CellTypeCondParam() {
             super(AnatEntity.class, new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID), AnatEntity.class,
                     (o) -> o.getId(), (o) -> o.getId(),
-                    "anatEntity", "Anat. entity and cell type", "anat_entity",
-                    "anat_entity_id", "filter_anat_entity_id", true);
+                    "cellType", "Cell type", "cell_type",
+                    "cell_type_id", "filter_cell_type_id", true);
         }
     }
     public static class DevStageCondParam extends ConditionParameter<DevStage, DevStage> {

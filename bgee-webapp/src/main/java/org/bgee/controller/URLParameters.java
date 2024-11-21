@@ -366,7 +366,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "anat_entity_id".
      */
     private static final Parameter<String> ANAT_ENTITY = new Parameter<>(
-            ConditionParameter.ANAT_ENTITY_CELL_TYPE.getRequestParameterName(),
+            ConditionParameter.ANAT_ENTITY.getRequestParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
@@ -374,7 +374,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "filter_anat_entity_id".
      */
     private static final Parameter<String> FILTER_ANAT_ENTITY = new Parameter<String>(
-            ConditionParameter.ANAT_ENTITY_CELL_TYPE.getRequestFilterParameterName(),
+            ConditionParameter.ANAT_ENTITY.getRequestFilterParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
@@ -391,7 +391,8 @@ public class URLParameters {
      * and can be requested as such, but it is sometimes important to make the distinction.
      * Corresponds to the URL parameter "cell_type_id".
      */
-    private static final Parameter<String> CELL_TYPE = new Parameter<>("cell_type_id",
+    private static final Parameter<String> CELL_TYPE = new Parameter<>(
+            ConditionParameter.CELL_TYPE.getRequestParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
@@ -401,7 +402,8 @@ public class URLParameters {
      * Corresponds to the URL parameter "filter_cell_type_id".
      */
     private static final Parameter<String> FILTER_CELL_TYPE = new Parameter<String>(
-            "filter_cell_type_id", true, false, null, true, DEFAULT_IS_SECURE,
+            ConditionParameter.CELL_TYPE.getRequestFilterParameterName(),
+            true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the sexes requested.

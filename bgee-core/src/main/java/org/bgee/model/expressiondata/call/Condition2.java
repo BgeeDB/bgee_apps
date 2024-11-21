@@ -31,18 +31,18 @@ public class Condition2 extends BaseCondition2 {
             Map<DataType, BigDecimal> globalMaxRanksByDataType) {
         super(//we'll check correct types in this constructor.
               //We also want to have an entry for all condition parameters.
-              conditionParameterObjects == null? null:
-                  ConditionParameter.allOf().stream()
-                  .collect(Collectors.toMap(
-                          param -> param,
-                          param -> {
-                              ConditionParameterValue compEnt = conditionParameterObjects.get(param);
-                              if (compEnt == null) {
-                                  return param.getCondValueRoot();
-                              }
-                              return compEnt;
-                          })),
-                  species);
+              ConditionParameter.allOf().stream()
+              .collect(Collectors.toMap(
+                      param -> param,
+                      param -> {
+                          ConditionParameterValue compEnt = conditionParameterObjects == null? null:
+                              conditionParameterObjects.get(param);
+                          if (compEnt == null) {
+                              return param.getCondValueRoot();
+                          }
+                          return compEnt;
+                      })),
+              species);
         if (this.conditionParameterObjects.entrySet().stream()
                 .anyMatch(e -> !ConditionParameterValue.class.isInstance(e.getValue()) ||
                         !e.getKey().getCondValueType().isAssignableFrom(e.getValue().getClass()))) {

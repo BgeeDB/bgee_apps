@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.URLParameters;
 import org.bgee.model.NamedEntity;
+import org.bgee.model.expressiondata.call.ConditionParameterValue;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonWriter;
@@ -38,6 +39,27 @@ public abstract class PostFilterTypeAdapter<T> extends TypeAdapter<T> {
         startWritePostFilterParameter(out, filterName, urlParameterName, informativeId, informativeName);
         for (NamedEntity<?> value: values) {
             this.utils.writeSimplifiedNamedEntity(out, value);
+        }
+        endWritePostFilterParameter(out);
+
+        log.traceExit();
+    }
+
+    protected void writePostFilterConditionParameterValues(JsonWriter out, String filterName,
+            String urlParameterName, Collection<? extends ConditionParameterValue> values) throws IOException {
+        log.traceEntry("{}, {}, {}, {}", out, filterName, urlParameterName, values);
+        this.writePostFilterConditionParameterValues(out, filterName, urlParameterName, values, true, true);
+        log.traceExit();
+    }
+    protected void writePostFilterConditionParameterValues(JsonWriter out, String filterName,
+            String urlParameterName, Collection<? extends ConditionParameterValue> values,
+                    boolean informativeId, boolean informativeName) throws IOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", out, filterName, urlParameterName, values,
+                informativeId, informativeName);
+
+        startWritePostFilterParameter(out, filterName, urlParameterName, informativeId, informativeName);
+        for (ConditionParameterValue value: values) {
+            this.utils.writeSimplifiedConditionParameterValue(out, value);
         }
         endWritePostFilterParameter(out);
 

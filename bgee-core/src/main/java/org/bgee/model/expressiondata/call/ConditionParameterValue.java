@@ -11,5 +11,5 @@ import org.bgee.model.expressiondata.baseelements.BaseConditionParameterValue;
  * @since Bgee 16.0 Nov. 2024
  */
 public interface ConditionParameterValue extends BaseConditionParameterValue {
-
+    public String getName();
 }

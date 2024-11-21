@@ -76,6 +76,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -922,8 +923,23 @@ public class CommandData extends CommandParent {
                 //default value
                 ConditionParameter.allOf():
                 //otherwise retrieve condition parameters from request
-                ConditionParameter.allOf()
-                    .stream().filter(a -> selectedCondParams.contains(a.getParameterName()))
+                ConditionParameter.allOf().stream()
+                    .filter(a -> selectedCondParams.contains(a.getParameterName()))
+                    //Previously, there was only for anatomy-related data one ConditionParameter
+                    //ANAT_ENTITY_CELL_TYPE. Now they are separated, but in the frontend
+                    //there is sill only one checkbox for requesting both anat. entities and cell types
+                    //(sending the parameter name corresponding now to ANAT_ENTITY).
+                    //So if any of ANAT_ENTITY or CELL_TYPE is requested, we add both.
+                    .flatMap(a -> {
+                        if (a.equals(ConditionParameter.ANAT_ENTITY) ||
+                                a.equals(ConditionParameter.CELL_TYPE)) {
+                            return Stream.of(ConditionParameter.ANAT_ENTITY,
+                                    ConditionParameter.CELL_TYPE);
+                        }
+                        return Stream.of(a);
+                    })
+                    //With the LinkedHashSet we're sure we won't get multiple times
+                    //ANAT_ENTITY and CELL_TYPE, and that they will be in the desired order
                     .collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
         log.debug("Condition parameters: {}", condParams);
         EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();

@@ -6,8 +6,8 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.URLParameters;
-import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.call.ConditionParameterValue;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 
 import com.google.gson.stream.JsonReader;
@@ -31,10 +31,10 @@ public class ExpressionCallPostFilterTypeAdapter extends PostFilterTypeAdapter<E
         out.beginObject();
 
         for (ConditionParameter<?, ?> condParam: ConditionParameter.allOf()) {
-            Set<? extends NamedEntity<?>> values = value.getEntities(condParam);
+            Set<? extends ConditionParameterValue> values = value.getEntities(condParam);
             if (!values.isEmpty()) {
                 out.name(condParam.getAttributeName());
-                this.writePostFilterNamedEntityParameter(out, condParam.getDisplayName(),
+                this.writePostFilterConditionParameterValues(out, condParam.getDisplayName(),
                         condParam.getRequestFilterParameterName(), values,
                         condParam.isInformativeId(),
                         true);

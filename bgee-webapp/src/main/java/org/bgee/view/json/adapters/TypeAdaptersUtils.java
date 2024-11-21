@@ -23,6 +23,7 @@ import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionParameterValue;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAuthorAnnotation;
@@ -304,6 +305,19 @@ public class TypeAdaptersUtils {
         out.beginObject();
         out.name("id").value(namedEntity.getId().toString());
         out.name("name").value(namedEntity.getName());
+        out.endObject();
+        log.traceExit();
+    }
+    public void writeSimplifiedConditionParameterValue(JsonWriter out, ConditionParameterValue value)
+            throws IOException {
+        log.traceEntry("{}, {}", out, value);
+        if (value == null) {
+            out.nullValue();
+            log.traceExit(); return;
+        }
+        out.beginObject();
+        out.name("id").value(value.getId().toString());
+        out.name("name").value(value.getName());
         out.endObject();
         log.traceExit();
     }

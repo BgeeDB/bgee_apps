@@ -36,6 +36,7 @@ import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 
 /**
@@ -2436,40 +2437,16 @@ public class RequestParameters {
     public List<String> getDataType() {
         return this.getValues(this.getUrlParametersInstance().getParamDataType());
     }
-    /**
-     * Convenient method to retrieve values of the parameter returned by 
-     * {@link URLParameters#getParamDevStage()}. Equivalent to calling 
-     * {@link #getValues(URLParameters.Parameter)} for this parameter.
-     * 
-     * @return  A {@code List} of {@code String}s that are the values of 
-     *          the {@code stage_id} URL parameter. Can be {@code null}.
-     */
-    public List<String> getDevStage() {
-        return this.getValues(this.getUrlParametersInstance().getParamDevStage());
+
+    public List<String> getCondParamIds(ConditionParameter<?, ?> condParam) {
+        return this.getValues(this.getUrlParametersInstance().getCondParamToCondURLParam(condParam));
     }
-    /**
-     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
-     * {@link URLParameters#getParamStageDescendant()}.
-     *
-     * @return  {@code true} if it was requested for {@link URLParameters#getParamStageDescendant()},
-     *          {@code false} otherwise.
-     */
-    public boolean isDevStageDescendant() {
+    public boolean isRequestedDescendant(ConditionParameter<?, ?> condParam) {
         log.traceEntry();
         return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
-                this.getUrlParametersInstance().getParamStageDescendant())));
+                this.getUrlParametersInstance().getCondParamToDescendantURLParam(condParam))));
     }
-    /**
-     * Convenient method to retrieve values of the parameter returned by 
-     * {@link URLParameters#getParamAnatEntity()}. Equivalent to calling 
-     * {@link #getValues(URLParameters.Parameter)} for this parameter.
-     *
-     * @return  The {@code List} of {@code String}s that are the values of 
-     *          the {@code anat_entity_id} URL parameter. Can be {@code null}.
-     */
-    public List<String> getAnatEntity() {
-        return this.getValues(this.getUrlParametersInstance().getParamAnatEntity());
-    }
+
     /**
      * Convenient method to retrieve values of the parameter returned by
      * {@link URLParameters#getParamDiscardAnatEntity()}. Equivalent to calling
@@ -2481,41 +2458,7 @@ public class RequestParameters {
     public List<String> getDiscardAnatEntity() {
         return this.getValues(this.getUrlParametersInstance().getParamDiscardAnatEntity());
     }
-    /**
-     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
-     * {@link URLParameters#getParamAnatEntityDescendant()}.
-     *
-     * @return  {@code true} if it was requested for {@link URLParameters#getParamAnatEntityDescendant()},
-     *          {@code false} otherwise.
-     */
-    public boolean isAnatEntityDescendant() {
-        log.traceEntry();
-        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
-                this.getUrlParametersInstance().getParamAnatEntityDescendant())));
-    }
-    /**
-     * Convenient method to retrieve values of the parameter returned by
-     * {@link URLParameters#getParamCellType()}. Equivalent to calling
-     * {@link #getValues(URLParameters.Parameter)} for this parameter.
-     *
-     * @return  The {@code List} of {@code String}s that are the values of
-     *          the {@code cell_type_id} URL parameter. Can be {@code null}.
-     */
-    public List<String> getCellType() {
-        return this.getValues(this.getUrlParametersInstance().getParamCellType());
-    }
-    /**
-     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
-     * {@link URLParameters#getParamCellTypeDescendant()}.
-     *
-     * @return  {@code true} if it was requested for {@link URLParameters#getParamCellTypeDescendant()},
-     *          {@code false} otherwise.
-     */
-    public boolean isCellTypeDescendant() {
-        log.traceEntry();
-        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
-                this.getUrlParametersInstance().getParamCellTypeDescendant())));
-    }
+
     /**
      * Convenient method to retrieve the value was sent for the URL parameter
      * {@link URLParameters#getParamObservedData()}.
@@ -2566,28 +2509,7 @@ public class RequestParameters {
         }
         return log.traceExit((Boolean) null);
     }
-    /**
-     * Convenient method to retrieve values of the parameter returned by
-     * {@link URLParameters#getParamSex()}. Equivalent to calling
-     * {@link #getValues(URLParameters.Parameter)} for this parameter.
-     *
-     * @return  A {@code List} of {@code String}s that are the values of
-     *          the {@code sex} URL parameter. Can be {@code null}.
-     */
-    public List<String> getSex() {
-        return this.getValues(this.getUrlParametersInstance().getParamSex());
-    }
-    /**
-     * Convenient method to retrieve values of the parameter returned by
-     * {@link URLParameters#getParamStrain()}. Equivalent to calling
-     * {@link #getValues(URLParameters.Parameter)} for this parameter.
-     *
-     * @return  A {@code List} of {@code String}s that are the values of
-     *          the {@code strain} URL parameter. Can be {@code null}.
-     */
-    public List<String> getStrain() {
-        return this.getValues(this.getUrlParametersInstance().getParamStrain());
-    }
+
     /**
      * Convenient method to retrieve values of the parameter returned by
      * {@link URLParameters#getParamExpAssayId()}. Equivalent to calling

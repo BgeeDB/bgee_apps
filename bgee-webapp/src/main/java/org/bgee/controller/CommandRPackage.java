@@ -36,6 +36,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -234,7 +235,7 @@ public class CommandRPackage extends CommandParent {
 
         //parameters not needing processing
         final List<Integer> speciesIds = this.requestParameters.getSpeciesList();
-        final List<String> stageIds   = this.requestParameters.getDevStage();
+        final List<String> stageIds   = this.requestParameters.getCondParamIds(ConditionParameter.DEV_STAGE);
         List<String> requestedAttrs = this.requestParameters.getValues(
                 this.requestParameters.getUrlParametersInstance().getParamAttributeList());
         //XXX: why not using 'getAttributes' method?
@@ -596,10 +597,11 @@ public class CommandRPackage extends CommandParent {
 
         //Retrieve requested entities
         List<String> entityIds = null;
+        //TODO: adapt to generalized ConditionParameter when we delete CallService.Attribute
         if (CallService.Attribute.ANAT_ENTITY_ID.equals(condParam)) {
-            entityIds = this.requestParameters.getAnatEntity();
+            entityIds = this.requestParameters.getCondParamIds(ConditionParameter.ANAT_ENTITY);
         } else if (CallService.Attribute.DEV_STAGE_ID.equals(condParam)) {
-            entityIds = this.requestParameters.getDevStage();
+            entityIds = this.requestParameters.getCondParamIds(ConditionParameter.DEV_STAGE);
         } else {
             throw log.throwing(new InvalidRequestException(condParam + "is not a valid "
                     + "condition parameter"));

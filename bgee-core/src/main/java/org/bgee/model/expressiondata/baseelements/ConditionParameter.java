@@ -51,7 +51,7 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
             super(AnatEntity.class, new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID), AnatEntity.class,
                     (o) -> o.getId(), (o) -> o.getId(),
                     "anatEntity", "Anat. entity", "anat_entity",
-                    "anat_entity_id", "filter_anat_entity_id", true);
+                    "anat_entity_id", "filter_anat_entity_id", "anat_entity_descendant", true, true);
         }
     }
     public static class CellTypeCondParam extends ConditionParameter<AnatEntity, AnatEntity> {
@@ -59,7 +59,7 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
             super(AnatEntity.class, new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID), AnatEntity.class,
                     (o) -> o.getId(), (o) -> o.getId(),
                     "cellType", "Cell type", "cell_type",
-                    "cell_type_id", "filter_cell_type_id", true);
+                    "cell_type_id", "filter_cell_type_id", "cell_type_descendant", true, true);
         }
     }
     public static class DevStageCondParam extends ConditionParameter<DevStage, DevStage> {
@@ -67,14 +67,14 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
             super(DevStage.class, new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID), DevStage.class,
                     (o) -> o.getId(), (o) -> o.getId(),
                     "devStage", "Developmental and life stage", "dev_stage",
-                    "stage_id", "filter_stage_id", true);
+                    "stage_id", "filter_stage_id", "stage_descendant", true, true);
         }
     }
     public static class SexCondParam extends ConditionParameter<Sex, RawDataSex> {
         private SexCondParam() {
             super(Sex.class, new Sex(SexEnum.ANY.getStringRepresentation()), RawDataSex.class,
                     (o) -> o.getId(), (o) -> o.getStringRepresentation(),
-                    "sex", "Sex", "sex", "sex", "filter_sex", false);
+                    "sex", "Sex", "sex", "sex", "filter_sex", null, false, false);
         }
     }
     //XXX: This String for raw data strain is the only reason why we cannot constraint this ConditionParameter
@@ -83,7 +83,7 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
         private StrainCondParam() {
             super(Strain.class, new Strain(ConditionDAO.STRAIN_ROOT_ID), String.class,
                     (o) -> o.getId(), (o) -> o,
-                    "strain", "Strain", "strain", "strain", "filter_strain", false);
+                    "strain", "Strain", "strain", "strain", "filter_strain", null, false, false);
         }
     }
 
@@ -217,13 +217,16 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
     private final String parameterName;
     private final String requestParameterName;
     private final String requestFilterParameterName;
+    private final String requestDescendantParameterName;
     private final boolean informativeId;
+    private final boolean withRequestableDescendants;
 
     private ConditionParameter(Class<T> condValueType, T condValueRoot, Class<U> rawDataCondValueType,
             Function<T, String> condValueIdFun, Function<U, String> rawDataCondValueIdFun,
             String attributeName, String displayName, String parameterName,
             String requestParameterName, String requestFilterParameterName,
-            boolean informativeId) {
+            String requestDescendantParameterName,
+            boolean informativeId, boolean withRequestableDescendants) {
         this.condValueType = condValueType;
         this.condValueRoot = condValueRoot;
         this.rawDataCondValueType = rawDataCondValueType;
@@ -234,7 +237,9 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
         this.parameterName = parameterName;
         this.requestParameterName = requestParameterName;
         this.requestFilterParameterName = requestFilterParameterName;
+        this.requestDescendantParameterName = requestDescendantParameterName;
         this.informativeId = informativeId;
+        this.withRequestableDescendants = withRequestableDescendants;
     }
 
     public Class<T> getCondValueType() {
@@ -267,15 +272,21 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
     public String getRequestFilterParameterName() {
         return requestFilterParameterName;
     }
+    public String getRequestDescendantParameterName() {
+        return requestDescendantParameterName;
+    }
     public boolean isInformativeId() {
         return informativeId;
     }
+    public boolean isWithRequestableDescendants() {
+        return withRequestableDescendants;
+    }
+
+
     @Override
     public String toString() {
         return this.getAttributeName();
     }
-
-
 
     //****************************
     //No need for hashCode/equals, there will be only one instance of each of these classes,

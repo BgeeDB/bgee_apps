@@ -53,6 +53,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
@@ -992,7 +993,8 @@ public class CommandTopAnat extends CommandParent {
     
         // Dev. stages can be null if all selected species stages should be used
         final List<String> subDevStages = Collections.unmodifiableList(Optional.ofNullable(
-                this.requestParameters.getDevStage()).orElse(new ArrayList<>()));
+                this.requestParameters.getCondParamIds(ConditionParameter.DEV_STAGE))
+                .orElse(new ArrayList<>()));
         Set<String> devStageIds = null; 
         if (!subDevStages.isEmpty()) {
             devStageIds = new HashSet<>(subDevStages);

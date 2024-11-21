@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -16,7 +18,6 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandRPackage.PropagationParam;
-import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
@@ -24,7 +25,6 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 
 /**
  * This class is designed to declare and provide all {@code Parameter<T>} that
@@ -345,38 +345,45 @@ public class URLParameters {
                 .map(e -> e.name())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
-    /**
-     * A {@code Parameter<String>} that contains the developmental stages to be used.
-     * Corresponds to the URL parameter "stage_id".
-     */
-    private static final Parameter<String> DEV_STAGE = new Parameter<String>(
-            ConditionParameter.DEV_STAGE.getRequestParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-    /**
-     * A {@code Parameter<String>} that contains the developmental stages to be used in a filter.
-     * Corresponds to the URL parameter "filter_stage_id".
-     */
-    private static final Parameter<String> FILTER_DEV_STAGE = new Parameter<String>(
-            ConditionParameter.DEV_STAGE.getRequestFilterParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE,
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-    /**
-     * A {@code Parameter<String>} that contains the anatomical entities to be used.
-     * Corresponds to the URL parameter "anat_entity_id".
-     */
-    private static final Parameter<String> ANAT_ENTITY = new Parameter<>(
-            ConditionParameter.ANAT_ENTITY.getRequestParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE,
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-    /**
-     * A {@code Parameter<String>} that contains the anatomical entities to be used in a filter.
-     * Corresponds to the URL parameter "filter_anat_entity_id".
-     */
-    private static final Parameter<String> FILTER_ANAT_ENTITY = new Parameter<String>(
-            ConditionParameter.ANAT_ENTITY.getRequestFilterParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE,
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+
+    //named like this in case we need a different map for RawDataCondition,
+    //e.g., COND_PARAM_TO_RAW_DATA_COND_URL_PARAM.
+    //LinkedHashMap to keep the order of the parameters.
+    private static final Map<ConditionParameter<?, ?>, Parameter<String>> COND_PARAM_TO_COND_URL_PARAM =
+            Collections.unmodifiableMap(ConditionParameter.allOf().stream()
+            .collect(Collectors.toMap(
+                    cp -> cp,
+                    cp -> new Parameter<String>(
+                            cp.getRequestParameterName(),
+                            //We could maybe have better granularity of these attributes
+                            //managed in ConditionParameter class?
+                            true, false, null, true, DEFAULT_IS_SECURE,
+                            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class),
+                    (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));},
+                    () -> new LinkedHashMap<>())));
+    private static final Map<ConditionParameter<?, ?>, Parameter<String>> COND_PARAM_TO_FILTER_COND_URL_PARAM =
+            Collections.unmodifiableMap(ConditionParameter.allOf().stream()
+            .collect(Collectors.toMap(
+                    cp -> cp,
+                    cp -> new Parameter<String>(
+                            cp.getRequestFilterParameterName(),
+                            //We could maybe have better granularity of these attributes
+                            //managed in ConditionParameter class?
+                            true, false, null, true, DEFAULT_IS_SECURE,
+                            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class),
+                    (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));},
+                    () -> new LinkedHashMap<>())));
+    private static final Map<ConditionParameter<?, ?>, Parameter<Boolean>> COND_PARAM_TO_DESCENDANT_URL_PARAM =
+            Collections.unmodifiableMap(ConditionParameter.allOf().stream()
+            .filter(cp -> cp.isWithRequestableDescendants())
+            .collect(Collectors.toMap(
+                    cp -> cp,
+                    cp -> new Parameter<Boolean>(cp.getRequestDescendantParameterName(),
+                            false, false, null, true, false, 5,
+                            DEFAULT_FORMAT, Boolean.class),
+                    (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));},
+                    () -> new LinkedHashMap<>())));
+
     /**
      * A {@code Parameter<String>} that contains the anatomical entities to discard including their children.
      * Corresponds to the URL parameter "discard_anat_entity_and_children_id".
@@ -385,77 +392,7 @@ public class URLParameters {
             "discard_anat_entity_and_children_id",
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-    /**
-     * A {@code Parameter<String>} that contains the cell type IDs to be used.
-     * Cell types are also anatomical entities (see {@link #ANAT_ENTITY}),
-     * and can be requested as such, but it is sometimes important to make the distinction.
-     * Corresponds to the URL parameter "cell_type_id".
-     */
-    private static final Parameter<String> CELL_TYPE = new Parameter<>(
-            ConditionParameter.CELL_TYPE.getRequestParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE,
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-    /**
-     * A {@code Parameter<String>} that contains the cell type IDs to be used in a filter.
-     * Cell types are also anatomical entities (see {@link #ANAT_ENTITY}),
-     * and can be requested as such, but it is sometimes important to make the distinction.
-     * Corresponds to the URL parameter "filter_cell_type_id".
-     */
-    private static final Parameter<String> FILTER_CELL_TYPE = new Parameter<String>(
-            ConditionParameter.CELL_TYPE.getRequestFilterParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE,
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-    /**
-     * A {@code Parameter<String>} that contains the sexes requested.
-     * Corresponds to the URL parameter "sex".
-     */
-    private static final Parameter<String> SEX = new Parameter<String>(
-            ConditionParameter.SEX.getRequestParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE,
-            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(SexEnum.class).stream()
-                    .map(e -> e.name().length())
-                    .max(Comparator.naturalOrder()).get()),
-            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(SexEnum.class).stream()
-                .map(e -> e.name())
-                .collect(Collectors.joining("|")) + ")",
-            String.class);
-    /**
-     * A {@code Parameter<String>} that contains the sexes to be used in a filter.
-     * Corresponds to the URL parameter "filter_sex". As opposed to {@link #SEX},
-     * raw data sexes can be provided in this filter, not only global condition sexes.
-     */
-    private static final Parameter<String> FILTER_SEX = new Parameter<String>(
-            ConditionParameter.SEX.getRequestFilterParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE,
-            Math.max(RequestParameters.ALL_VALUE.length(),
-                    Stream.concat(EnumSet.allOf(RawDataSex.class).stream(),
-                            EnumSet.allOf(SexEnum.class).stream())
-                    .distinct()
-                    .map(e -> e.name().length())
-                    .max(Comparator.naturalOrder()).get()),
-            "(?i:" + RequestParameters.ALL_VALUE + "|" +
-                    Stream.concat(EnumSet.allOf(RawDataSex.class).stream(),
-                            EnumSet.allOf(SexEnum.class).stream())
-                    .distinct()
-                    .map(e -> e.name())
-                    .collect(Collectors.joining("|")) + ")",
-            String.class);
-    /**
-     * A {@code Parameter<String>} that contains the strains requested.
-     * Corresponds to the URL parameter "strain".
-     */
-    private static final Parameter<String> STRAIN = new Parameter<>(
-            ConditionParameter.STRAIN.getRequestParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE,
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-    /**
-     * A {@code Parameter<String>} that contains the strains requested to be used in a filter.
-     * Corresponds to the URL parameter "filter_strain".
-     */
-    private static final Parameter<String> FILTER_STRAIN = new Parameter<>(
-            ConditionParameter.STRAIN.getRequestFilterParameterName(),
-            true, false, null, true, DEFAULT_IS_SECURE,
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+
 
 //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of
@@ -487,28 +424,6 @@ public class URLParameters {
 //            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 //
 
-    /**
-     * A {@code Parameter<Boolean>} used to define whether to include substages
-     * of developmental stages. Corresponds to the URL parameter "stage_descendant".
-     */
-    private static final Parameter<Boolean> STAGE_DESCENDANT = new Parameter<Boolean>(
-            "stage_descendant", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
-
-    /**
-     * A {@code Parameter<Boolean>} used to define whether to include descendants
-     * of anatomical entities. Corresponds to the URL parameter "anat_entity_descendant".
-     */
-    private static final Parameter<Boolean> ANAT_ENTITY_DESCENDANT = new Parameter<Boolean>(
-            "anat_entity_descendant", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
-
-    /**
-     * A {@code Parameter<Boolean>} used to define whether to include descendants
-     * of cell types. Cell types are also anatomical entities (see {@link #ANAT_ENTITY_DESCENDANT},
-     * and can be requested as such, but in some cases it is important to make the distinction.
-     * Corresponds to the URL parameter "cell_type_descendant".
-     */
-    private static final Parameter<Boolean> CELL_TYPE_DESCENDANT = new Parameter<Boolean>(
-            "cell_type_descendant", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
     /**
      * A {@code Parameter<Boolean>} defining whether to retrieve observed expression calls only.
      * Corresponds to the URL parameter "observed_data".
@@ -774,81 +689,85 @@ public class URLParameters {
      * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
      * in the order they will appear in the URL
      */
-    private final List<Parameter<?>> list = Arrays.<Parameter<?>>asList(
-            PAGE,
-            ACTION,
-            GENE_ID,
-            SPECIES_ID,
-            FILTER_SPECIES_ID,
-            QUERY,
-            COND_PARAM,
-            COND_PARAM2,
-            // Species request
-            SPECIES_LIST,
-            // Anat. similarity analyze params
-            ANAT_ENTITY_LIST,
-            // propagated ontology terms request
-            PROPAGATION,
-            // Expression comparison request
-            GENE_LIST,
-            // TopAnat analyze params
-            FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
-            EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DECORRELATION_TYPE,
-            NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
-            GENE_INFO, 
-            //ID to identify a specific analysis
-            ANALYSIS_ID, 
-            //DAO as webservice
-            ATTRIBUTE_LIST,
-
-            ANAT_ENTITY,
-            FILTER_ANAT_ENTITY,
-            DISCARD_ANAT_ENTITY_ID,
-            CELL_TYPE,
-            FILTER_CELL_TYPE,
-            DEV_STAGE,
-            FILTER_DEV_STAGE,
-            SEX,
-            FILTER_SEX,
-            STRAIN,
-            FILTER_STRAIN,
-            ANAT_ENTITY_DESCENDANT,
-            CELL_TYPE_DESCENDANT,
-            STAGE_DESCENDANT,
-            OBSERVED_DATA,
-            EXCLUDE_NON_INFORMATIVE,
-            ONLY_PROPAGATED,
-            EXP_ASSAY_ID,
-            EXPERIMENT_ID,
-            FILTER_EXPERIMENT_ID,
-            FILTER_ASSAY_ID,
-            GET_SPECIES_LIST,
-            GET_RESULTS,
-            GET_RESULT_COUNT,
-            GET_COLUMN_DEFINITION,
-            GET_FILTERS,
-            OFFSET,
-            LIMIT,
-//            ALL_ORGANS,
-//            CHOSEN_DATA_TYPE,
-//            EMAIL,
-//            STAGE_CHILDREN,
-            // Job params
-            JOB_TITLE, JOB_ID, EMAIL, JOB_CREATION_DATE, 
-            DISPLAY_TYPE,
-            DATA, 
-            //webservice parameter
-            API_KEY, 
-            DISPLAY_REQUEST_PARAMS,
-            DETAILED_REQUEST_PARAMS,
-            AJAX,
-            POST_FORM_SUBMIT
-    );
+    private final List<Parameter<?>> list;
 
     /**
      * Default constructor
      */
-    public URLParameters(){}
+    public URLParameters(){
+        List<Parameter<?>> list = new ArrayList<>();
+        list.add(PAGE);
+        list.add(ACTION);
+        list.add(GENE_ID);
+        list.add(SPECIES_ID);
+        list.add(FILTER_SPECIES_ID);
+        list.add(QUERY);
+        list.add(COND_PARAM);
+        list.add(COND_PARAM2);
+        // Species request
+        list.add(SPECIES_LIST);
+
+        list.addAll(COND_PARAM_TO_COND_URL_PARAM.values());
+        list.addAll(COND_PARAM_TO_FILTER_COND_URL_PARAM.values());
+        list.addAll(COND_PARAM_TO_DESCENDANT_URL_PARAM.values());
+
+        // Anat. similarity analyze params
+        list.add(ANAT_ENTITY_LIST);
+        // propagated ontology terms request
+        list.add(PROPAGATION);
+        // Expression comparison request
+        list.add(GENE_LIST);
+        // TopAnat analyze params
+        list.add(FOREGROUND_LIST);
+        list.add(FOREGROUND_FILE);
+        list.add(BACKGROUND_LIST);
+        list.add(BACKGROUND_FILE);
+        list.add(EXPRESSION_TYPE);
+        list.add(SUMMARY_QUALITY);
+        list.add(DATA_TYPE);
+        list.add(DECORRELATION_TYPE);
+        list.add(NODE_SIZE);
+        list.add(FDR_THRESHOLD);
+        list.add(P_VALUE_THRESHOLD);
+        list.add(NB_NODE);
+        list.add(GENE_INFO);
+        //ID to identify a specific analysis
+        list.add(ANALYSIS_ID);
+        //DAO as webservice
+        list.add(ATTRIBUTE_LIST);
+
+        list.add(DISCARD_ANAT_ENTITY_ID);
+        list.add(OBSERVED_DATA);
+        list.add(EXCLUDE_NON_INFORMATIVE);
+        list.add(ONLY_PROPAGATED);
+        list.add(EXP_ASSAY_ID);
+        list.add(EXPERIMENT_ID);
+        list.add(FILTER_EXPERIMENT_ID);
+        list.add(FILTER_ASSAY_ID);
+        list.add(GET_SPECIES_LIST);
+        list.add(GET_RESULTS);
+        list.add(GET_RESULT_COUNT);
+        list.add(GET_COLUMN_DEFINITION);
+        list.add(GET_FILTERS);
+        list.add(OFFSET);
+        list.add(LIMIT);
+
+        // Job params
+        list.add(JOB_TITLE);
+        list.add(JOB_ID);
+        list.add(EMAIL);
+        list.add(JOB_CREATION_DATE);
+        list.add(DISPLAY_TYPE);
+        list.add(DATA);
+        //webservice parameter
+        list.add(API_KEY);
+        list.add(DISPLAY_REQUEST_PARAMS);
+        list.add(DETAILED_REQUEST_PARAMS);
+        list.add(AJAX);
+        list.add(POST_FORM_SUBMIT);
+
+        this.list = Collections.unmodifiableList(list);
+    }
 
     /**
      * @return A {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
@@ -1042,34 +961,17 @@ public class URLParameters {
     public Parameter<String> getParamDataType() {
         return DATA_TYPE;
     }
-    /**
-     * @return  A {@code Parameter<String>} defining a developmental stage.
-     *          Corresponds to the URL parameter "stage_id".
-     */
-    public Parameter<String> getParamDevStage() {
-        return DEV_STAGE;
+
+    public Parameter<String> getCondParamToCondURLParam(ConditionParameter<?, ?> condParam) {
+        return COND_PARAM_TO_COND_URL_PARAM.get(condParam);
     }
-    /**
-     * @return  A {@code Parameter<String>} defining a developmental stage used in a filter.
-     *          Corresponds to the URL parameter "filter_stage_id".
-     */
-    public Parameter<String> getParamFilterDevStage() {
-        return FILTER_DEV_STAGE;
+    public Parameter<String> getCondParamToFilterCondURLParam(ConditionParameter<?, ?> condParam) {
+        return COND_PARAM_TO_FILTER_COND_URL_PARAM.get(condParam);
     }
-    /**
-     * @return  A {@code Parameter<String>} defining an anatomical entity ID.
-     * Corresponds to the URL parameter "anat_entity_id".
-     */
-    public Parameter<String> getParamAnatEntity() {
-        return ANAT_ENTITY;
+    public Parameter<Boolean> getCondParamToDescendantURLParam(ConditionParameter<?, ?> condParam) {
+        return COND_PARAM_TO_DESCENDANT_URL_PARAM.get(condParam);
     }
-    /**
-     * @return  A {@code Parameter<String>} defining an anatomical entity ID used in a filter.
-     * Corresponds to the URL parameter "filter_anat_entity_id".
-     */
-    public Parameter<String> getParamFilterAnatEntity() {
-        return FILTER_ANAT_ENTITY;
-    }
+
     /**
      * @return  A {@code Parameter<String>} defining IDs of anatomical entities to discard,
      *          including their children.
@@ -1078,75 +980,7 @@ public class URLParameters {
     public Parameter<String> getParamDiscardAnatEntity() {
         return DISCARD_ANAT_ENTITY_ID;
     }
-    /**
-     * @return  A {@code Parameter<String>} defining a cell type ID.
-     * Corresponds to the URL parameter "cell_type_id".
-     */
-    public Parameter<String> getParamCellType() {
-        return CELL_TYPE;
-    }
-    /**
-     * @return  A {@code Parameter<String>} defining a cell type ID used in a filter.
-     * Corresponds to the URL parameter "filter_cell_type_id".
-     */
-    public Parameter<String> getParamFilterCellType() {
-        return FILTER_CELL_TYPE;
-    }
-    /**
-     * @return  A {@code Parameter<String>} that contains the sexes requested.
-     *          Corresponds to the URL parameter "sex".
-     */
-    public Parameter<String> getParamSex() {
-        return SEX;
-    }
-    /**
-     * @return  A {@code Parameter<String>} that contains the sexes requested in a filter.
-     *          Corresponds to the URL parameter "filter_sex".
-     */
-    public Parameter<String> getParamFilterSex() {
-        return FILTER_SEX;
-    }
-    /**
-     * @return  A {@code Parameter<String>} that contains the strains requested.
-     *          Corresponds to the URL parameter "strain".
-     */
-    public Parameter<String> getParamStrain() {
-        return STRAIN;
-    }
-    /**
-     * @return  A {@code Parameter<String>} that contains the strains requested in a filter.
-     *          Corresponds to the URL parameter "filter_strain".
-     */
-    public Parameter<String> getParamFilterStrain() {
-        return FILTER_STRAIN;
-    }
 
-    /**
-     * @return  A {@code Parameter<Boolean>} used to define whether to include substages
-     *          of developmental stages. Corresponds to the URL parameter "stage_descendant".
-     */
-    public Parameter<Boolean> getParamStageDescendant(){
-        return STAGE_DESCENDANT;
-    }
-
-    /**
-     * @return  A {@code Parameter<Boolean>} used to define whether to include descendants
-     *          of anatomical entities. Corresponds to the URL parameter "anat_entity_descendant".
-     */
-    public Parameter<Boolean> getParamAnatEntityDescendant(){
-        return ANAT_ENTITY_DESCENDANT;
-    }
-
-    /**
-     * Cell types are also anatomical entities (see {@link #ANAT_ENTITY_DESCENDANT},
-     * and can be requested as such, but in some cases it is important to make the distinction.
-     *
-     * @return  A {@code Parameter<Boolean>} used to define whether to include descendants
-     *          of cell types. Corresponds to the URL parameter "cell_type_descendant".
-     */
-    public Parameter<Boolean> getParamCellTypeDescendant(){
-        return CELL_TYPE_DESCENDANT;
-    }
     /**
      * @return  A {@code Parameter<Boolean>} defining whether to retrieve observed expression calls only.
      *          Corresponds to the URL parameter "observed_data".

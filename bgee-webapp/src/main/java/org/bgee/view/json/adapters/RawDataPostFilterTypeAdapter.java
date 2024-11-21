@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.URLParameters;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
@@ -43,38 +44,44 @@ public class RawDataPostFilterTypeAdapter extends PostFilterTypeAdapter<RawDataP
                     value.getSpecies());
         }
 
+        //TODO: to rewrite with generalized ConditionParameters when we also generalize RawDataPostFilter etc
         if (!value.getAnatEntities().isEmpty()) {
             out.name("anatEntities");
-            this.writePostFilterNamedEntityParameter(out, "Anatomical entities",
-                    this.urlParameters.getParamFilterAnatEntity().getName(),
+            this.writePostFilterNamedEntityParameter(out,
+                    ConditionParameter.ANAT_ENTITY.getDisplayName(),
+                    this.urlParameters.getCondParamToFilterCondURLParam(ConditionParameter.ANAT_ENTITY).getName(),
                     value.getAnatEntities());
         }
 
         if (!value.getCellTypes().isEmpty()) {
             out.name("cellTypes");
-            this.writePostFilterNamedEntityParameter(out, "Cell types",
-                    this.urlParameters.getParamFilterCellType().getName(),
+            this.writePostFilterNamedEntityParameter(out,
+                    ConditionParameter.CELL_TYPE.getDisplayName(),
+                    this.urlParameters.getCondParamToFilterCondURLParam(ConditionParameter.CELL_TYPE).getName(),
                     value.getCellTypes());
         }
 
         if (!value.getDevStages().isEmpty()) {
             out.name("devStages");
-            this.writePostFilterNamedEntityParameter(out, "Developmental and life stages",
-                    this.urlParameters.getParamFilterDevStage().getName(),
+            this.writePostFilterNamedEntityParameter(out,
+                    ConditionParameter.DEV_STAGE.getDisplayName(),
+                    this.urlParameters.getCondParamToFilterCondURLParam(ConditionParameter.DEV_STAGE).getName(),
                     value.getDevStages());
         }
 
         if (!value.getSexes().isEmpty()) {
             out.name("sexes");
-            this.writePostFilterEnumParameter(out, "Sexes",
-                    this.urlParameters.getParamFilterSex().getName(),
+            this.writePostFilterEnumParameter(out,
+                    ConditionParameter.SEX.getDisplayName(),
+                    this.urlParameters.getCondParamToFilterCondURLParam(ConditionParameter.SEX).getName(),
                     value.getSexes());
         }
 
         if (!value.getStrains().isEmpty()) {
             out.name("strains");
-            this.writePostFilterStringParameter(out, "Strains",
-                    this.urlParameters.getParamFilterStrain().getName(),
+            this.writePostFilterStringParameter(out,
+                    ConditionParameter.STRAIN.getDisplayName(),
+                    this.urlParameters.getCondParamToFilterCondURLParam(ConditionParameter.STRAIN).getName(),
                     value.getStrains());
         }
 

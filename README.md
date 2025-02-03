@@ -3,7 +3,7 @@
 [![Bluesky](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpublic.api.bsky.app%2Fxrpc%2Fapp.bsky.actor.getProfile%2F%3Factor%3Dbgee.org&query=%24.followersCount&style=social&logo=bluesky&label=Follow%20%40bgee.org)](https://bsky.app/profile/bgee.org)
 [![Mastodon](https://img.shields.io/mastodon/follow/109308703977124988?style=social&label=Follow%20%40bgeedb&domain=https%3A%2F%2Fgenomic.social)](https://genomic.social/%40bgeedb)
 
-# Bgee application source code of Bgee release 16.0
+# Bgee application source code of Bgee release 15.2
 
 1. [Directory structure](#directory-structure)
 2. [To do for each release of Bgee](#to-do-for-each-release-of-bgee)

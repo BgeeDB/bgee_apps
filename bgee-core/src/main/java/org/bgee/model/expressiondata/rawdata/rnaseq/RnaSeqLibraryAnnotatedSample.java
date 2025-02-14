@@ -50,12 +50,11 @@ public class RnaSeqLibraryAnnotatedSample
         return barcode;
     }
 
-    //For now we consider an annotated sample library to be unique for one libraryId
-    //with same condition
     @Override
     public int hashCode() {
-        return Objects.hash(annotation == null? null: annotation.getRawDataCondition(), library);
+        return Objects.hash(annotation, barcode, library, pipelineSummary);
     }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -65,10 +64,8 @@ public class RnaSeqLibraryAnnotatedSample
         if (getClass() != obj.getClass())
             return false;
         RnaSeqLibraryAnnotatedSample other = (RnaSeqLibraryAnnotatedSample) obj;
-        return Objects.equals(
-                       annotation == null? null: annotation.getRawDataCondition(),
-                       other.annotation == null? null: other.annotation.getRawDataCondition())
-               && Objects.equals(library, other.library);
+        return Objects.equals(annotation, other.annotation) && Objects.equals(barcode, other.barcode)
+                && Objects.equals(library, other.library) && Objects.equals(pipelineSummary, other.pipelineSummary);
     }
 
     @Override

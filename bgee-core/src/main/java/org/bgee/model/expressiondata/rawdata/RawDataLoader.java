@@ -895,7 +895,7 @@ public class RawDataLoader extends CommonService {
                                   to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
                                   this.downloadFileService.loadExperimentDownloadFiles(to.getId(),
                                           isSingleCell? DataType.SC_RNA_SEQ: DataType.RNA_SEQ),
-                                  0, to.isTargetBase()),
+                                  0, to.isTargetBase(), to.getNumberOfAnnotatedCells()),
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));
 

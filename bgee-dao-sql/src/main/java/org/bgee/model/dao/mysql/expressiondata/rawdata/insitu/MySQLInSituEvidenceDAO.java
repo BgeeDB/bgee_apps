@@ -92,7 +92,12 @@ implements InSituEvidenceDAO{
                 processedFilters, null, Set.of(TABLE_NAME), DAODataType.IN_SITU);
 
         // generate WHERE CLAUSE
-        if (!processedFilters.getRawDataFilters().isEmpty()) {
+        // usedInPropagatedCalls is not used to generate insitu queries. If usedInPropagatedCalls is the only
+        // rawDataFilter not empty the query will not contain any where clause. That's why we check
+        // that any rawDataFilter variable except usedInPropagatedCalls is not empty.
+        boolean requireWhereClause = rawDataFilters.stream()
+                .allMatch(item -> item.usedInPropagatedCallsIsTheOnlyPotentialNotBlank()) ? false : true;
+        if(requireWhereClause) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
                     filtersToDatabaseMapping));
         }

@@ -149,6 +149,15 @@ public class DAORawDataFilter extends DAODataFilter2 {
         }
     }
 
+    public boolean usedInPropagatedCallsIsTheOnlyPotentialNotBlank() {
+        return (this.getAssayIds() == null || this.getAssayIds().isEmpty()) &&
+                (this.getConditionIds() == null || this.getConditionIds().isEmpty()) &&
+                (this.getExperimentIds() == null || this.getExperimentIds().isEmpty()) &&
+                (this.getExprOrAssayIds() == null || this.getExprOrAssayIds().isEmpty()) &&
+                (this.getGeneIds() == null || this.getGeneIds().isEmpty()) &&
+                (this.getSpeciesIds() == null || this.getSpeciesIds().isEmpty());
+    }
+
     /**
      * @return The {@code Set} of {@code String} corresponding to the experimentIds for which raw
      * data has to be retrieved in the selected species. If null, all experiments are retrieved.

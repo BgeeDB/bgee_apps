@@ -142,8 +142,17 @@ implements RawDataConditionDAO {
                 Set.of(TABLE_NAME), dataType);
 
         // generate WHERE
+        // usedInPropagatedCalls is only used to generate queries for datatypes that are not always propagated.
+        // If usedInPropagatedCalls is the only rawDataFilter not empty, the query should not contain any where
+        // clause for datatypes that are always propagated. For such datatypes checking that rawDataFilters is null or empty
+        // is not enough. That's why we check that any rawDataFilter except usedInPropagatedCalls is not empty for all datatypes
+        // that are always propagated.
+        boolean onlyUsedInPropagatedCalls = processedFilters.getRawDataFilters().stream()
+                .allMatch(item -> item.usedInPropagatedCallsIsTheOnlyPotentialNotBlank());
         sb.append(" WHERE ");
-        if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
+        if ( !processedFilters.getRawDataFilters().isEmpty() && !dataType.isAlwaysPropagated() ||
+                !onlyUsedInPropagatedCalls && dataType.isAlwaysPropagated() ||
+                isSingleCell != null) {
             sb.append("(")
               .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping,
                       isSingleCell))

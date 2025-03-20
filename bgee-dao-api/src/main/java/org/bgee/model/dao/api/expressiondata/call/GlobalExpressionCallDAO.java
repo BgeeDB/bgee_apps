@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO.RawExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.call.RawExpressionCallDAO.ExpressionCallTO;
 
 /**
  * DAO defining queries using or retrieving {@link GlobalExpressionCallTO}s, 
@@ -609,7 +609,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * @version Bgee 15.0, Apr. 2021
      * @since   Bgee 14, Feb. 2017
      */
-    public static class GlobalExpressionCallTO extends RawExpressionCallTO {
+    public static class GlobalExpressionCallTO extends ExpressionCallTO {
 
         private static final long serialVersionUID = -1057540315343857464L;
         

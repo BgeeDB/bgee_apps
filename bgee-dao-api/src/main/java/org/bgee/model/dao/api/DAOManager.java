@@ -27,8 +27,8 @@ import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.call.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
@@ -1069,12 +1069,12 @@ public abstract class DAOManager implements AutoCloseable
         return log.traceExit(this.getNewSexDAO());
     }
     /**
-     * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO}, 
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.call.RawExpressionCallDAO RawExpressionCallDAO},
      * unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code RawExpressionCallDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.call.RawExpressionCallDAO RawExpressionCallDAO
      */
     public RawExpressionCallDAO getRawExpressionCallDAO() {
         log.traceEntry();
@@ -1685,7 +1685,7 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract SexDAO getNewSexDAO();
     /**
      * Service provider must return a new 
-     * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO} 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.call.RawExpressionCallDAO RawExpressionCallDAO}
      * instance when this method is called. 
      * 
      * @return  A new {@code RawExpressionCallDAO}

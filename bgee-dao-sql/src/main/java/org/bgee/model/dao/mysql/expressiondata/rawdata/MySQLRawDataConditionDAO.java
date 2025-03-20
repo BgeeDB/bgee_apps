@@ -9,7 +9,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -268,100 +267,6 @@ implements RawDataConditionDAO {
                 throw log.throwing(new DAOException(e));
             }
         }
-    }
-    
-    protected static int configureRawDataConditionFiltersStmt(BgeePreparedStatement stmt,
-            Collection<DAORawDataConditionFilter> conditionFilters, int paramIndex)
-                    throws SQLException {
-        log.traceEntry("{}, {}, {}", stmt, conditionFilters, paramIndex);
-
-        if (conditionFilters == null) {
-            throw log.throwing(new IllegalArgumentException("conditionFilters can not be null"));
-        }
-        int offsetParamIndex = paramIndex;
-        for (DAORawDataConditionFilter condFilter: conditionFilters) {
-
-            offsetParamIndex = parameterizeAnatEntityCellTypeWhereFragment(
-                    condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(), null,
-                    stmt, offsetParamIndex);
-
-            if (!condFilter.getSpeciesIds().isEmpty()) {
-                stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);
-                offsetParamIndex += condFilter.getSpeciesIds().size();
-            }
-            if (!condFilter.getDevStageIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
-                offsetParamIndex += condFilter.getDevStageIds().size();
-            }
-            if (!condFilter.getSexIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getSexIds(), true);
-                offsetParamIndex += condFilter.getSexIds().size();
-            }
-            if (!condFilter.getStrainIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getStrainIds(), true);
-                offsetParamIndex += condFilter.getStrainIds().size();
-            }
-        }
-        return log.traceExit(offsetParamIndex);
-    }
-
-    private String generateOneConditionFilter(DAORawDataConditionFilter condFilter) {
-        log.traceEntry("{}", condFilter);
-        StringBuilder sb = new StringBuilder();
-        if(condFilter == null) {
-            throw log.throwing(new IllegalArgumentException("condFilter can not be null"));
-        }
-
-        boolean previousCond = false;
-
-        String anatEntityCellTypeWhereClause = generateAnatEntityCellTypeWhereFragment(
-                condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(), null,
-                MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO.Attribute.ANAT_ENTITY_ID.getTOFieldName(),
-                MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO.Attribute.CELL_TYPE_ID.getTOFieldName());
-        if (StringUtils.isNotBlank(anatEntityCellTypeWhereClause)) {
-            previousCond = true;
-            sb.append(anatEntityCellTypeWhereClause);
-        }
-
-        if (!condFilter.getSpeciesIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.SPECIES_ID,
-                    condFilter.getSpeciesIds(), previousCond));
-            previousCond = true;
-        }
-        if (!condFilter.getDevStageIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.STAGE_ID,
-                    condFilter.getDevStageIds(), previousCond));
-            previousCond = true;
-        }
-        if (!condFilter.getSexIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.SEX,
-                    condFilter.getSexIds(), previousCond));
-            previousCond = true;
-        }
-        if (!condFilter.getStrainIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.STRAIN,
-                    condFilter.getStrainIds(), previousCond));
-            previousCond = true;
-        }
-        return log.traceExit(sb.toString());
-    }
-
-    private String generateOneConditionParameterWhereClause(RawDataConditionDAO.Attribute attr,
-            Set<?> condValues, boolean previousFilter) {
-        log.traceEntry("{}, {}, {}", attr, condValues, previousFilter);
-        StringBuffer sb = new StringBuffer();
-        if(previousFilter) {
-            sb.append(" AND ");
-        }
-        sb.append(MySQLRawDataConditionDAO.TABLE_NAME).append(".")
-        .append(attr.getTOFieldName()).append(" IN (")
-        .append(BgeePreparedStatement.generateParameterizedQueryString(condValues.size()))
-        .append(")");
-        return log.traceExit(sb.toString());
     }
 
 }

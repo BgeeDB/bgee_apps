@@ -2,6 +2,7 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata;
 
 import java.sql.SQLException;
 import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -14,11 +15,13 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
@@ -1335,6 +1338,100 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(whereClause);
     }
 
+    protected static String generateOneConditionFilter(DAORawDataConditionFilter condFilter) {
+        log.traceEntry("{}", condFilter);
+        StringBuilder sb = new StringBuilder();
+        if(condFilter == null) {
+            throw log.throwing(new IllegalArgumentException("condFilter can not be null"));
+        }
+
+        boolean previousCond = false;
+
+        String anatEntityCellTypeWhereClause = generateAnatEntityCellTypeWhereFragment(
+                condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(), null,
+                MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO.Attribute.ANAT_ENTITY_ID.getTOFieldName(),
+                MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO.Attribute.CELL_TYPE_ID.getTOFieldName());
+        if (StringUtils.isNotBlank(anatEntityCellTypeWhereClause)) {
+            previousCond = true;
+            sb.append(anatEntityCellTypeWhereClause);
+        }
+
+        if (!condFilter.getSpeciesIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.SPECIES_ID,
+                    condFilter.getSpeciesIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getDevStageIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.STAGE_ID,
+                    condFilter.getDevStageIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getSexIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.SEX,
+                    condFilter.getSexIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getStrainIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.STRAIN,
+                    condFilter.getStrainIds(), previousCond));
+            previousCond = true;
+        }
+        return log.traceExit(sb.toString());
+    }
+
+    private static String generateOneConditionParameterWhereClause(RawDataConditionDAO.Attribute attr,
+            Set<?> condValues, boolean previousFilter) {
+        log.traceEntry("{}, {}, {}", attr, condValues, previousFilter);
+        StringBuffer sb = new StringBuffer();
+        if(previousFilter) {
+            sb.append(" AND ");
+        }
+        sb.append(MySQLRawDataConditionDAO.TABLE_NAME).append(".")
+        .append(attr.getTOFieldName()).append(" IN (")
+        .append(BgeePreparedStatement.generateParameterizedQueryString(condValues.size()))
+        .append(")");
+        return log.traceExit(sb.toString());
+    }
+
+    protected static int configureRawDataConditionFiltersStmt(BgeePreparedStatement stmt,
+            Collection<DAORawDataConditionFilter> conditionFilters, int paramIndex)
+                    throws SQLException {
+        log.traceEntry("{}, {}, {}", stmt, conditionFilters, paramIndex);
+
+        if (conditionFilters == null) {
+            throw log.throwing(new IllegalArgumentException("conditionFilters can not be null"));
+        }
+        int offsetParamIndex = paramIndex;
+        for (DAORawDataConditionFilter condFilter: conditionFilters) {
+
+            offsetParamIndex = parameterizeAnatEntityCellTypeWhereFragment(
+                    condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(), null,
+                    stmt, offsetParamIndex);
+
+            if (!condFilter.getSpeciesIds().isEmpty()) {
+                stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);
+                offsetParamIndex += condFilter.getSpeciesIds().size();
+            }
+            if (!condFilter.getDevStageIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
+                offsetParamIndex += condFilter.getDevStageIds().size();
+            }
+            if (!condFilter.getSexIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getSexIds(), true);
+                offsetParamIndex += condFilter.getSexIds().size();
+            }
+            if (!condFilter.getStrainIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getStrainIds(), true);
+                offsetParamIndex += condFilter.getStrainIds().size();
+            }
+        }
+        return log.traceExit(offsetParamIndex);
+    }
+
     private <U extends Comparable<U>> String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter,
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping, Set<U> callTableAssayIds,
             Boolean isSingleCell) {
@@ -1588,7 +1685,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 .collect(Collectors.toMap(a -> a.getTOFieldName(), a -> a)));
     }
 
-    protected void checkOffsetAndLimit(Long offset, Integer limit) {
+    protected static void checkOffsetAndLimit(Long offset, Integer limit) {
         log.traceEntry("{}, {}", offset, limit);
         if (offset != null && limit == null) {
             throw log.throwing(new IllegalArgumentException("limit can not be null when offset is"

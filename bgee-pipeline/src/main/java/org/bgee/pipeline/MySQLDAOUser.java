@@ -15,8 +15,8 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotation
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLDiffExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.call.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;

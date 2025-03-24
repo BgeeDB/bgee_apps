@@ -41,20 +41,8 @@ public class MySQLRawExpressionCallDAO extends MySQLRawDataDAO<RawExpressionCall
     
     private final static Logger log = LogManager.getLogger(MySQLRawExpressionCallDAO.class.getName());
 
+    //TODO: the name of that table is temporary. Do not forget to update it while moving to Bgee 16
     public final static String TABLE_NAME = "expression_otf";
-//    private final static Map<String, RawExpressionCallDAO.Attribute> colToAttrMap;
-
-//    static {
-//        log.traceEntry();
-//        Map<String, RawExpressionCallDAO.Attribute> colToAttributesMap = new HashMap<>();
-//        colToAttributesMap.put(EXPR_ID_FIELD, RawExpressionCallDAO.Attribute.EXPRESSION_ID);
-//        colToAttributesMap.put(MySQLGeneDAO.BGEE_GENE_ID, RawExpressionCallDAO.Attribute.BGEE_GENE_ID);
-//        colToAttributesMap.put(MySQLConditionDAO.RAW_COND_ID_FIELD,
-//                RawExpressionCallDAO.Attribute.CONDITION_ID);
-// 
-//        colToAttrMap = Collections.unmodifiableMap(colToAttributesMap);
-//        log.traceExit();
-//    }
 
     public MySQLRawExpressionCallDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);

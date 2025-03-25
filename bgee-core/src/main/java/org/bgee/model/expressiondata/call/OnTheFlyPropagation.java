@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +18,12 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.call.DAORawCallFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.call.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.RawDataFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataLoader;
@@ -53,7 +59,58 @@ public class OnTheFlyPropagation extends CommonService {
         RawDataService rawDataService = this.getServiceFactory().getRawDataService();
         GeneService geneService = this.getServiceFactory().getGeneService();
         ConditionGraphService condGraphService = this.getServiceFactory().getConditionGraphService();
-        
+
+        // test new approach of raw data expression calls retrieval. Scores, weight and pValues are stored in the expression table
+
+        // init filters
+        // same genes than
+        Set<Integer> bgeeGeneIds = Set.of(862430,862431,862432,862433,862434,862435,862436,862437,862438,862439,862440,862441,862442,
+                862443,862444,862445,862446,862447,862448,862449,862450,862451,862452,862453,862454,862455,862456,862457,862458,862659,
+                862767,862881,863284,863705,863939,864175,864647,864661,866346,866579,866868,868843,869032,869153,869586,869854,870301,
+                870405,870686,870866,870934,871159,873648,874551,874688,875814,876139,878695,880063);
+        Set<Integer> speciesIds = Set.of(9606);
+        Set<DAORawDataConditionFilter> condFilters = Set.of(new DAORawDataConditionFilter(null, Set.of("UBERON:0000955",
+                "UBERON:0002113", "UBERON:0002048"),
+                null, null, null, null));
+        EnumSet<DAODataType> daoDataTypes = EnumSet.of(DAODataType.RNA_SEQ, DAODataType.AFFYMETRIX);
+        DAORawCallFilter daoFilter = new DAORawCallFilter(bgeeGeneIds, null, null, null);
+
+        // query the database
+        Set<RawExpressionCallTO> callTOs = this.getDaoManager().getRawExpressionCallDAO().getRawExpressionCalls(daoFilter).stream()
+                .collect(Collectors.toSet());
+        log.info("RawExpressionCallTO retrieved : " + callTOs.size());
+
+        // create a  nested map with outer map keys being a bgeeGeneId and the inner map key being a raw conditionId
+        Map<Integer, Map<Integer, RawExpressionCallTO>> geneToCondToRawExpressionCall = callTOs.stream().collect(Collectors.groupingBy(
+                call -> call.getBgeeGeneId(),
+                Collectors.toMap(call -> call.getConditionId(), Function.identity())));
+
+        // retrieve distinct raw conditionId for which globalConditionIds have to be found
+        Set<Integer> conditionIds = geneToCondToRawExpressionCall.values().stream().flatMap(c -> c.keySet().stream().distinct())
+                .collect(Collectors.toSet());
+        log.info("Distinct conditionId : " + conditionIds.toString());
+
+        // each raw condition is linked to exactly one global condition when using a relation origin "self"
+        Map<Integer, Integer> rawCondToCond = this.getDaoManager().getConditionDAO()
+                .getRawCondIdToGlobalCondIdFromRawCondIds(conditionIds, Set.of(ConditionRelationOrigin.SELF))
+                .stream().collect(Collectors.toMap(c -> c.getRawConditionId(), c ->c.getGlobalConditionId()));
+        // Map<Integer, Map<Integer, Set<RawExpressionCallTO>>> with the outer key being bgeeGeneIds and the inner key being
+        // globalConditionIds.
+        // One gene-globalCondition can have several RawExpressionCallTOs because several raw sex info (e.g not available, missing, ...)
+        // can be mapped to the same sex value "any" in the global condition
+        Map<Integer, Map<Integer, Set<RawExpressionCallTO>>> geneToGlobalCondToRawExpressionCall =
+                geneToCondToRawExpressionCall.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        geneEntry -> geneEntry.getValue().entrySet().stream()
+                        .filter(condEntry -> rawCondToCond.containsKey(condEntry.getKey()))
+                        .collect(Collectors.groupingBy(
+                                condEntry -> rawCondToCond.get(condEntry.getKey()),
+                                Collectors.mapping(Map.Entry::getValue, Collectors.toSet())
+                                ))
+                ));
+
+
         // init objects used for this test
         int speciesId = 9606;
         Set<String> geneIds = Set.of("ENSG00000008988"

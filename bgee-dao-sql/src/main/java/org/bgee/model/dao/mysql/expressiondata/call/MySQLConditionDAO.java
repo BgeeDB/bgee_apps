@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.expressiondata.call;
 
+import java.awt.IllegalComponentStateException;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -59,6 +60,7 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
     public final static String ANAT_ENTITY_ID_FIELD = "anatEntityId";
 
     public final static String TABLE_NAME = "globalCond";
+    private final static String GLOBAL_COND_TO_COND_TABLE_NAME = "globalCondToCond";
 
     /**
      * @param tableName             A {@code String} that is the name of the global condition table
@@ -134,13 +136,13 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
 
         final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>():
             new HashSet<>(speciesIds));
-        String tableName = "globalCondToCond";
         String globalCondTableName = "globalCond";
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT ").append(tableName).append(".* FROM ").append(tableName)
+        sb.append("SELECT ").append(GLOBAL_COND_TO_COND_TABLE_NAME).append(".* FROM ")
+        .append(GLOBAL_COND_TO_COND_TABLE_NAME)
           .append(" INNER JOIN ").append(globalCondTableName)
           .append(" ON ").append(globalCondTableName).append(".globalConditionId = ")
-          .append(tableName).append(".globalConditionId");
+          .append(GLOBAL_COND_TO_COND_TABLE_NAME).append(".globalConditionId");
         if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams()) || !speIds.isEmpty()) {
             sb.append(" WHERE ");
         }
@@ -164,6 +166,36 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         }
     }
 
+    @Override
+    public GlobalConditionToRawConditionTOResultSet getRawCondIdToGlobalCondIdFromRawCondIds(
+            Collection<Integer> conditionIds, Collection<ConditionRelationOrigin> condRelationOrigin)
+                    throws DAOException, IllegalArgumentException {
+        log.traceEntry("{}, {}", conditionIds, condRelationOrigin);
+        if (conditionIds == null || conditionIds.isEmpty()) {
+            throw log.throwing(new IllegalComponentStateException("conditionIds can not be null or empty"));
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT DISTINCT " + GLOBAL_COND_TO_COND_TABLE_NAME + "." + GLOBAL_COND_ID_FIELD + ", ")
+        .append(GLOBAL_COND_TO_COND_TABLE_NAME + "." + RAW_COND_ID_FIELD)
+        .append(" FROM " + GLOBAL_COND_TO_COND_TABLE_NAME)
+        .append(" WHERE " + GLOBAL_COND_TO_COND_TABLE_NAME + "." + RAW_COND_ID_FIELD)
+        .append(" IN (" + BgeePreparedStatement.generateParameterizedQueryString(conditionIds.size()) + ")");
+        if (condRelationOrigin != null && !condRelationOrigin.isEmpty()) {
+            sb.append(" AND " + GLOBAL_COND_TO_COND_TABLE_NAME + ".conditionRelationOrigin IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(condRelationOrigin.size()) + ")");
+        }
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
+            int paramIndex = 1;
+            stmt.setIntegers(paramIndex, conditionIds, true);
+            paramIndex = paramIndex + conditionIds.size();
+            stmt.setStrings(paramIndex, condRelationOrigin.stream().map(cro -> cro.getStringRepresentation())
+                    .collect(Collectors.toSet()), true);
+            return log.traceExit(new MySQLGlobalConditionToRawConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
 
     @Override
     public ConditionTOResultSet getGlobalConditions(Collection<Integer> speciesIds,
@@ -841,7 +873,7 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         //Warning, this stream must be sequential, our SQL accessors cannot be used in parallel
         .mapToInt((partition) -> {
             StringBuilder sql = new StringBuilder(); 
-            sql.append("INSERT INTO globalCondToCond (")
+            sql.append("INSERT INTO ").append(GLOBAL_COND_TO_COND_TABLE_NAME).append(" (")
             .append(RAW_COND_ID_FIELD).append(", ")
             .append(GLOBAL_COND_ID_FIELD).append(", ")
             .append(COND_REL_ORIGIN_FIELD)

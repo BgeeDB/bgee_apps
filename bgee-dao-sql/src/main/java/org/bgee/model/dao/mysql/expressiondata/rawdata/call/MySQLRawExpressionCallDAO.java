@@ -88,7 +88,7 @@ public class MySQLRawExpressionCallDAO extends MySQLRawDataDAO<RawExpressionCall
 
         StringBuilder sb = new StringBuilder();
         // generate SELECT clause
-        sb.append("SELECT ")
+        sb.append("SELECT DISTINCT ")
         .append(MySQLRawExpressionCallDAO.TABLE_NAME + "." + RawExpressionCallDAO.Attribute.EXPRESSION_ID.getTOFieldName()).append(", ")
         .append(MySQLRawExpressionCallDAO.TABLE_NAME + "." + RawExpressionCallDAO.Attribute.CONDITION_ID.getTOFieldName()).append(", ")
         .append(MySQLRawExpressionCallDAO.TABLE_NAME + "." + RawExpressionCallDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(", ")

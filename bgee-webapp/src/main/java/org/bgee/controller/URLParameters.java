@@ -622,6 +622,28 @@ public class URLParameters {
     private static final Parameter<String> EMAIL = new Parameter<String>("email",
             false, false, null, false, true, DEFAULT_MAX_SIZE, DEFAULT_FORMAT, 
             String.class);
+
+    /**
+     * A {@code Parameter<String>} defining the source URL, e.g., for a feedback.
+     * Corresponds to the URL parameter "source_url". This is a non-storable parameter.
+     */
+    private static final Parameter<String> SOURCE_URL = new Parameter<String>("source_url",
+            false, false, null, false, true, 1000000, DEFAULT_FORMAT,
+            String.class);
+    /**
+     * A {@code Parameter<String>} that contains a comment.
+     * Corresponds to the URL parameter "comment". This is a non-storable parameter.
+     */
+    private static final Parameter<String> COMMENT = new Parameter<String>("comment",
+            false, false, null, false, true,
+            1000000, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<Integer>} used to define the rating of a page.
+     * Corresponds to the URL parameter "rating". This is a non-storable parameter.
+     */
+    private static final Parameter<Integer> RATING = new Parameter<Integer>("rating",
+            false, false, null, false, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
     
     /**
      * A {@code Parameter<String>} that contains the attributes to retrieve when performing 
@@ -829,10 +851,12 @@ public class URLParameters {
             LIMIT,
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
-//            EMAIL,
 //            STAGE_CHILDREN,
             // Job params
-            JOB_TITLE, JOB_ID, EMAIL, JOB_CREATION_DATE, 
+            JOB_TITLE, JOB_ID, EMAIL, JOB_CREATION_DATE,
+            SOURCE_URL,
+            COMMENT,
+            RATING,
             DISPLAY_TYPE,
             DATA, 
             //webservice parameter
@@ -1241,6 +1265,28 @@ public class URLParameters {
      */
     public Parameter<String> getParamEmail(){
         return EMAIL;
+    }
+
+    /**
+     * @return  A {@code Parameter<String>} defining the source URL, e.g., when giving a feedback.
+     *          Corresponds to the URL parameter "source_url".
+     */
+    public Parameter<String> getParamSourceUrl() {
+        return SOURCE_URL;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a comment, e.g., when giving a feedback.
+     *          Corresponds to the URL parameter "comment".
+     */
+    public Parameter<String> getParamComment() {
+        return COMMENT;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining the rating of a pag.
+     *          Corresponds to the URL parameter "rating".
+     */
+    public Parameter<Integer> getParamRating() {
+        return RATING;
     }
     
     /**

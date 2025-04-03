@@ -238,6 +238,11 @@ public class RequestParameters {
      */
     public static final String PAGE_COLLABORATIONS = "collaborations";
     /**
+     * A {@code String} that is the value taken by the {@code page} parameter
+     * (see {@link URLParameters#getParamPage()}) when a page related to sending a feedback is requested.
+     */
+    public static final String PAGE_FEEDBACK = "feedback";
+    /**
      * A {@code String} that encapsulates the value of the gene id parameter for the gene page.
      */
     public static final String GENE_ID = "gene_id";
@@ -3366,6 +3371,19 @@ public class RequestParameters {
         }
         return log.traceExit(false);
     }
+    /**
+    *
+    * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+    * category "feedback"
+    */
+   public boolean isAFeedbackPageCategory() {
+       log.traceEntry();
+       if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+               this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_FEEDBACK)) {
+           return log.traceExit(true);
+       }
+       return log.traceExit(false);
+   }
    /**
     * Determine whether the detailed information about the request parameters must be provided.
     * Corresponds to the URL parameter {@link URLParameters#getParamDetailedRequestParams()}.

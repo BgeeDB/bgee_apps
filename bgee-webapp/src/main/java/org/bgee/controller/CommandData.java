@@ -1825,9 +1825,9 @@ public class CommandData extends CommandParent {
             dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
                     () -> getAffymetrixExperimentsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
-                    () -> getRnaSeqExperimentsColumnDescriptions());
+                    () -> getRnaSeqExperimentsColumnDescriptions(false));
             dataTypeTolDescrSupplier.put(DataType.SC_RNA_SEQ,
-                    () -> getRnaSeqExperimentsColumnDescriptions());
+                    () -> getRnaSeqExperimentsColumnDescriptions(true));
             dataTypeTolDescrSupplier.put(DataType.EST,
                     () -> getESTExperimentsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.IN_SITU,
@@ -2410,8 +2410,8 @@ public class CommandData extends CommandParent {
         colDescr.add(getExpToAnnotsColDesc("result.id"));
         return log.traceExit(colDescr);
     }
-    private List<ColumnDescription> getRnaSeqExperimentsColumnDescriptions() {
-        log.traceEntry();
+    private List<ColumnDescription> getRnaSeqExperimentsColumnDescriptions(boolean isSingleCell) {
+        log.traceEntry("{}", isSingleCell);
 
         List<ColumnDescription> colDescr = new ArrayList<>();
         colDescr.add(new ColumnDescription("Experiment ID", null,
@@ -2426,6 +2426,13 @@ public class CommandData extends CommandParent {
                 List.of("result.dOI"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+        if (isSingleCell) {
+            colDescr.add(new ColumnDescription("Cell count",
+                    "Number of annotated cells in the dataset. Unannotated cells are not considered.",
+                    List.of("result.numberOfAnnotatedCells"),
+                    ColumnDescription.ColumnType.NUMERIC,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Description", null,
                 List.of("result.description"),
                 ColumnDescription.ColumnType.STRING,

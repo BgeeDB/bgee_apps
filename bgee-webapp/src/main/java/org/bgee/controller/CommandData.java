@@ -1456,7 +1456,9 @@ public class CommandData extends CommandParent {
         //If we receive the magic value "SUMMARY", we'll use a fix list of terms.
         List<String> anatEntityIds = this.requestParameters.getAnatEntity() == null? new ArrayList<>():
             new ArrayList<>(this.requestParameters.getAnatEntity());
+        boolean summaryTermsRequested = false;
         if (anatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            summaryTermsRequested = true;
             anatEntityIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
             anatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
         }
@@ -1471,6 +1473,9 @@ public class CommandData extends CommandParent {
         if (discardAnatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
             discardAnatEntityIds.addAll(SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS);
             discardAnatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
+            if (!summaryTermsRequested) {
+                discardAnatEntityIds.removeAll(anatEntityIds);
+            }
         }
         boolean requestedAnatEntityDescendant = Boolean.TRUE.equals(this.requestParameters.getFirstValue(
                 this.requestParameters.getUrlParametersInstance().getParamAnatEntityDescendant()));

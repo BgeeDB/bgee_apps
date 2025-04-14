@@ -103,7 +103,7 @@ implements RNASeqExperimentDAO{
             log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                Integer dataSourceId = null;
+                Integer dataSourceId = null, numberOfAnnotatedCells = null;
                 boolean isTargetBase = false;
                 String id = null, name = null, description = null, dOI = null;
 
@@ -124,12 +124,15 @@ implements RNASeqExperimentDAO{
                         dOI = currentResultSet.getString(column.getKey());
                     } else if(column.getValue().equals("isTargetBase")) {
                          isTargetBase = currentResultSet.getInt(column.getKey()) == 1? true: false;
+                    } else if(column.getValue().equals(RNASeqExperimentDAO.Attribute.NUMBER_ANNOTATED_CELLS
+                            .getTOFieldName())) {
+                        numberOfAnnotatedCells = currentResultSet.getInt(column.getKey());
                     } else {
                         log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 }
                 return log.traceExit(new RNASeqExperimentTO(id, name, description, dataSourceId, isTargetBase,
-                        dOI));
+                        numberOfAnnotatedCells, dOI));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

@@ -34,7 +34,7 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
     public enum Attribute implements DAO.Attribute {
         ID("rnaSeqExperimentId"), NAME("rnaSeqExperimentName"),
         DESCRIPTION("rnaSeqExperimentDescription"), DATA_SOURCE_ID("dataSourceId"),
-        DOI("DOI");
+        DOI("DOI"), NUMBER_ANNOTATED_CELLS("numberOfAnnotatedCells");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTTO} class.
@@ -105,20 +105,25 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
         private static final long serialVersionUID = 9129478756981348941L;
 
         private boolean isTargetBase;
+        private Integer numberOfAnnotatedCells;
 
         public RNASeqExperimentTO(String id, String name, String description,
-                Integer dataSourceId, boolean isTargetBase, String dOI) {
+                Integer dataSourceId, boolean isTargetBase, Integer numberOfAnnotatedCells, String dOI) {
             super(id, name, description, dataSourceId, dOI);
+            this.numberOfAnnotatedCells = numberOfAnnotatedCells;
             this.isTargetBase = isTargetBase;
         }
         public boolean isTargetBase() {
             return isTargetBase;
         }
+        public Integer getNumberOfAnnotatedCells() {
+            return numberOfAnnotatedCells;
+        }
         @Override
         public String toString() {
             return "RNASeqExperimentTO [isTargetBase=" + isTargetBase + ", getDataSourceId()=" + getDataSourceId()
                     + ", getName()=" + getName() + ", getDescription()=" + getDescription() + ", getDOI()=" + getDOI() 
-                    + ", getId()=" + getId() + "]";
+                    + ", getId()=" + getId() + ", getNumberOfAnnotatedCells()=" + getNumberOfAnnotatedCells() + "]";
         }
     }
 }

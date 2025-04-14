@@ -502,6 +502,13 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getTopAnatFromPersonal()
      */
     public final static String TOPANAT_FROM_PERSONAL_DEFAULT = null;  
+
+    public final static String FEEDBACK_FROM_ADDRESS_KEY = "org.bgee.webapp.feedbackFromAddress";
+    public final static String FEEDBACK_FROM_ADDRESS_DEFAULT = null;
+    public final static String FEEDBACK_FROM_PERSONAL_KEY = "org.bgee.webapp.feedbackFromPersonal";
+    public final static String FEEDBACK_FROM_PERSONAL_DEFAULT = null;
+    public final static String FEEDBACK_SEND_TO_KEY = "org.bgee.webapp.feedbackSendTo";
+    public final static String FEEDBACK_SEND_TO_DEFAULT = null;
     
 
     /**
@@ -765,7 +772,21 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getTopAnatFromPersonal()
      */
     private final String topAnatFromPersonal;
-    
+
+
+    /**
+     * @see #getFeedbackFromAddress()
+     */
+    private final String feedbackFromAddress;
+    /**
+     * @see #getFeedbackFromPersonal()
+     */
+    private final String feedbackFromPersonal;
+    /**
+     * @see #getFeedbackSendTo()
+     */
+    private final String feedbackSendTo;
+
     /**
      * @see #getGeneScoreClusteringMethod()
      */
@@ -854,6 +875,12 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 TOPANAT_FROM_ADDRESS_KEY, TOPANAT_FROM_ADDRESS_DEFAULT);
         topAnatFromPersonal = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOPANAT_FROM_PERSONAL_KEY, TOPANAT_FROM_PERSONAL_DEFAULT);
+        feedbackFromAddress = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                FEEDBACK_FROM_ADDRESS_KEY, FEEDBACK_FROM_ADDRESS_DEFAULT);
+        feedbackFromPersonal = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                FEEDBACK_FROM_PERSONAL_KEY, FEEDBACK_FROM_PERSONAL_DEFAULT);
+        feedbackSendTo = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                FEEDBACK_SEND_TO_KEY, FEEDBACK_SEND_TO_DEFAULT);
         geneScoreClusteringMethod = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 GENE_SCORE_CLUSTERING_METHOD_KEY, GENE_SCORE_CLUSTERING_METHOD_DEFAULT);
         geneScoreClusteringThreshold = getDoubleOption(prop, SYS_PROPS, FILE_PROPS, 
@@ -1121,6 +1148,31 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public String getTopAnatFromPersonal() {
         return topAnatFromPersonal;
+    }
+
+    /**
+     * @return  A {@code String} that is the mail address which to send mails related to feedback from.
+     * @see #FEEDBACK_FROM_ADDRESS_KEY
+     * @see #FEEDBACK_FROM_ADDRESS_DEFAULT
+     */
+    public String getFeedbackFromAddress() {
+        return feedbackFromAddress;
+    }
+    /**
+     * @return  A {@code String} that is the mail personal which to send mails related to feedback from.
+     * @see #FEEDBACK_FROM_PERSONAL_KEY
+     * @see #FEEDBACK_FROM_PERSONAL_DEFAULT
+     */
+    public String getFeedbackFromPersonal() {
+        return feedbackFromPersonal;
+    }
+    /**
+     * @return  A {@code String} that is the mail address to send feedback to.
+     * @see #FEEDBACK_SEND_TO_KEY
+     * @see #FEEDBACK_SEND_TO_DEFAULT
+     */
+    public String getFeedbackSendTo() {
+        return feedbackSendTo;
     }
     
     /**

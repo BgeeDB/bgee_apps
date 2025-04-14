@@ -373,7 +373,9 @@ public class SearchMatchResultService extends CommonService {
     public static String getFormattedQueryTerm(String searchTerm) {
         log.traceEntry("{}", searchTerm);
         String formattedTerm = getFormattedTerm(searchTerm);
-        return log.traceExit("^" + formattedTerm + "$ | \"" + formattedTerm + "\"");
+        String formattedTermWithSpace = formattedTerm.contains(" ") ?
+                "\\\"" + formattedTerm.replaceAll(" ", "\\\" \\\"") + "\\\"" : formattedTerm;
+        return log.traceExit("^" + formattedTermWithSpace + "$ | \"" + formattedTermWithSpace + "\"");
     }
 
     /**

@@ -294,6 +294,10 @@ public class FrontController extends HttpServlet {
                 controller = new CommandAnatomicalSimilarity(
                         response, requestParameters, this.prop, factory, serviceFactory);
                 
+            }  else if (requestParameters.isAFeedbackPageCategory()) {
+                controller = new CommandFeedback(response, requestParameters, this.prop,
+                        serviceFactory, this.jobService, user, this.mailSender);
+
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }

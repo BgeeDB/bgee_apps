@@ -146,7 +146,12 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                 processedRawDataFilters, null, necessaryTables, DAODataType.AFFYMETRIX);
 
         // generate WHERE CLAUSE
-        if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
+        // usedInPropagatedCalls is only used for rna-seq data. If usedInPropagatedCalls is the only
+        // rawDataFilter not empty the query will not contain any where clause. That's why we check
+        // that any rawDataFilter variable except usedInPropagatedCalls is not empty.
+        boolean requireWhereClause = processedRawDataFilters.getRawDataFilters().stream()
+                .allMatch(item -> item.usedInPropagatedCallsIsTheOnlyPotentialNotBlank()) ? false : true;
+        if(requireWhereClause) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
                     filtersToDatabaseMapping));
@@ -249,7 +254,12 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                 processedRawDataFilters, null, necessaryTables, DAODataType.EST);
 
         // generate WHERE CLAUSE
-        if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
+        // usedInPropagatedCalls is only used for rna-seq data. If usedInPropagatedCalls is the only
+        // rawDataFilter not empty the query will not contain any where clause. That's why we check
+        // that any rawDataFilter variable except usedInPropagatedCalls is not empty.
+        boolean requireWhereClause = processedRawDataFilters.getRawDataFilters().stream()
+                .allMatch(item -> item.usedInPropagatedCallsIsTheOnlyPotentialNotBlank()) ? false : true;
+        if(requireWhereClause) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
                     filtersToDatabaseMapping));
@@ -372,7 +382,12 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                 processedRawDataFilters, null, necessaryTables, DAODataType.IN_SITU);
 
         // generate WHERE CLAUSE
-        if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
+        // usedInPropagatedCalls is only used for rna-seq data. If usedInPropagatedCalls is the only
+        // rawDataFilter not empty the query will not contain any where clause. That's why we check
+        // that any rawDataFilter variable except usedInPropagatedCalls is not empty.
+        boolean requireWhereClause = processedRawDataFilters.getRawDataFilters().stream()
+                .allMatch(item -> item.usedInPropagatedCallsIsTheOnlyPotentialNotBlank()) ? false : true;
+        if(requireWhereClause) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
                     filtersToDatabaseMapping));

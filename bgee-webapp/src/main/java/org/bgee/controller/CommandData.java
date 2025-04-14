@@ -1456,7 +1456,9 @@ public class CommandData extends CommandParent {
         //If we receive the magic value "SUMMARY", we'll use a fix list of terms.
         List<String> anatEntityIds = this.requestParameters.getAnatEntity() == null? new ArrayList<>():
             new ArrayList<>(this.requestParameters.getAnatEntity());
+        boolean summaryTermsRequested = false;
         if (anatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            summaryTermsRequested = true;
             anatEntityIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
             anatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
         }
@@ -1471,6 +1473,9 @@ public class CommandData extends CommandParent {
         if (discardAnatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
             discardAnatEntityIds.addAll(SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS);
             discardAnatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
+            if (!summaryTermsRequested) {
+                discardAnatEntityIds.removeAll(anatEntityIds);
+            }
         }
         boolean requestedAnatEntityDescendant = Boolean.TRUE.equals(this.requestParameters.getFirstValue(
                 this.requestParameters.getUrlParametersInstance().getParamAnatEntityDescendant()));
@@ -1826,9 +1831,9 @@ public class CommandData extends CommandParent {
             dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
                     () -> getAffymetrixExperimentsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
-                    () -> getRnaSeqExperimentsColumnDescriptions());
+                    () -> getRnaSeqExperimentsColumnDescriptions(false));
             dataTypeTolDescrSupplier.put(DataType.SC_RNA_SEQ,
-                    () -> getRnaSeqExperimentsColumnDescriptions());
+                    () -> getRnaSeqExperimentsColumnDescriptions(true));
             dataTypeTolDescrSupplier.put(DataType.EST,
                     () -> getESTExperimentsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.IN_SITU,
@@ -2411,8 +2416,8 @@ public class CommandData extends CommandParent {
         colDescr.add(getExpToAnnotsColDesc("result.id"));
         return log.traceExit(colDescr);
     }
-    private List<ColumnDescription> getRnaSeqExperimentsColumnDescriptions() {
-        log.traceEntry();
+    private List<ColumnDescription> getRnaSeqExperimentsColumnDescriptions(boolean isSingleCell) {
+        log.traceEntry("{}", isSingleCell);
 
         List<ColumnDescription> colDescr = new ArrayList<>();
         colDescr.add(new ColumnDescription("Experiment ID", null,
@@ -2427,6 +2432,13 @@ public class CommandData extends CommandParent {
                 List.of("result.dOI"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
+        if (isSingleCell) {
+            colDescr.add(new ColumnDescription("Cell count",
+                    "Number of annotated cells in the dataset. Unannotated cells are not considered.",
+                    List.of("result.numberOfAnnotatedCells"),
+                    ColumnDescription.ColumnType.NUMERIC,
+                    null, null, true, null, null));
+        }
         colDescr.add(new ColumnDescription("Description", null,
                 List.of("result.description"),
                 ColumnDescription.ColumnType.STRING,

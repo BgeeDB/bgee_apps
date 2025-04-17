@@ -300,8 +300,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
             log.info("Done inserting hierarchical groups");
 
             log.info("Start updating genes...");
-            nbUpdatedGenes = this.getGeneDAO().updateGenes(this.geneTOs,
-                    Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID));
+//            nbUpdatedGenes = this.getGeneDAO().updateGenes(this.geneTOs,
+//                    Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID));
             log.info("Done updating genes.");
             log.info("Start inserting gene to hierarchical group mapping...");
             nbInsertedGroupToGene = this.getHierarchicalGroupDAO()
@@ -593,7 +593,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
                     if(idToBgeeIdInBgee.containsKey(omaGeneId)){
 	                    for (Integer bgeeGeneId : idToBgeeIdInBgee.get(omaGeneId)){
 	                    	if (this.addGeneTO(new GeneTO(bgeeGeneId,omaGeneId, null, null, null, null, 
-	                                this.omaNodeId,null, null),
+	                                this.omaNodeId,null, null, null),
 	                                omaXrefId)) {
 	                            isInBgee = true;
 	                        } else if (!geneMapping.isEmpty()) {
@@ -602,7 +602,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	                            	String currentGeneId = geneMapping.get(omaGeneId);
 	                                log.debug("Mapping found for geneId {}: {}", omaGeneId, currentGeneId);
 	                                if (this.addGeneTO(new GeneTO(bgeeGeneId, currentGeneId, null, null, null, null, 
-	                                        this.omaNodeId, null, null), omaXrefId)) {
+	                                        this.omaNodeId, null, null, null), omaXrefId)) {
 	                                    isInBgee = true;
 	                                }
 	                            }

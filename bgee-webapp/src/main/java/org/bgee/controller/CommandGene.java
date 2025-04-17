@@ -346,7 +346,7 @@ public class CommandGene extends CommandParent {
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
 
-        Set<Gene> genes = loadGenes(geneService, geneId, speciesId, false, true, false);
+        Set<Gene> genes = loadGenes(geneService, geneId, speciesId, false, true, false, true);
         assert genes != null && !genes.isEmpty();
         display.displayGeneGeneralInformation(genes);
         log.traceExit();
@@ -400,7 +400,7 @@ public class CommandGene extends CommandParent {
         if (speciesId == null || speciesId < 1) {
             throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
         }
-        Set<Gene> genes = loadGenes(geneService, geneId, speciesId, false, false, true);
+        Set<Gene> genes = loadGenes(geneService, geneId, speciesId, false, false, true, false);
         assert genes != null && genes.size() == 1;
         display.displayGeneXRefs(genes.iterator().next());
 
@@ -480,16 +480,18 @@ public class CommandGene extends CommandParent {
      *                              is retrieved or not.
      * @param withSynonymInfo       A {@code boolean} defining whether synonyms of the genes are retrieved.
      * @param withXRefInfo          A {@code boolean} defining whether XRefs of the genes are retrieved.
+     * @param withExpressionSummary A {@code boolean} defining whether expression summary has to be retrieved.
      * @return                      A {@code Set} containing the matching {@code Gene}s.
      * @throws InvalidRequestException  If {@code geneId} is blank or {@code speciesId} is non-null and
      *                                  not greater than 0.
      * @throws PageNotFoundException    If the {@code geneId} or {@code speciesId} are not found in Bgee.
      */
     private static Set<Gene> loadGenes(GeneService geneService, String geneId, Integer speciesId,
-            boolean withSpeciesSourceInfo, boolean withSynonymInfo, boolean withXRefInfo)
+            boolean withSpeciesSourceInfo, boolean withSynonymInfo, boolean withXRefInfo,
+            boolean withExpressionSummary)
                     throws InvalidRequestException, PageNotFoundException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", geneService, geneId, speciesId, withSpeciesSourceInfo,
-                withSynonymInfo, withXRefInfo);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", geneService, geneId, speciesId, withSpeciesSourceInfo,
+                withSynonymInfo, withXRefInfo, withExpressionSummary);
 
         //Sanity checks
         if (StringUtils.isBlank(geneId)) {
@@ -503,8 +505,9 @@ public class CommandGene extends CommandParent {
         try {
             genes = speciesId != null && speciesId > 0?
                 geneService.loadGenes(Collections.singleton(new GeneFilter(speciesId, geneId)),
-                        withSpeciesSourceInfo, withSynonymInfo, withXRefInfo).collect(Collectors.toSet()):
-                geneService.loadGenesById(geneId, withSpeciesSourceInfo, withSynonymInfo, withXRefInfo);
+                        withSpeciesSourceInfo, withSynonymInfo, withXRefInfo, withExpressionSummary)
+                .collect(Collectors.toSet()):
+                geneService.loadGenesById(geneId, withSpeciesSourceInfo, withSynonymInfo, withXRefInfo, withExpressionSummary);
         } catch (IllegalArgumentException | GeneNotFoundException e) {
             //we do nothing here, the speciesId was probably incorrect, this will throw
             //a PageNotFoundException below;

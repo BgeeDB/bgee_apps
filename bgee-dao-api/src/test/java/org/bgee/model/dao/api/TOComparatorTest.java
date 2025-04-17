@@ -164,19 +164,19 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreGeneTOEqual() {
-        GeneTO to1 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, true, 1);
-        GeneTO to2 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, true, 1);
+        GeneTO to1 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, true, 1, "expression summary");
+        GeneTO to2 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, true, 1, "expression summary");
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, false, 1);
+        to2 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, false, 1, "expression summary");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new GeneTO(2, "ID1", "name1", "desc1", 1, 2, 3, true, 1);
+        to2 = new GeneTO(2, "ID1", "name1", "desc1", 1, 2, 3, true, 1, "expression summary");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, true, 2);
+        to2 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, true, 2, "expression summary");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     

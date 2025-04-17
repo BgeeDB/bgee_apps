@@ -59,7 +59,7 @@ public class RawDataServiceTest extends TestAncestor {
         //not all genes of a species, therefore we only retrieve "geneId1", "geneId2"
         GeneTOResultSet geneTORS = getMockResultSet(GeneTOResultSet.class,
                 List.of(GENE_TOS.get(1), GENE_TOS.get(2)));
-        when(this.geneDAO.getGenesBySpeciesAndGeneIds(Map.of(1, Set.of("geneId1", "geneId2"))))
+        when(this.geneDAO.getGenesBySpeciesAndGeneIds(Map.of(1, Set.of("geneId1", "geneId2")), false))
                 .thenReturn(geneTORS);
 
         //Raw data conditions

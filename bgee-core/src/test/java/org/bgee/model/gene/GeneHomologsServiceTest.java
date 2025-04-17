@@ -60,9 +60,9 @@ public class GeneHomologsServiceTest extends TestAncestor {
         GeneDAO geneDao = mock(GeneDAO.class);
         when(managerMock.getGeneDAO()).thenReturn(geneDao);
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
-            Arrays.asList(new GeneTO(123, "ID1", "Name1", "Desc1", 11, 1, 1, true, 1),
-                    new GeneTO(124, "ID2", "Name2", "Desc2", 22, 1, 1, true, 1),
-                    new GeneTO(223, "ID4", "Name4", "Desc4", 44, 2, 1, true, 1)));
+            Arrays.asList(new GeneTO(123, "ID1", "Name1", "Desc1", 11, 1, 1, true, 1, null),
+                    new GeneTO(124, "ID2", "Name2", "Desc2", 22, 1, 1, true, 1, null),
+                    new GeneTO(223, "ID4", "Name4", "Desc4", 44, 2, 1, true, 1, null)));
         when(geneDao.getGenesBySpeciesIds(null)).thenReturn(mockGeneRs);
         GeneBioTypeTOResultSet mockBioTypeRs = getMockResultSet(GeneBioTypeTOResultSet.class,
                 Arrays.asList(new GeneBioTypeTO(1, "type1"), new GeneBioTypeTO(2, "type2")));
@@ -72,10 +72,10 @@ public class GeneHomologsServiceTest extends TestAncestor {
         GeneService service = new GeneService(serviceFactory);
         Map<Integer, Set<Gene>> expected = new HashMap<>();
         expected.put(1, new HashSet<>(Arrays.asList(
-            new Gene("ID1", "Name1", "Desc1", null, null, new Species(11), new GeneBioType("type1"), 1), 
-            new Gene("ID2", "Name2", "Desc2", null, null, new Species(22), new GeneBioType("type1"), 1))));
+            new Gene("ID1", "Name1", "Desc1", null, null, new Species(11), new GeneBioType("type1"), 1, null), 
+            new Gene("ID2", "Name2", "Desc2", null, null, new Species(22), new GeneBioType("type1"), 1, null))));
         expected.put(2, new HashSet<>(Arrays.asList(
-            new Gene("ID4", "Name4", "Desc4", null, null, new Species(44), new GeneBioType("type2"), 1))));
+            new Gene("ID4", "Name4", "Desc4", null, null, new Species(44), new GeneBioType("type2"), 1, null))));
 //        Map<Integer, Set<Gene>> actual = service.getOrthologs(1234, null);
 //        assertEquals(expected, actual);
     }

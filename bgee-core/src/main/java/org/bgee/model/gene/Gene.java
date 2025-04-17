@@ -80,7 +80,11 @@ public class Gene {
 	 * @see #getGeneMappedToSameGeneIdCount()
 	 */
 	private final int geneMappedToSameGeneIdCount;
-    
+
+	/**
+     * @see #getExpressionSummary()
+     */
+    private final String expressionSummary;
     /**
      * Constructor providing the {@code geneId} and the {@code Species} of this {@code Gene}.
      * <p>  
@@ -94,7 +98,7 @@ public class Gene {
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String geneId, Species species, GeneBioType geneBioType) throws IllegalArgumentException {
-        this(geneId, null, null, null, null, species, geneBioType, 1);
+        this(geneId, null, null, null, null, species, geneBioType, 1, null);
     }
     /**
      * Constructor providing the {@code geneId}, the name, the description,
@@ -119,13 +123,14 @@ public class Gene {
      * @param geneMappedToSameGeneIdCount           An {@code Integer} that is the number of genes
      *                                              in the Bgee database with the same gene ID.
      *                                              See {@link #getGeneMappedToSameGeneIdCount()}
+     * @param expressionSummary                     A {@code String} summarizing the expression of the gene.
      *                                              for more details.
      * @throws IllegalArgumentException     if {@code geneId} is blank,
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String geneId, String name, String description, Collection<String> synonyms,
             Collection<GeneXRef> xRefs, Species species, GeneBioType geneBioType,
-            int geneMappedToSameGeneIdCount)
+            int geneMappedToSameGeneIdCount, String expressionSummary)
         throws IllegalArgumentException {
         if (StringUtils.isBlank(geneId)) {
             throw log.throwing(new IllegalArgumentException("The gene ID must be provided."));
@@ -150,6 +155,7 @@ public class Gene {
         this.species = species;
         this.geneBioType = geneBioType;
         this.geneMappedToSameGeneIdCount = geneMappedToSameGeneIdCount;
+        this.expressionSummary = expressionSummary;
     }
     
 	/**
@@ -210,6 +216,9 @@ public class Gene {
 	    return this.geneMappedToSameGeneIdCount;
 	}
 
+	public String getExpressionSummary() {
+	    return this.expressionSummary;
+	}
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -257,16 +266,10 @@ public class Gene {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Gene [geneId=").append(geneId)
-               .append(", name=").append(name)
-               .append(", description=").append(description)
-               .append(", synonyms=").append(synonyms)
-               .append(", x-refs=").append(xRefs)
-               .append(", species=").append(species)
-               .append(", geneBioType=").append(geneBioType)
-               .append(", geneMappedToSameGeneIdCount=").append(geneMappedToSameGeneIdCount)
-               .append("]");
-        return builder.toString();
+        return "Gene [geneId=" + geneId + ", name=" + name + ", description=" + description + ", synonyms=" + synonyms
+                + ", xRefs=" + xRefs + ", species=" + species + ", geneBioType=" + geneBioType
+                + ", geneMappedToSameGeneIdCount=" + geneMappedToSameGeneIdCount + ", expressionSummary="
+                + expressionSummary + "]";
     }
+
 }

@@ -567,7 +567,7 @@ public class CallService extends CallServiceParent {
             throw log.throwing(new IllegalArgumentException("A GeneFilter must be provided"));
         }
         Set<Gene> genes = this.getServiceFactory().getGeneService().loadGenes(callFilter.getGeneFilters(),
-                false, false, false)
+                false, false, false, false)
                 .collect(Collectors.toSet());
         return log.traceExit(this.loadSingleSpeciesExprAnalysis(callFilter, genes));
     }

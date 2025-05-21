@@ -3,15 +3,17 @@ package org.bgee.controller.exception;
 import java.util.LinkedHashMap;
 
 /**
- * An {@code Exception} thrown when a request is malformed and could not be processed. 
- * This exception can for instance be thrown when a required parameter for a query 
- * is missing, or incompatible parameters are provided. 
+ * A {@code RuntimeException} thrown when a request is malformed and could not be processed.
+ * This exception can for instance be thrown when a required parameter for a query
+ * is missing, or incompatible parameters are provided.
+ * <p>
+ * {@code RuntimeException} for easier use in {@code Streams}.
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Nov. 2015
+ * @version Bgee 15.2 May 2025
  * @since Bgee 13 Nov. 2015
  */
-public class InvalidRequestException extends Exception implements ControllerException {
+public class InvalidRequestException extends RuntimeException implements ControllerException {
 
     private static final long serialVersionUID = 92035576451396047L;
 

@@ -373,6 +373,19 @@ public class URLParameters {
                             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class),
                     (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));},
                     () -> new LinkedHashMap<>())));
+    private static final Map<ConditionParameter<?, ?>, Parameter<String>> COND_PARAM_TO_DISCARD_COND_URL_PARAM =
+            Collections.unmodifiableMap(ConditionParameter.allOf().stream()
+            .filter(cp -> cp.getRequestDiscardParameterName() != null)
+            .collect(Collectors.toMap(
+                    cp -> cp,
+                    cp -> new Parameter<String>(
+                            cp.getRequestDiscardParameterName(),
+                            //We could maybe have better granularity of these attributes
+                            //managed in ConditionParameter class?
+                            true, false, null, true, DEFAULT_IS_SECURE,
+                            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class),
+                    (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));},
+                    () -> new LinkedHashMap<>())));
     private static final Map<ConditionParameter<?, ?>, Parameter<Boolean>> COND_PARAM_TO_DESCENDANT_URL_PARAM =
             Collections.unmodifiableMap(ConditionParameter.allOf().stream()
             .filter(cp -> cp.isWithRequestableDescendants())
@@ -383,15 +396,6 @@ public class URLParameters {
                             DEFAULT_FORMAT, Boolean.class),
                     (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));},
                     () -> new LinkedHashMap<>())));
-
-    /**
-     * A {@code Parameter<String>} that contains the anatomical entities to discard including their children.
-     * Corresponds to the URL parameter "discard_anat_entity_and_children_id".
-     */
-    private static final Parameter<String> DISCARD_ANAT_ENTITY_ID = new Parameter<>(
-            "discard_anat_entity_and_children_id",
-            true, false, null, true, DEFAULT_IS_SECURE,
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
 
 //    /**
@@ -709,6 +713,7 @@ public class URLParameters {
 
         list.addAll(COND_PARAM_TO_COND_URL_PARAM.values());
         list.addAll(COND_PARAM_TO_FILTER_COND_URL_PARAM.values());
+        list.addAll(COND_PARAM_TO_DISCARD_COND_URL_PARAM.values());
         list.addAll(COND_PARAM_TO_DESCENDANT_URL_PARAM.values());
 
         // Anat. similarity analyze params
@@ -736,7 +741,6 @@ public class URLParameters {
         //DAO as webservice
         list.add(ATTRIBUTE_LIST);
 
-        list.add(DISCARD_ANAT_ENTITY_ID);
         list.add(OBSERVED_DATA);
         list.add(EXCLUDE_NON_INFORMATIVE);
         list.add(ONLY_PROPAGATED);
@@ -968,17 +972,11 @@ public class URLParameters {
     public Parameter<String> getCondParamToFilterCondURLParam(ConditionParameter<?, ?> condParam) {
         return COND_PARAM_TO_FILTER_COND_URL_PARAM.get(condParam);
     }
+    public Parameter<String> getCondParamToDiscardCondURLParam(ConditionParameter<?, ?> condParam) {
+        return COND_PARAM_TO_FILTER_COND_URL_PARAM.get(condParam);
+    }
     public Parameter<Boolean> getCondParamToDescendantURLParam(ConditionParameter<?, ?> condParam) {
         return COND_PARAM_TO_DESCENDANT_URL_PARAM.get(condParam);
-    }
-
-    /**
-     * @return  A {@code Parameter<String>} defining IDs of anatomical entities to discard,
-     *          including their children.
-     *          Corresponds to the URL parameter "discard_anat_entity_and_children_id".
-     */
-    public Parameter<String> getParamDiscardAnatEntity() {
-        return DISCARD_ANAT_ENTITY_ID;
     }
 
     /**

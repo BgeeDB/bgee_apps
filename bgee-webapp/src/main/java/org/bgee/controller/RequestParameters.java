@@ -2441,22 +2441,16 @@ public class RequestParameters {
     public List<String> getCondParamIds(ConditionParameter<?, ?> condParam) {
         return this.getValues(this.getUrlParametersInstance().getCondParamToCondURLParam(condParam));
     }
+    public List<String> getCondParamFilterIds(ConditionParameter<?, ?> condParam) {
+        return this.getValues(this.getUrlParametersInstance().getCondParamToFilterCondURLParam(condParam));
+    }
+    public List<String> getCondParamDiscardIds(ConditionParameter<?, ?> condParam) {
+        return this.getValues(this.getUrlParametersInstance().getCondParamToDiscardCondURLParam(condParam));
+    }
     public boolean isRequestedDescendant(ConditionParameter<?, ?> condParam) {
         log.traceEntry();
         return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
                 this.getUrlParametersInstance().getCondParamToDescendantURLParam(condParam))));
-    }
-
-    /**
-     * Convenient method to retrieve values of the parameter returned by
-     * {@link URLParameters#getParamDiscardAnatEntity()}. Equivalent to calling
-     * {@link #getValues(URLParameters.Parameter)} for this parameter.
-     *
-     * @return  The {@code List} of {@code String}s that are the values of
-     *          the {@code discard_anat_entity_and_children_id} URL parameter. Can be {@code null}.
-     */
-    public List<String> getDiscardAnatEntity() {
-        return this.getValues(this.getUrlParametersInstance().getParamDiscardAnatEntity());
     }
 
     /**

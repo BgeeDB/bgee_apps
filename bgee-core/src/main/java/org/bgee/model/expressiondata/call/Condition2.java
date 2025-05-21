@@ -26,7 +26,7 @@ public class Condition2 extends BaseCondition2 {
     //XXX: maybe create a new Map implementation to make sure the generic type
     //of ConditionParameter and of ComposedEntity are consistent,
     //to raise an exception at compilation and not only at runtime?
-    public Condition2(Map<ConditionParameter<?, ?>, ConditionParameterValue> conditionParameterObjects,
+    public Condition2(Map<ConditionParameter<? extends ConditionParameterValue, ?>, ConditionParameterValue> conditionParameterObjects,
             Species species, Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) {
         super(//we'll check correct types in this constructor.

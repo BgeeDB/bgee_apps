@@ -3,7 +3,10 @@ package org.bgee.model.expressiondata.baseelements;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Function;
@@ -49,32 +52,44 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
     public static class AnatEntityCondParam extends ConditionParameter<AnatEntity, AnatEntity> {
         private AnatEntityCondParam() {
             super(AnatEntity.class, new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID), AnatEntity.class,
-                    (o) -> o.getId(), (o) -> o.getId(),
+                    (o) -> o.getId(), (o) -> o.getId(), null,
                     "anatEntity", "Anat. entity", "anat_entity",
-                    "anat_entity_id", "filter_anat_entity_id", "anat_entity_descendant", true, true);
+                    "anat_entity_id", "filter_anat_entity_id", "discard_anat_entity_and_children_id",
+                    "anatEntity.id", "anatEntity.id", "anat_entity_descendant",
+                    true, true, 1);
         }
     }
     public static class CellTypeCondParam extends ConditionParameter<AnatEntity, AnatEntity> {
         private CellTypeCondParam() {
             super(AnatEntity.class, new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID), AnatEntity.class,
-                    (o) -> o.getId(), (o) -> o.getId(),
+                    (o) -> o.getId(), (o) -> o.getId(), null,
                     "cellType", "Cell type", "cell_type",
-                    "cell_type_id", "filter_cell_type_id", "cell_type_descendant", true, true);
+                    "cell_type_id", "filter_cell_type_id", null,
+                    "cellType.id", "cellType.id",
+                    "cell_type_descendant", true, true, 1);
         }
     }
     public static class DevStageCondParam extends ConditionParameter<DevStage, DevStage> {
         private DevStageCondParam() {
             super(DevStage.class, new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID), DevStage.class,
-                    (o) -> o.getId(), (o) -> o.getId(),
+                    (o) -> o.getId(), (o) -> o.getId(), null,
                     "devStage", "Developmental and life stage", "dev_stage",
-                    "stage_id", "filter_stage_id", "stage_descendant", true, true);
+                    "stage_id", "filter_stage_id", null,
+                    "devStage.id", "devStage.id", "stage_descendant",
+                    true, true, 2);
         }
     }
     public static class SexCondParam extends ConditionParameter<Sex, RawDataSex> {
         private SexCondParam() {
             super(Sex.class, new Sex(SexEnum.ANY.getStringRepresentation()), RawDataSex.class,
                     (o) -> o.getId(), (o) -> o.getStringRepresentation(),
-                    "sex", "Sex", "sex", "sex", "filter_sex", null, false, false);
+                    EnumSet.allOf(SexEnum.class)
+                    .stream()
+                    .map(e -> e.name())
+                    .collect(Collectors.toSet()),
+                    "sex", "Sex", "sex", "sex", "filter_sex", null,
+                    "sex.id", "sex", null,
+                    false, false, 3);
         }
     }
     //XXX: This String for raw data strain is the only reason why we cannot constraint this ConditionParameter
@@ -83,7 +98,11 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
         private StrainCondParam() {
             super(Strain.class, new Strain(ConditionDAO.STRAIN_ROOT_ID), String.class,
                     (o) -> o.getId(), (o) -> o,
-                    "strain", "Strain", "strain", "strain", "filter_strain", null, false, false);
+                    //Debatable whether we should provide all strains here
+                    null,
+                    "strain", "Strain", "strain", "strain", "filter_strain", null,
+                    "strain.id", "strain", null,
+                    false, false, 4);
         }
     }
 
@@ -103,8 +122,24 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
                     STRAIN));
     private final static Set<LinkedHashSet<ConditionParameter<? extends ConditionParameterValue, ?>>> ALL_COND_PARAM_COMBINATIONS =
           getAllPossibleCombinations(ALL_OF);
+    private final static LinkedHashMap<Integer, LinkedHashSet<ConditionParameter<?, ?>>> GROUP_ID_TO_COND_PARAMS =
+            ALL_OF.stream().collect(Collectors.toMap(
+                    cp -> cp.getGroupId(),
+                    cp -> new LinkedHashSet<>(Set.of(cp)),
+                    (v1, v2) -> {v1.addAll(v2); return v1;},
+                    () -> new LinkedHashMap<>()));
 
 
+    public static final LinkedHashMap<Integer, LinkedHashSet<ConditionParameter<?, ?>>> getGroupIdToCondParams() {
+        log.traceEntry();
+        //defensive copying
+        return log.traceExit(GROUP_ID_TO_COND_PARAMS.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> new LinkedHashSet<>(e.getValue()),
+                        (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));},
+                        () -> new LinkedHashMap<>())));
+    }
     /**
      * @return  The returned {@code LinkedHashSet} can be safely modified.
      */
@@ -208,38 +243,64 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
     private final Class<T> condValueType;
     private final T condValueRoot;
     private final Class<U> rawDataCondValueType;
+
     //We could still add two other generic types if we wanted to specify
     //a type of ID different from String
     private final Function<T, String> condValueIdFun;
     private final Function<U, String> rawDataCondValueIdFun;
+    //see javadoc getAllPossibleValueIds
+    private final Set<String> allPossibleCondValueIds;
+
     private final String attributeName;
     private final String displayName;
     private final String parameterName;
     private final String requestParameterName;
     private final String requestFilterParameterName;
+    private final String requestDiscardParameterName;
+    //Corresponds to the attributes in Condition2 transformed into JSON, e.g., "sex.id"
+    //for class Sex stored in the attribute 'sex' in Condition2, and the Sex class has an 'id' attribute
+    private final String condTargetAttributeName;
+    //Corresponds to the attributes in RawDataCondition transformed into JSON, e.g., "sex" or "strain"
+    //corresponding to those attributes in RawDataCondition and that are Strings.
+    //For other objects such as anatEntity, it will be "anatEntity.id" since they are classes
+    //with an 'id' attribute
+    private final String rawDataCondTargetAttributeName;
     private final String requestDescendantParameterName;
     private final boolean informativeId;
     private final boolean withRequestableDescendants;
+    //Some CondtionParameters are related and can be grouped together,
+    //such as ANAT_ENTITY and CELL_TYPE. They will have the same groupId.
+    private final int groupId;
 
     private ConditionParameter(Class<T> condValueType, T condValueRoot, Class<U> rawDataCondValueType,
             Function<T, String> condValueIdFun, Function<U, String> rawDataCondValueIdFun,
+            Set<String> allPossibleCondValueIds,
             String attributeName, String displayName, String parameterName,
             String requestParameterName, String requestFilterParameterName,
+            String requestDiscardParameterName,
+            String condTargetAttributeName, String rawDataCondTargetAttributeName,
             String requestDescendantParameterName,
-            boolean informativeId, boolean withRequestableDescendants) {
+            boolean informativeId, boolean withRequestableDescendants,
+            int groupId) {
         this.condValueType = condValueType;
         this.condValueRoot = condValueRoot;
         this.rawDataCondValueType = rawDataCondValueType;
         this.condValueIdFun = condValueIdFun;
         this.rawDataCondValueIdFun = rawDataCondValueIdFun;
+        this.allPossibleCondValueIds = allPossibleCondValueIds == null? null:
+            Collections.unmodifiableSet(allPossibleCondValueIds);
         this.attributeName = attributeName;
         this.displayName = displayName;
         this.parameterName = parameterName;
         this.requestParameterName = requestParameterName;
         this.requestFilterParameterName = requestFilterParameterName;
+        this.requestDiscardParameterName = requestDiscardParameterName;
+        this.condTargetAttributeName = condTargetAttributeName;
+        this.rawDataCondTargetAttributeName = rawDataCondTargetAttributeName;
         this.requestDescendantParameterName = requestDescendantParameterName;
         this.informativeId = informativeId;
         this.withRequestableDescendants = withRequestableDescendants;
+        this.groupId = groupId;
     }
 
     public Class<T> getCondValueType() {
@@ -257,6 +318,17 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
     public Function<U, String> getRawDataCondValueIdFun() {
         return rawDataCondValueIdFun;
     }
+    /**
+     * If in a {@code Condition2}, the objects associated with this {@code ConditionParameter}
+     * only accepts a restrictive set of IDs (e.g., {@code ConditionParameter.SEX} for class {@code Sex}
+     * in attribute {@code Condition2#getSex()}), return them. Otherwise, return {@code null}.
+     *
+     * @return  A {@code Set} of {@code String}s that are all the possible IDs that can be accepted
+     *          associated with this {@code ConditionParameter}, {@code null} if there is no restriction.
+     */
+    public Set<String> getAllPossibleCondValueIds() {
+        return allPossibleCondValueIds;
+    }
     public String getAttributeName() {
         return attributeName;
     }
@@ -272,6 +344,15 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
     public String getRequestFilterParameterName() {
         return requestFilterParameterName;
     }
+    public String getRequestDiscardParameterName() {
+        return requestDiscardParameterName;
+    }
+    public String getCondTargetAttributeName() {
+        return condTargetAttributeName;
+    }
+    public String getRawDataCondTargetAttributeName() {
+        return rawDataCondTargetAttributeName;
+    }
     public String getRequestDescendantParameterName() {
         return requestDescendantParameterName;
     }
@@ -280,6 +361,9 @@ public abstract class ConditionParameter<T extends ConditionParameterValue, U> {
     }
     public boolean isWithRequestableDescendants() {
         return withRequestableDescendants;
+    }
+    public int getGroupId() {
+        return groupId;
     }
 
 

@@ -115,6 +115,7 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
      *                                  or if all provided {@code Collection}s are empty or {@code null}..
      */
     //XXX: should we accept RawDataSex as arguments rather than Strings for sexes?
+    //TODO: generalize as in BaseConditionFilter2 using ConditionParameters
     public RawDataConditionFilter(Integer speciesId, Collection<String> anatEntityIds, Collection<String> devStageIds,
             Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains,
             boolean includeSubAnatEntities, boolean includeSubDevStages, boolean includeSubCellTypes,

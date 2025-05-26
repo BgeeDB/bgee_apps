@@ -67,7 +67,8 @@ public class GenerateXRefsFilesWithExprInfo {
         UNIPROT(1, new HashSet<>(), "XRefsBgee.txt"),
         GENE_CARDS(3, new HashSet<>(Arrays.asList(9606)), "geneCards_XRefBgee.tsv"),
         WIKIDATA(10, new HashSet<>(Arrays.asList(6239,7227,7955,9606,10090,10116)),
-                "WikidataBotInput.tsv");
+                "WikidataBotInput.tsv"),
+        BGEE_GENE_SUMMARY(1, new HashSet<>(Arrays.asList()), "geneSummaryBgee.txt");
 
         private final Integer numberOfConditionsToWrite;
         private final Set<Integer> speciesIds;
@@ -132,7 +133,10 @@ public class GenerateXRefsFilesWithExprInfo {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments."));
         }
         GenerateXRefsFilesWithExprInfo expressionInfoGenerator = new GenerateXRefsFilesWithExprInfo();
-        Set<String> wikidataUberonClasses = getWikidataUberonClasses(args[2]);
+        List<String> xrefsFileTypes = CommandRunner.parseListArgument(args[3]);
+        // Load Uberon classes present in Wikidata only if wikidata xref file has to be created
+        Set<String> wikidataUberonClasses = xrefsFileTypes.contains(XrefsFileType.WIKIDATA.toString()) ?
+                getWikidataUberonClasses(args[2]) :new HashSet<>();
         expressionInfoGenerator.generate(args[0], args[1], wikidataUberonClasses,
                 CommandRunner.parseListArgument(args[3]));
 
@@ -177,7 +181,7 @@ public class GenerateXRefsFilesWithExprInfo {
 
         // Create one geneFilter per gene used to retrieve the calls
         Set<GeneFilter> geneFiltersToLoadCalls = geneService
-                .loadGenes(geneFiltersToLoadGenes, false, false, true)
+                .loadGenes(geneFiltersToLoadGenes, false, false, true, false)
                 .map(g -> new GeneFilter(g.getSpecies().getId(), g.getGeneId()))
                 .collect(Collectors.toSet());
 
@@ -382,6 +386,7 @@ public class GenerateXRefsFilesWithExprInfo {
                             .putAll(generateXrefLineUniProt(geneId, callsByAnatEntity, filteredUniProtIds));
                         }
                     }
+                    
                     if(requestedXrefFileTypes.contains(XrefsFileType.GENE_CARDS)
                             && (XrefsFileType.GENE_CARDS.getSpeciesIds().contains(speciesId) ||
                                     XrefsFileType.GENE_CARDS.getSpeciesIds() == null || 
@@ -391,10 +396,17 @@ public class GenerateXRefsFilesWithExprInfo {
                     }
                     if(requestedXrefFileTypes.contains(XrefsFileType.WIKIDATA)
                             && (XrefsFileType.WIKIDATA.getSpeciesIds().contains(speciesId) ||
-                            XrefsFileType.UNIPROT.getSpeciesIds() == null || 
-                            XrefsFileType.UNIPROT.getSpeciesIds().isEmpty())) {
+                            XrefsFileType.WIKIDATA.getSpeciesIds() == null || 
+                            XrefsFileType.WIKIDATA.getSpeciesIds().isEmpty())) {
                         syncMap.computeIfAbsent(XrefsFileType.WIKIDATA, k -> createNewSynchronizedSortedMap())
                         .putAll(generateXrefLineWikidata(geneId, callsByAnatEntity, wikidataUberonClasses));
+                    }
+                    if (requestedXrefFileTypes.contains(XrefsFileType.BGEE_GENE_SUMMARY) 
+                            && (XrefsFileType.BGEE_GENE_SUMMARY.getSpeciesIds().contains(speciesId) ||
+                                    XrefsFileType.BGEE_GENE_SUMMARY.getSpeciesIds() == null || 
+                                    XrefsFileType.BGEE_GENE_SUMMARY.getSpeciesIds().isEmpty())) {
+                        syncMap.computeIfAbsent(XrefsFileType.BGEE_GENE_SUMMARY, k -> createNewSynchronizedSortedMap())
+                        .putAll(generateGeneSummary(geneId, speciesId, callsByAnatEntity));
                     }
                 }
             });
@@ -449,6 +461,21 @@ public class GenerateXRefsFilesWithExprInfo {
         return Stream.of(
                 new AbstractMap.SimpleEntry<>(geneId, XRefLines))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private Map<String, List<String>> generateGeneSummary(String geneId, Integer speciesId, List<ExpressionCall> callsByCondition) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(geneId).append("\t").append(speciesId).append("\t");
+        int numberConditionsToWrite = XrefsFileType.BGEE_GENE_SUMMARY.getNumberOfConditionsToWrite();
+        if (numberConditionsToWrite > 0) {
+            sb.append("Expressed in ");
+        }
+
+        //generate expression sentence
+        sb.append(stringSentenceCurrentCondition(numberConditionsToWrite, callsByCondition));
+        sb.append(stringSentenceOtherConditions(numberConditionsToWrite, callsByCondition));
+        
+        return Map.of(geneId, List.of(sb.toString()));
     }
 
     private String stringSentenceCurrentCondition (int numberConditionsToWrite,

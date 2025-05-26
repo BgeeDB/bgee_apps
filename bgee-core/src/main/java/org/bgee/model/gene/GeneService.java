@@ -67,7 +67,7 @@ public class GeneService extends CommonService {
      */
     public Stream<Gene> loadGenes(GeneFilter filter) {
         log.traceEntry("{}", filter);
-        return log.traceExit(this.loadGenes(Collections.singleton(filter), false, false, false));
+        return log.traceExit(this.loadGenes(Collections.singleton(filter), false, false, false, false));
     }
 
     /**
@@ -82,15 +82,16 @@ public class GeneService extends CommonService {
      * @return              A {@code Stream} of matching {@code Gene}s.
      */
     public Stream<Gene> loadGenes(Collection<GeneFilter> filters, boolean withSpeciesSourceInfo,
-            boolean withSynonymInfo, boolean withXRefInfo) {
-        log.traceEntry("{}, {}, {}, {}", filters, withSpeciesSourceInfo, withSynonymInfo, withXRefInfo);
+            boolean withSynonymInfo, boolean withXRefInfo, boolean withExpressionSummary) {
+        log.traceEntry("{}, {}, {}, {}, {}", filters, withSpeciesSourceInfo, withSynonymInfo, withXRefInfo,
+                withExpressionSummary);
         
         Set<GeneFilter> clonedFilters = filters == null? new HashSet<>(): new HashSet<>(filters);
         Map<Integer, Set<String>> filtersToMap = clonedFilters.stream()
                 .collect(Collectors.toMap(f -> f.getSpeciesId(), f -> new HashSet<>(f.getGeneIds()),
                         (s1, s2) -> {s1.addAll(s2); return s1;}));
 
-        return log.traceExit(this.loadGenes(this.geneDAO.getGenesBySpeciesAndGeneIds(filtersToMap).stream(),
+        return log.traceExit(this.loadGenes(this.geneDAO.getGenesBySpeciesAndGeneIds(filtersToMap, withExpressionSummary).stream(),
                 null, filtersToMap.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet()),
                 filtersToMap.keySet(), withSpeciesSourceInfo, withSynonymInfo, withXRefInfo));
     }
@@ -111,7 +112,7 @@ public class GeneService extends CommonService {
      */
     public Set<Gene> loadGenesById(String geneId) {
         log.traceEntry("{}", geneId);
-        return log.traceExit(this.loadGenesById(geneId, false, false, false));
+        return log.traceExit(this.loadGenesById(geneId, false, false, false, false));
     }
 
     /**
@@ -126,18 +127,21 @@ public class GeneService extends CommonService {
      *                              is retrieved or not.
      * @param withSynonymInfo       A {@code boolean} defining whether synonyms of the genes are retrieved.
      * @param withXRefInfo          A {@code boolean} defining whether XRefs of the genes are retrieved.
+     * @param withExpressionSummary A {@code boolean} defining whether the expression summary sentence has to be retrieved.
      * @return                  A {@code Set} of matching {@code Gene}s.
      */
     public Set<Gene> loadGenesById(String geneId, boolean withSpeciesSourceInfo, boolean withSynonymInfo,
-            boolean withXRefInfo) {
-        log.traceEntry("{}, {}, {}, {}", geneId, withSpeciesSourceInfo, withSynonymInfo, withXRefInfo);
+            boolean withXRefInfo, boolean withExpressionSummary) {
+        log.traceEntry("{}, {}, {}, {}, {}", geneId, withSpeciesSourceInfo, withSynonymInfo, withXRefInfo,
+                withExpressionSummary);
         if (StringUtils.isBlank(geneId)) {
             throw log.throwing(new IllegalArgumentException("No gene ID can be blank."));
         }
         
         //we expect very few results from a single ID, so we don't preload all species
         //in database as for method 'loadGenesByIds'
-        Set<GeneTO> geneTOs = this.geneDAO.getGenesByGeneIds(Collections.singleton(geneId))
+        Set<GeneTO> geneTOs = this.geneDAO.getGenesByGeneIds(Collections.singleton(geneId),
+                withExpressionSummary)
                 .stream().collect(Collectors.toSet());
         //In case the ID provided was incorrect/doesn't match any gene in Bgee
         if (geneTOs == null || geneTOs.isEmpty()) {
@@ -323,7 +327,7 @@ public class GeneService extends CommonService {
     private Stream<Gene> loadGenes(Stream<GeneTO> geneTOStream, Set<Integer> bgeeGeneIds,
             Set<String> geneIds, Set<Integer> speciesIds,
             boolean withSpeciesSourceInfo, boolean withSynonymInfo, boolean withXRefInfo) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", geneTOStream, bgeeGeneIds, geneIds, speciesIds,
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", geneTOStream, bgeeGeneIds, geneIds, speciesIds,
                 withSpeciesSourceInfo, withSynonymInfo, withXRefInfo);
 
         //We first check whether we need Sources for this query, in which case they can be reused

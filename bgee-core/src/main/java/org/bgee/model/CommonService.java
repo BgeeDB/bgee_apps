@@ -284,7 +284,8 @@ public class CommonService extends Service {
                     "Species ID of the gene does not match provided Species."));
         }
         return log.traceExit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                synonyms, xRefs, species, geneBioType, geneTO.getGeneMappedToGeneIdCount()));
+                synonyms, xRefs, species, geneBioType, geneTO.getGeneMappedToGeneIdCount(),
+                geneTO.getExpressionSummary()));
     }
 
     /**
@@ -562,7 +563,7 @@ public class CommonService extends Service {
 
         //Make the DAO query and map GeneTOs to Genes. Store them in a Map to keep the bgeeGeneIds.
         final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(geneDAO
-                .getGenesBySpeciesAndGeneIds(requestedSpeToGeneIdsMap)
+                .getGenesBySpeciesAndGeneIds(requestedSpeToGeneIdsMap, false)
                 .stream()
                 .collect(Collectors.toMap(
                         gTO -> gTO.getId(),

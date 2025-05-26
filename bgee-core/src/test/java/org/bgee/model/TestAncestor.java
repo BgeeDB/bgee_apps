@@ -199,29 +199,30 @@ public abstract class TestAncestor {
                     1,                  //geneBioTypeId
                     100,                //OMAParentNodeId
                     true,               //From Ensembl?
-                    1                   //Number of genes with same public ID
+                    1,                  //Number of genes with same public ID
+                    null
                     )),
             Map.entry(2, new GeneTO(
                     2, "geneId2", "geneName2", "geneDescription2",
                     1, //same species as geneId1
                     2, //alternative geneBioType
-                    100, true, 1)),
+                    100, true, 1, "expression summary")),
             Map.entry(3, new GeneTO(3,
                     "geneId3_4", //two different genes with same public ID in species 2 and species 3
                     "geneName3", "geneDescription3",
                     2,           //species 2
                     1, 100,
                     true,        //species 2 and 3 has a genome from a different database than Ensembl
-                    2            //two different genes with same public ID in species 2 and species 3
-                    )),
+                    2,           //two different genes with same public ID in species 2 and species 3
+                    null)),
             Map.entry(4, new GeneTO(4,
                     "geneId3_4", //two different genes with same public ID in species 2 and species 3
                     "geneName4", "geneDescription4",
                     2,           //species 3
                     1, 100,
                     false,       //species 2 and 3 has a genome from a different database than Ensembl
-                    2            //two different genes with same public ID in species 2 and species 3
-                    ))));
+                    2,           //two different genes with same public ID in species 2 and species 3
+                    null))));
     protected static final Map<Integer, GeneXRefTO> GENE_X_REF_TOS = unmodifiableLinkedHashMap(List.of(
             Map.entry(1, new GeneXRefTO(
                     1, //Bgee gene ID
@@ -284,7 +285,7 @@ public abstract class TestAncestor {
                             .collect(Collectors.toSet()): null,
                         SPECIES.get(to.getSpeciesId()),
                         GENE_BIO_TYPES.get(to.getGeneBioTypeId()),
-                        to.getGeneMappedToGeneIdCount())))
+                        to.getGeneMappedToGeneIdCount(), null)))
         .collect(Collectors.toList()));
     }
     protected static final Map<Integer, Gene> GENES = loadGeneMap(false, false);

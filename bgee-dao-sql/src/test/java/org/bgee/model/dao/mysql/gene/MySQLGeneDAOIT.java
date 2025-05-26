@@ -63,10 +63,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         List<GeneTO> expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1), 
-                new GeneTO(2, "ID2", "genN2", "genDesc2", 21, 0, 2, true, 1), 
-                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1), 
-                new GeneTO(4, "ID4", "genN4", "genDesc4", 21, 0, 0, true, 1)); 
+                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1, "expression summary"), 
+                new GeneTO(2, "ID2", "genN2", "genDesc2", 21, 0, 2, true, 1, "expression summary"), 
+                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1, "expression summary"), 
+                new GeneTO(4, "ID4", "genN4", "genDesc4", 21, 0, 0, true, 1, "expression summary")); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -82,10 +82,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
         methGenes = dao.getAllGenes().getAllTOs();
         expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", null, null, null, null, null, null, null), 
-                new GeneTO(2, "ID2", null, null, null, null, null, null, null), 
-                new GeneTO(3, "ID3", null, null, null, null, null, null, null),
-                new GeneTO(4, "ID4", null, null, null, null, null, null, null));
+                new GeneTO(1, "ID1", null, null, null, null, null, null, null, "expression summary"), 
+                new GeneTO(2, "ID2", null, null, null, null, null, null, null, "expression summary"), 
+                new GeneTO(3, "ID3", null, null, null, null, null, null, null, "expression summary"),
+                new GeneTO(4, "ID4", null, null, null, null, null, null, null, "expression summary"));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -105,10 +105,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
         List<GeneTO> methGenes = dao.getGenesBySpeciesIds(null).getAllTOs();
         List<GeneTO> expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", null, null, null, null, null, null, null), 
-                new GeneTO(2, "ID2", null, null, null, null, null, null, null), 
-                new GeneTO(3, "ID3", null, null, null, null, null, null, null),
-                new GeneTO(4, "ID4", null, null, null, null, null, null, null));
+                new GeneTO(1, "ID1", null, null, null, null, null, null, null, "expression summary"), 
+                new GeneTO(2, "ID2", null, null, null, null, null, null, null, "expression summary"), 
+                new GeneTO(3, "ID3", null, null, null, null, null, null, null, "expression summary"),
+                new GeneTO(4, "ID4", null, null, null, null, null, null, null, "expression summary"));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -119,8 +119,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         methGenes = dao.getGenesBySpeciesIds(speciesIds).getAllTOs();
         expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1), 
-                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1)); 
+                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1, "expression summary"), 
+                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1, "expression summary")); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -148,10 +148,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
         List<GeneTO> methGenes = dao.getGenesByGeneIds(null).getAllTOs();
         List<GeneTO> expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", null, null, null, null, null, null, null), 
-                new GeneTO(2, "ID2", null, null, null, null, null, null, null), 
-                new GeneTO(3, "ID3", null, null, null, null, null, null, null),
-                new GeneTO(4, "ID4", null, null, null, null, null, null, null));
+                new GeneTO(1, "ID1", null, null, null, null, null, null, null, "expression summary"), 
+                new GeneTO(2, "ID2", null, null, null, null, null, null, null, "expression summary"), 
+                new GeneTO(3, "ID3", null, null, null, null, null, null, null, "expression summary"),
+                new GeneTO(4, "ID4", null, null, null, null, null, null, null, "expression summary"));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -164,9 +164,9 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         geneIds.addAll(Arrays.asList("ID1", "ID2", "ID4"));
         methGenes = dao.getGenesByGeneIds(geneIds).getAllTOs();
         expectedGenes = Arrays.asList(
-                new GeneTO(null, null, "genN1", null, null, null, null, null, null), 
-                new GeneTO(null, null, "genN2", null, null, null, null, null, null), 
-                new GeneTO(null, null, "genN4", null, null, null, null, null, null));
+                new GeneTO(null, null, "genN1", null, null, null, null, null, null, "expression summary"), 
+                new GeneTO(null, null, "genN2", null, null, null, null, null, null, "expression summary"), 
+                new GeneTO(null, null, "genN4", null, null, null, null, null, null, "expression summary"));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -184,12 +184,12 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 
         // Without specified species IDs and gene IDs
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-        List<GeneTO> methGenes = dao.getGenesBySpeciesAndGeneIds(null).getAllTOs();
+        List<GeneTO> methGenes = dao.getGenesBySpeciesAndGeneIds(null, false).getAllTOs();
         List<GeneTO> expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", null, null, null, null, null, null, null), 
-                new GeneTO(2, "ID2", null, null, null, null, null, null, null), 
-                new GeneTO(3, "ID3", null, null, null, null, null, null, null),
-                new GeneTO(4, "ID4", null, null, null, null, null, null, null));
+                new GeneTO(1, "ID1", null, null, null, null, null, null, null, null), 
+                new GeneTO(2, "ID2", null, null, null, null, null, null, null, null), 
+                new GeneTO(3, "ID3", null, null, null, null, null, null, null, null),
+                new GeneTO(4, "ID4", null, null, null, null, null, null, null, null));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -199,10 +199,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         speciesIds.addAll(Arrays.asList(11, 31, 44));
         dao.clearAttributes();
         methGenes = dao.getGenesBySpeciesAndGeneIds(speciesIds.stream().collect(
-                Collectors.toMap(id -> id, id -> null))).getAllTOs();
+                Collectors.toMap(id -> id, id -> null)), true).getAllTOs();
         expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1), 
-                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1)); 
+                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1, "expression summary"), 
+                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1, "expression summary")); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -214,9 +214,9 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         geneIds.addAll(Arrays.asList("ID1"));
         Map<Integer, Set<String>> speMap = new HashMap<>();
         speMap.put(11, geneIds);
-        methGenes = dao.getGenesBySpeciesAndGeneIds(speMap).getAllTOs();
+        methGenes = dao.getGenesBySpeciesAndGeneIds(speMap, true).getAllTOs();
         expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", null, "genDesc1", null, null, null, null, null)); 
+                new GeneTO(1, "ID1", null, "genDesc1", null, null, null, null, null, "expression summary")); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -236,10 +236,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID, GeneDAO.Attribute.SPECIES_ID));
         List<GeneTO> methGenes = dao.getGenesByBgeeIds(null).getAllTOs();
         List<GeneTO> expectedGenes = Arrays.asList(
-                new GeneTO(1, null, null, null, 11, null, null, null, null),
-                new GeneTO(2, null, null, null, 21, null, null, null, null),
-                new GeneTO(3, null, null, null, 31, null, null, null, null),
-                new GeneTO(4, null, null, null, 21, null, null, null, null));
+                new GeneTO(1, null, null, null, 11, null, null, null, null, "expression summary"),
+                new GeneTO(2, null, null, null, 21, null, null, null, null, "expression summary"),
+                new GeneTO(3, null, null, null, 31, null, null, null, null, "expression summary"),
+                new GeneTO(4, null, null, null, 21, null, null, null, null, "expression summary"));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -250,9 +250,9 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         Set<Integer> bgeeGeneIds = new HashSet<>(Arrays.asList(1, 2, 3));
         methGenes = dao.getGenesByBgeeIds(bgeeGeneIds).getAllTOs();
         expectedGenes = Arrays.asList(
-                new GeneTO(null, null, null, "genDesc1", null, null, null, null, null),
-                new GeneTO(null, null, null, "genDesc2", null, null, null, null, null),
-                new GeneTO(null, null, null, "genDesc4", null, null, null, null, null));
+                new GeneTO(null, null, null, "genDesc1", null, null, null, null, null, "expression summary"),
+                new GeneTO(null, null, null, "genDesc2", null, null, null, null, null, "expression summary"),
+                new GeneTO(null, null, null, "genDesc4", null, null, null, null, null, "expression summary"));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -268,15 +268,15 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         this.populateAndUseDatabase();
 
         Collection<GeneTO> geneTOs = Arrays.asList(
-                new GeneTO(1, "ID1", "GNMod1", "DescMod1", 31, 12, 7, true, 1),
-                new GeneTO(2, "ID2", "GNMod2", "DescMod2", 11, 12, 6, false, 1));
+                new GeneTO(1, "ID1", "GNMod1", "DescMod1", 31, 12, 7, true, 1, "expression summary"),
+                new GeneTO(2, "ID2", "GNMod2", "DescMod2", 11, 12, 6, false, 1, "expression summary"));
         
         Collection<GeneDAO.Attribute> attributesToUpdate1 = Arrays.asList(
-                GeneDAO.Attribute.OMA_PARENT_NODE_ID);
+                GeneDAO.Attribute.GENE_BIO_TYPE_ID);
         Collection<GeneDAO.Attribute> attributesToUpdate2 = Arrays.asList(
                 GeneDAO.Attribute.NAME, GeneDAO.Attribute.DESCRIPTION,
                 GeneDAO.Attribute.SPECIES_ID, GeneDAO.Attribute.GENE_BIO_TYPE_ID,
-                GeneDAO.Attribute.OMA_PARENT_NODE_ID, GeneDAO.Attribute.ENSEMBL_GENE);
+                GeneDAO.Attribute.ENSEMBL_GENE);
         
         try {
             //Test with only one Attribute

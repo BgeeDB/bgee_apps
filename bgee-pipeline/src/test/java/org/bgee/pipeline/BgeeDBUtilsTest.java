@@ -372,9 +372,9 @@ public class BgeeDBUtilsTest extends TestAncestor {
     public void shouldGetGeneTOsByIds() {
         try (MockDAOManager mockManager = new MockDAOManager()) {
             
-            GeneTO gene1 = new GeneTO(1, "1", "gene A", "desc A", 1, 1, 1, true, 1); 
-            GeneTO gene2 = new GeneTO(2, "2", "gene B", "desc B", 2, 1, 1, true, 1); 
-            GeneTO gene3 = new GeneTO(3, "3", "gene C", "desc C", 1, 2, 2, true, 1); 
+            GeneTO gene1 = new GeneTO(1, "1", "gene A", "desc A", 1, 1, 1, true, 1, null); 
+            GeneTO gene2 = new GeneTO(2, "2", "gene B", "desc B", 2, 1, 1, true, 1, null); 
+            GeneTO gene3 = new GeneTO(3, "3", "gene C", "desc C", 1, 2, 2, true, 1, null); 
 
             List<GeneTO> returnedGeneTOs = Arrays.asList(gene1, gene2, gene3);
             
@@ -422,8 +422,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
 
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<GeneTO> returnedGeneTOs = Arrays.asList(
-                    new GeneTO(1, "1", "gene A", "desc A", 1, 1, 1, true, 2), 
-                    new GeneTO(1, "1", "gene B", "desc B", 1, 1, 1, true, 2));
+                    new GeneTO(1, "1", "gene A", "desc A", 1, 1, 1, true, 2, null), 
+                    new GeneTO(1, "1", "gene B", "desc B", 1, 1, 1, true, 2, null));
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);

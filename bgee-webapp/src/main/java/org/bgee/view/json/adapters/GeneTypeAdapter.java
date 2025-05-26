@@ -59,6 +59,7 @@ public final class GeneTypeAdapter extends TypeAdapter<Gene> {
         out.name("geneId").value(value.getGeneId());
         out.name("name").value(value.getName());
         out.name("description").value(value.getDescription());
+        out.name("expressionSummary").value(value.getExpressionSummary());
         out.name("synonyms");
         this.gson.getAdapter(Set.class).write(out, value.getSynonyms());
         out.name("xRefs");
@@ -66,6 +67,7 @@ public final class GeneTypeAdapter extends TypeAdapter<Gene> {
         out.name("species");
         this.gson.getAdapter(Species.class).write(out, value.getSpecies());
         out.name("geneBioType");
+
         this.gson.getAdapter(GeneBioType.class).write(out, value.getGeneBioType());
         out.name("geneMappedToSameGeneIdCount").value(value.getGeneMappedToSameGeneIdCount());
 

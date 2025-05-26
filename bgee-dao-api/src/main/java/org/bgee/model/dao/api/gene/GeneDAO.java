@@ -32,9 +32,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * <li>{@code DESCRIPTION}: corresponds to {@link GeneTO#getDescription()}.
      * <li>{@code SPECIES_ID}: corresponds to {@link GeneTO#getSpeciesId()}.
      * <li>{@code GENE_BIO_TYPE_ID}: corresponds to {@link GeneTO#getGeneBioTypeId()}.
-     * <li>{@code OMA_PARENT_NODE_ID}: corresponds to {@link GeneTO#getOMAParentNodeId()}.
      * <li>{@code ENSEMBL_GENE}: corresponds to {@link GeneTO#isEnsemblGene()}.
      * <li>{@code GENE_MAPPED_TO_SAME_GENE_ID_COUNT}: corresponds to {@link GeneTO#getGeneMappedToGeneIdCount()}.
+     * <li>{@code EXPRESSION_SUMMARY}: corresponds to {@link GeneTO#getExpressionSummary()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -42,9 +42,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         ID("bgeeGeneId"), GENE_ID("geneId"), NAME("geneName"), DESCRIPTION("geneDescription"),
-        SPECIES_ID("speciesId"), GENE_BIO_TYPE_ID("geneBiotypeId"),
-        OMA_PARENT_NODE_ID("OMAParentNodeId"), ENSEMBL_GENE("ensemblGene"),
-        GENE_MAPPED_TO_SAME_GENE_ID_COUNT("geneMappedToGeneIdCount");
+        SPECIES_ID("speciesId"), GENE_BIO_TYPE_ID("geneBiotypeId"),ENSEMBL_GENE("ensemblGene"),
+        GENE_MAPPED_TO_SAME_GENE_ID_COUNT("geneMappedToGeneIdCount"),
+        EXPRESSION_SUMMARY("expressionSummary");
 
         /**
          * A {@code String} that is the corresponding field name in {@code AffymetrixChipTO} class.
@@ -80,7 +80,17 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @throws DAOException
      */
     public GeneTOResultSet getGenesByGeneIds(Collection<String> geneIds) throws DAOException;
-    
+
+    /**
+     * Retrieve genes by theirIDs.
+     * @param geneIds               A {Collection} of gene ids.
+     * @param withExpressionSummary A {@code boolean} defining whether the expression summary sentence
+     *                              should be retrieved. 
+     * @return  A {@code GeneTOResultSet} containing genes found from the data source.
+     * @throws DAOException
+     */
+    public GeneTOResultSet getGenesByGeneIds(Collection<String> geneIds, boolean withExpressionSummary)
+            throws DAOException;
     /**
      * Retrieve genes by their bgee gene ids.
      * @param geneIds A {Collection} of gene ids.
@@ -134,10 +144,13 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      *                              species IDs, the associated value being a {@code Set}
      *                              of {@code String}s that are theIDs of the genes
      *                              to retrieve in the associated species.
+     * @param withExpressionSummary A {@code boolean} defining whether the expression summary sentence
+     *                              should be retrieved. 
      * @return                      A {@code GeneTOResultSet} containing matching genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneTOResultSet getGenesBySpeciesAndGeneIds(Map<Integer, Set<String>> speciesIdToGeneIds) 
+    public GeneTOResultSet getGenesBySpeciesAndGeneIds(Map<Integer, Set<String>> speciesIdToGeneIds,
+            boolean withExpressionSummary) 
             throws DAOException;
 
     /**
@@ -238,6 +251,11 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         private final Integer geneMappedToGeneIdCount;
 
         /**
+         * @see #getExpressionSummary()
+         */
+        private final String expressionSummary;
+
+        /**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), the description and the species ID of this gene.
          * <p>
@@ -250,7 +268,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param speciesId An {@code Integer} of the species which this gene belongs to.
          */
         public GeneTO(Integer bgeeGeneId, String geneId, String geneName, Integer speciesId) {
-            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null, null);
+            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null, null, null);
         }
 
         /**
@@ -274,10 +292,12 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          *                                  in Ensembl.
          * @param geneMappedToGeneIdCount   An {@code Integer} that is the number of genes
          *                                  in the Bgee database with the samegene ID.
+         * @param expressionSummary         A {@code String} that summarize the expression of the gene
+         *                                  for anat. entities and celltypes.
          */
         public GeneTO(Integer bgeeGeneId, String geneId, String geneName, String geneDescription, 
                 Integer speciesId, Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene,
-                Integer geneMappedToGeneIdCount) {
+                Integer geneMappedToGeneIdCount, String expressionSummary) {
             super(bgeeGeneId, geneName, geneDescription);
             this.geneId = geneId;
             this.speciesId = speciesId;
@@ -285,6 +305,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
             this.OMAParentNodeId = OMAParentNodeId;
             this.ensemblGene = ensemblGene;
             this.geneMappedToGeneIdCount = geneMappedToGeneIdCount;
+            this.expressionSummary = expressionSummary;
         }
 
         /**
@@ -329,17 +350,18 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
             return this.geneMappedToGeneIdCount;
         }
 
+        public String getExpressionSummary() {
+            return this.expressionSummary;
+        }
+
         @Override
         public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("GeneTO [geneId=").append(geneId)
-                   .append(", speciesId=").append(speciesId)
-                   .append(", geneBioTypeId=").append(geneBioTypeId)
-                   .append(", OMAParentNodeId=").append(OMAParentNodeId)
-                   .append(", ensemblGene=").append(ensemblGene)
-                   .append(", geneMappedToGeneIdCount=").append(geneMappedToGeneIdCount).append("]");
-            return builder.toString();
+            return "GeneTO [geneId=" + geneId + ", speciesId=" + speciesId + ", geneBioTypeId=" + geneBioTypeId
+                    + ", OMAParentNodeId=" + OMAParentNodeId + ", ensemblGene=" + ensemblGene
+                    + ", geneMappedToGeneIdCount=" + geneMappedToGeneIdCount + ", expressionSummary="
+                    + expressionSummary + "]";
         }
+
     }
 
     /**

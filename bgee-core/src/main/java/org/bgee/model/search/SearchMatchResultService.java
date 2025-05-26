@@ -530,7 +530,7 @@ public class SearchMatchResultService extends CommonService {
                 species,
                 geneBioTypeMap.get(((Long) match.attrValues.get(attrIndexMap.get("genebiotypeid")))
                         .intValue()),
-                ((Long) match.attrValues.get(attrIndexMap.get("genemappedtogeneidcount"))).intValue());
+                ((Long) match.attrValues.get(attrIndexMap.get("genemappedtogeneidcount"))).intValue(), null);
 
         // If the gene name, id or description match there is no term
         //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash

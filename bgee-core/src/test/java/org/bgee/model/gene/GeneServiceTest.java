@@ -78,10 +78,10 @@ public class GeneServiceTest extends TestAncestor {
         GeneDAO dao = mock(GeneDAO.class);
         when(managerMock.getGeneDAO()).thenReturn(dao);
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
-                Arrays.asList(new GeneTO(1, "ID1", "Name1", "Desc1", 11, 1, 1, true, 1),
-                        new GeneTO(2, "ID2", "Name2", "Desc2", 22, 1, 1, true, 1),
-                        new GeneTO(4, "ID4", "Name4", "Desc4", 44, 2, 1, true, 1)));
-        when(dao.getGenesBySpeciesAndGeneIds(filtersToMap)).thenReturn(mockGeneRs);
+                Arrays.asList(new GeneTO(1, "ID1", "Name1", "Desc1", 11, 1, 1, true, 1, null),
+                        new GeneTO(2, "ID2", "Name2", "Desc2", 22, 1, 1, true, 1, null),
+                        new GeneTO(4, "ID4", "Name4", "Desc4", 44, 2, 1, true, 1, null)));
+        when(dao.getGenesBySpeciesAndGeneIds(filtersToMap, false)).thenReturn(mockGeneRs);
         GeneBioTypeTOResultSet mockBioTypeRs = getMockResultSet(GeneBioTypeTOResultSet.class,
                 Arrays.asList(new GeneBioTypeTO(1, "type1"), new GeneBioTypeTO(2, "type2")));
         when(dao.getGeneBioTypes()).thenReturn(mockBioTypeRs);
@@ -95,9 +95,9 @@ public class GeneServiceTest extends TestAncestor {
 
         // Test
         Set<Gene> expectedGenes = new HashSet<>();
-        expectedGenes.add(new Gene("ID1", "Name1", "Desc1", null, null, new Species(11), new GeneBioType("type1"), 1));
-        expectedGenes.add(new Gene("ID2", "Name2", "Desc2", null, null, new Species(22), new GeneBioType("type1"), 1));
-        expectedGenes.add(new Gene("ID4", "Name4", "Desc4", null, null, new Species(44), new GeneBioType("type2"), 1));
+        expectedGenes.add(new Gene("ID1", "Name1", "Desc1", null, null, new Species(11), new GeneBioType("type1"), 1, null));
+        expectedGenes.add(new Gene("ID2", "Name2", "Desc2", null, null, new Species(22), new GeneBioType("type1"), 1, null));
+        expectedGenes.add(new Gene("ID4", "Name4", "Desc4", null, null, new Species(44), new GeneBioType("type2"), 1, null));
         
         GeneService service = new GeneService(serviceFactory);
         Set<GeneFilter> geneFilters = new HashSet<>();
@@ -105,7 +105,7 @@ public class GeneServiceTest extends TestAncestor {
         geneFilters.add(new GeneFilter(22, "ID2"));
         geneFilters.add(new GeneFilter(44, "ID4"));
         assertEquals("Incorrect gene to keywords mapping",
-                expectedGenes, service.loadGenes(geneFilters, false, false, false).collect(Collectors.toSet()));
+                expectedGenes, service.loadGenes(geneFilters, false, false, false, false).collect(Collectors.toSet()));
     }
 
     /**
@@ -150,16 +150,16 @@ public class GeneServiceTest extends TestAncestor {
         // Mock the GeneDAO response from cross-ref ids
         Set<Integer> bgeeGeneIds = new HashSet<>(Arrays.asList(1, 2, 22, 4));
         GeneTOResultSet mockGeneRs1 = getMockResultSet(GeneTOResultSet.class,
-                Arrays.asList(new GeneTO(1, "ID1", "Name1a", null, 1, 1, null, null, 1),
-                        new GeneTO(2, "ID2", "Name2", null, 1, 1, null, null, 1),
-                        new GeneTO(22, "ID22", "Name22", null, 1, 1, null, null, 1),
-                        new GeneTO(4, "ID4", "Name4", null, 1, 1, null, null, 1)));
+                Arrays.asList(new GeneTO(1, "ID1", "Name1a", null, 1, 1, null, null, 1, null),
+                        new GeneTO(2, "ID2", "Name2", null, 1, 1, null, null, 1, null),
+                        new GeneTO(22, "ID22", "Name22", null, 1, 1, null, null, 1, null),
+                        new GeneTO(4, "ID4", "Name4", null, 1, 1, null, null, 1, null)));
         when(geneDao.getGenesByBgeeIds(bgeeGeneIds)).thenReturn(mockGeneRs1);
 
         // Mock the GeneDAO response from IDs
         GeneTOResultSet mockGeneRs2 = getMockResultSet(GeneTOResultSet.class,
-                Arrays.asList(new GeneTO(1, "ID1", "Name1a", null, 1, 1, null, null, 1),
-                        new GeneTO(11, "ID1", "Name1b", null, 2, 1, null, null, 1)));
+                Arrays.asList(new GeneTO(1, "ID1", "Name1a", null, 1, 1, null, null, 1, null),
+                        new GeneTO(11, "ID1", "Name1b", null, 2, 1, null, null, 1, null)));
         when(geneDao.getGenesByGeneIds(new HashSet<>(Arrays.asList("ID1", "UnknownID"))))
                 .thenReturn(mockGeneRs2);
 
@@ -173,15 +173,15 @@ public class GeneServiceTest extends TestAncestor {
         
         Map<String,Set<Gene>> expectedMap = new HashMap<>();
         expectedMap.put("ID1", new HashSet<>(Arrays.asList(
-                new Gene("ID1", "Name1a", null, null, null, new Species(1), new GeneBioType("type1"), 1),
-                new Gene("ID1", "Name1b", null, null, null, new Species(2), new GeneBioType("type1"), 1))));
+                new Gene("ID1", "Name1a", null, null, null, new Species(1), new GeneBioType("type1"), 1, null),
+                new Gene("ID1", "Name1b", null, null, null, new Species(2), new GeneBioType("type1"), 1, null))));
         expectedMap.put("OtherID1", new HashSet<>(Arrays.asList(
-                new Gene("ID1", "Name1a", null, null, null, new Species(1), new GeneBioType("type1"), 1))));
+                new Gene("ID1", "Name1a", null, null, null, new Species(1), new GeneBioType("type1"), 1, null))));
         expectedMap.put("OtherID2", new HashSet<>(Arrays.asList(
-                new Gene("ID2", "Name2",  null, null, null, new Species(1), new GeneBioType("type1"), 1),
-                new Gene("ID22", "Name22",  null, null, null, new Species(1), new GeneBioType("type1"), 1))));
+                new Gene("ID2", "Name2",  null, null, null, new Species(1), new GeneBioType("type1"), 1, null),
+                new Gene("ID22", "Name22",  null, null, null, new Species(1), new GeneBioType("type1"), 1, null))));
         expectedMap.put("OtherID4", new HashSet<>(
-                Arrays.asList(new Gene("ID4", "Name4", null, null, null, new Species(1), new GeneBioType("type1"), 1))));
+                Arrays.asList(new Gene("ID4", "Name4", null, null, null, new Species(1), new GeneBioType("type1"), 1, null))));
         expectedMap.put("UnknownID", new HashSet<>());
 
         GeneService service = new GeneService(serviceFactory);
@@ -228,7 +228,7 @@ public class GeneServiceTest extends TestAncestor {
 
         // Mock gene DAO
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
-                Arrays.asList(new GeneTO(bgeeGeneId, geneId, "Name1", "", 10090, 1, 1, true, 1)));
+                Arrays.asList(new GeneTO(bgeeGeneId, geneId, "Name1", "", 10090, 1, 1, true, 1, null)));
         when(geneDao.getGenesByGeneIds(new HashSet<String>(Arrays.asList(geneId)))).thenReturn(mockGeneRs);
 
         // Mock species service

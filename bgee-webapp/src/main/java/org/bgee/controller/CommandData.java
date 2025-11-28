@@ -987,6 +987,7 @@ public class CommandData extends CommandParent {
 
                 //results
                 if (this.requestParameters.isGetResults()) {
+//                    calls = this.loadExprCallResults(callLoader);
                     calls = this.loadExprCallResults(callLoader);
                 }
                 //Raw data counts
@@ -1642,7 +1643,8 @@ public class CommandData extends CommandParent {
         List<ExpressionCall2> results = this.cacheService.useCacheNonAtomic(
                 EXPR_CALL_RESULT_CACHE_DEF,
                 cacheKey,
-                () -> callLoader.loadData(offset, limit),
+//                () -> callLoader.loadData(offset, limit),
+                () -> callLoader.loadDataOnTheFly().values().stream().collect(Collectors.toList()),
                 COMPUTE_TIME_RESULT_CACHE_MS);
         return log.traceExit(results);
     }

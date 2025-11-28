@@ -97,7 +97,7 @@ implements OntologyElement<DevStage, String>, ConditionParameterValue, RawDataCo
     public boolean isGroupingStage() {
         return groupingStage;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();

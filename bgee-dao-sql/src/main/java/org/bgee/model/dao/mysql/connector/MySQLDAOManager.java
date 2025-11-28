@@ -29,15 +29,10 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.anatdev.SexDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
@@ -54,6 +49,7 @@ import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLObservedExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLGlobalExpressionCallDAO;
@@ -61,15 +57,9 @@ import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLSamplePValueDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MysqlRawDataCountDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.call.MySQLRawExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTLibraryDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituEvidenceDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituExperimentDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipTypeDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqExperimentDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryDAO;
@@ -1056,10 +1046,15 @@ public class MySQLDAOManager extends DAOManager {
         log.traceEntry();
         return log.traceExit(new MySQLRelationDAO(this));
     }
+//    @Override
+//    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
+//        log.traceEntry();
+//        return log.traceExit(new MySQLRawExpressionCallDAO(this));
+//    }
     @Override
-    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
+    protected MySQLObservedExpressionDAO getNewObservedExpressionDAO() {
         log.traceEntry();
-        return log.traceExit(new MySQLRawExpressionCallDAO(this));
+        return log.traceExit(new MySQLObservedExpressionDAO(this));
     }
     @Override
     protected MySQLGlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {
@@ -1085,11 +1080,6 @@ public class MySQLDAOManager extends DAOManager {
     protected RawDataConditionDAO getNewRawDataConditionDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLRawDataConditionDAO(this));
-    }
-    @Override
-    protected MySQLAffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {
-        log.traceEntry();
-        return log.traceExit(new MySQLAffymetrixProbesetDAO(this));
     }
     @Override
     protected InSituEvidenceDAO getNewInSituEvidenceDAO() {
@@ -1180,18 +1170,6 @@ public class MySQLDAOManager extends DAOManager {
     }
 
     @Override
-    protected AffymetrixChipDAO getNewAffymetrixChipDAO() {
-        log.traceEntry();
-        return log.traceExit(new MySQLAffymetrixChipDAO(this));
-    }
-
-    @Override
-    protected MicroarrayExperimentDAO getNewMicroarrayExperimentDAO() {
-        log.traceEntry();
-        return log.traceExit(new MySQLMicroarrayExperimentDAO(this));
-    }
-
-    @Override
     protected RNASeqExperimentDAO getNewRnaSeqExperimentDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLRNASeqExperimentDAO(this));
@@ -1209,16 +1187,6 @@ public class MySQLDAOManager extends DAOManager {
         return log.traceExit(new MySQLRNASeqLibraryDAO(this));
     }
     @Override
-    protected ESTLibraryDAO getNewESTLibraryDAO() {
-        log.traceEntry();
-        return log.traceExit(new MySQLESTLibraryDAO(this));
-    }
-    @Override
-    protected ESTDAO getNewESTDAO() {
-        log.traceEntry();
-        return log.traceExit(new MySQLESTDAO(this));
-    }
-    @Override
     protected SexDAO getNewSexDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLSexDAO(this));
@@ -1230,9 +1198,4 @@ public class MySQLDAOManager extends DAOManager {
         return log.traceExit(new MysqlRawDataCountDAO(this));
     }
 
-    @Override
-    protected AffymetrixChipTypeDAO getNewAffymetrixChipTypeDAO() {
-        log.traceEntry();
-        return log.traceExit(new MySQLAffymetrixChipTypeDAO(this));
-    }
 }

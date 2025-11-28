@@ -62,6 +62,8 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      */
     public final static String STRAIN_ROOT_ID = "wild-type";
 
+    public static final int MAX_MASK = (1 << ConditionParameter.values().length) - 1;
+
     public enum ConditionParameter {
         ANAT_ENTITY(),
         CELL_TYPE(),
@@ -200,6 +202,20 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             throws DAOException, IllegalArgumentException;
 
     /**
+     * Retrieves all relations between global condition Ids and its direct parents for the provided {@code speciesId}.
+     * The relations are retrieved as a {@code GlobalConditionToDirectAncestorTOResultSet}.
+     * 
+     * @param speciesId             An {@code Integer} that is the ID of species allowing to filter the relations to retrieve.
+     *                              Throws an error if {@code null} or empty.
+     * @return                      A {@code GlobalConditionToDirectAncestorTOResultSet} containing the direct relations between
+     *                              global conditions retrieved from the data source for the provided speciesId.
+     * @throws DAOException
+     * @throws IllegalArgumentException
+     */
+    public GlobalConditionToDirectAncestorTOResultSet getGlobalConditionToDirectAncestor(Integer speciesId) 
+            throws DAOException, IllegalArgumentException;
+
+    /**
      * Retrieves global conditions belonging to the provided {@code speciesIds} with parameters defined
      * as specified by {@code DAOConditionFilter2}.
      * <p>
@@ -248,30 +264,45 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     public ConditionTOResultSet getGlobalConditionsFromIds(Collection<Integer> condIds,
             Collection<Attribute> attributes) throws DAOException, IllegalArgumentException;
 
+    //XXX: could create a filter containing both the globalCondition IDs and the condition parameters
     /**
-     * Retrieve the correspondence between raw condition and global conditions, represented as
-     * {@code GlobalConditionToRawConditionTO}s.
-     * <p>
-     * The results are retrieved and returned as a {@code GlobalConditionToRawConditionTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet}
-     * once results are retrieved.
-     *
-     * @param speciesIds                    A {@code Collection} of {@code Integer}s that are the IDs
-     *                                      of species allowing to filter the results to retrieve.
-     *                                      If {@code null} or empty, results for all species are retrieved.
-     * @param conditionParameters           A {@code Collection} of {@code ConditionDAO.Attribute}s
-     *                                      defining the condition parameters of the global conditions
-     *                                      to retrieve mappings for.
-     *                                      (see {@link Attribute#isConditionParameter()}).
-     * @return                              A {@code GlobalConditionToRawConditionTOResultSet}
-     *                                      allowing to retrieve the requested
-     *                                      {@code GlobalConditionToRawConditionTO}s.
-     * @throws DAOException
-     * @throws IllegalArgumentException
+     * Retrieve the mapping between global conditions and raw conditions from global condition IDs and
+     * condition parameters
+     * @param globalConditionIds    A {@code Collection} of {@code Integer}
+     * @param condParams            An {@code EnumSet} of {@code ConditionParameter} corresponding to the
+     *                              condition parameters for which we want to retrieve the mapping between
+     *                              global conditions and raw conditions
+     *                              
+     * @return                      A {@code RawConditionToSelfGlobalConditionTOResultSet} containing all mapping
+     *                              between raw condition IDs and global condition IDs for the requested condition
+     *                              parameters
      */
-    public GlobalConditionToRawConditionTOResultSet getGlobalCondToRawCondBySpeciesIds(
-        Collection<Integer> speciesIds, Collection<Attribute> conditionParameters)
-            throws DAOException, IllegalArgumentException;
+    public RawConditionToSelfGlobalConditionTOResultSet getRawConditionToSelfGlobalConditionFromGlobalConditionIds(
+            Collection<Integer> globalConditionIds, EnumSet<ConditionParameter> condParams) throws DAOException;
+//    /**
+//     * Retrieve the correspondence between raw condition and global conditions, represented as
+//     * {@code GlobalConditionToRawConditionTO}s.
+//     * <p>
+//     * The results are retrieved and returned as a {@code GlobalConditionToRawConditionTOResultSet}.
+//     * It is the responsibility of the caller to close this {@code DAOResultSet}
+//     * once results are retrieved.
+//     *
+//     * @param speciesIds                    A {@code Collection} of {@code Integer}s that are the IDs
+//     *                                      of species allowing to filter the results to retrieve.
+//     *                                      If {@code null} or empty, results for all species are retrieved.
+//     * @param conditionParameters           A {@code Collection} of {@code ConditionDAO.Attribute}s
+//     *                                      defining the condition parameters of the global conditions
+//     *                                      to retrieve mappings for.
+//     *                                      (see {@link Attribute#isConditionParameter()}).
+//     * @return                              A {@code GlobalConditionToRawConditionTOResultSet}
+//     *                                      allowing to retrieve the requested
+//     *                                      {@code GlobalConditionToRawConditionTO}s.
+//     * @throws DAOException
+//     * @throws IllegalArgumentException
+//     */
+//    public GlobalConditionToRawConditionTOResultSet getGlobalCondToRawCondBySpeciesIds(
+//        Collection<Integer> speciesIds, Collection<Attribute> conditionParameters)
+//            throws DAOException, IllegalArgumentException;
     
     /**
      * Retrieve the maximum of global condition IDs, used in the global expression data,
@@ -328,14 +359,27 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * Inserts the provided correspondence between raw condition and global conditions 
      * into the data source, represented as a {@code Collection} of {@code GlobalConditionToRawConditionTO}s. 
      *
-     * @param globalCondToRawCondTOs    A {@code Collection} of {@code GlobalConditionToRawConditionTO}s
-     *                                  to be inserted into the data source.
-     * @return                          An {@code int} that is the number of inserted TOs. 
-     * @throws DAOException             If an error occurred while trying to insert data.
-     * @throws IllegalArgumentException If {@code globalCondToRawCondTOs} is {@code null} or empty.
+     * @param RawConditionToSelfGlobalCondition    A {@code Collection} of {@code GlobalConditionToRawConditionTO}s
+     *                                             to be inserted into the data source.
+     * @return                                     An {@code int} that is the number of inserted TOs. 
+     * @throws DAOException                        If an error occurred while trying to insert data.
+     * @throws IllegalArgumentException If {@code rawConditionToSelfGlobalCondition} is {@code null} or empty.
      */
-    public int insertGlobalConditionToRawCondition(
-            Collection<GlobalConditionToRawConditionTO> globalCondToRawCondTOs)
+    public int insertRawConditionToSelfGlobalCondition(
+            Collection<RawConditionToSelfGlobalConditionTO> rawConditionToSelfGlobalCondition)
+                    throws DAOException, IllegalArgumentException;
+
+    /**
+     * Inserts the direct relation between a source conditionId and its target direct parents conditionIds. 
+     *
+     * @param conditionIdToParentConditionIds    A {@code Collection} of {@code GlobalConditionToRawConditionTO}s
+     *                                           to be inserted into the data source.
+     * @return                                   An {@code int} that is the number of inserted TOs. 
+     * @throws DAOException                      If an error occurred while trying to insert data.
+     * @throws IllegalArgumentException          If {@code condIdToDirectAncestorId} is {@code null} or empty.
+     */
+    public int insertcondIdToDirectAncestorId(
+            Collection<GlobalConditionToDirectAncestorTO> condIdToDirectAncestorId)
                     throws DAOException, IllegalArgumentException;
 
     /**
@@ -533,77 +577,47 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     }
 
     /**
-     * {@code DAOResultSet} specifics to {@code GlobalConditionToRawConditionTO}s
+     * {@code DAOResultSet} specifics to {@code RawConditionToSelfGlobalConditionTO}s
      *
-     * @author Frederic Bastian
-     * @version Bgee 14 Feb. 2017
-     * @since Bgee 14 Feb. 2017
+     * @author Julien Wollbrett
+     * @version Bgee 16 Oct. 2025
+     * @since Bgee 16 Oct. 2025
      */
-    public interface GlobalConditionToRawConditionTOResultSet
-                    extends DAOResultSet<GlobalConditionToRawConditionTO> {
+    public interface RawConditionToSelfGlobalConditionTOResultSet
+                    extends DAOResultSet<RawConditionToSelfGlobalConditionTO> {
     }
 
     /**
-     * A {@code TransferObject} representing a relation between a globalCondition and
-     * one of the raw conditions considered when aggregating the data in the related globalCondition.
+     * A {@code TransferObject} representing a relation between a raw condition and
+     * its self condition for a given combination of condition parameters
      * <p>
-     * This class defines a raw condition ID (see {@link #getConditionId()}
+     * This class defines a raw condition ID (see {@link #getRawConditionId()}
      * and a global condition ID (see {@link #getGlobalConditionId()}), and also stores
-     * the origin of the relations (association from sub-conditions or parent conditions
-     * or from the same condition, see {@link #getCondtionRelationOrigin()}).
+     * the combination of condition parameters as a bitwise. 
      *
-     * @author Frederic Bastian
-     * @version Bgee 14 Mar. 2017
-     * @since Bgee 14 Mar. 2017
+     * @author Julien Wollbrett
+     * @version Bgee 16 Oct. 2025
+     * @since Bgee 16 Oct. 2025
      */
     //TODO: add related method in TOComparator
-    public static class GlobalConditionToRawConditionTO extends TransferObject {
-        private final static Logger log = LogManager.getLogger(GlobalConditionToRawConditionTO.class.getName());
-        private static final long serialVersionUID = -553628358149907274L;
-
-        public enum ConditionRelationOrigin implements TransferObject.EnumDAOField {
-            SELF("self"), DESCENDANT("descendant"), PARENT("parent");
-
-            /**
-             * The {@code String} representation of the enum.
-             */
-            private String stringRepresentation;
-            /**
-             * Constructor
-             * @param stringRepresentation the {@code String} representation of the enum.
-             */
-            ConditionRelationOrigin(String stringRepresentation) {
-                this.stringRepresentation = stringRepresentation;
-            }
-            @Override
-            public String getStringRepresentation() {
-                return stringRepresentation;
-            }
-            /**
-             * Return the mapped {@link ConditionRelationOrigin} from a string representation.
-             * @param stringRepresentation A string representation
-             * @return The corresponding {@code ConditionRelationOrigin}
-             * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
-             */
-            public static ConditionRelationOrigin convertToCondRelOrigin(String stringRepresentation){
-                log.traceEntry("{}", stringRepresentation);
-                return log.traceExit(GlobalConditionToRawConditionTO.convert(ConditionRelationOrigin.class, 
-                        stringRepresentation));
-            }
-        }
-
-        /**
+    public static class RawConditionToSelfGlobalConditionTO extends TransferObject {
+        private final static Logger log = LogManager.getLogger(RawConditionToSelfGlobalConditionTO.class.getName());
+        private static final long serialVersionUID = 7293350787610176970L;
+       /**
          * A {@code Integer} representing the ID of the raw condition.
          */
-        private final Integer rawConditionId;
+        private final int rawConditionId;
         /**
          * A {@code Integer} representing the ID of the global condition.
          */
-        private final Integer globalConditionId;
+        private final int globalConditionId;
         /**
-         * A {@code ConditionRelationOrigin} representing the origin of the association.
+         * A {@code Integer} representing the combination of condition parameters that allows to map
+         * the raw condition to the global condition. 
          */
-        private final ConditionRelationOrigin conditionRelationOrigin;
+        private final int condParamBitwise;
+
+//        private final EnumSet<ConditionParameter> conditionParameters;
 
         /**
          * Constructor providing the condition ID (see {@link #getRawConditionId()}) and
@@ -611,43 +625,119 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
          *
          * @param rawExpressionId           An {@code Integer} that is the ID of the raw condition.
          * @param globalExpressionId        An {@code Integer} that is the ID of the global condition.
-         * @param conditionRelationOrigin   An {@code ConditionRelationOrigin} representing
-         *                                  the origin of the association.
+         * @param conditionParameters       An {@code EnumSet} of {@code ConditionParameter} representing
+         *                                  the combination of condition parameters.
          **/
-        public GlobalConditionToRawConditionTO(Integer rawConditionId, Integer globalConditionId,
-                ConditionRelationOrigin conditionRelationOrigin) {
-            super();
+        public RawConditionToSelfGlobalConditionTO(int rawConditionId, int globalConditionId,
+                EnumSet<ConditionParameter> conditionParameters) {
             this.rawConditionId = rawConditionId;
             this.globalConditionId = globalConditionId;
-            this.conditionRelationOrigin = conditionRelationOrigin;
+            this.condParamBitwise = fromCondParamToSubsetMask(conditionParameters);
+//            this.conditionParameters = conditionParameters;
+        }
+
+        /**
+         * Constructor providing the raw condition ID (see {@link #getRawConditionId()}) and
+         * the global condition ID (see {@link #getGlobalConditionId()}).
+         *
+         * @param rawExpressionId           An {@code Integer} that is the ID of the raw condition.
+         * @param globalExpressionId        An {@code Integer} that is the ID of the global condition.
+         * @param condParamBitwise          An {@code Integer} that is the bitwise representation of
+         *                                  the combination of condition parameters.
+         **/
+        public RawConditionToSelfGlobalConditionTO(int rawConditionId, int globalConditionId,
+                int condParamBitwise) {
+            this.rawConditionId = rawConditionId;
+            this.globalConditionId = globalConditionId;
+            this.condParamBitwise = condParamBitwise;
+//            this.conditionParameters = fromSubsetMaskToCondParam(condParamBitwise);
+        }
+
+        //TODO: Should be moved Somewhere else
+        public final static int fromCondParamToSubsetMask (EnumSet<ConditionParameter> conditionParameters) {
+            if (conditionParameters == null || conditionParameters.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("conditionParameters can not be null or empty"));
+            }
+            int mask = 0;
+            ConditionParameter[] values = ConditionParameter.values();
+            for (int i = 0; i < values.length; i++) {
+                if (conditionParameters.contains(values[i])) {
+                    mask |= (1 << i);
+                }
+            }
+            return mask;
+        }
+        //TODO: Should be moved Somewhere else
+        public final static EnumSet<ConditionParameter> fromSubsetMaskToCondParam(int subsetMask) {
+            if (subsetMask < 1 || subsetMask > MAX_MASK) {
+                throw log.throwing(new IllegalArgumentException("Invalid subsetMask: " + subsetMask +
+                    ". Expected a value between 1 and 31 inclusive."));
+            }
+            EnumSet<ConditionParameter> params = EnumSet.noneOf(ConditionParameter.class);
+            ConditionParameter[] values = ConditionParameter.values();
+
+            for (int i = 0; i < values.length; i++) {
+                if ((subsetMask & (1 << i)) != 0) {
+                    params.add(values[i]);
+                }
+            }
+            return params;
         }
 
         /**
          * @return  the {@code Integer} representing the ID of the raw condition.
          */
-        public Integer getRawConditionId() {
+        public int getRawConditionId() {
             return rawConditionId;
         }
         /**
          * @return  the {@code Integer} representing the ID of the global condition.
          */
-        public Integer getGlobalConditionId() {
+        public int getGlobalConditionId() {
             return globalConditionId;
         }
         /**
-         * @return  {@code ConditionRelationOrigin} representing the origin of the association.
+         * @return  the {@code Integer} representing the bitwise combination of condition parameters.
          */
-        public ConditionRelationOrigin getConditionRelationOrigin() {
-            return conditionRelationOrigin;
+        public int getCondParamBitwise() {
+            return condParamBitwise;
         }
+
+//        public EnumSet<ConditionParameter> getConditionParameters() {
+//            return conditionParameters;
+//        }
 
         @Override
         public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("GlobalConditionToRawConditionTO [rawConditionId=").append(rawConditionId)
-                    .append(", globalConditionId=").append(globalConditionId)
-                    .append(", conditionRelationOrigin=").append(conditionRelationOrigin).append("]");
-            return builder.toString();
+            return "RawConditionToSelfCondition [rawConditionId=" + rawConditionId + ", globalConditionId="
+                    + globalConditionId + ", condParamBitwise=" + condParamBitwise + "]";
         }
+
     }
+
+    public interface GlobalConditionToDirectAncestorTOResultSet extends DAOResultSet<GlobalConditionToDirectAncestorTO>{
+    }
+
+    public static class GlobalConditionToDirectAncestorTO extends TransferObject{
+
+        private static final long serialVersionUID = -8774630317282011145L;
+
+        private final Integer sourceConditionId;
+        private final Integer targetConditionId;
+
+        public GlobalConditionToDirectAncestorTO(Integer sourceConditionId, Integer targetConditionId) {
+            this.sourceConditionId = sourceConditionId;
+            this.targetConditionId = targetConditionId;
+        }
+
+        public Integer getSourceConditionId() {
+            return sourceConditionId;
+        }
+
+        public Integer getTargetConditionId() {
+            return targetConditionId;
+        }
+
+    }
+
 }

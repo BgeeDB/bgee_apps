@@ -184,12 +184,12 @@ public abstract class MySQLDAOUser {
     protected MySQLDiffExpressionCallDAO getDiffExpressionCallDAO() {
         return (MySQLDiffExpressionCallDAO) this.manager.getDiffExpressionCallDAO();
     }
-    /**
-     * @return  A {@code MySQLNoExpressionCallDAO}.
-     */
-    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
-        return (MySQLRawExpressionCallDAO) this.manager.getRawExpressionCallDAO();
-    }
+//    /**
+//     * @return  A {@code MySQLNoExpressionCallDAO}.
+//     */
+//    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
+//        return (MySQLRawExpressionCallDAO) this.manager.getRawExpressionCallDAO();
+//    }
     /**
      * @return  A {@code MySQLAnatEntityDAO}.
      */

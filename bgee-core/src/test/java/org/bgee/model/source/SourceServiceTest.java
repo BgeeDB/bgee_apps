@@ -71,9 +71,7 @@ public class SourceServiceTest extends TestAncestor {
                 Arrays.asList(
                         new SourceToSpeciesTO(2, 11, DAODataType.IN_SITU, InfoType.ANNOTATION),
                         new SourceToSpeciesTO(2, 11, DAODataType.RNA_SEQ, InfoType.ANNOTATION),
-                        new SourceToSpeciesTO(2, 11, DAODataType.IN_SITU, InfoType.DATA),
-                        new SourceToSpeciesTO(2, 21, DAODataType.EST, InfoType.DATA),
-                        new SourceToSpeciesTO(4, 11, DAODataType.AFFYMETRIX, InfoType.DATA)));
+                        new SourceToSpeciesTO(2, 11, DAODataType.IN_SITU, InfoType.DATA)));
         when(sourceToSpeciesDao.getAllSourceToSpecies(null)).thenReturn(mockSourceToSpeciesRs);
 
         List<Source> expectedSources = new ArrayList<Source>();
@@ -93,14 +91,12 @@ public class SourceServiceTest extends TestAncestor {
         expectedSources.clear();
         Map<Integer, Set<DataType>> forData2 = new HashMap<>();
         forData2.put(11, new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
-        forData2.put(21, new HashSet<DataType>(Arrays.asList(DataType.EST)));
         Map<Integer, Set<DataType>> forAnnot2 = new HashMap<>();
         forAnnot2.put(11, new HashSet<DataType>(Arrays.asList(DataType.IN_SITU, DataType.RNA_SEQ)));
         expectedSources.add(new Source(2, "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
                 "https://www.ncbi.nlm.nih.gov/taxonomy",
                 date1, "v13", false, org.bgee.model.source.SourceCategory.NONE, 3, forData2, forAnnot2));
         Map<Integer, Set<DataType>> forData4 = new HashMap<>();
-        forData4.put(11, new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
         expectedSources.add(new Source(4, "ZFIN", "ZFIN desc",
                 "https://zfin.org/[xref_id]",
                 "https://zfin.org/[experiment_id]",
@@ -136,8 +132,8 @@ public class SourceServiceTest extends TestAncestor {
         when(managerMock.getSourceToSpeciesDAO()).thenReturn(sourceToSpeciesDao);
         SourceToSpeciesTOResultSet mockSourceToSpeciesRs = getMockResultSet(SourceToSpeciesTOResultSet.class,
                 Arrays.asList(
-                        new SourceToSpeciesTO(2, 21, DAODataType.EST, InfoType.DATA),
-                        new SourceToSpeciesTO(4, 11, DAODataType.AFFYMETRIX, InfoType.ANNOTATION)));
+                        new SourceToSpeciesTO(2, 21, DAODataType.RNA_SEQ, InfoType.DATA),
+                        new SourceToSpeciesTO(4, 11, DAODataType.IN_SITU, InfoType.ANNOTATION)));
         when(sourceToSpeciesDao.getAllSourceToSpecies(null)).thenReturn(mockSourceToSpeciesRs);
 
         List<Source> expectedSources = new ArrayList<Source>();
@@ -151,7 +147,7 @@ public class SourceServiceTest extends TestAncestor {
         assertEquals("Incorrect sources", expectedSources, service.loadDisplayableSources(false));
 
         Map<Integer, Set<DataType>> forAnnot4 = new HashMap<>();
-        forAnnot4.put(11, new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        forAnnot4.put(11, new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         expectedSources.clear();
         expectedSources.add(new Source(4, "ZFIN", "ZFIN desc",
                 "https://zfin.org/[xref_id]",

@@ -55,7 +55,7 @@ public class TopAnatParamsTest extends TestAncestor {
                 new HashSet<String>(Arrays.asList("G1","G2","G3","G4")), 999,
                 SummaryCallType.ExpressionSummary.EXPRESSED);
         topAnatParamsBuilder.summaryQuality(SummaryQuality.GOLD);
-        topAnatParamsBuilder.dataTypes(new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        topAnatParamsBuilder.dataTypes(new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         topAnatParamsBuilder.decorrelationType(DecorrelationType.ELIM);
         topAnatParamsBuilder.devStageId("a");
         topAnatParamsBuilder.fdrThreshold(1);

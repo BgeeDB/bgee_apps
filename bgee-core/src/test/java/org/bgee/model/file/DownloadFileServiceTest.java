@@ -38,7 +38,7 @@ public class DownloadFileServiceTest extends TestAncestor {
 		DownloadFileDAO downloadFileDaoMock = mock(DownloadFileDAO.class);
 		DownloadFileTOResultSet resultSetMock = getMockResultSet(DownloadFileTOResultSet.class, 
 		        Arrays.asList(new DownloadFileTO(1, "NAME", "DESC", "/tmp/foo", Long.valueOf(42),
-		                          DownloadFileTO.CategoryEnum.AFFY_ANNOT, 22,
+		                          DownloadFileTO.CategoryEnum.RNASEQ_ANNOT, 22,
 		                          Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID)), 
 		                      new DownloadFileTO(2, "NAME2", "DESC2", "/tmp/foo", Long.valueOf(1337),
 		                          DownloadFileTO.CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 22,

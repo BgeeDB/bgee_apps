@@ -27,11 +27,6 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall.ExclusionReason;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCallSource;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChipPipelineSummary;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixContainer;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqContainer;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibrary;
@@ -113,23 +108,6 @@ public class OTFExpressionCallLoaderTest {
         RawCall call3 = new RawCall(gene1, new BigDecimal(0.1), DataState.HIGHQUALITY,
                 ExclusionReason.NOT_EXCLUDED, new BigDecimal(3));
 
-        AffymetrixExperiment affyExp = new AffymetrixExperiment("AffyExp1", null, null, null, null, 2);
-        AffymetrixChip chip1 = new AffymetrixChip("chip1", affyExp, annot1, null, null);
-        AffymetrixChip chip2 = new AffymetrixChip("chip2", affyExp, annot2, null, null);
-        AffymetrixChip chip3 = new AffymetrixChip("chip3", affyExp, annot3, null, null);
-        AffymetrixProbeset probeset1 = new AffymetrixProbeset("probeset1", chip1, call1,
-                null, null);
-        AffymetrixProbeset probeset1bis = new AffymetrixProbeset("probeset1bis", chip1, call1,
-                null, null);
-        AffymetrixProbeset probeset2 = new AffymetrixProbeset("probeset2", chip1, call2,
-                null, null);
-        AffymetrixProbeset probeset3 = new AffymetrixProbeset("probeset3", chip2, call1,
-                null, null);
-        AffymetrixProbeset probeset4 = new AffymetrixProbeset("probeset4", chip3, call3,
-                null, null);
-        AffymetrixContainer affyContainer = new AffymetrixContainer(Set.of(affyExp),
-                Set.of(chip1, chip2, chip3), Set.of(probeset1, probeset1bis, probeset2, probeset3, probeset4));
-
         RnaSeqExperiment rnaSeqExp = new RnaSeqExperiment("rnaSeqExp", null, null, null, null,
                 null, 1, false);
         RnaSeqLibrary rnaSeqLib = new RnaSeqLibrary("rnaSeqLib", null, null, rnaSeqExp);
@@ -141,7 +119,6 @@ public class OTFExpressionCallLoaderTest {
                 Set.of(rnaSeqLib), Set.of(sample), Set.of(rnaSeqCall));
 
         Map<RawDataDataType<?, ?>, RawDataContainer<?, ?>> rawDataContainers = Map.of(
-                RawDataDataType.AFFYMETRIX, affyContainer,
                 RawDataDataType.BULK_RNA_SEQ, rnaSeqContainer);
 
         //Cannot just do an assertEquals on this expected Map because we don't care about the order
@@ -155,16 +132,8 @@ public class OTFExpressionCallLoaderTest {
                 .transformToRawDataPerCondition(rawDataCondToCond, rawDataContainers);
         assertTrue(transformedMap.keySet().equals(Set.of(cond1, cond2)));
         Map<DataType, List<RawCallSource<?>>> dataCond1 = transformedMap.get(cond1);
-        assertTrue(dataCond1.keySet().equals(Set.of(DataType.AFFYMETRIX, DataType.RNA_SEQ)));
-        List<RawCallSource<?>> affCallsCond1 = dataCond1.get(DataType.AFFYMETRIX);
-        assertTrue(affCallsCond1.size() == 4 &&
-                affCallsCond1.containsAll(List.of(probeset1, probeset1bis, probeset2, probeset4)));
         List<RawCallSource<?>> rnaSeqCond1 = dataCond1.get(DataType.RNA_SEQ);
         assertTrue(rnaSeqCond1.equals(List.of(rnaSeqCall)));
-        Map<DataType, List<RawCallSource<?>>> dataCond2 = transformedMap.get(cond2);
-        assertTrue(dataCond2.keySet().equals(Set.of(DataType.AFFYMETRIX)));
-        List<RawCallSource<?>> affCallsCond2 = dataCond2.get(DataType.AFFYMETRIX);
-        assertTrue(affCallsCond2.equals(List.of(probeset3)));
         log.info("TransformedMap: {}", transformedMap);
     }
     
@@ -227,12 +196,8 @@ public class OTFExpressionCallLoaderTest {
         RawCall RCrnaseq1 = new RawCall(gene1, new BigDecimal("0.25"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1000"));
         RawCall RCrnaseq2 = new RawCall(gene1, new BigDecimal("0.40"), DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("30"));
 
-        AffymetrixChipPipelineSummary affysummary = new AffymetrixChipPipelineSummary(100, new BigDecimal(200), strain, strain, null, new BigDecimal(0.7));
         
         // Initialize experiments and samples
-        AffymetrixExperiment affyExp = new AffymetrixExperiment("AffyExp1", null, null, null, null, 1);
-        AffymetrixChip chip1 = new AffymetrixChip("chip1", affyExp, null, null, affysummary);
-        
         RnaSeqLibraryAnnotatedSamplePipelineSummary rnaseqsummary1 = new RnaSeqLibraryAnnotatedSamplePipelineSummary(new BigDecimal("0.0003"),new BigDecimal("0.01"), new BigDecimal("0.001"), 100000, 95000, new BigDecimal("50000"), 4500);
         RnaSeqLibraryAnnotatedSamplePipelineSummary rnaseqsummary2 = new RnaSeqLibraryAnnotatedSamplePipelineSummary(new BigDecimal("0.0003"),new BigDecimal("0.01"), new BigDecimal("0.001"), 100000, 95000, new BigDecimal("30000"), 17500);
         
@@ -246,9 +211,6 @@ public class OTFExpressionCallLoaderTest {
 
         // Initialize raw data map
         Map<DataType, List<RawCallSource<?>>> rawData = Map.of(
-            DataType.AFFYMETRIX, List.of(
-                new AffymetrixProbeset("probeset1", chip1, RCaffymetrix, null, null)
-            ),
             DataType.RNA_SEQ, List.of(
                 new RnaSeqResultAnnotatedSample(sample1, RCrnaseq1, null, null, null, null, null),
                 new RnaSeqResultAnnotatedSample(sample2, RCrnaseq2, null, null, null, null, null)
@@ -257,7 +219,7 @@ public class OTFExpressionCallLoaderTest {
         
        
         OTFExpressionCall childCall1 = new OTFExpressionCall(gene1, cond2,
-                EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
+                EnumSet.of(DataType.RNA_SEQ),
                 new BigDecimal("0.10"), new BigDecimal("0.15"),
                 new BigDecimal("0.001"), new BigDecimal("0.003"),
                 new BigDecimal("20000"), new BigDecimal("12"),
@@ -265,7 +227,7 @@ public class OTFExpressionCallLoaderTest {
                 PropagationState.SELF_AND_DESCENDANT);
         
         OTFExpressionCall childCall2 = new OTFExpressionCall(gene1, cond3,
-                EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
+                EnumSet.of(DataType.RNA_SEQ),
                 new BigDecimal("0.50"), new BigDecimal("0.70"),
                 new BigDecimal("0.25"), new BigDecimal("0.35"),
                 new BigDecimal("10000"), new BigDecimal("15"),
@@ -273,7 +235,7 @@ public class OTFExpressionCallLoaderTest {
                 PropagationState.SELF_AND_DESCENDANT);
 
         OTFExpressionCall expectedCall = new OTFExpressionCall(gene1, cond1,
-                EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ),
+                EnumSet.of(DataType.RNA_SEQ),
                 new BigDecimal("0.45").setScale(50, RoundingMode.HALF_UP), new BigDecimal("0.55").setScale(50, RoundingMode.HALF_UP), 
                 new BigDecimal("0.001"), new BigDecimal("0.003"), 
                 new BigDecimal("52100"), new BigDecimal("49.51"), 

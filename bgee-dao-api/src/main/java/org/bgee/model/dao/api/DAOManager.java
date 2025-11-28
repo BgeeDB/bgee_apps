@@ -1064,19 +1064,19 @@ public abstract class DAOManager implements AutoCloseable
         return log.traceExit(this.getNewSexDAO());
     }
 
-//    /**
-//     * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO}, 
-//     * unless this {@code DAOManager} is already closed. 
-//     * 
-//     * @return  a new {@code RawExpressionCallDAO}.
-//     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-//     * @see org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO
-//     */
-//    public RawExpressionCallDAO getRawExpressionCallDAO() {
-//        log.traceEntry();
-//        this.checkClosed();
-//        return log.traceExit(this.getNewRawExpressionCallDAO());
-//    }
+    /**
+     * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code RawExpressionCallDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO
+     */
+    public RawExpressionCallDAO getRawExpressionCallDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewRawExpressionCallDAO());
+    }
 
     public ObservedExpressionDAO getObservedExpressionDAO() {
         log.traceEntry();
@@ -1603,14 +1603,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code SexDAO}
      */
     protected abstract SexDAO getNewSexDAO();
-//    /**
-//     * Service provider must return a new 
-//     * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO} 
-//     * instance when this method is called. 
-//     * 
-//     * @return  A new {@code RawExpressionCallDAO}
-//     */
-//    protected abstract RawExpressionCallDAO getNewRawExpressionCallDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO} 
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code RawExpressionCallDAO}
+     */
+    protected abstract RawExpressionCallDAO getNewRawExpressionCallDAO();
     /**
      * Service provider must return a new 
 

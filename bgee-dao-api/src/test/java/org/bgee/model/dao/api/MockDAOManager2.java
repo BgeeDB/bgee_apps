@@ -161,10 +161,10 @@ public class MockDAOManager2 extends DAOManager {
     protected RawDataConditionDAO getNewRawDataConditionDAO() {
         return this.instanceMockManager.getNewRawDataConditionDAO();
     }
-//    @Override
-//    protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
-//        return this.instanceMockManager.getNewRawExpressionCallDAO();
-//    }
+    @Override
+    protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
+        return this.instanceMockManager.getNewRawExpressionCallDAO();
+    }
     @Override
     protected ObservedExpressionDAO getNewObservedExpressionDAO() {
         return this.instanceMockManager.getNewObservedExpressionDAO();

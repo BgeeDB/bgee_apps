@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
@@ -351,12 +350,5 @@ public class ExpressionCallService extends CallServiceParent {
                 filter.getConditionFilters(),
                 requestedCondMap));
     }
-    
-    private int[][] loadRawCondToSelfGlobalCond(int[] rawConditionIds) {
-        return null;
-    }
 
-    private Map<Integer, Set<RawExpressionCallTO>> loadSelfGlobalCondIdToRawExpressionCallTOs(RawDataConditionFilter filter) {
-        return null;
-    }
 }

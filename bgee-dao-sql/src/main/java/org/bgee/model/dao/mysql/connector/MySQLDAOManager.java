@@ -1046,11 +1046,11 @@ public class MySQLDAOManager extends DAOManager {
         log.traceEntry();
         return log.traceExit(new MySQLRelationDAO(this));
     }
-//    @Override
-//    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
-//        log.traceEntry();
-//        return log.traceExit(new MySQLRawExpressionCallDAO(this));
-//    }
+    @Override
+    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLRawExpressionCallDAO(this));
+    }
     @Override
     protected MySQLObservedExpressionDAO getNewObservedExpressionDAO() {
         log.traceEntry();

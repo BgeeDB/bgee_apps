@@ -19,6 +19,7 @@ import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.call.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
@@ -151,10 +152,10 @@ public class MockDAOManager extends DAOManager {
     protected RawDataConditionDAO getNewRawDataConditionDAO() {
         return this.instanceMockManager.getNewRawDataConditionDAO();
     }
-//    @Override
-//    protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
-//        return this.instanceMockManager.getNewRawExpressionCallDAO();
-//    }
+    @Override
+    protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
+        return this.instanceMockManager.getNewRawExpressionCallDAO();
+    }
     @Override
     protected ObservedExpressionDAO getNewObservedExpressionDAO() {
         return this.instanceMockManager.getNewObservedExpressionDAO();

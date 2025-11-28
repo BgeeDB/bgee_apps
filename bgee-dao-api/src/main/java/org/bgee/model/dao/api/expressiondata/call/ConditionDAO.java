@@ -20,8 +20,8 @@ import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTOResultSet;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
+//import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTOResultSet;
+//import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
 
 /**
  * DAO defining queries using or retrieving {@link ConditionTO}s, used for global expression calls
@@ -257,9 +257,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     public ConditionTOResultSet getGlobalConditionsFromCallFilters(Collection<DAOCallFilter> callFilters, 
             Collection<Attribute> attributes) throws DAOException;
 
-    public GlobalConditionToRawConditionTOResultSet getRawCondIdToGlobalCondIdFromRawCondIds(
-            Collection<Integer> conditionIds, Collection<ConditionRelationOrigin> condRelationOrigin)
-                    throws DAOException, IllegalArgumentException;
+//    public GlobalConditionToRawConditionTOResultSet getRawCondIdToGlobalCondIdFromRawCondIds(
+//            Collection<Integer> conditionIds, Collection<ConditionRelationOrigin> condRelationOrigin)
+//                    throws DAOException, IllegalArgumentException;
 
     public ConditionTOResultSet getGlobalConditionsFromIds(Collection<Integer> condIds,
             Collection<Attribute> attributes) throws DAOException, IllegalArgumentException;

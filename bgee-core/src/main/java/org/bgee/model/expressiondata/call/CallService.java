@@ -1875,10 +1875,6 @@ public class CallService extends CallServiceParent {
             mappedDataTypes = dts.stream()
                     .map(dt -> {
                         switch(dt) {
-                        case AFFYMETRIX:
-                            return log.traceExit(DataType.AFFYMETRIX);
-                        case EST:
-                            return log.traceExit(DataType.EST);
                         case IN_SITU:
                             return log.traceExit(DataType.IN_SITU);
                         case RNA_SEQ:

@@ -14,8 +14,6 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * {@code Enum} listing the data types used in Bgee:
  *
  * <ul>
- * <li>{@code AFFYMETRIX}
- * <li>{@code EST}
  * <li>{@code IN_SITU}
  * <li>{@code RNA_SEQ}
  * <li>{@code SC_RNA_SEQ}
@@ -27,12 +25,6 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  */
 public enum DAODataType implements EnumDAOField {
     //The order of these Enum elements is important and is used to generate field names
-    AFFYMETRIX("affymetrix", "affymetrix", "Affy", "affymetrixMeanRank", "affymetrixGlobalMeanRank",
-            "affymetrixMeanRankNorm", "affymetrixGlobalMeanRankNorm", "affymetrixDistinctRankSum",
-            "affymetrixGlobalDistinctRankSum", "affymetrixMaxRank", "affymetrixGlobalMaxRank", false,
-            true, true),
-    EST("est", "est", "Est", "estRank", "estGlobalRank", "estRankNorm", "estGlobalRankNorm",
-            "estMaxRank", "estGlobalMaxRank", "estMaxRank", "estGlobalMaxRank", true, true, true),
     IN_SITU("in situ", "inSitu", "InSitu", "inSituRank", "inSituGlobalRank", "inSituRankNorm",
             "inSituGlobalRankNorm", "inSituMaxRank", "inSituGlobalMaxRank",
             "inSituMaxRank", "inSituGlobalMaxRank", true, false, true),

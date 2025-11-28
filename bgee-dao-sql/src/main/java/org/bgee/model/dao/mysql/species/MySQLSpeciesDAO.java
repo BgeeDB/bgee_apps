@@ -48,6 +48,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
         COL_TO_ATTR_MAP.put("dataSourceId", SpeciesDAO.Attribute.DATA_SOURCE_ID);
         COL_TO_ATTR_MAP.put("genomeSpeciesId", SpeciesDAO.Attribute.GENOME_SPECIES_ID);
         COL_TO_ATTR_MAP.put("speciesDisplayOrder", SpeciesDAO.Attribute.DISPLAY_ORDER);
+        COL_TO_ATTR_MAP.put("devOntologyXRef", SpeciesDAO.Attribute.DEV_ONTOLOGY_XREF);
     }
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
@@ -264,7 +265,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
             log.traceEntry();
             Integer speciesId = null, taxonId = null, genomeSpeciesId = null, displayOrder = null, 
                     dataSourceId = null;
-            String genus = null, species = null, speciesCommonName = null, 
+            String genus = null, species = null, speciesCommonName = null, devOntologyXRef = null,
                    genomeFilePath = null, genomeVersion = null, genomeAssemblyXRef = null;
             // Get results
             try {
@@ -306,6 +307,9 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
                     case GENOME_SPECIES_ID:
                         genomeSpeciesId = this.getCurrentResultSet().getInt(columnIndex);
                         break;
+                    case DEV_ONTOLOGY_XREF:
+                        devOntologyXRef = this.getCurrentResultSet().getString(columnIndex);
+                        break;
                     default:
                         log.throwing(new UnrecognizedColumnException(columnName));
                     }
@@ -316,7 +320,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
             //Set SpeciesTO
             return log.traceExit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
                     displayOrder, taxonId, genomeFilePath, genomeVersion, genomeAssemblyXRef,
-                    dataSourceId, genomeSpeciesId));
+                    dataSourceId, genomeSpeciesId, devOntologyXRef));
         }
     }
 }

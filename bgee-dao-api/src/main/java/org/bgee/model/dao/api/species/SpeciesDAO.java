@@ -32,6 +32,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * <li>{@code DATA_SOURCE_ID}: corresponds to {@link SpeciesTO#getDataSourceId()}.
      * <li>{@code GENOME_SPECIES_ID}: corresponds to {@link SpeciesTO#getGenomeSpeciesId()}.
      * <li>{@code DISPLAY_ORDER}: corresponds to {@link SpeciesTO#getDisplayOrder()}.
+     * <li>{@code DEV_ONTOLOGY_XREF}: corresponds to {@link SpeciesTO#getdevOntologyXRef()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -42,7 +43,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         PARENT_TAXON_ID("parentTaxonId"), GENOME_FILE_PATH("genomeFilePath"),
         GENOME_VERSION("genomeVersion"), GENOME_ASSEMBLY_XREF("getGenomeAssemblyXRef"),
         DATA_SOURCE_ID("dataSourceId"), GENOME_SPECIES_ID("genomeSpeciesId"),
-        DISPLAY_ORDER("speciesDisplayOrder");
+        DEV_ONTOLOGY_XREF("devOntologyXRef"), DISPLAY_ORDER("speciesDisplayOrder");
 
         /**
          * A {@code String} that is the corresponding field name in {@code RelationTO} class.
@@ -201,6 +202,11 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * (ID 9598), because bonobo is not in Ensembl.
          */
         private final Integer genomeSpeciesId;
+
+        /**
+         * A {@code String} that is the URL to the potential species specific dev. ontology.
+         */
+        private final String devOntologyXRef;
         
         /**
          * Constructor providing the ID, the common name, the genus, the species, and the ID 
@@ -231,7 +237,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          */
         public SpeciesTO(Integer id, String commonName, String genus, String speciesName, 
                 Integer displayOrder, Integer parentTaxonId, String genomeFilePath, String genomeVersion, 
-                String genomeAssemblyXRef, Integer dataSourceId, Integer genomeSpeciesId) {
+                String genomeAssemblyXRef, Integer dataSourceId, Integer genomeSpeciesId, String devOntologyXRef) {
             super(id, commonName);
             
             this.genus = genus;
@@ -243,6 +249,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             this.genomeAssemblyXRef = genomeAssemblyXRef;
             this.dataSourceId = dataSourceId;
             this.genomeSpeciesId = genomeSpeciesId;
+            this.devOntologyXRef = devOntologyXRef;
         }
         
         /**
@@ -329,16 +336,17 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             return genomeSpeciesId;
         }
 
+        public String getDevOntologyXRef() {
+            return devOntologyXRef;
+        }
+
         @Override
         public String toString() {
-            return "ID: " + this.getId() + " - Common name: " + this.getName() + 
-                    " - Genus: " + this.getGenus() + " - Species name: " + this.getSpeciesName() + 
-                    " - Parent taxon ID: " + this.getParentTaxonId() + " - Description: " + 
-                    this.getDescription() + " - Genome file path: " + this.getGenomeFilePath() +
-                    " - Genome version: " + this.getGenomeFilePath() +
-                    " - Genome assembly XRef: " + this.getGenomeAssemblyXRef() +
-                    " - Data source ID: " + this.getDataSourceId() + " - Genome species ID: " + 
-                    this.getGenomeSpeciesId();
+            return "SpeciesTO [genus=" + genus + ", speciesName=" + speciesName + ", displayOrder=" + displayOrder
+                    + ", parentTaxonId=" + parentTaxonId + ", genomeFilePath=" + genomeFilePath + ", genomeVersion="
+                    + genomeVersion + ", genomeAssemblyXRef=" + genomeAssemblyXRef + ", dataSourceId=" + dataSourceId
+                    + ", genomeSpeciesId=" + genomeSpeciesId + ", devOntologyXRef=" + devOntologyXRef + "]";
         }
+
     }
 }

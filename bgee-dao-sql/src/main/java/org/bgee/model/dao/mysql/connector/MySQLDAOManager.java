@@ -49,11 +49,11 @@ import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLObservedExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLGlobalExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLSamplePValueDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MysqlRawDataCountDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituEvidenceDAO;
@@ -1045,10 +1045,15 @@ public class MySQLDAOManager extends DAOManager {
         log.traceEntry();
         return log.traceExit(new MySQLRelationDAO(this));
     }
+//    @Override
+//    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
+//        log.traceEntry();
+//        return log.traceExit(new MySQLRawExpressionCallDAO(this));
+//    }
     @Override
-    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
+    protected MySQLObservedExpressionDAO getNewObservedExpressionDAO() {
         log.traceEntry();
-        return log.traceExit(new MySQLRawExpressionCallDAO(this));
+        return log.traceExit(new MySQLObservedExpressionDAO(this));
     }
     @Override
     protected MySQLGlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {

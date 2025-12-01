@@ -24,7 +24,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
@@ -55,45 +54,48 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
     public final static String SPECIES_ID = "speciesId";
     public final static String RAW_COND_ID_FIELD = "conditionId";
     public final static String GLOBAL_COND_ID_FIELD = "globalConditionId";
-    private final static String COND_REL_ORIGIN_FIELD = "conditionRelationOrigin";
+    private final static String COND_PARAM_SUBSET_MASK_FIELD = "subsetMask";
     public final static String ANAT_ENTITY_ID_FIELD = "anatEntityId";
+    public final static String SOURCE_COND_ID_RELATION = "sourceGlobalConditionId";
+    public final static String TARGET_COND_ID_RELATION = "targetGlobalConditionId";
 
     public final static String TABLE_NAME = "globalCond";
+    private final static String COND_REL_TABLE_NAME = "globalCondRelation";
 
-    /**
-     * @param tableName             A {@code String} that is the name of the global condition table
-     *                              in the SQL query.
-     * @param condParamCombination  A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              condition parameters considered for aggregating the expression data
-     *                              (see {@link Attribute#isConditionParameter()}).
-     * @return                      A {@code String} that is the part of a WHERE clause
-     *                              allowing to select the conditions for the requested
-     *                              condition parameter combination.
-     * @throws IllegalArgumentException If {@code conditionParameters} is {@code null}, empty,
-     *                                  or one of the {@code Attribute}s in {@code conditionParameters}
-     *                                  is not a condition parameter attributes (see 
-     *                                  {@link ConditionDAO.Attribute#isConditionParameter()}). 
-     */
-    private static String getCondParamCombinationWhereClause(final String tableName,
-            Collection<ConditionDAO.Attribute> condParamCombination) throws IllegalArgumentException {
-        log.traceEntry("{}, {}", tableName, condParamCombination);
-        if (condParamCombination == null || condParamCombination.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException(
-                    "A condition parameter combination must be provided."));
-        }
-        final Set<ConditionDAO.Attribute> condParams = EnumSet.copyOf(condParamCombination);
-        if (condParams.stream().anyMatch(a -> !a.isConditionParameter())) {
-            throw log.throwing(new IllegalArgumentException("The condition parameter combination "
-                    + "contains some Attributes that are not condition parameters: " + condParams));
-        }
-    
-        final Map<String, ConditionDAO.Attribute> colToAttr = getColToAttributesMap();
-        return log.traceExit(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
-                .filter(a -> a.isConditionParameter() && !condParams.contains(a))
-                .map(a -> tableName + "." + getSelectExprFromAttribute(a, colToAttr) + " = '"
-                        + a.getRootId() + "'")
-                .collect(Collectors.joining(" AND ")));
-    }
+//    /**
+//     * @param tableName             A {@code String} that is the name of the global condition table
+//     *                              in the SQL query.
+//     * @param condParamCombination  A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+//     *                              condition parameters considered for aggregating the expression data
+//     *                              (see {@link Attribute#isConditionParameter()}).
+//     * @return                      A {@code String} that is the part of a WHERE clause
+//     *                              allowing to select the conditions for the requested
+//     *                              condition parameter combination.
+//     * @throws IllegalArgumentException If {@code conditionParameters} is {@code null}, empty,
+//     *                                  or one of the {@code Attribute}s in {@code conditionParameters}
+//     *                                  is not a condition parameter attributes (see 
+//     *                                  {@link ConditionDAO.Attribute#isConditionParameter()}). 
+//     */
+//    private static String getCondParamCombinationWhereClause(final String tableName,
+//            Collection<ConditionDAO.Attribute> condParamCombination) throws IllegalArgumentException {
+//        log.traceEntry("{}, {}", tableName, condParamCombination);
+//        if (condParamCombination == null || condParamCombination.isEmpty()) {
+//            throw log.throwing(new IllegalArgumentException(
+//                    "A condition parameter combination must be provided."));
+//        }
+//        final Set<ConditionDAO.Attribute> condParams = EnumSet.copyOf(condParamCombination);
+//        if (condParams.stream().anyMatch(a -> !a.isConditionParameter())) {
+//            throw log.throwing(new IllegalArgumentException("The condition parameter combination "
+//                    + "contains some Attributes that are not condition parameters: " + condParams));
+//        }
+//    
+//        final Map<String, ConditionDAO.Attribute> colToAttr = getColToAttributesMap();
+//        return log.traceExit(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
+//                .filter(a -> a.isConditionParameter() && !condParams.contains(a))
+//                .map(a -> tableName + "." + getSelectExprFromAttribute(a, colToAttr) + " = '"
+//                        + a.getRootId() + "'")
+//                .collect(Collectors.joining(" AND ")));
+//    }
 
     /**
      * Get a {@code Map} associating column names to corresponding {@code ConditionDAO.Attribute}.
@@ -126,43 +128,43 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         super(manager);
     }
 
-    @Override
-    public GlobalConditionToRawConditionTOResultSet getGlobalCondToRawCondBySpeciesIds(
-            Collection<Integer> speciesIds, Collection<ConditionDAO.Attribute> conditionParameters)
-                throws DAOException, IllegalArgumentException {
-        log.traceEntry("{}, {}", speciesIds, conditionParameters);
-
-        final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>():
-            new HashSet<>(speciesIds));
-        String tableName = "globalCondToCond";
-        String globalCondTableName = "globalCond";
-        StringBuilder sb = new StringBuilder();
-        sb.append("SELECT ").append(tableName).append(".* FROM ").append(tableName)
-          .append(" INNER JOIN ").append(globalCondTableName)
-          .append(" ON ").append(globalCondTableName).append(".globalConditionId = ")
-          .append(tableName).append(".globalConditionId");
-        if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams()) || !speIds.isEmpty()) {
-            sb.append(" WHERE ");
-        }
-        sb.append(getCondParamCombinationWhereClause(globalCondTableName, conditionParameters));
-        if (!speIds.isEmpty()) {
-            if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams())) {
-                sb.append(" AND ");
-            }
-            sb.append(globalCondTableName).append(".").append(SPECIES_ID).append(" IN (")
-              .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
-              .append(")");
-        }
-        try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
-            if (!speIds.isEmpty()) {
-                stmt.setIntegers(1, speIds, true);
-            }
-            return log.traceExit(new MySQLGlobalConditionToRawConditionTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
+//    @Override
+//    public GlobalConditionToRawConditionTOResultSet getGlobalCondToRawCondBySpeciesIds(
+//            Collection<Integer> speciesIds, Collection<ConditionDAO.Attribute> conditionParameters)
+//                throws DAOException, IllegalArgumentException {
+//        log.traceEntry("{}, {}", speciesIds, conditionParameters);
+//
+//        final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>():
+//            new HashSet<>(speciesIds));
+//        String tableName = "globalCondToCond";
+//        String globalCondTableName = "globalCond";
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("SELECT ").append(tableName).append(".* FROM ").append(tableName)
+//          .append(" INNER JOIN ").append(globalCondTableName)
+//          .append(" ON ").append(globalCondTableName).append(".globalConditionId = ")
+//          .append(tableName).append(".globalConditionId");
+//        if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams()) || !speIds.isEmpty()) {
+//            sb.append(" WHERE ");
+//        }
+//        sb.append(getCondParamCombinationWhereClause(globalCondTableName, conditionParameters));
+//        if (!speIds.isEmpty()) {
+//            if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams())) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(globalCondTableName).append(".").append(SPECIES_ID).append(" IN (")
+//              .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
+//              .append(")");
+//        }
+//        try {
+//            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
+//            if (!speIds.isEmpty()) {
+//                stmt.setIntegers(1, speIds, true);
+//            }
+//            return log.traceExit(new MySQLGlobalConditionToRawConditionTOResultSet(stmt));
+//        } catch (SQLException e) {
+//            throw log.throwing(new DAOException(e));
+//        }
+//    }
 
 
     @Override
@@ -822,16 +824,16 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
     }
 
     @Override
-    public int insertGlobalConditionToRawCondition(
-            Collection<GlobalConditionToRawConditionTO> globalCondToRawCondTOs)
+    public int insertRawConditionToSelfGlobalCondition(
+            Collection<RawConditionToSelfGlobalConditionTO> rawConditionToSelfGlobalConditionTOs)
                     throws DAOException, IllegalArgumentException {
-        log.traceEntry("{}", globalCondToRawCondTOs);
+        log.traceEntry("{}", rawConditionToSelfGlobalConditionTOs);
 
-        if (globalCondToRawCondTOs == null || globalCondToRawCondTOs.isEmpty()) {
+        if (rawConditionToSelfGlobalConditionTOs == null || rawConditionToSelfGlobalConditionTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No condition relation provided"));
         }
 
-        List<GlobalConditionToRawConditionTO> toList = new ArrayList<>(globalCondToRawCondTOs);
+        List<RawConditionToSelfGlobalConditionTO> toList = new ArrayList<>(rawConditionToSelfGlobalConditionTOs);
         int maxElementCount = 5000;
         int iterationCount = toList.size() < maxElementCount? 1: (int) Math.ceil((float) toList.size()/(float) maxElementCount);
 
@@ -840,11 +842,11 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
                 (i + 1) * maxElementCount < toList.size()? (i + 1) * maxElementCount: toList.size()))
         //Warning, this stream must be sequential, our SQL accessors cannot be used in parallel
         .mapToInt((partition) -> {
-            StringBuilder sql = new StringBuilder(); 
-            sql.append("INSERT INTO globalCondToCond (")
+            StringBuilder sql = new StringBuilder();
+            sql.append("INSERT INTO condToSelfGlobalCond (")
             .append(RAW_COND_ID_FIELD).append(", ")
             .append(GLOBAL_COND_ID_FIELD).append(", ")
-            .append(COND_REL_ORIGIN_FIELD)
+            .append(COND_PARAM_SUBSET_MASK_FIELD)
             .append(") VALUES ");
             for (int i = 0; i < partition.size(); i++) {
                 if (i > 0) {
@@ -856,12 +858,12 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
             try (BgeePreparedStatement stmt =
                     this.getManager().getConnection().prepareStatement(sql.toString())) {
                 int paramIndex = 1;
-                for (GlobalConditionToRawConditionTO to: partition) {
+                for (RawConditionToSelfGlobalConditionTO to: partition) {
                     stmt.setInt(paramIndex, to.getRawConditionId());
                     paramIndex++;
                     stmt.setInt(paramIndex, to.getGlobalConditionId());
                     paramIndex++;
-                    stmt.setString(paramIndex, to.getConditionRelationOrigin().getStringRepresentation());
+                    stmt.setInt(paramIndex, to.getCondParamBitwise());
                     paramIndex++;
                 }
                 return stmt.executeUpdate();
@@ -948,27 +950,27 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
     }
 
     /**
-     * MySQL implementation of {@code GlobalConditionToRawConditionTOResultSet}.
+     * MySQL implementation of {@code MySQLRawConditionToSelfGlobalConditionTOResultSet}.
      *
      * @author Frederic Bastian
      * @version Bgee 14 Mar. 2017
      * @since Bgee 14 Mar. 2017
      */
-    public class MySQLGlobalConditionToRawConditionTOResultSet
-    extends MySQLDAOResultSet<GlobalConditionToRawConditionTO>
-    implements GlobalConditionToRawConditionTOResultSet {
+    class MySQLRawConditionToSelfGlobalConditionTOResultSet
+    extends MySQLDAOResultSet<RawConditionToSelfGlobalConditionTO>
+    implements RawConditionToSelfGlobalConditionTOResultSet {
 
-        private MySQLGlobalConditionToRawConditionTOResultSet(BgeePreparedStatement statement) {
+        private MySQLRawConditionToSelfGlobalConditionTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 
         @Override
-        protected GlobalConditionToRawConditionTO getNewTO() throws DAOException {
+        protected RawConditionToSelfGlobalConditionTO getNewTO() throws DAOException {
             log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer rawConditionId = null, globalConditionId = null;
-                ConditionRelationOrigin relOrigin = null;
+                Integer condParamSubsetMask = null;
 
                 for (String columnName: this.getColumnLabels().values()) {
 
@@ -976,19 +978,160 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
                         rawConditionId = currentResultSet.getInt(columnName);
                     } else if (columnName.equals(GLOBAL_COND_ID_FIELD)) {
                         globalConditionId = currentResultSet.getInt(columnName);
-                    } else if (columnName.equals(COND_REL_ORIGIN_FIELD)) {
-                        relOrigin = ConditionRelationOrigin.convertToCondRelOrigin(
-                                currentResultSet.getString(columnName));
+                    } else if (columnName.equals(COND_PARAM_SUBSET_MASK_FIELD)) {
+                        condParamSubsetMask = currentResultSet.getInt(columnName);
                     }  else {
                         throw log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
 
-                return log.traceExit(new GlobalConditionToRawConditionTO(
-                        rawConditionId, globalConditionId, relOrigin));
+                return log.traceExit(new RawConditionToSelfGlobalConditionTO(
+                        rawConditionId, globalConditionId, condParamSubsetMask));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }
+        }
+    }
+
+    /**
+     * MySQL implementation of {@code GlobalConditionToDirectAncestorTOResultSet}.
+     *
+     * @author Julien Wollbrett
+     * @version Bgee 16 Oct. 2025
+     * @since Bgee 16 Oct. 2025
+     */
+    class MySQLGlobalConditionToDirectAncestorTOResultSet
+    extends MySQLDAOResultSet<GlobalConditionToDirectAncestorTO>
+    implements GlobalConditionToDirectAncestorTOResultSet {
+
+        private MySQLGlobalConditionToDirectAncestorTOResultSet(BgeePreparedStatement statement) {
+            super(statement);
+        }
+
+        @Override
+        protected GlobalConditionToDirectAncestorTO getNewTO() throws DAOException {
+            log.traceEntry();
+            try {
+                final ResultSet currentResultSet = this.getCurrentResultSet();
+                Integer sourceConditionId = null, targetConditionId = null;
+
+                for (String columnName: this.getColumnLabels().values()) {
+
+                    if (columnName.equals(SOURCE_COND_ID_RELATION)) {
+                        sourceConditionId = currentResultSet.getInt(columnName);
+                    } else if (columnName.equals(TARGET_COND_ID_RELATION)) {
+                        targetConditionId = currentResultSet.getInt(columnName);
+                    } else {
+                        throw log.throwing(new UnrecognizedColumnException(columnName));
+                    }
+                }
+
+                return log.traceExit(new GlobalConditionToDirectAncestorTO(
+                        sourceConditionId, targetConditionId));
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
+            }
+        }
+    }
+
+    @Override
+    public int insertcondIdToDirectAncestorId(Collection<GlobalConditionToDirectAncestorTO> condIdToDirectAncestorTOs)
+            throws DAOException, IllegalArgumentException {
+        log.traceEntry("{}", condIdToDirectAncestorTOs);
+
+        if (condIdToDirectAncestorTOs == null || condIdToDirectAncestorTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("no condIdToDirectAncestorTOs provided"));
+        }
+
+        List<GlobalConditionToDirectAncestorTO> toList = new ArrayList<>(condIdToDirectAncestorTOs);
+        int maxElementCount = 5000;
+        int iterationCount = toList.size() < maxElementCount? 1: (int) Math.ceil((float) toList.size()/(float) maxElementCount);
+
+        int countUpdated = IntStream.range(0, iterationCount)
+                .mapToObj(i -> toList.subList(i * maxElementCount,
+                        (i + 1) * maxElementCount < toList.size()? (i + 1) * maxElementCount: toList.size()))
+                //Warning, this stream must be sequential, our SQL accessors cannot be used in parallel
+                .mapToInt((partition) -> {
+                    StringBuilder sql = new StringBuilder();
+                    sql.append("INSERT INTO ").append(COND_REL_TABLE_NAME).append(" (")
+                    .append(SOURCE_COND_ID_RELATION).append(", ")
+                    .append(TARGET_COND_ID_RELATION)
+                    .append(") VALUES ");
+                    for (int i = 0; i < partition.size(); i++) {
+                        if (i > 0) {
+                            sql.append(", ");
+                        }
+                        sql.append("(").append(BgeePreparedStatement.generateParameterizedQueryString(2))
+                        .append(") ");
+                    }
+                    try (BgeePreparedStatement stmt =
+                            this.getManager().getConnection().prepareStatement(sql.toString())) {
+                        int paramIndex = 1;
+                        for (GlobalConditionToDirectAncestorTO to: partition) {
+                            stmt.setInt(paramIndex, to.getSourceConditionId());
+                            paramIndex++;
+                            stmt.setInt(paramIndex, to.getTargetConditionId());
+                            paramIndex++;
+                        }
+                        return stmt.executeUpdate();
+                    } catch (SQLException e) {
+                        throw log.throwing(new DAOException(e));
+                    }
+                })
+                .sum();
+        return log.traceExit(countUpdated);
+    }
+
+    @Override
+    public GlobalConditionToDirectAncestorTOResultSet getGlobalConditionToDirectAncestor(Integer speciesId)
+            throws DAOException, IllegalArgumentException {
+        log.traceEntry("{}", speciesId);
+        if (speciesId == null || speciesId <= 0) {
+            throw log.throwing(new IllegalArgumentException("the speciesId can not be null or <= 0"));
+        }
+        //SELECT clause
+        StringBuilder sqlQuery = new StringBuilder("SELECT ").append(SOURCE_COND_ID_RELATION).append(", ")
+                .append(TARGET_COND_ID_RELATION);
+        //FROM clause
+        sqlQuery.append(" FROM ").append(COND_REL_TABLE_NAME)
+                .append(" AS ").append(COND_REL_TABLE_NAME)
+                .append(" INNER JOIN ").append(TABLE_NAME).append(" AS ").append(TABLE_NAME)
+                .append(" ON ").append(TABLE_NAME).append(".").append(GLOBAL_COND_ID_FIELD)
+                .append(" = ").append(COND_REL_TABLE_NAME).append(".").append(SOURCE_COND_ID_RELATION);
+        //WHERE clause
+        sqlQuery.append(" WHERE ").append(TABLE_NAME).append(".").append(SPECIES_ID).append(" = ?");
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sqlQuery.toString());
+            stmt.setInt(1, speciesId);
+            return log.traceExit(new MySQLGlobalConditionToDirectAncestorTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    public RawConditionToSelfGlobalConditionTOResultSet getRawConditionToSelfGlobalConditionFromGlobalConditionIds(
+            Collection<Integer> globalConditionIds, EnumSet<ConditionParameter> condParams) throws DAOException {
+        log.traceEntry("{}, {}", globalConditionIds, condParams);
+        if (globalConditionIds == null || globalConditionIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("At least one conditionId should be provided"));
+        }
+        EnumSet<ConditionParameter> processdDataTypes = condParams == null || condParams.isEmpty() ?
+                EnumSet.allOf(ConditionParameter.class) : condParams;
+        StringBuilder sqlQuery = new StringBuilder("SELECT ").append(RAW_COND_ID_FIELD).append(", ")
+                .append(GLOBAL_COND_ID_FIELD).append(", ").append(COND_PARAM_SUBSET_MASK_FIELD);
+        sqlQuery.append(" FROM condToSelfGlobalCond");
+        sqlQuery.append(" WHERE ").append(GLOBAL_COND_ID_FIELD).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(globalConditionIds.size())).append(")")
+            .append(" AND ").append(COND_PARAM_SUBSET_MASK_FIELD).append(" = ")
+            .append(RawConditionToSelfGlobalConditionTO.fromCondParamToSubsetMask(processdDataTypes));
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sqlQuery.toString());
+            int paramIndex = 1;
+            stmt.setIntegers(paramIndex, globalConditionIds, true);
+            return log.traceExit(new MySQLRawConditionToSelfGlobalConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
         }
     }
 }

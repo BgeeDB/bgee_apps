@@ -16,7 +16,6 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
@@ -207,12 +206,6 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLDownloadFileDAO getDownloadFileDAO() {
         return (MySQLDownloadFileDAO) this.manager.getDownloadFileDAO();
-    }
-    /**
-     * @return  A {@code MySQLAffymetrixProbesetDAO}.
-     */
-    protected MySQLAffymetrixProbesetDAO getAffymetrixProbesetDAO() {
-        return (MySQLAffymetrixProbesetDAO) this.manager.getAffymetrixProbesetDAO();
     }
     /**
      * @return  A {@code MySQLInSituSpotDAO}.

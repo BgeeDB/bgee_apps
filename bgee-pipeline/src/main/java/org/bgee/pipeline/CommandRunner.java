@@ -18,7 +18,7 @@ import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateXRefsFilesWithExprInfo;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateBioSODAFile;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateOncoMXFile;
-import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
+//import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
@@ -270,9 +270,9 @@ public class CommandRunner {
             break;
  
         //---------- Download file generation -----------
-        case "GenerateDiffExprFile":
-            GenerateDiffExprFile.main(newArgs);
-            break;
+//        case "GenerateDiffExprFile":
+//            GenerateDiffExprFile.main(newArgs);
+//            break;
         case "GenerateBasicExprFile":
             GenerateExprFile2.main(newArgs);
             break;

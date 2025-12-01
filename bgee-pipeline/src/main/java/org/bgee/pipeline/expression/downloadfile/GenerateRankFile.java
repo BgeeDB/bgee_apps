@@ -93,8 +93,6 @@ public class GenerateRankFile {
         private final String devStageId;
         private final String devStageName;
         private final String formattedRank;
-        private final boolean affymetrixData;
-        private final boolean estData;
         private final boolean inSituData;
         private final boolean rnaSeqData;
         private final boolean singleCellRnaSeqFullLengthData;
@@ -103,7 +101,7 @@ public class GenerateRankFile {
         
         public ExpressionCallBean(String geneId, String geneName, String anatEntityId, 
                 String anatEntityName, String devStageId, String devStageName, String formattedRank, 
-                boolean affymetrixData, boolean estData, boolean inSituData, boolean rnaSeqData, 
+                boolean inSituData, boolean rnaSeqData, 
                 boolean singleCellRnaSeqFullLengthData, boolean redundant, List<String> btoXRefs) {
             
             this.geneId = geneId;
@@ -113,8 +111,6 @@ public class GenerateRankFile {
             this.devStageId = devStageId;
             this.devStageName = devStageName;
             this.formattedRank = formattedRank;
-            this.affymetrixData = affymetrixData;
-            this.estData = estData;
             this.inSituData = inSituData;
             this.rnaSeqData = rnaSeqData;
             this.singleCellRnaSeqFullLengthData = singleCellRnaSeqFullLengthData;
@@ -142,12 +138,6 @@ public class GenerateRankFile {
         }
         public String getFormattedRank() {
             return formattedRank;
-        }
-        public boolean isAffymetrixData() {
-            return affymetrixData;
-        }
-        public boolean isEstData() {
-            return estData;
         }
         public boolean isInSituData() {
             return inSituData;
@@ -839,8 +829,6 @@ public class GenerateRankFile {
                 cond.getAnatEntityId(), anatEntity == null? null: anatEntity.getName(), 
                 cond.getDevStageId(), devStage == null? null: devStage.getName(), 
                 FORMATTER.apply(c.getMeanRank()), 
-                dataTypeToStatus.get(DataType.AFFYMETRIX), 
-                dataTypeToStatus.get(DataType.EST), 
                 dataTypeToStatus.get(DataType.IN_SITU), 
                 dataTypeToStatus.get(DataType.RNA_SEQ),
                 dataTypeToStatus.get(DataType.SC_RNA_SEQ), 

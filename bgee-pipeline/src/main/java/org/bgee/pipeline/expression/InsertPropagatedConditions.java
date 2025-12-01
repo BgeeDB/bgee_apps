@@ -616,36 +616,36 @@ public class InsertPropagatedConditions extends CallService {
     
     
 
-    /**
-     * Merge a {@code Set} of {@code PipelineCallData} into one {@code ExpressionCallData}.
-     * 
-     * @param dataType          A {@code DataType} that is the data type of {@code pipelineCallData}.
-     * @param pipelineCallData  A {@code Set} of {@code PipelineCallData} to be used to
-     *                          build the {@code ExpressionCallData}.
-     *                          on propagated data.
-     */
-    private static Condition mapRawDataConditionToCondition(RawDataCondition rawCond) {
-        log.traceEntry("{}", rawCond);
-        if (rawCond == null) {
-            return log.traceExit((Condition) null);
-        }
-        //All the elements must be non-null, otherwise the propagation will end up
-        //with not comparable conditions between elements mapped to the root
-        //and element mapped to null.
-        assert rawCond.getAnatEntity() != null;
-        assert rawCond.getDevStage() != null;
-        assert rawCond.getCellType() != null;
-        assert rawCond.getSex() != null;
-        assert rawCond.getStrain() != null;
-        AnatEntity anatEntityToUse = rawCond.getAnatEntity();
-        //Quick and dirty blacklisting of "unknown" terms, we remap them to the root of the anatEntities
-        if (UNKNOWN_ANAT_ENTITY_IDS.contains(anatEntityToUse.getId())) {
-            anatEntityToUse = ROOT_ANAT_ENTITY;
-        }
-        return log.traceExit(new Condition(anatEntityToUse, rawCond.getDevStage(),
-                rawCond.getCellType(), mapRawDataSexToSex(rawCond.getSex()),
-                mapRawDataStrainToStrain(rawCond.getStrain()), rawCond.getSpecies()));
-    }
+//    /**
+//     * Merge a {@code Set} of {@code PipelineCallData} into one {@code ExpressionCallData}.
+//     * 
+//     * @param dataType          A {@code DataType} that is the data type of {@code pipelineCallData}.
+//     * @param pipelineCallData  A {@code Set} of {@code PipelineCallData} to be used to
+//     *                          build the {@code ExpressionCallData}.
+//     *                          on propagated data.
+//     */
+//    private static Condition mapRawDataConditionToCondition(RawDataCondition rawCond) {
+//        log.traceEntry("{}", rawCond);
+//        if (rawCond == null) {
+//            return log.traceExit((Condition) null);
+//        }
+//        //All the elements must be non-null, otherwise the propagation will end up
+//        //with not comparable conditions between elements mapped to the root
+//        //and element mapped to null.
+//        assert rawCond.getAnatEntity() != null;
+//        assert rawCond.getDevStage() != null;
+//        assert rawCond.getCellType() != null;
+//        assert rawCond.getSex() != null;
+//        assert rawCond.getStrain() != null;
+//        AnatEntity anatEntityToUse = rawCond.getAnatEntity();
+//        //Quick and dirty blacklisting of "unknown" terms, we remap them to the root of the anatEntities
+//        if (UNKNOWN_ANAT_ENTITY_IDS.contains(anatEntityToUse.getId())) {
+//            anatEntityToUse = ROOT_ANAT_ENTITY;
+//        }
+//        return log.traceExit(new Condition(anatEntityToUse, rawCond.getDevStage(),
+//                rawCond.getCellType(), mapRawDataSexToSex(rawCond.getSex()),
+//                mapRawDataStrainToStrain(rawCond.getStrain()), rawCond.getSpecies()));
+//    }
 
 
     private static String mapDAORawDataStrainToRawDataStrain(String daoStrain) {

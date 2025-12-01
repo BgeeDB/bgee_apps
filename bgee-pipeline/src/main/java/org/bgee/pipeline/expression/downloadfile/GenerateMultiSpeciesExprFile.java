@@ -932,7 +932,6 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_LATIN_NAME_COLUMN_NAME,
                 CIO_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME, EXPRESSION_COLUMN_NAME,
                 QUALITY_COLUMN_NAME, INCLUDING_OBSERVED_DATA_COLUMN_NAME,
-                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_QUAL_COLUMN_NAME,
                 EST_DATA_COLUMN_NAME, EST_CALL_QUALITY_COLUMN_NAME,
                 INSITU_DATA_COLUMN_NAME, INSITU_CALL_QUALITY_COLUMN_NAME,
                 RNASEQ_DATA_COLUMN_NAME, RNASEQ_QUAL_COLUMN_NAME});
@@ -1036,8 +1035,6 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                     headers[i].equals(EXPRESSION_COLUMN_NAME) ||
                     headers[i].equals(QUALITY_COLUMN_NAME) ||
                     headers[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_DATA_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_QUAL_COLUMN_NAME) ||
                     headers[i].equals(EST_DATA_COLUMN_NAME) ||
                     headers[i].equals(EST_CALL_QUALITY_COLUMN_NAME) ||
                     headers[i].equals(INSITU_DATA_COLUMN_NAME) ||
@@ -1127,18 +1124,10 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 // *** Attributes specific to complete file ***
                 if (header[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME)) {
                     mapping[i] = "includingObservedData";
-                } else if (header[i].equals(AFFYMETRIX_DATA_COLUMN_NAME)) {
-                    mapping[i] = "affymetrixData";
-                } else if (header[i].equals(AFFYMETRIX_QUAL_COLUMN_NAME)) {
-                    mapping[i] = "affymetrixCallQuality";
-                } else if (header[i].equals(AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME)) { 
-                    mapping[i] = "includingAffymetrixObservedData";
                 } else if (header[i].equals(EST_DATA_COLUMN_NAME)) {
                     mapping[i] = "estData";
                 } else if (header[i].equals(EST_CALL_QUALITY_COLUMN_NAME)) {
                     mapping[i] = "estCallQuality";
-                } else if (header[i].equals(EST_OBSERVED_DATA_COLUMN_NAME)) {
-                    mapping[i] = "includingEstObservedData";
                 } else if (header[i].equals(INSITU_DATA_COLUMN_NAME)) {
                     mapping[i] = "inSituData";
                 } else if (header[i].equals(INSITU_CALL_QUALITY_COLUMN_NAME)) {

@@ -1807,37 +1807,24 @@ public class CommandData extends CommandParent {
         if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(action) ||
                 EXPERIMENT_PAGE_ACTION.equals(action)) {
             boolean withExpInfo = RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(action);
-            dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
-                    () -> getAffymetrixRawDataAnnotsColumnDescriptions(withExpInfo));
             dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
                     () -> getRnaSeqRawDataAnnotsColumnDescriptions(false, withExpInfo));
             dataTypeTolDescrSupplier.put(DataType.SC_RNA_SEQ,
                     () -> getRnaSeqRawDataAnnotsColumnDescriptions(true, withExpInfo));
-            //Of note, there's no experiment page for EST
-            dataTypeTolDescrSupplier.put(DataType.EST,
-                    () -> getESTRawDataAnnotsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.IN_SITU,
                     () -> getInSituRawDataAnnotsColumnDescriptions(withExpInfo));
         } else if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(action)) {
-            dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
-                    () -> getAffymetrixProcExprValuesColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
                     () -> getRnaSeqProcExprValuesColumnDescriptions(false));
             dataTypeTolDescrSupplier.put(DataType.SC_RNA_SEQ,
                     () -> getRnaSeqProcExprValuesColumnDescriptions(true));
-            dataTypeTolDescrSupplier.put(DataType.EST,
-                    () -> getESTProcExprValuesColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.IN_SITU,
                     () -> getInSituProcExprValuesColumnDescriptions());
         } else if (RequestParameters.ACTION_EXPERIMENTS.equals(action)) {
-            dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
-                    () -> getAffymetrixExperimentsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
                     () -> getRnaSeqExperimentsColumnDescriptions(false));
             dataTypeTolDescrSupplier.put(DataType.SC_RNA_SEQ,
                     () -> getRnaSeqExperimentsColumnDescriptions(true));
-            dataTypeTolDescrSupplier.put(DataType.EST,
-                    () -> getESTExperimentsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.IN_SITU,
                     () -> getInSituExperimentsColumnDescriptions());
         } else {
@@ -1963,31 +1950,6 @@ public class CommandData extends CommandParent {
         return log.traceExit(colDescr);
     }
 
-    private List<ColumnDescription> getAffymetrixRawDataAnnotsColumnDescriptions(
-            boolean withExperimentInfo) {
-        log.traceEntry("{}", withExperimentInfo);
-        List<ColumnDescription> colDescr = new ArrayList<>();
-        if (withExperimentInfo) {
-            colDescr.add(new ColumnDescription("Experiment ID", null,
-                    List.of("result.experiment.id"),
-                    ColumnDescription.ColumnType.INTERNAL_LINK,
-                    ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
-            colDescr.add(new ColumnDescription("Experiment name", null,
-                    List.of("result.experiment.name"),
-                    ColumnDescription.ColumnType.STRING,
-                    null, null, true, null, null));
-        }
-        colDescr.add(new ColumnDescription("Chip ID", "Identifier of the Affymetrix chip",
-                List.of("result.id"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-
-        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
-        colDescr.add(getAnnotsToProcExprValuesColDesc("result.experiment.id", "result.id",
-                null, false));
-
-        return log.traceExit(colDescr);
-    }
     private List<ColumnDescription> getRnaSeqRawDataAnnotsColumnDescriptions(boolean isSingleCell,
             boolean withExperimentInfo) {
         log.traceEntry("{}, {}", isSingleCell, withExperimentInfo);
@@ -2090,28 +2052,6 @@ public class CommandData extends CommandParent {
 
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.library.experiment.id", "result.library.id",
                 "result", isSingleCell));
-
-        return log.traceExit(colDescr);
-    }
-    private List<ColumnDescription> getESTRawDataAnnotsColumnDescriptions() {
-        log.traceEntry();
-        List<ColumnDescription> colDescr = new ArrayList<>();
-        colDescr.add(new ColumnDescription("Library ID", null,
-                List.of("result.id"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Library name", null,
-                List.of("result.name"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Description", null,
-                List.of("result.description"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-
-        colDescr.addAll(getConditionColumnDescriptions("result", false, false));
-        colDescr.add(getAnnotsToProcExprValuesColDesc(null, "result.id",
-                null, false));
 
         return log.traceExit(colDescr);
     }
@@ -2237,47 +2177,6 @@ public class CommandData extends CommandParent {
                 null, filterTargets, false, null, null));
     }
 
-    private List<ColumnDescription> getAffymetrixProcExprValuesColumnDescriptions() {
-        log.traceEntry();
-        List<ColumnDescription> colDescr = new ArrayList<>();
-        colDescr.add(new ColumnDescription("Experiment ID", null,
-                List.of("result.assay.experiment.id"),
-                ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
-        colDescr.add(new ColumnDescription("Chip ID", "Identifier of the Affymetrix chip",
-                List.of("result.assay.id"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Probeset ID", "Identifier of the probeset for the chip type",
-                List.of("result.id"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Gene ID", null,
-                List.of("result.expressionCall.gene.geneId"),
-                ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true,
-                "result.expressionCall.gene.geneMappedToSameGeneIdCount",
-                "result.expressionCall.gene.species.id"));
-        colDescr.add(new ColumnDescription("Gene name", null,
-                List.of("result.expressionCall.gene.name"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Signal intensity",
-                "Normalized signal intensity of the probeset",
-                List.of("result.normalizedSignalIntensity"),
-                ColumnDescription.ColumnType.NUMERIC,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Expression p-value",
-                "P-value for the test of expression signal of the gene "
-                + "significantly different from background expression",
-                List.of("result.expressionCall.pValue"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
-
-        return log.traceExit(colDescr);
-    }
     private List<ColumnDescription> getRnaSeqProcExprValuesColumnDescriptions(boolean isSingleCell) {
         log.traceEntry();
         List<ColumnDescription> colDescr = new ArrayList<>();
@@ -2331,42 +2230,6 @@ public class CommandData extends CommandParent {
 
         return log.traceExit(colDescr);
     }
-    private List<ColumnDescription> getESTProcExprValuesColumnDescriptions() {
-        log.traceEntry();
-        List<ColumnDescription> colDescr = new ArrayList<>();
-        colDescr.add(new ColumnDescription("Library ID", null,
-                List.of("result.assay.id"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Library name", null,
-                List.of("result.assay.name"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("EST ID", "Identifier of the Expressed Sequence Tag",
-                List.of("result.id"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Gene ID", null,
-                List.of("result.rawCall.gene.geneId"),
-                ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true,
-                "result.rawCall.gene.geneMappedToSameGeneIdCount",
-                "result.rawCall.gene.species.id"));
-        colDescr.add(new ColumnDescription("Gene name", null,
-                List.of("result.rawCall.gene.name"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Expression p-value",
-                "P-value for the test of expression signal of the gene "
-                + "significantly different from background expression",
-                List.of("result.rawCall.pValue"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-
-        colDescr.addAll(getConditionColumnDescriptions("result.assay", false, false));
-
-        return log.traceExit(colDescr);
-    }
     private List<ColumnDescription> getInSituProcExprValuesColumnDescriptions() {
         log.traceEntry();
         List<ColumnDescription> colDescr = new ArrayList<>();
@@ -2399,25 +2262,6 @@ public class CommandData extends CommandParent {
         return log.traceExit(colDescr);
     }
 
-    private List<ColumnDescription> getAffymetrixExperimentsColumnDescriptions() {
-        log.traceEntry();
-
-        List<ColumnDescription> colDescr = new ArrayList<>();
-        colDescr.add(new ColumnDescription("Experiment ID", null,
-                List.of("result.id"),
-                ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
-        colDescr.add(new ColumnDescription("Experiment name", null,
-                List.of("result.name"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Description", null,
-                List.of("result.description"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(getExpToAnnotsColDesc("result.id"));
-        return log.traceExit(colDescr);
-    }
     private List<ColumnDescription> getRnaSeqExperimentsColumnDescriptions(boolean isSingleCell) {
         log.traceEntry("{}", isSingleCell);
 
@@ -2446,34 +2290,6 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
         colDescr.add(getExpToAnnotsColDesc("result.id"));
-        return log.traceExit(colDescr);
-    }
-    private List<ColumnDescription> getESTExperimentsColumnDescriptions() {
-        log.traceEntry();
-
-        List<ColumnDescription> colDescr = new ArrayList<>();
-        colDescr.add(new ColumnDescription("Library ID", null,
-                List.of("result.id"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Library name", null,
-                List.of("result.name"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        colDescr.add(new ColumnDescription("Description", null,
-                List.of("result.description"),
-                ColumnDescription.ColumnType.STRING,
-                null, null, true, null, null));
-        //We don't use the method getExprToAnnotsColDesc here,
-        //because EST data have no concept of experiment.
-        colDescr.add(new ColumnDescription("Link to raw data annotations",
-                "See the raw data annotation results for this library",
-                null,
-                ColumnDescription.ColumnType.LINK_TO_RAW_DATA_ANNOTS,
-                null, List.of(new ColumnDescription.FilterTarget("result.id",
-                        this.requestParameters.getUrlParametersInstance()
-                        .getParamFilterAssayId().getName())), false, null, null));
-
         return log.traceExit(colDescr);
     }
     private List<ColumnDescription> getInSituExperimentsColumnDescriptions() {

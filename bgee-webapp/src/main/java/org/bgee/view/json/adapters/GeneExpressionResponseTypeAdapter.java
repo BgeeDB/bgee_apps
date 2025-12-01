@@ -68,8 +68,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             dataTypesWithData.addAll(dataTypes);
             boolean highQualScore = false;
             if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
-                    (dataTypes.contains(DataType.AFFYMETRIX) ||
-                    dataTypes.contains(DataType.RNA_SEQ) ||
+                    (dataTypes.contains(DataType.RNA_SEQ) ||
                     dataTypes.contains(DataType.SC_RNA_SEQ) ||
                     call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
                 highQualScore = true;

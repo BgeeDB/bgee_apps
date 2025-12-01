@@ -11,6 +11,7 @@ import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
@@ -159,9 +160,13 @@ public class MockDAOManager2 extends DAOManager {
     protected RawDataConditionDAO getNewRawDataConditionDAO() {
         return this.instanceMockManager.getNewRawDataConditionDAO();
     }
+//    @Override
+//    protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
+//        return this.instanceMockManager.getNewRawExpressionCallDAO();
+//    }
     @Override
-    protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
-        return this.instanceMockManager.getNewRawExpressionCallDAO();
+    protected ObservedExpressionDAO getNewObservedExpressionDAO() {
+        return this.instanceMockManager.getNewObservedExpressionDAO();
     }
     @Override
     protected GlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {

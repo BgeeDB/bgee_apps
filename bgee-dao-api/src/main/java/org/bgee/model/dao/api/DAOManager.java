@@ -28,6 +28,7 @@ import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
@@ -1061,18 +1062,24 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.traceExit(this.getNewSexDAO());
     }
-    /**
-     * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO}, 
-     * unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code RawExpressionCallDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO
-     */
-    public RawExpressionCallDAO getRawExpressionCallDAO() {
+//    /**
+//     * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO}, 
+//     * unless this {@code DAOManager} is already closed. 
+//     * 
+//     * @return  a new {@code RawExpressionCallDAO}.
+//     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+//     * @see org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO
+//     */
+//    public RawExpressionCallDAO getRawExpressionCallDAO() {
+//        log.traceEntry();
+//        this.checkClosed();
+//        return log.traceExit(this.getNewRawExpressionCallDAO());
+//    }
+
+    public ObservedExpressionDAO getObservedExpressionDAO() {
         log.traceEntry();
-        this.checkClosed();
-        return log.traceExit(this.getNewRawExpressionCallDAO());
+            this.checkClosed();
+        return log.traceExit(this.getNewObservedExpressionDAO());
     }
     /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO GlobalExpressionCallDAO}, 
@@ -1594,14 +1601,22 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code SexDAO}
      */
     protected abstract SexDAO getNewSexDAO();
+//    /**
+//     * Service provider must return a new 
+//     * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO} 
+//     * instance when this method is called. 
+//     * 
+//     * @return  A new {@code RawExpressionCallDAO}
+//     */
+//    protected abstract RawExpressionCallDAO getNewRawExpressionCallDAO();
     /**
      * Service provider must return a new 
-     * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO} 
-     * instance when this method is called. 
-     * 
-     * @return  A new {@code RawExpressionCallDAO}
-     */
-    protected abstract RawExpressionCallDAO getNewRawExpressionCallDAO();
+    * {@link org.org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO ObservedExpressionDAO} 
+    * instance when this method is called. 
+    * 
+    * @return  A new {@code ObservedExpressionDAO}
+    */
+    protected abstract ObservedExpressionDAO getNewObservedExpressionDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO GlobalExpressionCallDAO} 

@@ -1,5 +1,7 @@
 package org.bgee.model.expressiondata.call;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;

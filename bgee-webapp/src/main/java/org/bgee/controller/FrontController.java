@@ -1,6 +1,7 @@
 package org.bgee.controller;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -27,6 +28,7 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.expressiondata.call.ConditionGraphCacheService;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.TooManyJobsException;
@@ -422,6 +424,16 @@ public class FrontController extends HttpServlet {
 
         CommandData commandData = this.getPartialCommandData();
         commandData.initializeCaches(sleepBetweenComputeMs);
+        
+     // --- Add condition graph cache initialization here ---
+        ConditionGraphCacheService cacheManager = new ConditionGraphCacheService(serviceFactoryProvider.get());
+
+        // Fetch all species IDs from DB
+        List<Integer> speciesIds = List.of(7227);
+
+        log.info("Loading condition graph cache for {} species...", speciesIds.size());
+        cacheManager.loadAllSpeciesGraphs(speciesIds);
+        log.info("ConditionGraphCache successfully initialized.");
 
         log.traceExit();
     }

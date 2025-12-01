@@ -34,15 +34,9 @@ import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
@@ -1135,61 +1129,6 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.traceExit(this.getNewAnatEntityDAO());
     }
-    
-    /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO
-     * AffymetrixProbesetDAO}, unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code AffymetrixProbesetDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO 
-     * AffymetrixProbesetDAO
-     */
-    public AffymetrixProbesetDAO getAffymetrixProbesetDAO() {
-        log.traceEntry();
-        this.checkClosed();
-        return log.traceExit(this.getNewAffymetrixProbesetDAO());
-    }
-
-    /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO}, 
-     * unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code AffymetrixChipDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO 
-     */
-    public AffymetrixChipDAO getAffymetrixChipDAO() {
-        log.traceEntry();
-        this.checkClosed();
-        return log.traceExit(this.getNewAffymetrixChipDAO());
-    }
-    /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO}, 
-     * unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code AffymetrixChipTypeDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO 
-     */
-    public AffymetrixChipTypeDAO getAffymetrixChipTypeDAO() {
-        log.traceEntry();
-        this.checkClosed();
-        return log.traceExit(this.getNewAffymetrixChipTypeDAO());
-    }
-    /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO}, 
-     * unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code MicroarrayExperimentDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO
-     */
-    public MicroarrayExperimentDAO getMicroarrayExperimentDAO() {
-        log.traceEntry();
-        this.checkClosed();
-        return log.traceExit(this.getNewMicroarrayExperimentDAO());
-    }
 
     /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO}, 
@@ -1244,33 +1183,6 @@ public abstract class DAOManager implements AutoCloseable
         log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewRnaSeqLibraryDAO());
-    }
-
-    /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO}, 
-     * unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code ESTLibraryDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO
-     */
-    public ESTLibraryDAO getESTLibraryDAO() {
-        log.traceEntry();
-        this.checkClosed();
-        return log.traceExit(this.getNewESTLibraryDAO());
-    }
-    /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO}, 
-     * unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code ESTDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO
-     */
-    public ESTDAO getESTDAO() {
-        log.traceEntry();
-        this.checkClosed();
-        return log.traceExit(this.getNewESTDAO());
     }
 
     /**
@@ -1725,38 +1637,6 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract AnatEntityDAO getNewAnatEntityDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO 
-     * AffymetrixProbesetDAO} instance when this method is called. 
-     * 
-     * @return  A new {@code AffymetrixProbesetDAO}
-     */
-    protected abstract AffymetrixProbesetDAO getNewAffymetrixProbesetDAO();
-    /**
-     * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO 
-     * AffymetrixChipDAO} instance when this method is called. 
-     * 
-     * @return  A new {@code AffymetrixChipDAO}
-     */
-    protected abstract AffymetrixChipDAO getNewAffymetrixChipDAO();
-    /**
-     * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO 
-     * AffymetrixChipTypeDAO} instance when this method is called. 
-     * 
-     * @return  A new {@code AffymetrixChipTypeDAO}
-     */
-    protected abstract AffymetrixChipTypeDAO getNewAffymetrixChipTypeDAO();
-    /**
-     * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO 
-     * MicroarrayExperimentDAO} instance when this method is called. 
-     * 
-     * @return  A new {@code MicroarrayExperimentDAO}
-     */
-    protected abstract MicroarrayExperimentDAO getNewMicroarrayExperimentDAO();
-    /**
-     * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RnaSeqExperimentDAO 
      * RnaSeqExperimentDAO} instance when this method is called. 
      * 
@@ -1787,22 +1667,6 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code RNASeqResultDAO}
      */
     protected abstract RNASeqResultAnnotatedSampleDAO getNewRNASeqResultAnnotatedSampleDAO();
-    /**
-     * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO 
-     * ESTLibraryDAO} instance when this method is called. 
-     * 
-     * @return  A new {@code ESTLibraryDAO}
-     */
-    protected abstract ESTLibraryDAO getNewESTLibraryDAO();
-    /**
-     * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO 
-     * ESTDAO} instance when this method is called. 
-     * 
-     * @return  A new {@code ESTDAO}
-     */
-    protected abstract ESTDAO getNewESTDAO();
 
     /**
      * Service provider must return a new 

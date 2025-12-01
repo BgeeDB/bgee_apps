@@ -36,7 +36,7 @@ public class RawDataCallSourceDAO {
     }
     /**
      * An interface describing elements allowing to produce {@link CallSourceDataTO}, for instance:
-     * an Affymetrix probeset, an RNA-Seq result, an EST, an in situ hybridization spot.
+     * an RNA-Seq result, an in situ hybridization spot.
      * <p>
      * Implementation note: this an interface rather than a class, because some {@code CallSourceTO}
      * have an ID, some do not, so we want these elements to freely extend {@code EntityTO}, or not,
@@ -53,7 +53,7 @@ public class RawDataCallSourceDAO {
     public static interface CallSourceTO<T extends Comparable<T>> extends Serializable {
         /**
          * @return  the ID this {@code CallSourceTO} is part of, for instance, the ID
-         *          of an Affymetrix chip, or of an RNA-Seq library.
+         *          of an RNA-Seq library.
          */
         public T getAssayId();
         /**
@@ -115,9 +115,8 @@ public class RawDataCallSourceDAO {
     /**
      * A {@code TransferObject} carrying information specifically about the aspect of the raw data
      * allowing to generate a call of presence/absence of expression. For information about the element
-     * producing this call (for instance, an Affymetrix probeset, having a specific ID),
-     * or the assay which this element belongs to (for instance, the Affymetrix chip which the probeset
-     * belongs to), see {@link CallSourceTO}.
+     * producing this call,
+     * or the assay which this element belongs to, see {@link CallSourceTO}.
      *
      * @author Frederic Bastian
      * @author Valentine Rech de Laval

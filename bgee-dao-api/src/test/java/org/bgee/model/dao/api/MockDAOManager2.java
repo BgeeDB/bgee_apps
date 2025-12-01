@@ -17,15 +17,9 @@ import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
@@ -183,10 +177,6 @@ public class MockDAOManager2 extends DAOManager {
         return this.instanceMockManager.getNewAnatEntityDAO();
     }
     @Override
-    protected AffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {
-        return this.instanceMockManager.getNewAffymetrixProbesetDAO();
-    }
-    @Override
     protected InSituSpotDAO getNewInSituSpotDAO() {
         return this.instanceMockManager.getNewInSituSpotDAO();
     }
@@ -256,16 +246,6 @@ public class MockDAOManager2 extends DAOManager {
     }
 
     @Override
-    protected AffymetrixChipDAO getNewAffymetrixChipDAO() {
-        return instanceMockManager.getNewAffymetrixChipDAO();
-    }
-
-    @Override
-    protected MicroarrayExperimentDAO getNewMicroarrayExperimentDAO() {
-        return instanceMockManager.getNewMicroarrayExperimentDAO();
-    }
-
-    @Override
     protected RNASeqExperimentDAO getNewRnaSeqExperimentDAO() {
         return instanceMockManager.getNewRnaSeqExperimentDAO();
     }
@@ -288,21 +268,6 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected RawDataCountDAO getNewRawDataCountDAO() {
         return instanceMockManager.getNewRawDataCountDAO();
-    }
-
-    @Override
-    protected AffymetrixChipTypeDAO getNewAffymetrixChipTypeDAO() {
-        return instanceMockManager.getNewAffymetrixChipTypeDAO();
-    }
-
-    @Override
-    protected ESTLibraryDAO getNewESTLibraryDAO() {
-        return instanceMockManager.getNewESTLibraryDAO();
-    }
-
-    @Override
-    protected ESTDAO getNewESTDAO() {
-        return instanceMockManager.getNewESTDAO();
     }
 
     @Override

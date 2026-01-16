@@ -1,3 +1,6 @@
+// tests implemented during the biohackathon
+//TODO: adapt them to the new implementation
+//
 //package org.bgee.model.expressiondata.call;
 //
 //import static org.junit.Assert.assertEquals;

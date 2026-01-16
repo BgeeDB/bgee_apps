@@ -262,7 +262,7 @@ public class CommandRunner {
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            FilterNoExprCalls.main(newArgs);
 //            break;
-//        case "InsertPropagatedCalls": 
+//        case "InsertPropagatedCalls":
 //            InsertPropagatedCalls.main(newArgs);
 //            break;
         case "CorrectTaxonConstraints":

@@ -1,3 +1,5 @@
+// Class implemented during the biohackathon but not used anymore.
+//TODO: to delete once the OTF propagation is finalized
 //package org.bgee.model.expressiondata.call;
 //
 //import java.math.BigDecimal;

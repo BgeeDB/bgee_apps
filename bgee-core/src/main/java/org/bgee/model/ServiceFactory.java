@@ -304,7 +304,7 @@ public class ServiceFactory implements AutoCloseable {
         log.traceEntry();
         return log.traceExit(new ConditionService(this));
     }
-    
+
     /**
      * @return A newly instantiated {@code ConditionGraphCacheService}
      */

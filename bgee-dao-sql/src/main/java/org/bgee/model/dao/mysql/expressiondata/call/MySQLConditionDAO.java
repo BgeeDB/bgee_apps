@@ -100,28 +100,14 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
     /**
      * Get a {@code Map} associating column names to corresponding {@code ConditionDAO.Attribute}.
      * 
-     * @param global    A {@code boolean} defining whether the global conditions (if {@code true})
-     *                  were targeted, or the raw conditions (if {@code false}).
      * @return          A {@code Map} where keys are {@code String}s that are column names, 
      *                  the associated value being the corresponding {@code ConditionDAO.Attribute}.
      */
     private static Map<String, ConditionDAO.Attribute> getColToAttributesMap() {
         log.traceEntry();
-        Map<String, ConditionDAO.Attribute> colToAttributesMap = new HashMap<>();
-        colToAttributesMap.put(GLOBAL_COND_ID_FIELD, ConditionDAO.Attribute.ID);
-        //only the original condition table containing all parameters has the field "exprMappedConditionId", 
-        //allowing to map conditions used in annotations to conditions used in expression tables.
-        colToAttributesMap.put("anatEntityId", ConditionDAO.Attribute.ANAT_ENTITY_ID);
-        colToAttributesMap.put("stageId", ConditionDAO.Attribute.STAGE_ID);
-        colToAttributesMap.put("sex", ConditionDAO.Attribute.SEX_ID);
-        colToAttributesMap.put("strain", ConditionDAO.Attribute.STRAIN_ID);
-        colToAttributesMap.put("cellTypeId", ConditionDAO.Attribute.CELL_TYPE_ID);
-        colToAttributesMap.put(SPECIES_ID, ConditionDAO.Attribute.SPECIES_ID);
-//        if (!global) {
-//            colToAttributesMap.put("sexInferred", ConditionDAO.Attribute.SEX_INFERRED);
-//        }
-        
-        return log.traceExit(colToAttributesMap);
+        return log.traceExit(EnumSet.allOf(ConditionDAO.Attribute.class)
+        .stream()
+        .collect(Collectors.toMap(e -> e.getTOFieldName(), e -> e)));
     }
 
     public MySQLConditionDAO(MySQLDAOManager manager) throws IllegalArgumentException {
@@ -903,7 +889,9 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
                 Integer id = null, speciesId = null;
                 String anatEntityId = null, stageId = null, cellTypeId = null, strainId = null;
                 ConditionDAO.ConditionTO.DAOSex sex = null;
+                BigDecimal bulkMaxRank = null, singleCellMaxRank = null, inSituMaxRank = null;
                 Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap();
+                
 
                 COL: for (String columnName : this.getColumnLabels().values()) {
                     //don't use MySQLDAO.getAttributeFromColName because we don't cover all columns
@@ -939,10 +927,9 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
-                //to be added when needed.
+                Set<ConditionRankInfoTO> condRankInfo = new HashSet<>();
                 return log.traceExit(new ConditionTO(id, anatEntityId, stageId, cellTypeId, sex, 
-                        strainId, speciesId, null));
+                        strainId, speciesId, condRankInfo));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

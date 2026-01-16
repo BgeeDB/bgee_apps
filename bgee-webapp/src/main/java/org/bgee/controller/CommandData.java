@@ -31,6 +31,7 @@ import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
@@ -91,11 +92,11 @@ public class CommandData extends CommandParent {
 
     public static class ExpressionCallResponse {
 
-        private final List<ExpressionCall2> calls;
+        private final List<OTFExpressionCall> calls;
         private final LinkedHashSet<ConditionParameter<?, ?>> condParams;
         private final EnumSet<DataType> requestedDataTypes;
 
-        public ExpressionCallResponse(List<ExpressionCall2> calls,
+        public ExpressionCallResponse(List<OTFExpressionCall> calls,
                 LinkedHashSet<ConditionParameter<?, ?>> condParams,
                 EnumSet<DataType> requestedDataTypes) {
             this.calls = calls;
@@ -103,7 +104,7 @@ public class CommandData extends CommandParent {
             this.requestedDataTypes = requestedDataTypes;
         }
 
-        public List<ExpressionCall2> getCalls() {
+        public List<OTFExpressionCall> getCalls() {
             return calls;
         }
         public LinkedHashSet<ConditionParameter<?, ?>> getCondParams() {
@@ -909,7 +910,7 @@ public class CommandData extends CommandParent {
 
         log.debug("Action identified: {}", this.requestParameters.getAction());
         List<ColumnDescription> colDescriptions = null;
-        List<ExpressionCall2> calls = null;
+        List<OTFExpressionCall> calls = null;
         Long count = null;
         ExpressionCallPostFilter postFilter = null;
 
@@ -1665,7 +1666,7 @@ public class CommandData extends CommandParent {
                         () -> new EnumMap<>(DataType.class))));
     }
 
-    private List<ExpressionCall2> loadExprCallResults(ExpressionCallLoader callLoader)
+    private List<OTFExpressionCall> loadExprCallResults(ExpressionCallLoader callLoader)
             throws InvalidRequestException {
         log.traceEntry("{}", callLoader);
 
@@ -1685,7 +1686,7 @@ public class CommandData extends CommandParent {
                 offset, limit);
         //Suppress warnings because we are responsible for the insertion and know the generic type
         @SuppressWarnings("unchecked")
-        List<ExpressionCall2> results = this.cacheService.useCacheNonAtomic(
+        List<OTFExpressionCall> results = this.cacheService.useCacheNonAtomic(
                 EXPR_CALL_RESULT_CACHE_DEF,
                 cacheKey,
 //                () -> callLoader.loadData(offset, limit),

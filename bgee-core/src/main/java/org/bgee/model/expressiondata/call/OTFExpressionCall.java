@@ -11,7 +11,7 @@ import org.bgee.model.gene.Gene;
 public class OTFExpressionCall {
 
     private final Gene gene;
-    private final Condition condition;
+    private final Condition2 condition;
     private final EnumSet<DataType> supportingDataTypes;
     private final BigDecimal allDataTypePValue;
     private final BigDecimal trustedDataTypePValue;
@@ -23,7 +23,7 @@ public class OTFExpressionCall {
     private final BigDecimal bestDescendantExpressionScore;
     private final PropagationState dataPropagation;
 
-    public OTFExpressionCall(Gene gene, Condition condition, EnumSet<DataType> supportingDataTypes,
+    public OTFExpressionCall(Gene gene, Condition2 condition, EnumSet<DataType> supportingDataTypes,
             BigDecimal allDataTypePValue, BigDecimal trustedDataTypePValue,
             BigDecimal bestDescendantAllDataTypePValue, BigDecimal bestDescendantTrustedDataTypePValue,
             BigDecimal expressionScoreWeight, BigDecimal expressionScore,
@@ -46,7 +46,7 @@ public class OTFExpressionCall {
     public Gene getGene() {
         return gene;
     }
-    public Condition getCondition() {
+    public Condition2 getCondition() {
         return condition;
     }
     public EnumSet<DataType> getSupportingDataTypes() {

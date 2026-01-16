@@ -52,7 +52,7 @@ import org.bgee.pipeline.CommandRunner;
 
 /**
  * Class responsible for inserting the propagated Conditions into the Bgee database.
- * 
+ *
  * @author  Julien Wollbrett
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
@@ -88,16 +88,16 @@ public class InsertPropagatedConditions extends CallService {
 
     /**
      * Main method to insert propagated conditions in Bgee database, see {@link #insert(List, Collection)}.
-     * Parameters that must be provided in order in {@code args} are: 
+     * Parameters that must be provided in order in {@code args} are:
      * <ol>
      * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to
      * propagate expression, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      * If empty (see {@link CommandRunner#EMPTY_LIST}), all species in database will be used.
-     * <li> a {@code Map} where keys are whatever, and each value is a set of strings, 
+     * <li> a {@code Map} where keys are whatever, and each value is a set of strings,
      * corresponding to {@code ConditionDAO.Attribute}s, allowing to target a specific
      * condition parameter combination. Example: 1//ANAT_ENTITY_ID,2//ANAT_ENTITY_ID--STAGE_ID
      * </ol>
-     * 
+     *
      * @param args           An {@code Array} of {@code String}s containing the requested parameters.
      * @throws DAOException  If an error occurred while inserting the data into the Bgee database.
      */
@@ -204,8 +204,8 @@ public class InsertPropagatedConditions extends CallService {
             } catch (Exception e) {
                 if (i < maxAttempt) {
                     log.catching(Level.DEBUG, e);
-                    log.debug(INSERTION_MARKER, 
-                            "Trying to start transaction failed, {} try over {}", 
+                    log.debug(INSERTION_MARKER,
+                            "Trying to start transaction failed, {} try over {}",
                             i + 1, maxAttempt);
                     try {
                         Thread.sleep(2000);
@@ -215,8 +215,8 @@ public class InsertPropagatedConditions extends CallService {
                         throw log.throwing(ex);
                     }
                 } else {
-                    log.debug(INSERTION_MARKER, 
-                            "Starting transaction failed, {} try over {}", 
+                    log.debug(INSERTION_MARKER,
+                            "Starting transaction failed, {} try over {}",
                             i + 1, maxAttempt);
                     //that was the last try, throw exception
                     throw e;
@@ -310,7 +310,7 @@ public class InsertPropagatedConditions extends CallService {
         if (!globalConditionToDirectAncestorTOs.isEmpty()) {
             condDAO.insertcondIdToDirectAncestorId(globalConditionToDirectAncestorTOs);
         }
-        
+
         return globalConditionToDirectAncestorTOs;
     }
 
@@ -324,11 +324,11 @@ public class InsertPropagatedConditions extends CallService {
      */
     private final int speciesId;
 
-    public InsertPropagatedConditions(Supplier<ServiceFactory> serviceFactorySupplier, 
+    public InsertPropagatedConditions(Supplier<ServiceFactory> serviceFactorySupplier,
             Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount) {
         this(serviceFactorySupplier, condParams, speciesId, geneOffset, geneRowCount, new CallServiceUtils());
     }
-    public InsertPropagatedConditions(Supplier<ServiceFactory> serviceFactorySupplier, 
+    public InsertPropagatedConditions(Supplier<ServiceFactory> serviceFactorySupplier,
             Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount,
             CallServiceUtils utils) {
         super(serviceFactorySupplier.get(), utils);
@@ -344,7 +344,7 @@ public class InsertPropagatedConditions extends CallService {
                     "geneRowCount must be provided if geneOffset is provided"));
         }
         this.condParams = EnumSet.copyOf(condParams);
-        this.speciesId = speciesId;      
+        this.speciesId = speciesId;
     }
 
     private void insertGlobalConditionsForOneSpecies() throws Exception {
@@ -382,7 +382,7 @@ public class InsertPropagatedConditions extends CallService {
             log.info("Done condition inference for species {}.", this.speciesId);
 
             startTransaction((MySQLDAOManager) mainManager);
-            
+
             //Insert propagated conditions
             Map<Condition, Integer> globalCondsToglobalCondId = InsertPropagatedConditions
                     .insertNewGlobalConditions(conditionGraph.getConditions(),
@@ -410,14 +410,14 @@ public class InsertPropagatedConditions extends CallService {
                     .insertGlobalConditionDirectRelation(conditionGraph, globalCondsToglobalCondId, condDAO);
             log.info("{} relations between global conndition and their direct ancestors have been inserted for species {}",
                     globalCondToDirectAncestorTOs.size(), speciesId);
-            
+
 
             ((MySQLDAOManager) mainManager).getConnection().getRealConnection().commit();
             ((MySQLDAOManager) mainManager).getConnection().getRealConnection().setAutoCommit(true);
         }
         log.traceExit();
     }
-    
+
     private Set<PipelineRawConditionToSelfGlobalConditionTO> generateRawConditionToSelfGlobalCondition(
             Map<Integer, RawDataCondition> rawCondIdToRawCondMap, Map<Condition, Set<Integer>> globalCondToSelfRawCondIds,
             Map<Condition, Integer> globalCondToGlobalCondIdMap) {
@@ -433,16 +433,16 @@ public class InsertPropagatedConditions extends CallService {
                         Map.Entry::getValue
                     ));
         // keep only IDs for each conditionParameter
-        Map<Condition, Integer> globalCondParamIdsToGlobalCondIdMap = 
+        Map<Condition, Integer> globalCondParamIdsToGlobalCondIdMap =
                 globalCondToGlobalCondIdMap.entrySet().stream().map(es -> {
                     Condition cond = new Condition(new AnatEntity(es.getKey().getAnatEntityId()),
                             new DevStage(es.getKey().getDevStageId()), new AnatEntity(es.getKey().getCellTypeId()),
                             new Sex(es.getKey().getSexId()), new Strain(es.getKey().getStrainId()), new Species(es.getKey().getSpeciesId()));
                     return Map.entry(cond, es.getValue());
                 }).collect(Collectors.toMap(ae -> ae.getKey(), ae -> ae.getValue()));
-        
+
         // for each raw cond Id
-        Set<PipelineRawConditionToSelfGlobalConditionTO> allRawCondToSelfGlobalCond = 
+        Set<PipelineRawConditionToSelfGlobalConditionTO> allRawCondToSelfGlobalCond =
                 rawCondIdToSelfGlobalCond.entrySet().stream().map(rcm -> {
                     Integer rawConditionId = rcm.getKey();
                     Condition globalCondition = rcm.getValue();
@@ -568,7 +568,7 @@ public class InsertPropagatedConditions extends CallService {
         }
 
         return log.traceExit(conditionTOs.stream()
-                .collect(Collectors.toMap(cTO -> cTO.getId(), 
+                .collect(Collectors.toMap(cTO -> cTO.getId(),
                         cTO -> new RawDataCondition(
                                     Optional.ofNullable(anatMap.get(cTO.getAnatEntityId() == null ?
                                             ConditionDAO.ANAT_ENTITY_ROOT_ID : cTO.getAnatEntityId()))
@@ -594,58 +594,58 @@ public class InsertPropagatedConditions extends CallService {
     }
 
 
-    
+
     //*************************************************************************
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
     /**
-     * Perform query to retrieve expressed calls without the post-processing of 
+     * Perform query to retrieve expressed calls without the post-processing of
      * the results returned by {@code DAO}s.
-     * 
-     * @param geneIds       A {@code Collection} of {@code Integer}s that are the Bgee IDs of the genes 
+     *
+     * @param geneIds       A {@code Collection} of {@code Integer}s that are the Bgee IDs of the genes
      *                      for which to return the {@code RawExpressionCallTO}s.
      * @param rawCallDAO    The {@code RawExpressionCallDAO} to use to retrieve {@code RawExpressionCallTO}s
      *                      from data source.
      * @return              The {@code Stream} of {@code RawExpressionCallTO}s.
      */
 
-    
+
     //*************************************************************************
     // METHODS PROPAGATION: from CallTOs to propagated Calls
     //*************************************************************************
-    
-    
 
-//    /**
-//     * Merge a {@code Set} of {@code PipelineCallData} into one {@code ExpressionCallData}.
-//     * 
-//     * @param dataType          A {@code DataType} that is the data type of {@code pipelineCallData}.
-//     * @param pipelineCallData  A {@code Set} of {@code PipelineCallData} to be used to
-//     *                          build the {@code ExpressionCallData}.
-//     *                          on propagated data.
-//     */
-//    private static Condition mapRawDataConditionToCondition(RawDataCondition rawCond) {
-//        log.traceEntry("{}", rawCond);
-//        if (rawCond == null) {
-//            return log.traceExit((Condition) null);
-//        }
-//        //All the elements must be non-null, otherwise the propagation will end up
-//        //with not comparable conditions between elements mapped to the root
-//        //and element mapped to null.
-//        assert rawCond.getAnatEntity() != null;
-//        assert rawCond.getDevStage() != null;
-//        assert rawCond.getCellType() != null;
-//        assert rawCond.getSex() != null;
-//        assert rawCond.getStrain() != null;
-//        AnatEntity anatEntityToUse = rawCond.getAnatEntity();
-//        //Quick and dirty blacklisting of "unknown" terms, we remap them to the root of the anatEntities
-//        if (UNKNOWN_ANAT_ENTITY_IDS.contains(anatEntityToUse.getId())) {
-//            anatEntityToUse = ROOT_ANAT_ENTITY;
-//        }
-//        return log.traceExit(new Condition(anatEntityToUse, rawCond.getDevStage(),
-//                rawCond.getCellType(), mapRawDataSexToSex(rawCond.getSex()),
-//                mapRawDataStrainToStrain(rawCond.getStrain()), rawCond.getSpecies()));
-//    }
+
+
+    /**
+     * Merge a {@code Set} of {@code PipelineCallData} into one {@code ExpressionCallData}.
+     *
+     * @param dataType          A {@code DataType} that is the data type of {@code pipelineCallData}.
+     * @param pipelineCallData  A {@code Set} of {@code PipelineCallData} to be used to
+     *                          build the {@code ExpressionCallData}.
+     *                          on propagated data.
+     */
+    private static Condition mapRawDataConditionToCondition(RawDataCondition rawCond) {
+        log.traceEntry("{}", rawCond);
+        if (rawCond == null) {
+            return log.traceExit((Condition) null);
+        }
+        //All the elements must be non-null, otherwise the propagation will end up
+        //with not comparable conditions between elements mapped to the root
+        //and element mapped to null.
+        assert rawCond.getAnatEntity() != null;
+        assert rawCond.getDevStage() != null;
+        assert rawCond.getCellType() != null;
+        assert rawCond.getSex() != null;
+        assert rawCond.getStrain() != null;
+        AnatEntity anatEntityToUse = rawCond.getAnatEntity();
+        //Quick and dirty blacklisting of "unknown" terms, we remap them to the root of the anatEntities
+        if (UNKNOWN_ANAT_ENTITY_IDS.contains(anatEntityToUse.getId())) {
+            anatEntityToUse = ROOT_ANAT_ENTITY;
+        }
+        return log.traceExit(new Condition(anatEntityToUse, rawCond.getDevStage(),
+                rawCond.getCellType(), mapRawDataSexToSex(rawCond.getSex()),
+                mapRawDataStrainToStrain(rawCond.getStrain()), rawCond.getSpecies()));
+    }
 
 
     private static String mapDAORawDataStrainToRawDataStrain(String daoStrain) {

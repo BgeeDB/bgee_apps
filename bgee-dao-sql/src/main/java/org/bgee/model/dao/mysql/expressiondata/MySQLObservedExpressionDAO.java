@@ -94,14 +94,13 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
         if (expressionFilter.getRawDataConditionFilter() != null && !(expressionFilter.getRawDataConditionFilter().areAllCondParamFiltersEmpty() &&
                 expressionFilter.getRawDataConditionFilter().getSpeciesIds().isEmpty())) {
             sb.append(" " + MySQLRawDataConditionDAO.TABLE_NAME + " INNER JOIN " + TABLE_NAME +
-                    " ON " + MySQLRawDataConditionDAO.TABLE_NAME + "." + 
+                    " ON " + MySQLRawDataConditionDAO.TABLE_NAME + "." +
                     RawDataConditionDAO.Attribute.ID.getTOFieldName() + " = " + TABLE_NAME + "." +
                     ObservedExpressionDAO.Attribute.CONDITION_ID.getTOFieldName());
         } else {
             sb.append(" " + TABLE_NAME);
         }
         return sb.toString();
-        
     }
 
     private String generateWhereClause(DAOObservedExpressionFilter filter) {
@@ -156,9 +155,7 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
             andClauseRequired = true;
         }
         return log.traceExit(sb.toString());
-    }
-        
-    private String generateOneWhereClause(Set<?> condParamsSet, String fieldName,
+    }    private String generateOneWhereClause(Set<?> condParamsSet, String fieldName,
             boolean andClauseRequired, String tableName) {
         StringBuilder sb = new StringBuilder();
         if (andClauseRequired) {
@@ -172,8 +169,8 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
     }
 
     /**
-     * Implementation of the {@code ObservedExpressionTOResultSet}. 
-     * 
+     * Implementation of the {@code ObservedExpressionTOResultSet}.
+     *
      * @author Julien Wollbrett
      * @version Bgee 16, Nov. 2025
      * @since Bgee 16, Nov. 2025
@@ -197,8 +194,6 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
                 BigDecimal inSituRank = null, inSituPValue = null, inSituWeight = null;
                 Map<String, ObservedExpressionDAO.Attribute> colNameToAttr = EnumSet.allOf(ObservedExpressionDAO.Attribute.class)
                         .stream().collect(Collectors.toMap(a -> a.getTOFieldName(), a -> a));
-                
-
                 COL: for (String columnName : this.getColumnLabels().values()) {
                     //don't use MySQLDAO.getAttributeFromColName because we don't cover all columns
                     //with ConditionDAO.Attributes (max rank columns)
@@ -216,7 +211,7 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
                         case BGEE_GENE_ID:
                             bgeeGeneId = currentResultSet.getInt(columnName);
                             break;
-                        case BULK_RANK:
+                        case BULK_SCORE:
                             bulkRank = currentResultSet.getBigDecimal(columnName);
                             break;
                         case BULK_PVALUE:
@@ -228,7 +223,7 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
                         case BULK_NUM_OBS:
                             bulkNumberObs = currentResultSet.getInt(columnName);
                             break;
-                        case SINGLE_CELL_RANK:
+                        case SINGLE_CELL_SCORE:
                             singleCellRank = currentResultSet.getBigDecimal(columnName);
                             break;
                         case SINGLE_CELL_PVALUE:
@@ -240,7 +235,7 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
                         case SINGLE_CELL_NUM_OBS:
                             singleCellNumberObs = currentResultSet.getInt(columnName);
                             break;
-                        case IN_SITU_RANK:
+                        case IN_SITU_SCORE:
                             inSituRank = currentResultSet.getBigDecimal(columnName);
                             break;
                         case IN_SITU_PVALUE:
@@ -256,15 +251,11 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.traceExit(new ObservedExpressionTO(id, conditionId, bgeeGeneId, bulkRank, bulkPValue, 
+                return log.traceExit(new ObservedExpressionTO(id, conditionId, bgeeGeneId, bulkRank, bulkPValue,
                         bulkWeight, bulkNumberObs, singleCellRank, singleCellPValue, singleCellWeight,
                         singleCellNumberObs, inSituRank, inSituPValue, inSituWeight, inSituNumberObs));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }
-        }
-        
-    }
-    
-
+        }    }
 }

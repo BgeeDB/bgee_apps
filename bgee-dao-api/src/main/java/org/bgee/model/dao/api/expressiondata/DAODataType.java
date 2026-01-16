@@ -30,12 +30,12 @@ public enum DAODataType implements EnumDAOField {
             "inSituMaxRank", "inSituGlobalMaxRank", true, false, true),
     RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq", "rnaSeqMeanRank", "rnaSeqGlobalMeanRank",
             "rnaSeqMeanRankNorm", "rnaSeqGlobalMeanRankNorm", "rnaSeqDistinctRankSum",
-            "rnaSeqGlobalDistinctRankSum", "rnaSeqMaxRank", "rnaSeqGlobalMaxRank", false, true, false),
+            "rnaSeqGlobalDistinctRankSum", "bulkMaxRank", "bulkGlobalMaxRank", false, true, false),
     SC_RNA_SEQ("single-cell RNA-Seq", "scRnaSeqFullLength", "ScRnaSeqFL",
             "scRnaSeqFullLengthMeanRank", "scRnaSeqFullLengthGlobalMeanRank",
             "scRnaSeqFullLengthMeanRankNorm", "scRnaSeqFullLengthGlobalMeanRankNorm",
             "scRnaSeqFullLengthDistinctRankSum", "scRnaSeqFullLengthGlobalDistinctRankSum",
-            "scRnaSeqFullLengthMaxRank", "scRnaSeqFullLengthGlobalMaxRank", false, true, false);
+            "singleCellMaxRank", "singleCellGlobalMaxRank", false, true, false);
 
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 

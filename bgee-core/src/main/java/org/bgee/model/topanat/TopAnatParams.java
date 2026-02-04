@@ -52,7 +52,7 @@ public class TopAnatParams {
      * A {@code DecorrelationType} that is the default decorrelation parameter 
      * when running a {@code TopAnatAnalysis}
      */
-    private final static DecorrelationType DECORLATION_TYPE_DEFAULT = DecorrelationType.WEIGTH;
+    private final static DecorrelationType DECORLATION_TYPE_DEFAULT = DecorrelationType.NONE;
 
     /**
      * A {@code StatisticTest} that is the default static test 
@@ -64,25 +64,25 @@ public class TopAnatParams {
      * A {@code int} that is the default node size
      * when running a {@code TopAnatAnalysis}
      */
-    private final static int NODE_SIZE_DEFAULT = 5;
+    private final static int NODE_SIZE_DEFAULT = 20;
 
     /**
      * A {@code Double} that is the default False Discovery Rate
      * when running a {@code TopAnatAnalysis}
      */
-    private final static double FDR_THRESHOLD_DEFAULT = 0.05d;
+    private final static double FDR_THRESHOLD_DEFAULT = 0.2d;
 
     /**
      * A {@code Double} that is the default p-value threshold
      * when running a {@code TopAnatAnalysis}
      */
-    private final static double PVALUE_THRESHOLD_DEFAULT = 0.05d;
+    private final static double PVALUE_THRESHOLD_DEFAULT = 1d;
 
     /**
      * An {@code int} that is the default number of nodes to display in the
      * generated graph of results when running a {@code TopAnatAnalysis}
      */
-    private final static int NUMBER_OF_NODES_TO_DISPLAX_DEFAULT = 10;
+    private final static int NUMBER_OF_NODES_TO_DISPLAX_DEFAULT = 20;
 
     /**
      * A {@code Set} of {@code String} that contains all foreground gene ids to be tested

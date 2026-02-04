@@ -70,13 +70,13 @@ public class TopAnatParams {
      * A {@code Double} that is the default False Discovery Rate
      * when running a {@code TopAnatAnalysis}
      */
-    private final static Double FDR_THRESHOLD_DEFAULT = 0.05d;
+    private final static double FDR_THRESHOLD_DEFAULT = 0.05d;
 
     /**
      * A {@code Double} that is the default p-value threshold
      * when running a {@code TopAnatAnalysis}
      */
-    private final static Double PVALUE_THRESHOLD_DEFAULT = 0.05d;
+    private final static double PVALUE_THRESHOLD_DEFAULT = 0.05d;
 
     /**
      * An {@code int} that is the default number of nodes to display in the
@@ -365,7 +365,7 @@ public class TopAnatParams {
          *                      below which an anatomical ontology will not be considered in the analysis
          * @return the updated current Builder instance
          */
-        public Builder nodeSize(int nodeSize){
+        public Builder nodeSize(Integer nodeSize){
             log.traceEntry("{}", nodeSize);
             this.nodeSize = nodeSize;
             return log.traceExit(this);
@@ -378,7 +378,7 @@ public class TopAnatParams {
          *                          to be used in the analysis
          * @return the updated current Builder instance
          */
-        public Builder fdrThreshold(double fdrThreshold){
+        public Builder fdrThreshold(Double fdrThreshold){
             log.traceEntry("{}", fdrThreshold);
             this.fdrThreshold = fdrThreshold;
             return log.traceExit(this);
@@ -391,7 +391,7 @@ public class TopAnatParams {
          *                              to be used in the analysis
          * @return the updated current Builder instance
          */
-        public Builder pvalueThreshold(double pvalueThreshold){
+        public Builder pvalueThreshold(Double pvalueThreshold){
             log.traceEntry("{}", pvalueThreshold);
             this.pvalueThreshold = pvalueThreshold;
             return log.traceExit(this);
@@ -405,7 +405,7 @@ public class TopAnatParams {
          *                                      generated graph of results  
          * @return the updated current Builder instance
          */
-        public Builder numberOfSignificantNode(int numberOfSignificantNode){
+        public Builder numberOfSignificantNode(Integer numberOfSignificantNode){
             log.traceEntry("{}", numberOfSignificantNode);
             this.numberOfSignificantNode = numberOfSignificantNode;
             return log.traceExit(this);
@@ -418,7 +418,7 @@ public class TopAnatParams {
          *                          included in a zip file
          * @return the updated current Builder instance
          */
-        public Builder isWithZip(boolean isWithZip){
+        public Builder isWithZip(Boolean isWithZip){
             log.traceEntry("{}", isWithZip);
             this.isWithZip = isWithZip;
             return log.traceExit(this);
@@ -452,6 +452,10 @@ public class TopAnatParams {
 
         if(builder.speciesId == null){
             throw new MissingParameterException("species id");           
+        }
+
+        if (builder.submittedForegroundIds == null || builder.submittedForegroundIds.isEmpty()) {
+            throw new MissingParameterException("Foreground gene IDs");
         }
 
         this.submittedForegroundIds = Collections.unmodifiableSet(
@@ -553,32 +557,32 @@ public class TopAnatParams {
     }
 
     /**
-     * @return  An {@code Integer} that contains the minimal node size below which an anatomical
+     * @return  An {@code int} that contains the minimal node size below which an anatomical
      *          ontology will not be considered in the analysis
      */
-    public Integer getNodeSize() {
+    public int getNodeSize() {
         return nodeSize;
     }
 
     /**
-     * @return  A {@code Double} that contains the False Discovery Rate to be used in the analysis
+     * @return  A {@code double} that contains the False Discovery Rate to be used in the analysis
      */
-    public Double getFdrThreshold() {
+    public double getFdrThreshold() {
         return fdrThreshold;
     }
 
     /**
-     * @return  A {@code Double} that contains the p-value threshold to be used in the analysis
+     * @return  A {@code double} that contains the p-value threshold to be used in the analysis
      */
-    public Double getPvalueThreshold() {
+    public double getPvalueThreshold() {
         return pvalueThreshold;
     }
 
     /**
-     * @return  An {@code Integer} that contains the number of significant nodes to be displayed
+     * @return  An {@code int} that contains the number of significant nodes to be displayed
      *          in the generated graph of results  
      */
-    public Integer getNumberOfSignificantNodes() {
+    public int getNumberOfSignificantNodes() {
         return numberOfSignificantNodes;
     }
 
@@ -591,9 +595,9 @@ public class TopAnatParams {
     }
 
     /**
-     * @return  A {@code Boolean} that tells whether all results should be included in a zip file
+     * @return  A {@code boolean} that tells whether all results should be included in a zip file
      */
-    public Boolean isWithZip(){
+    public boolean isWithZip(){
         return this.isWithZip;
     }
     

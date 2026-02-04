@@ -64,7 +64,7 @@ public class TopAnatRealTest extends TestAncestor {
                 "ENSXETG00000001573", 
                 "ENSXETG00000011784"
                 ), 
-                8364, SummaryCallType.ExpressionSummary.EXPRESSED).fdrThreshold(1).pvalueThreshold(1).summaryQuality(SummaryQuality.GOLD).build();
+                8364, SummaryCallType.ExpressionSummary.EXPRESSED).fdrThreshold(1d).pvalueThreshold(1d).summaryQuality(SummaryQuality.GOLD).build();
         
         JobService jobService = new JobService(props);
         try {

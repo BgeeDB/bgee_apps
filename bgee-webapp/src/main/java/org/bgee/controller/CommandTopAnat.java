@@ -19,7 +19,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -970,20 +969,24 @@ public class CommandTopAnat extends CommandParent {
                 this.requestParameters.getBackgroundList()).orElse(new ArrayList<>())); 
         boolean hasBgList = !subBgIds.isEmpty();
     
-        // Expr type cannot be null
-        final List<String> subCallTypes = Collections.unmodifiableList(Optional.ofNullable(
-                this.requestParameters.getExprType()).orElse(new ArrayList<>()));
-        if (subCallTypes.isEmpty()) {
-            throw log.throwing(new InvalidRequestException("A expression type must be provided"));
-        }
-        Set<String> callTypes = subCallTypes.stream().map(s -> s.toUpperCase(Locale.ROOT))
-                .collect(Collectors.toSet());
-        //TODO: remove when "ALL" call type is removed from web app
-        if (callTypes.contains("ALL")) {
-            callTypes.remove("ALL");
-            callTypes.add(CallType.Expression.EXPRESSED.name());
-            callTypes.add(CallType.DiffExpression.DIFF_EXPRESSED.name());
-        }
+        //NOTE: As of Bgee 15.2, the only valid call type is CallType.Expression.EXPRESSED.
+        //We comment previous code, and use a Collection as in previous code to not modify the next steps,
+        //but with only one element.
+        Set<String> callTypes = Collections.singleton(CallType.Expression.EXPRESSED.name());
+//        // Expr type cannot be null
+//        final List<String> subCallTypes = Collections.unmodifiableList(Optional.ofNullable(
+//                this.requestParameters.getExprType()).orElse(new ArrayList<>()));
+//        if (subCallTypes.isEmpty()) {
+//            throw log.throwing(new InvalidRequestException("A expression type must be provided"));
+//        }
+//        Set<String> callTypes = subCallTypes.stream().map(s -> s.toUpperCase(Locale.ROOT))
+//                .collect(Collectors.toSet());
+//        //TODO: remove when "ALL" call type is removed from web app
+//        if (callTypes.contains("ALL")) {
+//            callTypes.remove("ALL");
+//            callTypes.add(CallType.Expression.EXPRESSED.name());
+//            callTypes.add(CallType.DiffExpression.DIFF_EXPRESSED.name());
+//        }
         
         // Data quality can be null if there is no filter to be applied
         SummaryQuality dataQuality = this.checkAndGetSummaryQuality();
@@ -998,11 +1001,7 @@ public class CommandTopAnat extends CommandParent {
             devStageIds = new HashSet<>(subDevStages);
         }
 
-        // Decorrelation type can be null if all selected species stages should be used
         final String subDecorrType = this.requestParameters.getDecorrelationType();
-        if (StringUtils.isBlank(subDecorrType)) {
-            throw log.throwing(new InvalidRequestException("A decorrelation type must be provided"));
-        }
         
         final Integer subNodeSize = this.requestParameters.getNodeSize(); 
         if (subNodeSize != null && subNodeSize <= 0) {
@@ -1074,17 +1073,19 @@ public class CommandTopAnat extends CommandParent {
                 
                 if (BgeeEnum.isInEnum(SummaryCallType.ExpressionSummary.class, callType)) {
                     callTypeEnum = SummaryCallType.ExpressionSummary.convertToExpression(callType);
-                } else if (BgeeEnum.isInEnum(CallType.DiffExpression.class, callType)) {
-                    callTypeEnum = SummaryCallType.DiffExpressionSummary.convertToDiffExpression(callType);
-                } else {
+                }
+                //NOTE: as of Bgee 15.2, only CallType.ExpressionSummary can be used, we comment previous code
+//                else if (BgeeEnum.isInEnum(CallType.DiffExpression.class, callType)) {
+//                    callTypeEnum = SummaryCallType.DiffExpressionSummary.convertToDiffExpression(callType);
+//                }
+                else {
                     throw log.throwing(new InvalidRequestException("Unkown call type: " + callType));
                 }
 
                 TopAnatParams.Builder builder = new TopAnatParams.Builder(
                         cleanFgIds, cleanBgIds, speciesId, callTypeEnum);
                 
-                builder.summaryQuality(dataQuality);
-                builder.dataTypes(dataTypes);
+                builder.summaryQuality(dataQuality).dataTypes(dataTypes);
                 
                 if (StringUtils.isBlank(devStageId)) {
                     builder.devStageId(null);

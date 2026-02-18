@@ -1094,9 +1094,6 @@ public class CommandTopAnat extends CommandParent {
                 }
                 if (BgeeEnum.isInEnum(DecorrelationType.class, subDecorrType)) {
                     builder.decorrelationType(DecorrelationType.convertToDecorrelationType(subDecorrType));
-                } else {
-                    throw log.throwing(new InvalidRequestException("Unkown decorrelation type: " + 
-                            subDecorrType));
                 }
                 builder.nodeSize(subNodeSize);
                 builder.numberOfSignificantNode(subNbNodes);

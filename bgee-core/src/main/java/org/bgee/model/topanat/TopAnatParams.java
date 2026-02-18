@@ -52,7 +52,7 @@ public class TopAnatParams {
      * A {@code DecorrelationType} that is the default decorrelation parameter 
      * when running a {@code TopAnatAnalysis}
      */
-    private final static DecorrelationType DECORLATION_TYPE_DEFAULT = DecorrelationType.NONE;
+    private final static DecorrelationType DECORRELATION_TYPE_DEFAULT = DecorrelationType.NONE;
 
     /**
      * A {@code StatisticTest} that is the default static test 
@@ -465,7 +465,7 @@ public class TopAnatParams {
         // optional params
         this.dataTypes = builder.dataTypes == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.dataTypes));
-        this.decorrelationType = builder.decorrelationType == null ? TopAnatParams.DECORLATION_TYPE_DEFAULT :
+        this.decorrelationType = builder.decorrelationType == null ? TopAnatParams.DECORRELATION_TYPE_DEFAULT :
             builder.decorrelationType;
         this.statisticTest = builder.statisticTest == null ? TopAnatParams.STATISTIC_TEST_DEFAULT : 
             builder.statisticTest;

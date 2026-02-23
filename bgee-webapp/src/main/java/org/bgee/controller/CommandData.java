@@ -23,9 +23,16 @@ import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.call.ConditionFilter;
 import org.bgee.model.expressiondata.call.ConditionFilter2;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCallService;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
+import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
+import org.bgee.model.SearchResult;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
@@ -53,13 +60,16 @@ import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
 import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.species.Species;
+import org.bgee.model.species.Taxon;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.view.DataDisplay;
 import org.bgee.view.ViewFactory;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -113,6 +123,77 @@ public class CommandData extends CommandParent {
             return requestedDataTypes;
         }
     }
+
+    /**
+     * A single multi-species expression "call" for API output: gene (with species),
+     * multiSpeciesCondition, and expr_calls-style fields.
+     */
+    public static class MultispecExprCallItem {
+        private final Gene gene;
+        private final org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition multiSpeciesCondition;
+        private final String formattedExpressionScore;
+        private final String expressionScoreConfidence;
+        private final EnumMap<DataType, Boolean> dataTypesWithData;
+        private final String expressionState;
+        private final String expressionQuality;
+
+        public MultispecExprCallItem(Gene gene,
+                org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition multiSpeciesCondition,
+                String formattedExpressionScore, String expressionScoreConfidence,
+                EnumMap<DataType, Boolean> dataTypesWithData, String expressionState, String expressionQuality) {
+            this.gene = gene;
+            this.multiSpeciesCondition = multiSpeciesCondition;
+            this.formattedExpressionScore = formattedExpressionScore;
+            this.expressionScoreConfidence = expressionScoreConfidence;
+            this.dataTypesWithData = dataTypesWithData;
+            this.expressionState = expressionState;
+            this.expressionQuality = expressionQuality;
+        }
+
+        public Gene getGene() { return gene; }
+        public org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition getMultiSpeciesCondition() { return multiSpeciesCondition; }
+        public String getFormattedExpressionScore() { return formattedExpressionScore; }
+        public String getExpressionScoreConfidence() { return expressionScoreConfidence; }
+        public EnumMap<DataType, Boolean> getDataTypesWithData() { return dataTypesWithData; }
+        public String getExpressionState() { return expressionState; }
+        public String getExpressionQuality() { return expressionQuality; }
+    }
+
+    public static class MultispecExprCallResponse {
+        private final List<MultispecExprCallItem> calls;
+        private final LinkedHashSet<ConditionParameter<?, ?>> condParams;
+        private final EnumSet<DataType> requestedDataTypes;
+
+        public MultispecExprCallResponse(List<MultispecExprCallItem> calls,
+                LinkedHashSet<ConditionParameter<?, ?>> condParams,
+                EnumSet<DataType> requestedDataTypes) {
+            this.calls = calls;
+            this.condParams = condParams;
+            this.requestedDataTypes = requestedDataTypes;
+        }
+
+        public List<MultispecExprCallItem> getCalls() { return calls; }
+        public LinkedHashSet<ConditionParameter<?, ?>> getCondParams() { return condParams; }
+        public EnumSet<DataType> getRequestedDataTypes() { return requestedDataTypes; }
+    }
+
+    public static class TaxonWithSpecies {
+        private final Taxon taxon;
+        private final List<Species> species;
+        private final List<TaxonWithSpecies> children;
+
+        public TaxonWithSpecies(Taxon taxon, List<Species> species,
+                List<TaxonWithSpecies> children) {
+            this.taxon = taxon;
+            this.species = species != null ? species : Collections.emptyList();
+            this.children = children != null ? children : Collections.emptyList();
+        }
+
+        public Taxon getTaxon() { return taxon; }
+        public List<Species> getSpecies() { return species; }
+        public List<TaxonWithSpecies> getChildren() { return children; }
+    }
+
     public static class ColumnDescription {
         public static enum ColumnType {
             STRING, NUMERIC, INTERNAL_LINK, EXTERNAL_LINK, ANAT_ENTITY, DEV_STAGE,
@@ -797,6 +878,10 @@ public class CommandData extends CommandParent {
 
             this.processExprCallPage(speciesList, formDetails);
 
+        } else if (RequestParameters.ACTION_MULTISPEC_EXPR_CALLS.equals(this.requestParameters.getAction())) {
+
+            this.processMultispecExprCallPage(formDetails);
+
         } else if (this.requestParameters.getExperimentId() != null) {
 
             this.processExperimentPage();
@@ -1007,6 +1092,280 @@ public class CommandData extends CommandParent {
                 new ExpressionCallResponse(calls, condParams, dataTypes), count, postFilter);
 
         log.traceExit();
+    }
+
+    private void processMultispecExprCallPage(DataFormDetails formDetails)
+            throws InvalidRequestException, ThreadAlreadyWorkingException,
+            TooManyJobsException, IOException {
+        log.traceEntry("{}", formDetails);
+
+        log.debug("Action identified: {}", this.requestParameters.getAction());
+        List<ColumnDescription> colDescriptions = null;
+        List<MultispecExprCallItem> calls = null;
+        Long count = null;
+
+        List<String> userGeneList = Optional.ofNullable(this.requestParameters.getGeneList())
+                .orElse(Collections.emptyList());
+        if (userGeneList.size() < 2) {
+            throw log.throwing(new InvalidRequestException(
+                    "At least two gene IDs must be provided in gene_list."));
+        }
+
+        SearchResult<String, Gene> searchResult = this.serviceFactory.getGeneService()
+                .searchGenesByIds(userGeneList);
+        List<Gene> genes = new ArrayList<>(searchResult.getResults());
+        Set<Species> species = genes.stream().map(Gene::getSpecies).collect(Collectors.toSet());
+        if (species.isEmpty()) {
+            throw log.throwing(new InvalidRequestException(
+                    "No gene from species present in Bgee was found."));
+        }
+        /* TODO: Allow single-species multi-species calls. For now, we throw an error. */
+        if (species.size() == 1) {
+            throw log.throwing(new InvalidRequestException(
+                    "Genes must be from at least two species for multi-species expression calls."));
+        }
+
+        URLParameters urlParams = this.requestParameters.getUrlParametersInstance();
+        Set<String> selectedCondParams = new HashSet<>(
+                Optional.ofNullable(this.requestParameters.getValues(urlParams.getCondParam2()))
+                        .orElse(Collections.emptyList()));
+        LinkedHashSet<ConditionParameter<?, ?>> condParams = selectedCondParams.isEmpty()
+                ? new LinkedHashSet<>(ConditionParameter.allOf())
+                : ConditionParameter.allOf().stream()
+                        .filter(p -> selectedCondParams.contains(p.getParameterName()))
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
+        ConditionFilter condFilter = this.loadMultispecConditionFilter(true);
+
+        SummaryQuality qual = SummaryQuality.values()[0];
+        if (this.requestParameters.getDataQuality() != null &&
+                !this.requestParameters.getDataQuality().isBlank()) {
+            try {
+                qual = BgeeEnum.convert(SummaryQuality.class,
+                        this.requestParameters.getDataQuality());
+            } catch (IllegalArgumentException e) {
+                log.catching(Level.DEBUG, e);
+                throw log.throwing(new InvalidRequestException(
+                        "Unrecognized data quality: "
+                        + this.requestParameters.getDataQuality()));
+            }
+        }
+
+        if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount()
+                || this.requestParameters.isGetFilters()) {
+            Job job = null;
+            try {
+                job = this.jobService.registerNewJob(this.user.getUUID().toString());
+                job.startJob();
+
+                Set<GeneFilter> geneFilters = genes.stream()
+                        .collect(Collectors.groupingBy(g -> g.getSpecies().getId(),
+                                Collectors.mapping(Gene::getGeneId, Collectors.toSet())))
+                        .entrySet().stream()
+                        .map(e -> new GeneFilter(e.getKey(), e.getValue()))
+                        .collect(Collectors.toSet());
+                int lcaId = this.serviceFactory.getTaxonService().loadLeastCommonAncestor(
+                        species.stream().map(Species::getId).collect(Collectors.toSet())).getId();
+                MultiSpeciesCallService multiSpecService = this.serviceFactory.getMultiSpeciesCallService();
+                List<SimilarityExpressionCall> allCalls = multiSpecService
+                        .loadSimilarityExpressionCalls(lcaId, geneFilters, condFilter,
+                                false, qual)
+                        .collect(Collectors.toList());
+
+                if (this.requestParameters.isGetResultCount()) {
+                    count = (long) allCalls.size();
+                }
+                if (this.requestParameters.isGetResults()) {
+                    Integer limit = this.requestParameters.getLimit() == null ? DEFAULT_LIMIT
+                            : this.requestParameters.getLimit();
+                    if (limit > LIMIT_MAX) {
+                        throw log.throwing(new InvalidRequestException(
+                                "It is not possible to request more than " + LIMIT_MAX + " results."));
+                    }
+                    long offset = this.requestParameters.getOffset() == null ? 0L
+                            : this.requestParameters.getOffset();
+                    if (offset < 0) {
+                        throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
+                    }
+                    calls = allCalls.stream()
+                            .skip(offset)
+                            .limit(limit)
+                            .map(this::toMultispecExprCallItem)
+                            .collect(Collectors.toList());
+                }
+                if (this.requestParameters.isGetFilters()) {
+                    // Multi-species endpoint does not support post-filters; ignore.
+                }
+
+                job.completeWithSuccess();
+            } finally {
+                if (job != null) {
+                    job.release();
+                }
+            }
+        }
+        if (this.requestParameters.isGetColumnDefinition()) {
+            colDescriptions = this.getMultispecExprCallColumnDescriptions();
+        }
+
+        Set<Integer> speciesIds = species.stream()
+                .map(Species::getId).collect(Collectors.toSet());
+        Map<Integer, Species> speciesById = species.stream()
+                .collect(Collectors.toMap(Species::getId, s -> s));
+        TaxonWithSpecies speciesByTaxon = buildTaxonTree(speciesIds, speciesById);
+
+        DataDisplay display = this.viewFactory.getDataDisplay();
+        MultispecExprCallResponse response = new MultispecExprCallResponse(
+                calls != null ? calls : Collections.emptyList(), condParams, dataTypes);
+        display.displayMultispecExprCallPage(speciesByTaxon, formDetails, colDescriptions,
+                response, count, null);
+
+        log.traceExit();
+    }
+
+    private MultispecExprCallItem toMultispecExprCallItem(SimilarityExpressionCall sc) {
+        Gene gene = sc.getGene();
+        MultiSpeciesCondition msc = sc.getMultiSpeciesCondition();
+        List<ExpressionCall> rawCalls = new ArrayList<>(sc.getCalls());
+        Optional<ExpressionLevelInfo> maxInfo = rawCalls.stream()
+                .map(ExpressionCall::getExpressionLevelInfo)
+                .filter(Objects::nonNull)
+                .filter(eli -> eli.getExpressionScore() != null)
+                .max(Comparator.comparing(ExpressionLevelInfo::getExpressionScore,
+                        Comparator.nullsFirst(BigDecimal::compareTo)));
+        String formattedScore = maxInfo.map(ExpressionLevelInfo::getFormattedExpressionScore).orElse("NA");
+        EnumSet<DataType> dataTypesWithData = rawCalls.stream()
+                .flatMap(c -> c.getCallData().stream())
+                .map(cd -> cd.getDataType())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+        boolean highQual = !dataTypesWithData.isEmpty() && (
+                dataTypesWithData.contains(DataType.AFFYMETRIX)
+                        || dataTypesWithData.contains(DataType.RNA_SEQ)
+                        || dataTypesWithData.contains(DataType.SC_RNA_SEQ)
+                        || (maxInfo.isPresent() && maxInfo.get().getExpressionScore() != null
+                                && maxInfo.get().getExpressionScore().compareTo(BigDecimal.valueOf(20000)) < 0));
+        String confidence = highQual ? "high" : "low";
+        EnumMap<DataType, Boolean> dataTypesMap = new EnumMap<>(DataType.class);
+        for (DataType dt : EnumSet.allOf(DataType.class)) {
+            dataTypesMap.put(dt, dataTypesWithData.contains(dt));
+        }
+        String expressionState = sc.getSummaryCallType() != null
+                ? sc.getSummaryCallType().toString().toLowerCase() : "not_expressed";
+        String quality = rawCalls.stream()
+                .map(ExpressionCall::getSummaryQuality)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .map(q -> q.toString().toLowerCase())
+                .orElse("bronze");
+        return new MultispecExprCallItem(gene, msc, formattedScore, confidence,
+                dataTypesMap, expressionState, quality);
+    }
+
+    private TaxonWithSpecies buildTaxonTree(Set<Integer> speciesIds,
+            Map<Integer, Species> speciesById) {
+        OntologyService ontService = this.serviceFactory.getOntologyService();
+        Ontology<Taxon, Integer> taxonOnt = ontService.getTaxonOntologyLeadingToSpecies(
+                speciesIds, true, false);
+
+        Map<Integer, List<Species>> speciesByParentTaxonId = speciesById.values().stream()
+                .filter(s -> s.getParentTaxonId() != null)
+                .collect(Collectors.groupingBy(Species::getParentTaxonId));
+
+        // Build parent-child map using all ancestors (not just direct relations,
+        // which may be missing in the sparse LCA-filtered ontology).
+        // For each taxon, the "parent" in the filtered tree is the closest ancestor
+        // (highest taxonomic level value = closest to leaves).
+        Map<Integer, List<Taxon>> childrenByParent = new HashMap<>();
+        Taxon root = null;
+        for (Taxon t : taxonOnt.getElements()) {
+            Set<Taxon> ancestors = taxonOnt.getAncestors(t);
+            if (ancestors.isEmpty()) {
+                root = t;
+            } else {
+                Taxon parent = ancestors.stream()
+                        .max(Comparator.comparingInt(Taxon::getLevel))
+                        .get();
+                childrenByParent.computeIfAbsent(parent.getId(),
+                        k -> new ArrayList<>()).add(t);
+            }
+        }
+        if (root == null) {
+            throw new IllegalStateException(
+                    "No root taxon found in taxonomy ontology");
+        }
+
+        return buildTaxonNode(root, childrenByParent, speciesByParentTaxonId);
+    }
+
+    private TaxonWithSpecies buildTaxonNode(Taxon taxon,
+            Map<Integer, List<Taxon>> childrenByParent,
+            Map<Integer, List<Species>> speciesByParentTaxonId) {
+        List<Species> directSpecies = speciesByParentTaxonId.getOrDefault(
+                taxon.getId(), Collections.emptyList());
+
+        List<TaxonWithSpecies> children = childrenByParent
+                .getOrDefault(taxon.getId(), Collections.emptyList()).stream()
+                .sorted(Comparator.comparing(Taxon::getId))
+                .map(child -> buildTaxonNode(child, childrenByParent,
+                        speciesByParentTaxonId))
+                .collect(Collectors.toList());
+
+        return new TaxonWithSpecies(taxon, directSpecies, children);
+    }
+
+    private List<ColumnDescription> getMultispecExprCallColumnDescriptions() {
+        // Use only base columns (gene, call info, score, data types). Condition columns
+        // are omitted because multiSpeciesCondition has a different structure (anatEntities,
+        // cellTypes arrays) than single-species condition.
+        return getExprCallColumnDescriptions(Collections.emptySet());
+    }
+
+    private ConditionFilter loadMultispecConditionFilter(boolean consideringFilters)
+            throws InvalidRequestException {
+        List<String> filterAnatCell = consideringFilters
+                ? this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance().getParamFilterAnatEntity())
+                : null;
+        List<String> filterDev = consideringFilters
+                ? this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance().getParamFilterDevStage())
+                : null;
+        List<String> filterSex = consideringFilters
+                ? this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance().getParamFilterSex())
+                : null;
+        List<String> filterStrain = consideringFilters
+                ? this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance().getParamFilterStrain())
+                : null;
+
+        List<String> anatIds = filterAnatCell != null && !filterAnatCell.isEmpty()
+                ? new ArrayList<>(filterAnatCell)
+                : (this.requestParameters.getAnatEntity() != null ? new ArrayList<>(this.requestParameters.getAnatEntity()) : new ArrayList<>());
+        List<String> cellIds = filterAnatCell != null && !filterAnatCell.isEmpty()
+                ? new ArrayList<>(filterAnatCell)
+                : (this.requestParameters.getCellType() != null ? new ArrayList<>(this.requestParameters.getCellType()) : new ArrayList<>());
+        List<String> devIds = filterDev != null && !filterDev.isEmpty()
+                ? new ArrayList<>(filterDev)
+                : (this.requestParameters.getDevStage() != null ? new ArrayList<>(this.requestParameters.getDevStage()) : new ArrayList<>());
+        List<String> sexes = filterSex != null && !filterSex.isEmpty()
+                ? new ArrayList<>(filterSex)
+                : (this.requestParameters.getSex() != null ? new ArrayList<>(this.requestParameters.getSex()) : new ArrayList<>());
+        List<String> strains = filterStrain != null && !filterStrain.isEmpty()
+                ? new ArrayList<>(filterStrain)
+                : (this.requestParameters.getStrain() != null ? new ArrayList<>(this.requestParameters.getStrain()) : new ArrayList<>());
+
+        if (anatIds.isEmpty() && cellIds.isEmpty() && devIds.isEmpty() && sexes.isEmpty() && strains.isEmpty()) {
+            return null;
+        }
+        try {
+            return new ConditionFilter(
+                    anatIds.isEmpty() ? null : anatIds,
+                    devIds.isEmpty() ? null : devIds,
+                    cellIds.isEmpty() ? null : cellIds,
+                    sexes.isEmpty() ? null : sexes,
+                    strains.isEmpty() ? null : strains);
+        } catch (IllegalArgumentException e) {
+            log.catching(e);
+            throw log.throwing(new InvalidRequestException(e.getMessage()));
+        }
     }
 
     private void processExperimentPage() throws PageNotFoundException, IOException {

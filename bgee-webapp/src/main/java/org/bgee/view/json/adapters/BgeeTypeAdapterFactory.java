@@ -7,6 +7,8 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandData.ExpressionCallResponse;
+import org.bgee.controller.CommandData.MultispecExprCallResponse;
+import org.bgee.controller.CommandData.TaxonWithSpecies;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.SpeciesGeneListResponse;
 import org.bgee.controller.RequestParameters;
@@ -128,6 +130,16 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
         if (ExpressionCallResponse.class.isAssignableFrom(rawClass)) {
             @SuppressWarnings("unchecked")
             TypeAdapter<T> result = (TypeAdapter<T>) new ExpressionCallResponseTypeAdapter(gson, this.utils);
+            return log.traceExit(result);
+        }
+        if (MultispecExprCallResponse.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new MultispecExprCallResponseTypeAdapter(this.utils);
+            return log.traceExit(result);
+        }
+        if (TaxonWithSpecies.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new TaxonWithSpeciesTypeAdapter(gson, this.utils);
             return log.traceExit(result);
         }
 

@@ -346,11 +346,11 @@
             <!-- End for the dao-api layer -->
 
             <!-- Needed for the dao-sql layer -->
-            <!-- JDBC logging library -->
+            <!-- JDBC logging library (1.16 on Maven Central; 1.17-SNAPSHOT was unavailable) -->
             <dependency>
                 <groupId>org.bgee.log4jdbc-log4j2</groupId>
                 <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
-                <version>1.17-SNAPSHOT</version>
+                <version>1.16</version>
             </dependency>
             <!-- The JDBC connector -->
             <dependency>

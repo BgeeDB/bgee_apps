@@ -804,6 +804,30 @@ public class MultiSpeciesCallService extends CommonService {
     public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
             Collection<GeneFilter> geneFilters, ConditionFilter conditionFilter, boolean onlyTrusted) {
         log.traceEntry("{}, {}, {}, {}", taxonId, geneFilters, conditionFilter, onlyTrusted);
+        return log.traceExit(loadSimilarityExpressionCalls(taxonId, geneFilters,
+                conditionFilter, onlyTrusted, SummaryQuality.BRONZE));
+    }
+
+    /**
+     * @param taxonId           An {@code int} that is the NCBI ID of the taxon for which
+     *                          calls should be retrieved.
+     * @param geneFilters       A {@code Collection} of {@code GeneFilter}s allowing to filter
+     *                          the {@code SimilarityExpressionCall}s to retrieve.
+     * @param conditionFilter   A {@code ConditionFilter} containing the conditions for which
+     *                          similar expression calls should be retrieved.
+     * @param onlyTrusted       A {@code boolean} defining whether results should be restricted
+     *                          to "trusted" annotations.
+     *                          If {@code true}, only trusted annotations are returned.
+     * @param summaryQuality    A {@code SummaryQuality} defining the minimum quality level
+     *                          for expression calls to be included.
+     * @return                  The {@code Stream} of {@code SimilarityExpressionCall}s that are
+     *                          the similar expression calls for the requested parameters.
+     */
+    public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
+            Collection<GeneFilter> geneFilters, ConditionFilter conditionFilter,
+            boolean onlyTrusted, SummaryQuality summaryQuality) {
+        log.traceEntry("{}, {}, {}, {}, {}", taxonId, geneFilters, conditionFilter,
+                onlyTrusted, summaryQuality);
         if (taxonId <= 0) {
             throw log.throwing(new IllegalArgumentException("taxonId must be stricly positive"));
         }
@@ -870,9 +894,10 @@ public class MultiSpeciesCallService extends CommonService {
                 //filtering on observed conditions
                 EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID));
 
+        SummaryQuality qualToUse = summaryQuality != null ? summaryQuality : SummaryQuality.BRONZE;
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
-        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
-        summaryCallTypeQualityFilter.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE);
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, qualToUse);
+        summaryCallTypeQualityFilter.put(ExpressionSummary.NOT_EXPRESSED, qualToUse);
 
         // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
         ExpressionCallFilter expressionCallFilter = new ExpressionCallFilter(
@@ -888,8 +913,9 @@ public class MultiSpeciesCallService extends CommonService {
         Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
                 expressionCallFilter,
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.CELL_TYPE_ID, CallService.Attribute.CALL_TYPE, 
-                        CallService.Attribute.OBSERVED_DATA, CallService.Attribute.EXPRESSION_SCORE),
+                        CallService.Attribute.CELL_TYPE_ID, CallService.Attribute.CALL_TYPE,
+                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.OBSERVED_DATA,
+                        CallService.Attribute.EXPRESSION_SCORE),
                 serviceOrdering);
 
         Stream<List<ExpressionCall>> callsByGene = StreamSupport.stream(
@@ -1040,7 +1066,6 @@ public class MultiSpeciesCallService extends CommonService {
         int lcaId = this.getServiceFactory().getTaxonService().loadLeastCommonAncestor(
                 species.stream().map(s -> s.getId()).collect(Collectors.toSet())
                 ).getId();
-
 
         Stream<SimilarityExpressionCall> callStream = this.loadSimilarityExpressionCalls(
                 lcaId, geneFilters, null, false);

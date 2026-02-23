@@ -1,0 +1,367 @@
+---
+title: "API Endpoint: Multi-Species Expression Calls"
+author: "Harald Detering"
+date: "2026-02-23"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    self-contained: true
+    theme: readable
+    mermaid:
+      theme: default
+---
+
+# Overview
+
+The **multi-species expression calls** endpoint retrieves expression call data
+across multiple species, using homology-based similarity annotations to group
+conditions.
+
+It determines the Least Common Ancestor (LCA) taxon for the requested species
+and returns expression calls mapped to multi-species anatomical entity and cell
+type homology groups.
+
+**URL pattern:**
+
+```
+GET /bgee-webapp/?page=data&action=multispec_expr_calls&...
+```
+
+**Routing:** `page=data` + `action=multispec_expr_calls`
+→ `FrontController` → `CommandData.processMultispecExprCallPage`
+
+---
+
+# Input Parameters
+
+## Required
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `page` | Must be `data` | `page=data` |
+| `action` | Must be `multispec_expr_calls` | `action=multispec_expr_calls` |
+| `gene_list` | Newline-separated (`%0D%0A`) list of gene IDs. | `gene_list=ENSG00000170178%0D%0AENSMUSG00000001823%0D%0AENSDARG00000059263` |
+
+## Optional
+
+| Parameter | Default | Description | Values |
+|-----------|---------|-------------|--------|
+| `data_qual` | `BRONZE` | Minimum expression quality threshold | `BRONZE`, `SILVER`, `GOLD` |
+| `data_type` | all types | Data type(s) to include | `AFFYMETRIX`, `EST`, `IN_SITU`, `RNA_SEQ`, `SC_RNA_SEQ` |
+| `cond_param2` | all params | Condition parameter(s) to group by | `anat_entity`, `dev_stage`, `cell_type`, `sex`, `strain` |
+| `limit` | 20 | Max number of results (max 10 000) | Integer |
+| `offset` | 0 | Number of results to skip | Integer ≥ 0 |
+| `get_results` | -- | Set to `1` to retrieve the actual expression call results | `get_results=1` |
+| `get_result_count` | -- | Set to `1` to include total count in response | `1` |
+| `get_column_definition` | -- | Set to `1` to include column metadata | `1` |
+| `display_type` | -- | Output format | `json` |
+
+---
+
+# Output Structure
+
+## Top-level JSON envelope
+
+```json
+{
+  "code": 200,
+  "status": "SUCCESS",
+  "message": "Multi-species expression call page",
+  "data": {
+    "speciesByTaxon": { ... },
+    "expressionData": { ... },
+    "expressionCallCount": 42
+  }
+}
+```
+
+## `speciesByTaxon`
+
+A recursive tree representing the taxonomic hierarchy of all species involved
+in the query. Each node contains a `taxon` object, an optional `species` array
+(leaf-level taxa), and an optional `children` array of sub-nodes.
+
+```json
+{
+  "taxon": {
+    "scientificName": "Euteleostomi",
+    "level": 12,
+    "lca": true,
+    "id": 117571
+  },
+  "children": [
+    {
+      "taxon": {
+        "scientificName": "Euarchontoglires",
+        "level": 18,
+        "lca": true,
+        "id": 314146
+      },
+      "children": [
+        {
+          "taxon": { "scientificName": "Homo", "level": 28, "id": 9605 },
+          "species": [
+            { "id": 9606, "name": "human", "genus": "Homo",
+              "speciesName": "sapiens", "preferredDisplayOrder": 1 }
+          ]
+        },
+        {
+          "taxon": { "scientificName": "Mus", "level": 28, "id": 10088 },
+          "species": [
+            { "id": 10090, "name": "house mouse", "genus": "Mus",
+              "speciesName": "musculus", "preferredDisplayOrder": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "taxon": { "scientificName": "Danio", "level": 28, "id": 7954 },
+      "species": [
+        { "id": 7955, "name": "zebrafish", "genus": "Danio",
+          "speciesName": "rerio", "preferredDisplayOrder": 3 }
+      ]
+    }
+  ]
+}
+```
+
+## `expressionData`
+
+```json
+{
+  "requestedConditionParameters": ["anat_entity", "dev_stage", ...],
+  "requestedDataTypes": ["AFFYMETRIX", "RNA_SEQ", ...],
+  "expressionCalls": [ ... ]
+}
+```
+
+### Expression call object
+
+Each element in `expressionCalls`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `gene` | Object | Gene info with nested `species` |
+| `gene.geneId` | String | Ensembl gene ID |
+| `gene.name` | String | Gene symbol |
+| `gene.species` | Object | `{ id, name, genus, speciesName, preferredDisplayOrder }` |
+| `gene.geneMappedToSameGeneIdCount` | Integer | Number of genes mapped to same ID |
+| `multiSpeciesCondition` | Object | Homology-mapped condition |
+| `multiSpeciesCondition.anatEntities` | Array | Anatomical entities `[{ id, name }]` |
+| `multiSpeciesCondition.cellTypes` | Array | Cell types `[{ id, name }]` |
+| `expressionScore` | Object | `{ expressionScore, expressionScoreConfidence }` |
+| `dataTypesWithData` | Object | Boolean per data type: `{ AFFYMETRIX, EST, IN_SITU, RNA_SEQ, SC_RNA_SEQ }` |
+| `expressionState` | String | `"expressed"` or `"not_expressed"` |
+| `expressionQuality` | String | `"gold"`, `"silver"`, or `"bronze"` |
+
+**Example call:**
+
+```json
+{
+  "gene": {
+    "geneId": "ENSG00000170178",
+    "name": "HOXD12",
+    "species": { "id": 9606, "name": "human", "genus": "Homo",
+                 "speciesName": "sapiens", "preferredDisplayOrder": 1 },
+    "geneMappedToSameGeneIdCount": 1
+  },
+  "multiSpeciesCondition": {
+    "anatEntities": [{ "id": "UBERON:0002101", "name": "limb" }],
+    "cellTypes": []
+  },
+  "expressionScore": {
+    "expressionScore": "72.15",
+    "expressionScoreConfidence": "high"
+  },
+  "dataTypesWithData": {
+    "AFFYMETRIX": true, "EST": false, "IN_SITU": true,
+    "SC_RNA_SEQ": false, "RNA_SEQ": true
+  },
+  "expressionState": "expressed",
+  "expressionQuality": "gold"
+}
+```
+
+---
+
+# Request Flow
+
+## Controller logic
+
+The following flowchart describes the complete request processing in
+`CommandData.processMultispecExprCallPage`.
+
+```{mermaid}
+%%| fig-width: 10
+flowchart TD
+    START([HTTP Request]) --> PARSE_GENES["Parse <b>gene_list</b> parameter"]
+
+    PARSE_GENES --> CHECK_MIN{"gene_list<br/>size ≥ 2?"}
+    CHECK_MIN -->|No| ERR1["❌ InvalidRequestException:<br/><i>At least two gene IDs required</i>"]
+    CHECK_MIN -->|Yes| SEARCH["GeneService.searchGenesByIds(gene_list)"]
+
+    SEARCH --> CHECK_SP{"Species count<br/>from resolved genes?"}
+    CHECK_SP -->|0| ERR2["❌ InvalidRequestException:<br/><i>No genes from Bgee species</i>"]
+    CHECK_SP -->|≥ 1| PARSE_PARAMS["Parse optional parameters:<br/><b>cond_param2</b>, <b>data_type</b>, <b>data_qual</b>"]
+
+    PARSE_PARAMS --> CHECK_QUAL{"data_qual<br/>provided?"}
+    CHECK_QUAL -->|Yes| VALIDATE_QUAL{"Valid SummaryQuality<br/>(BRONZE/SILVER/GOLD)?"}
+    VALIDATE_QUAL -->|No| ERR4["❌ InvalidRequestException:<br/><i>Unrecognized data quality</i>"]
+    VALIDATE_QUAL -->|Yes| COND_FILTER
+    CHECK_QUAL -->|No| COND_FILTER["loadMultispecConditionFilter"]
+
+    COND_FILTER --> NEED_DATA{"get_results OR<br/>get_result_count?"}
+    NEED_DATA -->|No| SKIP_LOAD["Skip data loading"]
+    NEED_DATA -->|Yes| JOB["Register & start Job"]
+
+    JOB --> BUILD_FILTERS["Build GeneFilters<br/>(genes grouped by species)"]
+    BUILD_FILTERS --> LCA["TaxonService.loadLeastCommonAncestor<br/>(all species IDs)"]
+    LCA --> LOAD_CALLS["MultiSpeciesCallService<br/>.loadSimilarityExpressionCalls<br/>(lcaId, geneFilters, condFilter,<br/>onlyTrusted=false, qual)"]
+
+    LOAD_CALLS --> COLLECT["Collect Stream →<br/>List&lt;SimilarityExpressionCall&gt;"]
+
+    COLLECT --> CNT{"get_result_count?"}
+    CNT -->|Yes| SET_COUNT["count = allCalls.size()"]
+    CNT -->|No| RES
+    SET_COUNT --> RES
+
+    RES{"get_results?"}
+    RES -->|Yes| VALIDATE_LIMIT{"limit ≤ 10 000?"}
+    VALIDATE_LIMIT -->|No| ERR5["❌ InvalidRequestException:<br/><i>Cannot exceed 10 000 results</i>"]
+    VALIDATE_LIMIT -->|Yes| PAGINATE["Apply <b>offset</b> & <b>limit</b>"]
+    PAGINATE --> MAP["Map each SimilarityExpressionCall<br/>→ toMultispecExprCallItem()"]
+    RES -->|No| JOB_DONE
+
+    MAP --> JOB_DONE["job.completeWithSuccess()"]
+    SKIP_LOAD --> TAXON_TREE
+
+    JOB_DONE --> TAXON_TREE["buildTaxonTree(speciesIds)<br/>→ TaxonWithSpecies hierarchy"]
+
+    TAXON_TREE --> DISPLAY["DataDisplay.displayMultispecExprCallPage<br/>(speciesByTaxon, response, count)"]
+
+    DISPLAY --> RESPONSE([JSON Response])
+
+    style ERR1 fill:#f99,stroke:#c00
+    style ERR2 fill:#f99,stroke:#c00
+    style ERR3 fill:#f99,stroke:#c00
+    style ERR4 fill:#f99,stroke:#c00
+    style ERR5 fill:#f99,stroke:#c00
+    style START fill:#e8f5e9,stroke:#2e7d32
+    style RESPONSE fill:#e8f5e9,stroke:#2e7d32
+```
+
+## Taxon tree construction
+
+The `speciesByTaxon` hierarchy is built in `buildTaxonTree` /
+`buildTaxonNode`.
+
+```{mermaid}
+%%| fig-width: 8
+flowchart TD
+    A["OntologyService.getTaxonOntologyLeadingToSpecies<br/>(speciesIds, withLCA=true)"] --> B["Build speciesByParentTaxonId map<br/>(Species.getParentTaxonId → List&lt;Species&gt;)"]
+    B --> C["For each Taxon in ontology:<br/>find all ancestors"]
+    C --> D{"ancestors<br/>empty?"}
+    D -->|Yes| ROOT["Mark as root"]
+    D -->|No| PARENT["Parent = ancestor with<br/>highest taxonomic level<br/>(closest to leaves)"]
+    PARENT --> MAP["Add to childrenByParent map"]
+    MAP --> C
+    ROOT --> BUILD["buildTaxonNode(root,<br/>childrenByParent,<br/>speciesByParentTaxonId)"]
+    BUILD --> RECURSE["For each child taxon:<br/>recurse buildTaxonNode"]
+    RECURSE --> NODE["TaxonWithSpecies {<br/>  taxon,<br/>  species (from parentTaxonId),<br/>  children (recursive)<br/>}"]
+
+    style ROOT fill:#fff3e0,stroke:#e65100
+    style NODE fill:#e3f2fd,stroke:#1565c0
+```
+
+## Service layer: `MultiSpeciesCallService.loadSimilarityExpressionCalls`
+
+```{mermaid}
+%%| fig-width: 10
+flowchart TD
+    ENTRY["loadSimilarityExpressionCalls<br/>(taxonId, geneFilters, condFilter,<br/>onlyTrusted, summaryQuality)"]
+    ENTRY --> ANNOT["AnatSimilarityService<br/>.loadPositiveAnatEntitySimilarityAnnotations<br/>(taxonId, condFilter)"]
+    ANNOT --> AE_GROUPS["Extract anatEntity groups &<br/>cellType groups from<br/>similarity annotations"]
+
+    AE_GROUPS --> PER_SPECIES["For each species in geneFilters:"]
+    PER_SPECIES --> BUILD_CF["Build ExpressionCallFilter with:<br/>• summaryQuality (param)<br/>• GeneFilter (per species)<br/>• ConditionFilter (anat/cell groups)<br/>• DataType filter"]
+    BUILD_CF --> LOAD_EC["CallService.loadExpressionCalls<br/>(filter, attributes incl. DATA_QUALITY)"]
+    LOAD_EC --> COLLECT_EC["Collect ExpressionCall list per species"]
+
+    COLLECT_EC --> GROUP["Group calls by<br/>MultiSpeciesCondition<br/>(similarity-mapped anat entities)"]
+    GROUP --> ASSEMBLE["Assemble SimilarityExpressionCall:<br/>gene + multiSpeciesCondition +<br/>calls with quality"]
+
+    ASSEMBLE --> STREAM["Return Stream&lt;SimilarityExpressionCall&gt;"]
+
+    style ENTRY fill:#e8f5e9,stroke:#2e7d32
+    style STREAM fill:#e3f2fd,stroke:#1565c0
+```
+
+## DTO mapping: `toMultispecExprCallItem`
+
+```{mermaid}
+%%| fig-width: 8
+flowchart TD
+    SC["SimilarityExpressionCall"] --> GENE["Extract Gene"]
+    SC --> MSC["Extract MultiSpeciesCondition<br/>(anatEntities, cellTypes)"]
+    SC --> CALLS["Get underlying ExpressionCall list"]
+
+    CALLS --> SCORE["Find max expressionScore<br/>across all calls"]
+    CALLS --> DT["Collect DataTypes with data<br/>(from callData)"]
+    CALLS --> QUAL["Get first non-null<br/>SummaryQuality"]
+
+    DT --> CONF{"Has AFFYMETRIX,<br/>RNA_SEQ, or SC_RNA_SEQ,<br/>or score < 20000?"}
+    CONF -->|Yes| HIGH["confidence = 'high'"]
+    CONF -->|No| LOW["confidence = 'low'"]
+
+    GENE --> ITEM
+    MSC --> ITEM
+    SCORE --> ITEM
+    HIGH --> ITEM
+    LOW --> ITEM
+    DT --> ITEM
+    QUAL --> ITEM["MultispecExprCallItem"]
+
+    style SC fill:#fff3e0,stroke:#e65100
+    style ITEM fill:#e3f2fd,stroke:#1565c0
+```
+
+---
+
+# Files Changed
+
+## New files
+
+| File | Description |
+|------|-------------|
+| `bgee-webapp/.../adapters/MultispecExprCallResponseTypeAdapter.java` | Gson TypeAdapter for `MultispecExprCallResponse`. Serializes `requestedConditionParameters`, `requestedDataTypes`, and the `expressionCalls` array. |
+| `bgee-webapp/.../adapters/TaxonWithSpeciesTypeAdapter.java` | Gson TypeAdapter for `TaxonWithSpecies`. Recursively serializes the taxon tree with `taxon`, `species`, and `children` fields. |
+
+## Modified files
+
+| File | Changes |
+|------|---------|
+| **`CommandData.java`** | Added DTOs (`MultispecExprCallItem`, `MultispecExprCallResponse`, `TaxonWithSpecies`). Added `processMultispecExprCallPage`, `toMultispecExprCallItem`, `buildTaxonTree`, `buildTaxonNode`, `getMultispecExprCallColumnDescriptions`. |
+| **`MultiSpeciesCallService.java`** | Added 5-arg `loadSimilarityExpressionCalls` overload accepting `SummaryQuality`. Original 4-arg version now delegates with `BRONZE` default. Added `DATA_QUALITY` to requested attributes. |
+| **`DataDisplay.java`** | Added `displayMultispecExprCallPage(TaxonWithSpecies, ...)` method to interface. |
+| **`JsonDataDisplay.java`** | Implemented `displayMultispecExprCallPage`: builds response map with `speciesByTaxon` key. |
+| **`BgeeTypeAdapterFactory.java`** | Registered `MultispecExprCallResponseTypeAdapter` and `TaxonWithSpeciesTypeAdapter`. |
+| **`RequestParameters.java`** | Added `getDataQuality()` accessor (reads `data_qual` URL parameter). |
+
+---
+
+# Example Request
+
+```
+http://localhost:8080/bgee-webapp/?page=data
+  &action=multispec_expr_calls
+  &display_type=json
+  &get_results=1
+  &limit=10000
+  &gene_list=ENSDARG00000059263%0D%0AENSG00000170178%0D%0AENSMUSG00000001823
+  &data_qual=SILVER
+```
+
+This requests multi-species expression calls for three genes (zebrafish
+`hoxd12a`, human `HOXD12`, mouse `Hoxd12`) with a minimum quality of SILVER.

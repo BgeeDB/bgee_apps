@@ -21,6 +21,8 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.controller.CommandData.ColumnDescription;
 import org.bgee.controller.CommandData.DataFormDetails;
 import org.bgee.controller.CommandData.ExpressionCallResponse;
+import org.bgee.controller.CommandData.MultispecExprCallResponse;
+import org.bgee.controller.CommandData.TaxonWithSpecies;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
@@ -146,6 +148,36 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
             responseMap.put("filters", postFilter);
         }
         this.sendResponse(HttpServletResponse.SC_OK, "Expression call page", responseMap, true);
+        log.traceExit();
+    }
+
+    @Override
+    public void displayMultispecExprCallPage(TaxonWithSpecies speciesByTaxon,
+            DataFormDetails formDetails, List<ColumnDescription> colDescriptions,
+            MultispecExprCallResponse response, Long callCount,
+            ExpressionCallPostFilter postFilter) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesByTaxon, formDetails, colDescriptions,
+                response, callCount, postFilter);
+        LinkedHashMap<String, Object> responseMap = new LinkedHashMap<String, Object>();
+        if (speciesByTaxon != null) {
+            responseMap.put("speciesByTaxon", speciesByTaxon);
+        }
+        if (formDetails != null && formDetails.containsAnyInformation()) {
+            responseMap.put("requestDetails", formDetails);
+        }
+        if (colDescriptions != null && !colDescriptions.isEmpty()) {
+            responseMap.put("columnDescriptions", colDescriptions);
+        }
+        if (response != null) {
+            responseMap.put("expressionData", response);
+        }
+        if (callCount != null) {
+            responseMap.put("expressionCallCount", callCount);
+        }
+        if (postFilter != null) {
+            responseMap.put("filters", postFilter);
+        }
+        this.sendResponse(HttpServletResponse.SC_OK, "Multi-species expression call page", responseMap, true);
         log.traceExit();
     }
 

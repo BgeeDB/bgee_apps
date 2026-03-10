@@ -40,11 +40,19 @@ import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
+import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.Call;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.expressiondata.call.ConditionFilter2;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -951,6 +959,229 @@ public class MultiSpeciesCallService extends CommonService {
                 });
         return log.traceExit(similarityExpressionCallStream);
 
+    }
+
+    /**
+     * Retrieves similar expression calls using the new {@code ExpressionCall2} and
+     * {@code ConditionFilter2} types. Logic mirrors {@link #loadSimilarityExpressionCalls(int,
+     * Collection, ConditionFilter, boolean, SummaryQuality)} but uses
+     * {@code ExpressionCallService} and {@code ExpressionCallLoader}.
+     *
+     * @param taxonId           An {@code int} that is the NCBI ID of the taxon for which
+     *                          calls should be retrieved.
+     * @param geneFilters       A {@code Collection} of {@code GeneFilter}s allowing to filter
+     *                          the {@code SimilarityExpressionCall2}s to retrieve.
+     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter2}s containing the
+     *                          conditions for which similar expression calls should be retrieved.
+     *                          Can be {@code null} or empty for no filtering.
+     * @param onlyTrusted       A {@code boolean} defining whether results should be restricted
+     *                          to "trusted" annotations.
+     * @param summaryQuality    A {@code SummaryQuality} defining the minimum quality level
+     *                          for expression calls to be included.
+     * @return                  The {@code Stream} of {@code SimilarityExpressionCall2}s that are
+     *                          the similar expression calls for the requested parameters.
+     */
+    public Stream<SimilarityExpressionCall2> loadSimilarityExpressionCalls2(int taxonId,
+            Collection<GeneFilter> geneFilters, Collection<ConditionFilter2> conditionFilters,
+            boolean onlyTrusted, SummaryQuality summaryQuality) {
+        log.traceEntry("{}, {}, {}, {}, {}", taxonId, geneFilters, conditionFilters,
+                onlyTrusted, summaryQuality);
+        if (taxonId <= 0) {
+            throw log.throwing(new IllegalArgumentException("taxonId must be strictly positive"));
+        }
+        if (geneFilters != null && geneFilters.stream().anyMatch(Objects::isNull)) {
+            throw log.throwing(new IllegalArgumentException("No gene filter should be null"));
+        }
+
+        Set<GeneFilter> clnGeneFilters = Collections.unmodifiableSet(
+                geneFilters == null || geneFilters.isEmpty() ?
+                        this.getServiceFactory().getSpeciesService()
+                                .loadSpeciesByTaxonIds(Collections.singleton(taxonId), false)
+                                .stream().map(s -> new GeneFilter(s.getId()))
+                                .collect(Collectors.toSet()) :
+                        new HashSet<>(geneFilters));
+
+        // Retrieve AnatEntitySimilarity from the provided taxon
+        Set<AnatEntitySimilarity> anatEntitySimilaritiesFromAnatFilter = anatEntitySimilarityService
+                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted);
+        Set<AnatEntitySimilarity> anatEntitySimilaritiesFromCellTypeFilter =
+                new HashSet<>(anatEntitySimilaritiesFromAnatFilter);
+
+        // Extract anat entity and cell type IDs from conditionFilters for filtering similarities
+        Set<String> filterAnatEntityIds = new HashSet<>();
+        Set<String> filterCellTypeIds = new HashSet<>();
+        if (conditionFilters != null && !conditionFilters.isEmpty()) {
+            for (ConditionFilter2 cf : conditionFilters) {
+                ComposedFilterIds<String> composed = cf.getComposedFilterIds(
+                        ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+                if (composed != null && !composed.isEmpty()) {
+                    FilterIds<String> anatIds = composed.getFilterIds(0);
+                    FilterIds<String> cellIds = composed.getFilterIds(1);
+                    if (anatIds != null) {
+                        filterAnatEntityIds.addAll(anatIds.getIds());
+                    }
+                    if (cellIds != null) {
+                        filterCellTypeIds.addAll(cellIds.getIds());
+                    }
+                }
+            }
+        }
+
+        if (!filterAnatEntityIds.isEmpty()) {
+            anatEntitySimilaritiesFromAnatFilter = anatEntitySimilaritiesFromAnatFilter.stream()
+                    .filter(s -> s.getSourceAnatEntities().stream()
+                            .anyMatch(ae -> filterAnatEntityIds.contains(ae.getId())))
+                    .collect(Collectors.toSet());
+        }
+        if (!filterCellTypeIds.isEmpty()) {
+            anatEntitySimilaritiesFromCellTypeFilter = anatEntitySimilaritiesFromCellTypeFilter.stream()
+                    .filter(s -> s.getSourceAnatEntities().stream()
+                            .anyMatch(ae -> filterCellTypeIds.contains(ae.getId())))
+                    .collect(Collectors.toSet());
+        }
+
+        // Build maps for grouping (same logic as loadSimilarityExpressionCalls)
+        Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntityFromAnatFilter =
+                anatEntitySimilaritiesFromAnatFilter.stream()
+                        .flatMap(sim -> sim.getSourceAnatEntities().stream()
+                                .map(ae -> new SimpleEntry<>(ae, sim)))
+                        .collect(Collectors.groupingBy(SimpleEntry::getKey,
+                                Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
+        Set<String> allAnatEntityIds = similaritiesByAnatEntityFromAnatFilter.keySet().stream()
+                .map(Entity::getId)
+                .collect(Collectors.toSet());
+        Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntityFromCellTypeFilter =
+                anatEntitySimilaritiesFromCellTypeFilter.stream()
+                        .flatMap(sim -> sim.getSourceAnatEntities().stream()
+                                .map(ae -> new SimpleEntry<>(ae, sim)))
+                        .collect(Collectors.groupingBy(SimpleEntry::getKey,
+                                Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
+        Set<String> allCellTypeIds = similaritiesByAnatEntityFromCellTypeFilter.keySet().stream()
+                .map(Entity::getId)
+                .collect(Collectors.toSet());
+
+        // Use root IDs when empty (ComposedFilterIds requires non-empty FilterIds)
+        if (allAnatEntityIds.isEmpty()) {
+            allAnatEntityIds = Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+        }
+        if (allCellTypeIds.isEmpty()) {
+            allCellTypeIds = Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID);
+        }
+
+        SummaryQuality qualToUse = summaryQuality != null ? summaryQuality : SummaryQuality.BRONZE;
+        Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, qualToUse);
+        summaryCallTypeQualityFilter.put(ExpressionSummary.NOT_EXPRESSED, qualToUse);
+
+        // Build ConditionFilter2 for each species
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                new ComposedFilterIds<>(List.of(
+                        new FilterIds<>(allAnatEntityIds, false),
+                        new FilterIds<>(allCellTypeIds, false))));
+
+        ExpressionCallService exprCallService = this.getServiceFactory().getExpressionCallService();
+
+        // Load ExpressionCall2 for each species and merge (ExpressionCallFilter2 has single GeneFilter)
+        List<ExpressionCall2> allCalls = new ArrayList<>();
+        for (GeneFilter gf : clnGeneFilters) {
+            ConditionFilter2 speciesCondFilter = new ConditionFilter2(
+                    gf.getSpeciesId(), condParamToFilter,
+                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
+                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
+                    false);
+            ExpressionCallFilter2 exprCallFilter = new ExpressionCallFilter2(
+                    summaryCallTypeQualityFilter, gf,
+                    Collections.singleton(speciesCondFilter),
+                    null,
+                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
+                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
+                    true);
+            org.bgee.model.expressiondata.call.ExpressionCallLoader loader =
+                    exprCallService.loadCallLoader(exprCallFilter);
+            List<ExpressionCall2> speciesCalls = loader.loadData(0L,
+                    org.bgee.model.expressiondata.call.ExpressionCallLoader.LIMIT_MAX);
+            allCalls.addAll(speciesCalls);
+        }
+
+        // Sort by gene for ElementGroupFromListSpliterator
+        allCalls.sort(Comparator.comparing(ExpressionCall2::getGene, Gene.COMPARATOR));
+
+        Stream<List<ExpressionCall2>> callsByGene = StreamSupport.stream(
+                new ElementGroupFromListSpliterator<>(allCalls.stream(),
+                        ExpressionCall2::getGene, Gene.COMPARATOR), false);
+
+        // Build SimilarityExpressionCall2 for each Gene/MultiSpeciesCondition
+        Stream<SimilarityExpressionCall2> result = callsByGene.flatMap(callList -> {
+            LinkedHashMap<MultiSpeciesCondition, List<ExpressionCall2>> callsPerSimilarity =
+                    callList.stream()
+                            .flatMap(c -> {
+                                AnatEntity anatEntity = getAnatEntityFromCondition2(c.getCondition());
+                                AnatEntity cellType = getCellTypeFromCondition2(c.getCondition());
+                                Set<AnatEntitySimilarity> anatSims = similaritiesByAnatEntityFromAnatFilter
+                                        .getOrDefault(anatEntity, Collections.emptySet());
+                                Set<AnatEntitySimilarity> cellSims = similaritiesByAnatEntityFromCellTypeFilter
+                                        .getOrDefault(cellType, Collections.emptySet());
+                                return anatSims.stream()
+                                        .flatMap(anatSim -> cellSims.stream()
+                                                .map(cellSim -> new SimpleEntry<>(
+                                                        new MultiSpeciesCondition(anatSim, null, cellSim, null),
+                                                        new ArrayList<>(Arrays.asList(c)))));
+                            })
+                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+                                    (v1, v2) -> {
+                                        v1.addAll(v2);
+                                        return v1;
+                                    },
+                                    LinkedHashMap::new));
+
+            Gene gene = callList.get(0).getGene();
+            return callsPerSimilarity.entrySet().stream().map(e -> {
+                MultiSpeciesCondition cond = e.getKey();
+                boolean hasExpression = e.getValue().stream()
+                        .anyMatch(c -> ExpressionSummary.EXPRESSED.equals(c.getSummaryCallType()));
+                return new SimilarityExpressionCall2(gene, cond, e.getValue(),
+                        hasExpression ? ExpressionSummary.EXPRESSED : ExpressionSummary.NOT_EXPRESSED);
+            });
+        });
+        return log.traceExit(result);
+    }
+
+    /**
+     * Extracts the anatomical entity from a {@code Condition2} for ANAT_ENTITY_CELL_TYPE.
+     * ComposedEntity order: cellType at index 0, anatEntity at index 1 when both present.
+     */
+    private static AnatEntity getAnatEntityFromCondition2(
+            org.bgee.model.expressiondata.call.Condition2 condition) {
+        if (condition == null) {
+            return new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+        }
+        org.bgee.model.ComposedEntity<AnatEntity> composed = condition.getConditionParameterValue(
+                ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (composed == null || composed.isEmpty()) {
+            return new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+        }
+        // Order: cellType at 0, anatEntity at 1 when both present
+        AnatEntity ae = composed.size() >= 2 ? composed.getEntity(1) : composed.getEntity(0);
+        return ae != null ? ae : new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+    }
+
+    /**
+     * Extracts the cell type from a {@code Condition2} for ANAT_ENTITY_CELL_TYPE.
+     * ComposedEntity order: cellType at index 0, anatEntity at index 1 when both present.
+     */
+    private static AnatEntity getCellTypeFromCondition2(
+            org.bgee.model.expressiondata.call.Condition2 condition) {
+        if (condition == null) {
+            return new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+        }
+        org.bgee.model.ComposedEntity<AnatEntity> composed = condition.getConditionParameterValue(
+                ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (composed == null || composed.isEmpty()) {
+            return new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+        }
+        AnatEntity ct = composed.getEntity(0);
+        return ct != null ? ct : new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
     }
 
 //    /**

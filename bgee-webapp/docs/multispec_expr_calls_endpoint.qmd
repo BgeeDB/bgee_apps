@@ -241,7 +241,7 @@ flowchart TD
     MAP --> JOB_DONE["job.completeWithSuccess()"]
     SKIP_LOAD --> TAXON_TREE
 
-    JOB_DONE --> TAXON_TREE["buildTaxonTree(speciesIds)<br/>→ TaxonWithSpecies hierarchy"]
+    JOB_DONE --> TAXON_TREE["TaxonTreeService.buildTaxonTreeWithSpecies<br/>(speciesIds, speciesById)<br/>→ TaxonWithSpecies hierarchy"]
 
     TAXON_TREE --> DISPLAY["DataDisplay.displayMultispecExprCallPage<br/>(speciesByTaxon, response, count)"]
 
@@ -255,10 +255,13 @@ flowchart TD
     style RESPONSE fill:#e8f5e9,stroke:#2e7d32
 ```
 
-## Taxon tree construction
+## Service layer
 
-The `speciesByTaxon` hierarchy is built in `buildTaxonTree` /
-`buildTaxonNode`.
+The endpoint delegates to several model-layer services. Two are central to the multi-species flow:
+
+### `TaxonTreeService.buildTaxonTreeWithSpecies`
+
+`TaxonTreeService` is a dedicated service that builds the `speciesByTaxon` hierarchy. It exists as a separate service (rather than extending `TaxonService` or `OntologyService`) because it combines ontology structure with species data to produce a tree-shaped display model: `TaxonService` focuses on retrieving individual taxa; `OntologyService` returns graph structures. `TaxonTreeService` bridges these to produce the recursive `TaxonWithSpecies` tree used in the API response.
 
 ```{mermaid}
 %%| fig-width: 8
@@ -278,7 +281,7 @@ flowchart TD
     style NODE fill:#e3f2fd,stroke:#1565c0
 ```
 
-## Service layer: `MultiSpeciesCallService.loadSimilarityExpressionCalls2`
+### `MultiSpeciesCallService.loadSimilarityExpressionCalls2`
 
 ```{mermaid}
 %%| fig-width: 10
@@ -338,9 +341,13 @@ flowchart TD
 
 | File | Type | Description |
 |------|------|-------------|
+| `bgee-core/src/main/java/org/bgee/model/species/TaxonWithSpecies.java` | New | Model class for taxon tree nodes enriched with species (`taxon`, `species`, `children`). |
+| `bgee-core/src/main/java/org/bgee/model/species/TaxonTreeService.java` | New | Service to build `TaxonWithSpecies` hierarchy from species IDs. Uses `OntologyService` and optionally `SpeciesService`. |
+| `bgee-core/src/test/java/org/bgee/model/species/TaxonTreeServiceTest.java` | New | Unit tests for `TaxonTreeService.buildTaxonTreeWithSpecies`. |
 | `bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCall2.java` | New | Multi-species expression call container with `Set<ExpressionCall2>`. Same structure as `SimilarityExpressionCall` but uses the new call types. |
 | `bgee-core/src/test/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCall2Test.java` | New | Unit tests for `SimilarityExpressionCall2` (construction, getters, equals/hashCode, unmodifiable calls). |
 | `bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/MultiSpeciesCallService.java` | Modified | Added `loadSimilarityExpressionCalls2` (uses `ExpressionCallFilter2`, `ExpressionCallLoader`, `ExpressionCall2`). Uses `ConditionFilter2` for condition filtering. Legacy `loadSimilarityExpressionCalls` remains for backward compatibility. |
+| `bgee-core/src/main/java/org/bgee/model/ServiceFactory.java` | Modified | Added `getTaxonTreeService()`. |
 | `bgee-core/src/test/java/org/bgee/model/expressiondata/call/multispecies/MultiSpeciesCallServiceTest.java` | Modified | Added unit test `shouldLoadSimilarityExpressionCalls2` and integration test `shouldLoadSimilarityExpressionCalls2Integration`. |
 
 ## bgee-webapp
@@ -348,8 +355,8 @@ flowchart TD
 | File | Type | Description |
 |------|------|-------------|
 | `bgee-webapp/src/main/java/org/bgee/view/json/adapters/MultispecExprCallResponseTypeAdapter.java` | New | Gson TypeAdapter for `MultispecExprCallResponse`. Serializes `requestedConditionParameters`, `requestedDataTypes`, and the `expressionCalls` array. |
-| `bgee-webapp/src/main/java/org/bgee/view/json/adapters/TaxonWithSpeciesTypeAdapter.java` | New | Gson TypeAdapter for `TaxonWithSpecies`. Recursively serializes the taxon tree with `taxon`, `species`, and `children` fields. |
-| `bgee-webapp/src/main/java/org/bgee/controller/CommandData.java` | Modified | Added DTOs (`MultispecExprCallItem`, `MultispecExprCallResponse`, `TaxonWithSpecies`). Added `processMultispecExprCallPage`, `toMultispecExprCallItem`, `buildTaxonTree`, `buildTaxonNode`, `getMultispecExprCallColumnDescriptions`. **Migration:** `loadMultispecConditionFilter` now returns `Collection<ConditionFilter2>` (anat entity + cell type only). `processMultispecExprCallPage` uses `loadSimilarityExpressionCalls2` and `SimilarityExpressionCall2`. `toMultispecExprCallItem` accepts `SimilarityExpressionCall2` and maps `ExpressionCall2` fields. |
+| `bgee-webapp/src/main/java/org/bgee/view/json/adapters/TaxonWithSpeciesTypeAdapter.java` | New | Gson TypeAdapter for `TaxonWithSpecies` (from `bgee-core`). Recursively serializes the taxon tree with `taxon`, `species`, and `children` fields. |
+| `bgee-webapp/src/main/java/org/bgee/controller/CommandData.java` | Modified | Added DTOs (`MultispecExprCallItem`, `MultispecExprCallResponse`). Added `processMultispecExprCallPage`, `toMultispecExprCallItem`, `getMultispecExprCallColumnDescriptions`. Uses `TaxonTreeService.buildTaxonTreeWithSpecies` for species hierarchy. **Migration:** `loadMultispecConditionFilter` now returns `Collection<ConditionFilter2>` (anat entity + cell type only). `processMultispecExprCallPage` uses `loadSimilarityExpressionCalls2` and `SimilarityExpressionCall2`. `toMultispecExprCallItem` accepts `SimilarityExpressionCall2` and maps `ExpressionCall2` fields. |
 | `bgee-webapp/src/main/java/org/bgee/view/DataDisplay.java` | Modified | Added `displayMultispecExprCallPage(TaxonWithSpecies, ...)` method to interface. |
 | `bgee-webapp/src/main/java/org/bgee/view/json/JsonDataDisplay.java` | Modified | Implemented `displayMultispecExprCallPage`: builds response map with `speciesByTaxon` key. |
 | `bgee-webapp/src/main/java/org/bgee/view/json/adapters/BgeeTypeAdapterFactory.java` | Modified | Registered `MultispecExprCallResponseTypeAdapter` and `TaxonWithSpeciesTypeAdapter`. |

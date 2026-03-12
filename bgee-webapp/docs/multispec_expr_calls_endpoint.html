@@ -5126,9 +5126,12 @@ z-index: 1000;
   <li><a href="#request-flow" id="toc-request-flow" class="nav-link" data-scroll-target="#request-flow"><span class="header-section-number">4</span> Request Flow</a>
   <ul class="collapse">
   <li><a href="#controller-logic" id="toc-controller-logic" class="nav-link" data-scroll-target="#controller-logic"><span class="header-section-number">4.1</span> Controller logic</a></li>
-  <li><a href="#taxon-tree-construction" id="toc-taxon-tree-construction" class="nav-link" data-scroll-target="#taxon-tree-construction"><span class="header-section-number">4.2</span> Taxon tree construction</a></li>
-  <li><a href="#service-layer-multispeciescallservice.loadsimilarityexpressioncalls2" id="toc-service-layer-multispeciescallservice.loadsimilarityexpressioncalls2" class="nav-link" data-scroll-target="#service-layer-multispeciescallservice.loadsimilarityexpressioncalls2"><span class="header-section-number">4.3</span> Service layer: <code>MultiSpeciesCallService.loadSimilarityExpressionCalls2</code></a></li>
-  <li><a href="#dto-mapping-tomultispecexprcallitem" id="toc-dto-mapping-tomultispecexprcallitem" class="nav-link" data-scroll-target="#dto-mapping-tomultispecexprcallitem"><span class="header-section-number">4.4</span> DTO mapping: <code>toMultispecExprCallItem</code></a></li>
+  <li><a href="#service-layer" id="toc-service-layer" class="nav-link" data-scroll-target="#service-layer"><span class="header-section-number">4.2</span> Service layer</a>
+  <ul class="collapse">
+  <li><a href="#taxontreeservice.buildtaxontreewithspecies" id="toc-taxontreeservice.buildtaxontreewithspecies" class="nav-link" data-scroll-target="#taxontreeservice.buildtaxontreewithspecies"><span class="header-section-number">4.2.1</span> <code>TaxonTreeService.buildTaxonTreeWithSpecies</code></a></li>
+  <li><a href="#multispeciescallservice.loadsimilarityexpressioncalls2" id="toc-multispeciescallservice.loadsimilarityexpressioncalls2" class="nav-link" data-scroll-target="#multispeciescallservice.loadsimilarityexpressioncalls2"><span class="header-section-number">4.2.2</span> <code>MultiSpeciesCallService.loadSimilarityExpressionCalls2</code></a></li>
+  </ul></li>
+  <li><a href="#dto-mapping-tomultispecexprcallitem" id="toc-dto-mapping-tomultispecexprcallitem" class="nav-link" data-scroll-target="#dto-mapping-tomultispecexprcallitem"><span class="header-section-number">4.3</span> DTO mapping: <code>toMultispecExprCallItem</code></a></li>
   </ul></li>
   <li><a href="#files-changed" id="toc-files-changed" class="nav-link" data-scroll-target="#files-changed"><span class="header-section-number">5</span> Files Changed</a>
   <ul class="collapse">
@@ -5533,7 +5536,7 @@ z-index: 1000;
     MAP --&gt; JOB_DONE[&quot;job.completeWithSuccess()&quot;]
     SKIP_LOAD --&gt; TAXON_TREE
 
-    JOB_DONE --&gt; TAXON_TREE[&quot;buildTaxonTree(speciesIds)&lt;br/&gt;→ TaxonWithSpecies hierarchy&quot;]
+    JOB_DONE --&gt; TAXON_TREE[&quot;TaxonTreeService.buildTaxonTreeWithSpecies&lt;br/&gt;(speciesIds, speciesById)&lt;br/&gt;→ TaxonWithSpecies hierarchy&quot;]
 
     TAXON_TREE --&gt; DISPLAY[&quot;DataDisplay.displayMultispecExprCallPage&lt;br/&gt;(speciesByTaxon, response, count)&quot;]
 
@@ -5552,9 +5555,12 @@ z-index: 1000;
 </div>
 </div>
 </section>
-<section id="taxon-tree-construction" class="level2" data-number="4.2">
-<h2 data-number="4.2" class="anchored" data-anchor-id="taxon-tree-construction"><span class="header-section-number">4.2</span> Taxon tree construction</h2>
-<p>The <code>speciesByTaxon</code> hierarchy is built in <code>buildTaxonTree</code> / <code>buildTaxonNode</code>.</p>
+<section id="service-layer" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="service-layer"><span class="header-section-number">4.2</span> Service layer</h2>
+<p>The endpoint delegates to several model-layer services. Two are central to the multi-species flow:</p>
+<section id="taxontreeservice.buildtaxontreewithspecies" class="level3" data-number="4.2.1">
+<h3 data-number="4.2.1" class="anchored" data-anchor-id="taxontreeservice.buildtaxontreewithspecies"><span class="header-section-number">4.2.1</span> <code>TaxonTreeService.buildTaxonTreeWithSpecies</code></h3>
+<p><code>TaxonTreeService</code> is a dedicated service that builds the <code>speciesByTaxon</code> hierarchy. It exists as a separate service (rather than extending <code>TaxonService</code> or <code>OntologyService</code>) because it combines ontology structure with species data to produce a tree-shaped display model: <code>TaxonService</code> focuses on retrieving individual taxa; <code>OntologyService</code> returns graph structures. <code>TaxonTreeService</code> bridges these to produce the recursive <code>TaxonWithSpecies</code> tree used in the API response.</p>
 <div class="cell" data-fig-width="8" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -5581,8 +5587,8 @@ z-index: 1000;
 </div>
 </div>
 </section>
-<section id="service-layer-multispeciescallservice.loadsimilarityexpressioncalls2" class="level2" data-number="4.3">
-<h2 data-number="4.3" class="anchored" data-anchor-id="service-layer-multispeciescallservice.loadsimilarityexpressioncalls2"><span class="header-section-number">4.3</span> Service layer: <code>MultiSpeciesCallService.loadSimilarityExpressionCalls2</code></h2>
+<section id="multispeciescallservice.loadsimilarityexpressioncalls2" class="level3" data-number="4.2.2">
+<h3 data-number="4.2.2" class="anchored" data-anchor-id="multispeciescallservice.loadsimilarityexpressioncalls2"><span class="header-section-number">4.2.2</span> <code>MultiSpeciesCallService.loadSimilarityExpressionCalls2</code></h3>
 <div class="cell" data-fig-width="10" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -5612,8 +5618,9 @@ z-index: 1000;
 </div>
 </div>
 </section>
-<section id="dto-mapping-tomultispecexprcallitem" class="level2" data-number="4.4">
-<h2 data-number="4.4" class="anchored" data-anchor-id="dto-mapping-tomultispecexprcallitem"><span class="header-section-number">4.4</span> DTO mapping: <code>toMultispecExprCallItem</code></h2>
+</section>
+<section id="dto-mapping-tomultispecexprcallitem" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="dto-mapping-tomultispecexprcallitem"><span class="header-section-number">4.3</span> DTO mapping: <code>toMultispecExprCallItem</code></h2>
 <div class="cell" data-fig-width="8" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -5670,19 +5677,39 @@ z-index: 1000;
 </thead>
 <tbody>
 <tr class="odd">
+<td><code>bgee-core/src/main/java/org/bgee/model/species/TaxonWithSpecies.java</code></td>
+<td>New</td>
+<td>Model class for taxon tree nodes enriched with species (<code>taxon</code>, <code>species</code>, <code>children</code>).</td>
+</tr>
+<tr class="even">
+<td><code>bgee-core/src/main/java/org/bgee/model/species/TaxonTreeService.java</code></td>
+<td>New</td>
+<td>Service to build <code>TaxonWithSpecies</code> hierarchy from species IDs. Uses <code>OntologyService</code> and optionally <code>SpeciesService</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>bgee-core/src/test/java/org/bgee/model/species/TaxonTreeServiceTest.java</code></td>
+<td>New</td>
+<td>Unit tests for <code>TaxonTreeService.buildTaxonTreeWithSpecies</code>.</td>
+</tr>
+<tr class="even">
 <td><code>bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCall2.java</code></td>
 <td>New</td>
 <td>Multi-species expression call container with <code>Set&lt;ExpressionCall2&gt;</code>. Same structure as <code>SimilarityExpressionCall</code> but uses the new call types.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>bgee-core/src/test/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCall2Test.java</code></td>
 <td>New</td>
 <td>Unit tests for <code>SimilarityExpressionCall2</code> (construction, getters, equals/hashCode, unmodifiable calls).</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/MultiSpeciesCallService.java</code></td>
 <td>Modified</td>
 <td>Added <code>loadSimilarityExpressionCalls2</code> (uses <code>ExpressionCallFilter2</code>, <code>ExpressionCallLoader</code>, <code>ExpressionCall2</code>). Uses <code>ConditionFilter2</code> for condition filtering. Legacy <code>loadSimilarityExpressionCalls</code> remains for backward compatibility.</td>
+</tr>
+<tr class="odd">
+<td><code>bgee-core/src/main/java/org/bgee/model/ServiceFactory.java</code></td>
+<td>Modified</td>
+<td>Added <code>getTaxonTreeService()</code>.</td>
 </tr>
 <tr class="even">
 <td><code>bgee-core/src/test/java/org/bgee/model/expressiondata/call/multispecies/MultiSpeciesCallServiceTest.java</code></td>
@@ -5716,12 +5743,12 @@ z-index: 1000;
 <tr class="even">
 <td><code>bgee-webapp/src/main/java/org/bgee/view/json/adapters/TaxonWithSpeciesTypeAdapter.java</code></td>
 <td>New</td>
-<td>Gson TypeAdapter for <code>TaxonWithSpecies</code>. Recursively serializes the taxon tree with <code>taxon</code>, <code>species</code>, and <code>children</code> fields.</td>
+<td>Gson TypeAdapter for <code>TaxonWithSpecies</code> (from <code>bgee-core</code>). Recursively serializes the taxon tree with <code>taxon</code>, <code>species</code>, and <code>children</code> fields.</td>
 </tr>
 <tr class="odd">
 <td><code>bgee-webapp/src/main/java/org/bgee/controller/CommandData.java</code></td>
 <td>Modified</td>
-<td>Added DTOs (<code>MultispecExprCallItem</code>, <code>MultispecExprCallResponse</code>, <code>TaxonWithSpecies</code>). Added <code>processMultispecExprCallPage</code>, <code>toMultispecExprCallItem</code>, <code>buildTaxonTree</code>, <code>buildTaxonNode</code>, <code>getMultispecExprCallColumnDescriptions</code>. <strong>Migration:</strong> <code>loadMultispecConditionFilter</code> now returns <code>Collection&lt;ConditionFilter2&gt;</code> (anat entity + cell type only). <code>processMultispecExprCallPage</code> uses <code>loadSimilarityExpressionCalls2</code> and <code>SimilarityExpressionCall2</code>. <code>toMultispecExprCallItem</code> accepts <code>SimilarityExpressionCall2</code> and maps <code>ExpressionCall2</code> fields.</td>
+<td>Added DTOs (<code>MultispecExprCallItem</code>, <code>MultispecExprCallResponse</code>). Added <code>processMultispecExprCallPage</code>, <code>toMultispecExprCallItem</code>, <code>getMultispecExprCallColumnDescriptions</code>. Uses <code>TaxonTreeService.buildTaxonTreeWithSpecies</code> for species hierarchy. <strong>Migration:</strong> <code>loadMultispecConditionFilter</code> now returns <code>Collection&lt;ConditionFilter2&gt;</code> (anat entity + cell type only). <code>processMultispecExprCallPage</code> uses <code>loadSimilarityExpressionCalls2</code> and <code>SimilarityExpressionCall2</code>. <code>toMultispecExprCallItem</code> accepts <code>SimilarityExpressionCall2</code> and maps <code>ExpressionCall2</code> fields.</td>
 </tr>
 <tr class="even">
 <td><code>bgee-webapp/src/main/java/org/bgee/view/DataDisplay.java</code></td>

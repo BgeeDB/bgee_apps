@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Harald Detering">
-<meta name="dcterms.date" content="2026-02-23">
+<meta name="dcterms.date" content="2026-02-26">
 
 <title>API Endpoint: Multi-Species Expression Calls</title>
 <style>
@@ -5127,13 +5127,13 @@ z-index: 1000;
   <ul class="collapse">
   <li><a href="#controller-logic" id="toc-controller-logic" class="nav-link" data-scroll-target="#controller-logic"><span class="header-section-number">4.1</span> Controller logic</a></li>
   <li><a href="#taxon-tree-construction" id="toc-taxon-tree-construction" class="nav-link" data-scroll-target="#taxon-tree-construction"><span class="header-section-number">4.2</span> Taxon tree construction</a></li>
-  <li><a href="#service-layer-multispeciescallservice.loadsimilarityexpressioncalls" id="toc-service-layer-multispeciescallservice.loadsimilarityexpressioncalls" class="nav-link" data-scroll-target="#service-layer-multispeciescallservice.loadsimilarityexpressioncalls"><span class="header-section-number">4.3</span> Service layer: <code>MultiSpeciesCallService.loadSimilarityExpressionCalls</code></a></li>
+  <li><a href="#service-layer-multispeciescallservice.loadsimilarityexpressioncalls2" id="toc-service-layer-multispeciescallservice.loadsimilarityexpressioncalls2" class="nav-link" data-scroll-target="#service-layer-multispeciescallservice.loadsimilarityexpressioncalls2"><span class="header-section-number">4.3</span> Service layer: <code>MultiSpeciesCallService.loadSimilarityExpressionCalls2</code></a></li>
   <li><a href="#dto-mapping-tomultispecexprcallitem" id="toc-dto-mapping-tomultispecexprcallitem" class="nav-link" data-scroll-target="#dto-mapping-tomultispecexprcallitem"><span class="header-section-number">4.4</span> DTO mapping: <code>toMultispecExprCallItem</code></a></li>
   </ul></li>
   <li><a href="#files-changed" id="toc-files-changed" class="nav-link" data-scroll-target="#files-changed"><span class="header-section-number">5</span> Files Changed</a>
   <ul class="collapse">
-  <li><a href="#new-files" id="toc-new-files" class="nav-link" data-scroll-target="#new-files"><span class="header-section-number">5.1</span> New files</a></li>
-  <li><a href="#modified-files" id="toc-modified-files" class="nav-link" data-scroll-target="#modified-files"><span class="header-section-number">5.2</span> Modified files</a></li>
+  <li><a href="#bgee-core" id="toc-bgee-core" class="nav-link" data-scroll-target="#bgee-core"><span class="header-section-number">5.1</span> bgee-core</a></li>
+  <li><a href="#bgee-webapp" id="toc-bgee-webapp" class="nav-link" data-scroll-target="#bgee-webapp"><span class="header-section-number">5.2</span> bgee-webapp</a></li>
   </ul></li>
   <li><a href="#example-request" id="toc-example-request" class="nav-link" data-scroll-target="#example-request"><span class="header-section-number">6</span> Example Request</a></li>
   </ul>
@@ -5160,7 +5160,7 @@ z-index: 1000;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">February 23, 2026</p>
+      <p class="date">February 26, 2026</p>
     </div>
   </div>
   
@@ -5254,6 +5254,18 @@ z-index: 1000;
 <td><code>anat_entity</code>, <code>dev_stage</code>, <code>cell_type</code>, <code>sex</code>, <code>strain</code></td>
 </tr>
 <tr class="even">
+<td><code>anat_entity</code></td>
+<td>—</td>
+<td>Anatomical entity ID(s) to filter by</td>
+<td>UBERON IDs</td>
+</tr>
+<tr class="odd">
+<td><code>cell_type</code></td>
+<td>—</td>
+<td>Cell type ID(s) to filter by</td>
+<td>CL IDs</td>
+</tr>
+<tr class="even">
 <td><code>limit</code></td>
 <td>20</td>
 <td>Max number of results (max 10 000)</td>
@@ -5291,6 +5303,7 @@ z-index: 1000;
 </tr>
 </tbody>
 </table>
+<p>Condition filtering uses only anatomical entity and cell type (<code>anat_entity</code>, <code>cell_type</code>, or <code>filter_anat_entity</code>). Dev stage, sex, and strain are not used for filtering.</p>
 <hr>
 </section>
 </section>
@@ -5501,9 +5514,9 @@ z-index: 1000;
 
     JOB --&gt; BUILD_FILTERS[&quot;Build GeneFilters&lt;br/&gt;(genes grouped by species)&quot;]
     BUILD_FILTERS --&gt; LCA[&quot;TaxonService.loadLeastCommonAncestor&lt;br/&gt;(all species IDs)&quot;]
-    LCA --&gt; LOAD_CALLS[&quot;MultiSpeciesCallService&lt;br/&gt;.loadSimilarityExpressionCalls&lt;br/&gt;(lcaId, geneFilters, condFilter,&lt;br/&gt;onlyTrusted=false, qual)&quot;]
+    LCA --&gt; LOAD_CALLS[&quot;MultiSpeciesCallService&lt;br/&gt;.loadSimilarityExpressionCalls2&lt;br/&gt;(lcaId, geneFilters, condFilters,&lt;br/&gt;onlyTrusted=false, qual)&quot;]
 
-    LOAD_CALLS --&gt; COLLECT[&quot;Collect Stream →&lt;br/&gt;List&amp;lt;SimilarityExpressionCall&amp;gt;&quot;]
+    LOAD_CALLS --&gt; COLLECT[&quot;Collect Stream →&lt;br/&gt;List&amp;lt;SimilarityExpressionCall2&amp;gt;&quot;]
 
     COLLECT --&gt; CNT{&quot;get_result_count?&quot;}
     CNT --&gt;|Yes| SET_COUNT[&quot;count = allCalls.size()&quot;]
@@ -5514,7 +5527,7 @@ z-index: 1000;
     RES --&gt;|Yes| VALIDATE_LIMIT{&quot;limit ≤ 10 000?&quot;}
     VALIDATE_LIMIT --&gt;|No| ERR5[&quot;❌ InvalidRequestException:&lt;br/&gt;&lt;i&gt;Cannot exceed 10 000 results&lt;/i&gt;&quot;]
     VALIDATE_LIMIT --&gt;|Yes| PAGINATE[&quot;Apply &lt;b&gt;offset&lt;/b&gt; &amp; &lt;b&gt;limit&lt;/b&gt;&quot;]
-    PAGINATE --&gt; MAP[&quot;Map each SimilarityExpressionCall&lt;br/&gt;→ toMultispecExprCallItem()&quot;]
+    PAGINATE --&gt; MAP[&quot;Map each SimilarityExpressionCall2&lt;br/&gt;→ toMultispecExprCallItem()&quot;]
     RES --&gt;|No| JOB_DONE
 
     MAP --&gt; JOB_DONE[&quot;job.completeWithSuccess()&quot;]
@@ -5528,7 +5541,6 @@ z-index: 1000;
 
     style ERR1 fill:#f99,stroke:#c00
     style ERR2 fill:#f99,stroke:#c00
-    style ERR3 fill:#f99,stroke:#c00
     style ERR4 fill:#f99,stroke:#c00
     style ERR5 fill:#f99,stroke:#c00
     style START fill:#e8f5e9,stroke:#2e7d32
@@ -5569,27 +5581,27 @@ z-index: 1000;
 </div>
 </div>
 </section>
-<section id="service-layer-multispeciescallservice.loadsimilarityexpressioncalls" class="level2" data-number="4.3">
-<h2 data-number="4.3" class="anchored" data-anchor-id="service-layer-multispeciescallservice.loadsimilarityexpressioncalls"><span class="header-section-number">4.3</span> Service layer: <code>MultiSpeciesCallService.loadSimilarityExpressionCalls</code></h2>
+<section id="service-layer-multispeciescallservice.loadsimilarityexpressioncalls2" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="service-layer-multispeciescallservice.loadsimilarityexpressioncalls2"><span class="header-section-number">4.3</span> Service layer: <code>MultiSpeciesCallService.loadSimilarityExpressionCalls2</code></h2>
 <div class="cell" data-fig-width="10" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class="figure"><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    ENTRY[&quot;loadSimilarityExpressionCalls&lt;br/&gt;(taxonId, geneFilters, condFilter,&lt;br/&gt;onlyTrusted, summaryQuality)&quot;]
-    ENTRY --&gt; ANNOT[&quot;AnatSimilarityService&lt;br/&gt;.loadPositiveAnatEntitySimilarityAnnotations&lt;br/&gt;(taxonId, condFilter)&quot;]
+    ENTRY[&quot;loadSimilarityExpressionCalls2&lt;br/&gt;(taxonId, geneFilters, conditionFilters,&lt;br/&gt;onlyTrusted, summaryQuality)&quot;]
+    ENTRY --&gt; ANNOT[&quot;AnatSimilarityService&lt;br/&gt;.loadPositiveAnatEntitySimilarityAnnotations&lt;br/&gt;(taxonId, conditionFilters)&quot;]
     ANNOT --&gt; AE_GROUPS[&quot;Extract anatEntity groups &amp;&lt;br/&gt;cellType groups from&lt;br/&gt;similarity annotations&quot;]
 
     AE_GROUPS --&gt; PER_SPECIES[&quot;For each species in geneFilters:&quot;]
-    PER_SPECIES --&gt; BUILD_CF[&quot;Build ExpressionCallFilter with:&lt;br/&gt;• summaryQuality (param)&lt;br/&gt;• GeneFilter (per species)&lt;br/&gt;• ConditionFilter (anat/cell groups)&lt;br/&gt;• DataType filter&quot;]
-    BUILD_CF --&gt; LOAD_EC[&quot;CallService.loadExpressionCalls&lt;br/&gt;(filter, attributes incl. DATA_QUALITY)&quot;]
-    LOAD_EC --&gt; COLLECT_EC[&quot;Collect ExpressionCall list per species&quot;]
+    PER_SPECIES --&gt; BUILD_CF[&quot;Build ExpressionCallFilter2 with:&lt;br/&gt;• summaryQuality (param)&lt;br/&gt;• GeneFilter (per species)&lt;br/&gt;• ConditionFilter2 (anat/cell groups)&lt;br/&gt;• DataType filter&quot;]
+    BUILD_CF --&gt; LOAD_EC[&quot;ExpressionCallService.loadCallLoader()&lt;br/&gt;→ ExpressionCallLoader.loadData()&lt;br/&gt;(ExpressionCall2, attributes incl. DATA_QUALITY)&quot;]
+    LOAD_EC --&gt; COLLECT_EC[&quot;Collect ExpressionCall2 list per species&quot;]
 
     COLLECT_EC --&gt; GROUP[&quot;Group calls by&lt;br/&gt;MultiSpeciesCondition&lt;br/&gt;(similarity-mapped anat entities)&quot;]
-    GROUP --&gt; ASSEMBLE[&quot;Assemble SimilarityExpressionCall:&lt;br/&gt;gene + multiSpeciesCondition +&lt;br/&gt;calls with quality&quot;]
+    GROUP --&gt; ASSEMBLE[&quot;Assemble SimilarityExpressionCall2:&lt;br/&gt;gene + multiSpeciesCondition +&lt;br/&gt;calls with quality&quot;]
 
-    ASSEMBLE --&gt; STREAM[&quot;Return Stream&amp;lt;SimilarityExpressionCall&amp;gt;&quot;]
+    ASSEMBLE --&gt; STREAM[&quot;Return Stream&amp;lt;SimilarityExpressionCall2&amp;gt;&quot;]
 
     style ENTRY fill:#e8f5e9,stroke:#2e7d32
     style STREAM fill:#e3f2fd,stroke:#1565c0
@@ -5608,9 +5620,9 @@ z-index: 1000;
 <p></p><figure class="figure"><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    SC[&quot;SimilarityExpressionCall&quot;] --&gt; GENE[&quot;Extract Gene&quot;]
+    SC[&quot;SimilarityExpressionCall2&quot;] --&gt; GENE[&quot;Extract Gene&quot;]
     SC --&gt; MSC[&quot;Extract MultiSpeciesCondition&lt;br/&gt;(anatEntities, cellTypes)&quot;]
-    SC --&gt; CALLS[&quot;Get underlying ExpressionCall list&quot;]
+    SC --&gt; CALLS[&quot;Get underlying ExpressionCall2 list&quot;]
 
     CALLS --&gt; SCORE[&quot;Find max expressionScore&lt;br/&gt;across all calls&quot;]
     CALLS --&gt; DT[&quot;Collect DataTypes with data&lt;br/&gt;(from callData)&quot;]
@@ -5641,67 +5653,94 @@ z-index: 1000;
 </section>
 <section id="files-changed" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Files Changed</h1>
-<section id="new-files" class="level2" data-number="5.1">
-<h2 data-number="5.1" class="anchored" data-anchor-id="new-files"><span class="header-section-number">5.1</span> New files</h2>
+<section id="bgee-core" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="bgee-core"><span class="header-section-number">5.1</span> bgee-core</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 31%">
-<col style="width: 68%">
+<col style="width: 24%">
+<col style="width: 24%">
+<col style="width: 52%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>File</th>
+<th>Type</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>bgee-webapp/.../adapters/MultispecExprCallResponseTypeAdapter.java</code></td>
-<td>Gson TypeAdapter for <code>MultispecExprCallResponse</code>. Serializes <code>requestedConditionParameters</code>, <code>requestedDataTypes</code>, and the <code>expressionCalls</code> array.</td>
+<td><code>bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCall2.java</code></td>
+<td>New</td>
+<td>Multi-species expression call container with <code>Set&lt;ExpressionCall2&gt;</code>. Same structure as <code>SimilarityExpressionCall</code> but uses the new call types.</td>
 </tr>
 <tr class="even">
-<td><code>bgee-webapp/.../adapters/TaxonWithSpeciesTypeAdapter.java</code></td>
-<td>Gson TypeAdapter for <code>TaxonWithSpecies</code>. Recursively serializes the taxon tree with <code>taxon</code>, <code>species</code>, and <code>children</code> fields.</td>
+<td><code>bgee-core/src/test/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCall2Test.java</code></td>
+<td>New</td>
+<td>Unit tests for <code>SimilarityExpressionCall2</code> (construction, getters, equals/hashCode, unmodifiable calls).</td>
+</tr>
+<tr class="odd">
+<td><code>bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/MultiSpeciesCallService.java</code></td>
+<td>Modified</td>
+<td>Added <code>loadSimilarityExpressionCalls2</code> (uses <code>ExpressionCallFilter2</code>, <code>ExpressionCallLoader</code>, <code>ExpressionCall2</code>). Uses <code>ConditionFilter2</code> for condition filtering. Legacy <code>loadSimilarityExpressionCalls</code> remains for backward compatibility.</td>
+</tr>
+<tr class="even">
+<td><code>bgee-core/src/test/java/org/bgee/model/expressiondata/call/multispecies/MultiSpeciesCallServiceTest.java</code></td>
+<td>Modified</td>
+<td>Added unit test <code>shouldLoadSimilarityExpressionCalls2</code> and integration test <code>shouldLoadSimilarityExpressionCalls2Integration</code>.</td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="modified-files" class="level2" data-number="5.2">
-<h2 data-number="5.2" class="anchored" data-anchor-id="modified-files"><span class="header-section-number">5.2</span> Modified files</h2>
+<section id="bgee-webapp" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="bgee-webapp"><span class="header-section-number">5.2</span> bgee-webapp</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 40%">
-<col style="width: 60%">
+<col style="width: 24%">
+<col style="width: 24%">
+<col style="width: 52%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>File</th>
-<th>Changes</th>
+<th>Type</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><strong><code>CommandData.java</code></strong></td>
-<td>Added DTOs (<code>MultispecExprCallItem</code>, <code>MultispecExprCallResponse</code>, <code>TaxonWithSpecies</code>). Added <code>processMultispecExprCallPage</code>, <code>toMultispecExprCallItem</code>, <code>buildTaxonTree</code>, <code>buildTaxonNode</code>, <code>getMultispecExprCallColumnDescriptions</code>.</td>
+<td><code>bgee-webapp/src/main/java/org/bgee/view/json/adapters/MultispecExprCallResponseTypeAdapter.java</code></td>
+<td>New</td>
+<td>Gson TypeAdapter for <code>MultispecExprCallResponse</code>. Serializes <code>requestedConditionParameters</code>, <code>requestedDataTypes</code>, and the <code>expressionCalls</code> array.</td>
 </tr>
 <tr class="even">
-<td><strong><code>MultiSpeciesCallService.java</code></strong></td>
-<td>Added 5-arg <code>loadSimilarityExpressionCalls</code> overload accepting <code>SummaryQuality</code>. Original 4-arg version now delegates with <code>BRONZE</code> default. Added <code>DATA_QUALITY</code> to requested attributes.</td>
+<td><code>bgee-webapp/src/main/java/org/bgee/view/json/adapters/TaxonWithSpeciesTypeAdapter.java</code></td>
+<td>New</td>
+<td>Gson TypeAdapter for <code>TaxonWithSpecies</code>. Recursively serializes the taxon tree with <code>taxon</code>, <code>species</code>, and <code>children</code> fields.</td>
 </tr>
 <tr class="odd">
-<td><strong><code>DataDisplay.java</code></strong></td>
+<td><code>bgee-webapp/src/main/java/org/bgee/controller/CommandData.java</code></td>
+<td>Modified</td>
+<td>Added DTOs (<code>MultispecExprCallItem</code>, <code>MultispecExprCallResponse</code>, <code>TaxonWithSpecies</code>). Added <code>processMultispecExprCallPage</code>, <code>toMultispecExprCallItem</code>, <code>buildTaxonTree</code>, <code>buildTaxonNode</code>, <code>getMultispecExprCallColumnDescriptions</code>. <strong>Migration:</strong> <code>loadMultispecConditionFilter</code> now returns <code>Collection&lt;ConditionFilter2&gt;</code> (anat entity + cell type only). <code>processMultispecExprCallPage</code> uses <code>loadSimilarityExpressionCalls2</code> and <code>SimilarityExpressionCall2</code>. <code>toMultispecExprCallItem</code> accepts <code>SimilarityExpressionCall2</code> and maps <code>ExpressionCall2</code> fields.</td>
+</tr>
+<tr class="even">
+<td><code>bgee-webapp/src/main/java/org/bgee/view/DataDisplay.java</code></td>
+<td>Modified</td>
 <td>Added <code>displayMultispecExprCallPage(TaxonWithSpecies, ...)</code> method to interface.</td>
 </tr>
-<tr class="even">
-<td><strong><code>JsonDataDisplay.java</code></strong></td>
+<tr class="odd">
+<td><code>bgee-webapp/src/main/java/org/bgee/view/json/JsonDataDisplay.java</code></td>
+<td>Modified</td>
 <td>Implemented <code>displayMultispecExprCallPage</code>: builds response map with <code>speciesByTaxon</code> key.</td>
 </tr>
-<tr class="odd">
-<td><strong><code>BgeeTypeAdapterFactory.java</code></strong></td>
+<tr class="even">
+<td><code>bgee-webapp/src/main/java/org/bgee/view/json/adapters/BgeeTypeAdapterFactory.java</code></td>
+<td>Modified</td>
 <td>Registered <code>MultispecExprCallResponseTypeAdapter</code> and <code>TaxonWithSpeciesTypeAdapter</code>.</td>
 </tr>
-<tr class="even">
-<td><strong><code>RequestParameters.java</code></strong></td>
+<tr class="odd">
+<td><code>bgee-webapp/src/main/java/org/bgee/controller/RequestParameters.java</code></td>
+<td>Modified</td>
 <td>Added <code>getDataQuality()</code> accessor (reads <code>data_qual</code> URL parameter).</td>
 </tr>
 </tbody>

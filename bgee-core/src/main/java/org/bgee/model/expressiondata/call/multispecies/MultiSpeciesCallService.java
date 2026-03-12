@@ -1,7 +1,5 @@
 package org.bgee.model.expressiondata.call.multispecies;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -23,8 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.print.attribute.Size2DSyntax;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
@@ -37,7 +33,6 @@ import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarity;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
-import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
@@ -64,7 +59,6 @@ import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.Taxon;
-import org.bgee.model.species.TaxonomyFilter;
 
 /**
  * A {@link Service} to obtain {@link MultiSpeciesCall} objects. 

@@ -62,6 +62,7 @@ import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
+import org.bgee.model.species.TaxonWithSpecies;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.view.DataDisplay;
 import org.bgee.view.ViewFactory;
@@ -173,23 +174,6 @@ public class CommandData extends CommandParent {
         public List<MultispecExprCallItem> getCalls() { return calls; }
         public LinkedHashSet<ConditionParameter<?, ?>> getCondParams() { return condParams; }
         public EnumSet<DataType> getRequestedDataTypes() { return requestedDataTypes; }
-    }
-
-    public static class TaxonWithSpecies {
-        private final Taxon taxon;
-        private final List<Species> species;
-        private final List<TaxonWithSpecies> children;
-
-        public TaxonWithSpecies(Taxon taxon, List<Species> species,
-                List<TaxonWithSpecies> children) {
-            this.taxon = taxon;
-            this.species = species != null ? species : Collections.emptyList();
-            this.children = children != null ? children : Collections.emptyList();
-        }
-
-        public Taxon getTaxon() { return taxon; }
-        public List<Species> getSpecies() { return species; }
-        public List<TaxonWithSpecies> getChildren() { return children; }
     }
 
     public static class ColumnDescription {
@@ -1210,7 +1194,8 @@ public class CommandData extends CommandParent {
                 .map(Species::getId).collect(Collectors.toSet());
         Map<Integer, Species> speciesById = species.stream()
                 .collect(Collectors.toMap(Species::getId, s -> s));
-        TaxonWithSpecies speciesByTaxon = buildTaxonTree(speciesIds, speciesById);
+        TaxonWithSpecies speciesByTaxon = this.serviceFactory.getTaxonTreeService()
+                .buildTaxonTreeWithSpecies(speciesIds, speciesById);
 
         DataDisplay display = this.viewFactory.getDataDisplay();
         MultispecExprCallResponse response = new MultispecExprCallResponse(
@@ -1258,58 +1243,6 @@ public class CommandData extends CommandParent {
                 .orElse("bronze");
         return new MultispecExprCallItem(gene, msc, formattedScore, confidence,
                 dataTypesMap, expressionState, quality);
-    }
-
-    private TaxonWithSpecies buildTaxonTree(Set<Integer> speciesIds,
-            Map<Integer, Species> speciesById) {
-        OntologyService ontService = this.serviceFactory.getOntologyService();
-        Ontology<Taxon, Integer> taxonOnt = ontService.getTaxonOntologyLeadingToSpecies(
-                speciesIds, true, false);
-
-        Map<Integer, List<Species>> speciesByParentTaxonId = speciesById.values().stream()
-                .filter(s -> s.getParentTaxonId() != null)
-                .collect(Collectors.groupingBy(Species::getParentTaxonId));
-
-        // Build parent-child map using all ancestors (not just direct relations,
-        // which may be missing in the sparse LCA-filtered ontology).
-        // For each taxon, the "parent" in the filtered tree is the closest ancestor
-        // (highest taxonomic level value = closest to leaves).
-        Map<Integer, List<Taxon>> childrenByParent = new HashMap<>();
-        Taxon root = null;
-        for (Taxon t : taxonOnt.getElements()) {
-            Set<Taxon> ancestors = taxonOnt.getAncestors(t);
-            if (ancestors.isEmpty()) {
-                root = t;
-            } else {
-                Taxon parent = ancestors.stream()
-                        .max(Comparator.comparingInt(Taxon::getLevel))
-                        .get();
-                childrenByParent.computeIfAbsent(parent.getId(),
-                        k -> new ArrayList<>()).add(t);
-            }
-        }
-        if (root == null) {
-            throw new IllegalStateException(
-                    "No root taxon found in taxonomy ontology");
-        }
-
-        return buildTaxonNode(root, childrenByParent, speciesByParentTaxonId);
-    }
-
-    private TaxonWithSpecies buildTaxonNode(Taxon taxon,
-            Map<Integer, List<Taxon>> childrenByParent,
-            Map<Integer, List<Species>> speciesByParentTaxonId) {
-        List<Species> directSpecies = speciesByParentTaxonId.getOrDefault(
-                taxon.getId(), Collections.emptyList());
-
-        List<TaxonWithSpecies> children = childrenByParent
-                .getOrDefault(taxon.getId(), Collections.emptyList()).stream()
-                .sorted(Comparator.comparing(Taxon::getId))
-                .map(child -> buildTaxonNode(child, childrenByParent,
-                        speciesByParentTaxonId))
-                .collect(Collectors.toList());
-
-        return new TaxonWithSpecies(taxon, directSpecies, children);
     }
 
     private List<ColumnDescription> getMultispecExprCallColumnDescriptions() {

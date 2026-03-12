@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandData.ExpressionCallResponse;
 import org.bgee.controller.CommandData.MultispecExprCallResponse;
-import org.bgee.controller.CommandData.TaxonWithSpecies;
+import org.bgee.model.species.TaxonWithSpecies;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.SpeciesGeneListResponse;
 import org.bgee.controller.RequestParameters;

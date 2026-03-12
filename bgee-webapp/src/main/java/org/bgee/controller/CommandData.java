@@ -23,14 +23,12 @@ import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
-import org.bgee.model.expressiondata.call.ConditionFilter;
 import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCallService;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
-import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall;
+import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall2;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.SearchResult;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
@@ -1135,7 +1133,7 @@ public class CommandData extends CommandParent {
                         .filter(p -> selectedCondParams.contains(p.getParameterName()))
                         .collect(Collectors.toCollection(LinkedHashSet::new));
         EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
-        ConditionFilter condFilter = this.loadMultispecConditionFilter(true);
+        Collection<ConditionFilter2> condFilters = this.loadMultispecConditionFilter(true);
 
         SummaryQuality qual = SummaryQuality.values()[0];
         if (this.requestParameters.getDataQuality() != null &&
@@ -1167,8 +1165,8 @@ public class CommandData extends CommandParent {
                 int lcaId = this.serviceFactory.getTaxonService().loadLeastCommonAncestor(
                         species.stream().map(Species::getId).collect(Collectors.toSet())).getId();
                 MultiSpeciesCallService multiSpecService = this.serviceFactory.getMultiSpeciesCallService();
-                List<SimilarityExpressionCall> allCalls = multiSpecService
-                        .loadSimilarityExpressionCalls(lcaId, geneFilters, condFilter,
+                List<SimilarityExpressionCall2> allCalls = multiSpecService
+                        .loadSimilarityExpressionCalls2(lcaId, geneFilters, condFilters,
                                 false, qual)
                         .collect(Collectors.toList());
 
@@ -1223,12 +1221,12 @@ public class CommandData extends CommandParent {
         log.traceExit();
     }
 
-    private MultispecExprCallItem toMultispecExprCallItem(SimilarityExpressionCall sc) {
+    private MultispecExprCallItem toMultispecExprCallItem(SimilarityExpressionCall2 sc) {
         Gene gene = sc.getGene();
         MultiSpeciesCondition msc = sc.getMultiSpeciesCondition();
-        List<ExpressionCall> rawCalls = new ArrayList<>(sc.getCalls());
+        List<ExpressionCall2> rawCalls = new ArrayList<>(sc.getCalls());
         Optional<ExpressionLevelInfo> maxInfo = rawCalls.stream()
-                .map(ExpressionCall::getExpressionLevelInfo)
+                .map(ExpressionCall2::getExpressionLevelInfo)
                 .filter(Objects::nonNull)
                 .filter(eli -> eli.getExpressionScore() != null)
                 .max(Comparator.comparing(ExpressionLevelInfo::getExpressionScore,
@@ -1253,7 +1251,7 @@ public class CommandData extends CommandParent {
         String expressionState = sc.getSummaryCallType() != null
                 ? sc.getSummaryCallType().toString().toLowerCase() : "not_expressed";
         String quality = rawCalls.stream()
-                .map(ExpressionCall::getSummaryQuality)
+                .map(ExpressionCall2::getSummaryQuality)
                 .filter(Objects::nonNull)
                 .findFirst()
                 .map(q -> q.toString().toLowerCase())
@@ -1321,19 +1319,19 @@ public class CommandData extends CommandParent {
         return getExprCallColumnDescriptions(Collections.emptySet());
     }
 
-    private ConditionFilter loadMultispecConditionFilter(boolean consideringFilters)
+    /**
+     * Loads condition filter for the multispec endpoint. Returns {@code ConditionFilter2}
+     * for use with {@link MultiSpeciesCallService#loadSimilarityExpressionCalls2}.
+     * Only anat entity and cell type are used for filtering similarity groups.
+     *
+     * @param consideringFilters Whether to consider filter parameters from the request.
+     * @return A {@code Collection} of one {@code ConditionFilter2} with {@code speciesId=null},
+     *         or {@code null} when no filter parameters are specified.
+     */
+    private Collection<ConditionFilter2> loadMultispecConditionFilter(boolean consideringFilters)
             throws InvalidRequestException {
         List<String> filterAnatCell = consideringFilters
                 ? this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance().getParamFilterAnatEntity())
-                : null;
-        List<String> filterDev = consideringFilters
-                ? this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance().getParamFilterDevStage())
-                : null;
-        List<String> filterSex = consideringFilters
-                ? this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance().getParamFilterSex())
-                : null;
-        List<String> filterStrain = consideringFilters
-                ? this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance().getParamFilterStrain())
                 : null;
 
         List<String> anatIds = filterAnatCell != null && !filterAnatCell.isEmpty()
@@ -1342,26 +1340,32 @@ public class CommandData extends CommandParent {
         List<String> cellIds = filterAnatCell != null && !filterAnatCell.isEmpty()
                 ? new ArrayList<>(filterAnatCell)
                 : (this.requestParameters.getCellType() != null ? new ArrayList<>(this.requestParameters.getCellType()) : new ArrayList<>());
-        List<String> devIds = filterDev != null && !filterDev.isEmpty()
-                ? new ArrayList<>(filterDev)
-                : (this.requestParameters.getDevStage() != null ? new ArrayList<>(this.requestParameters.getDevStage()) : new ArrayList<>());
-        List<String> sexes = filterSex != null && !filterSex.isEmpty()
-                ? new ArrayList<>(filterSex)
-                : (this.requestParameters.getSex() != null ? new ArrayList<>(this.requestParameters.getSex()) : new ArrayList<>());
-        List<String> strains = filterStrain != null && !filterStrain.isEmpty()
-                ? new ArrayList<>(filterStrain)
-                : (this.requestParameters.getStrain() != null ? new ArrayList<>(this.requestParameters.getStrain()) : new ArrayList<>());
 
-        if (anatIds.isEmpty() && cellIds.isEmpty() && devIds.isEmpty() && sexes.isEmpty() && strains.isEmpty()) {
+        if (anatIds.isEmpty() && cellIds.isEmpty()) {
             return null;
         }
         try {
-            return new ConditionFilter(
-                    anatIds.isEmpty() ? null : anatIds,
-                    devIds.isEmpty() ? null : devIds,
-                    cellIds.isEmpty() ? null : cellIds,
-                    sexes.isEmpty() ? null : sexes,
-                    strains.isEmpty() ? null : strains);
+            List<FilterIds<String>> composedFilterIds = new ArrayList<>();
+            if (!anatIds.isEmpty()) {
+                composedFilterIds.add(new FilterIds<>(new HashSet<>(anatIds), false));
+            }
+            if (!cellIds.isEmpty()) {
+                if (composedFilterIds.isEmpty()) {
+                    composedFilterIds.add(new FilterIds<>(Set.of(ConditionDAO.ANAT_ENTITY_ROOT_ID), false));
+                }
+                composedFilterIds.add(new FilterIds<>(new HashSet<>(cellIds), false));
+            }
+            ComposedFilterIds<String> anatCellComposed = new ComposedFilterIds<>(composedFilterIds);
+            Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+            condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatCellComposed);
+
+            ConditionFilter2 condFilter = new ConditionFilter2(
+                    null,
+                    condParamToFilter,
+                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
+                    null,
+                    false);
+            return Collections.singletonList(condFilter);
         } catch (IllegalArgumentException e) {
             log.catching(e);
             throw log.throwing(new InvalidRequestException(e.getMessage()));

@@ -51,8 +51,8 @@ GET /bgee-webapp/?page=data&action=multispec_expr_calls&...
 | `data_qual` | `BRONZE` | Minimum expression quality threshold | `BRONZE`, `SILVER`, `GOLD` |
 | `data_type` | all types | Data type(s) to include | `AFFYMETRIX`, `EST`, `IN_SITU`, `RNA_SEQ`, `SC_RNA_SEQ` |
 | `cond_param2` | all params | Condition parameter(s) to group by | `anat_entity`, `dev_stage`, `cell_type`, `sex`, `strain` |
-| `anat_entity` | — | Anatomical entity ID(s) to filter by | UBERON IDs |
-| `cell_type` | — | Cell type ID(s) to filter by | CL IDs |
+| `anat_entity` | — | Anatomical entity ID(s) to filter by | UBERON IDs, or `SUMMARY` for summary terms |
+| `cell_type` | — | Cell type ID(s) to filter by | CL IDs, or `SUMMARY` for summary terms |
 | `limit` | 20 | Max number of results (max 10 000) | Integer |
 | `offset` | 0 | Number of results to skip | Integer ≥ 0 |
 | `get_results` | -- | Set to `1` to retrieve the actual expression call results | `get_results=1` |
@@ -60,7 +60,7 @@ GET /bgee-webapp/?page=data&action=multispec_expr_calls&...
 | `get_column_definition` | -- | Set to `1` to include column metadata | `1` |
 | `display_type` | -- | Output format | `json` |
 
-Condition filtering uses only anatomical entity and cell type (`anat_entity`, `cell_type`, or `filter_anat_entity`). Dev stage, sex, and strain are not used for filtering.
+Condition filtering uses only anatomical entity and cell type (`anat_entity`, `cell_type`, or `filter_anat_entity`). Dev stage, sex, and strain are not used for filtering. The magic value `SUMMARY` for `anat_entity` or `cell_type` expands to the same fixed list of summary terms as in the single-species expr_calls endpoint.
 
 ---
 

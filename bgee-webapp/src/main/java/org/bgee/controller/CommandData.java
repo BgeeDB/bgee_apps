@@ -1272,19 +1272,42 @@ public class CommandData extends CommandParent {
                 ? new ArrayList<>(filterAnatCell)
                 : (this.requestParameters.getCellType() != null ? new ArrayList<>(this.requestParameters.getCellType()) : new ArrayList<>());
 
+        // If we receive the magic value "SUMMARY", use the same fixed list of terms as the single-species endpoint.
+        if (filterAnatCell != null && !filterAnatCell.isEmpty()) {
+            if (anatIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+                anatIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
+                anatIds.addAll(SUMMARY_CELL_TYPE_IDS);
+                anatIds.remove(ID_PARAM_SUMMARY_VALUE);
+            }
+            cellIds = anatIds;
+        } else {
+            if (anatIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+                anatIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
+                anatIds.remove(ID_PARAM_SUMMARY_VALUE);
+            }
+            if (cellIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+                cellIds.addAll(SUMMARY_CELL_TYPE_IDS);
+                cellIds.remove(ID_PARAM_SUMMARY_VALUE);
+            }
+        }
+
         if (anatIds.isEmpty() && cellIds.isEmpty()) {
             return null;
         }
         try {
             List<FilterIds<String>> composedFilterIds = new ArrayList<>();
-            if (!anatIds.isEmpty()) {
-                composedFilterIds.add(new FilterIds<>(new HashSet<>(anatIds), false));
+            FilterIds<String> anatFilter = !anatIds.isEmpty()
+                    ? new FilterIds<>(new HashSet<>(anatIds), false) : null;
+            FilterIds<String> cellFilter = !cellIds.isEmpty()
+                    ? new FilterIds<>(new HashSet<>(cellIds), false) : null;
+            if (anatFilter != null) {
+                composedFilterIds.add(anatFilter);
             }
-            if (!cellIds.isEmpty()) {
+            if (cellFilter != null && !cellFilter.equals(anatFilter)) {
                 if (composedFilterIds.isEmpty()) {
                     composedFilterIds.add(new FilterIds<>(Set.of(ConditionDAO.ANAT_ENTITY_ROOT_ID), false));
                 }
-                composedFilterIds.add(new FilterIds<>(new HashSet<>(cellIds), false));
+                composedFilterIds.add(cellFilter);
             }
             ComposedFilterIds<String> anatCellComposed = new ComposedFilterIds<>(composedFilterIds);
             Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();

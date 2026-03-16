@@ -7,9 +7,14 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityTaxonSummary;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
+import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.Condition;
 import org.bgee.model.expressiondata.call.ConditionFilter;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall;
@@ -19,6 +24,7 @@ import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall;
 import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall2;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.SearchResult;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
@@ -37,6 +43,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -397,11 +404,96 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
             GeneFilter geneFilter1 = new GeneFilter(9606, Arrays.asList("ENSG00000244734", "ENSG00000130208"));
             GeneFilter geneFilter2 = new GeneFilter(10090, Arrays.asList("ENSMUSG00000052187", "ENSMUSG00000040564"));
 
-            java.util.List<SimilarityExpressionCall2> results = callService.loadSimilarityExpressionCalls2(
+            List<SimilarityExpressionCall2> results = callService.loadSimilarityExpressionCalls2(
                     7742, Arrays.asList(geneFilter1, geneFilter2), null, false, SummaryQuality.BRONZE)
                     .collect(Collectors.toList());
 
             assertNotNull("Results should not be null", results);
+            for (SimilarityExpressionCall2 sec : results) {
+                assertNotNull(sec.getGene());
+                assertNotNull(sec.getMultiSpeciesCondition());
+                assertNotNull(sec.getSummaryCallType());
+                assertNotNull(sec.getCalls());
+                for (org.bgee.model.expressiondata.call.Call.ExpressionCall2 call : sec.getCalls()) {
+                    assertNotNull(call.getGene());
+                    assertNotNull(call.getCondition());
+                }
+            }
+        }
+    }
+
+    /**
+     * Integration test for the multispec_expr_calls endpoint flow.
+     * Mirrors the full request path: gene resolution → LCA → condition filter (SUMMARY) → loadSimilarityExpressionCalls2.
+     * Verifies that when multiple species have expression data, all are returned.
+     * Uses the same gene list as the multispec_expr_calls API (human, mouse, bonobo, rat, pig, horse, dog, cat, gorilla).
+     * Requires a real database with expression data.
+     */
+    @Test
+    public void shouldLoadMultispecExprCallsWithSummaryConditionFilterIntegration() {
+        List<String> geneList = Arrays.asList(
+                "ENSG00000139767",   // human
+                "ENSMUSG00000063919", // mouse
+                "ENSPPAG00000028134", // bonobo
+                "ENSRNOG00000001141", // rat
+                "ENSSSCG00000009845", // pig
+                "ENSECAG00000021729", // horse
+                "ENSCAFG00000023113", // dog
+                "ENSOCUG00000004503", // cat
+                "ENSACAG00000004139"  // gorilla
+        );
+
+        try (ServiceFactory serviceFactory = new ServiceFactory()) {
+            SearchResult<String, Gene> searchResult = serviceFactory.getGeneService().searchGenesByIds(geneList);
+            List<Gene> genes = new java.util.ArrayList<>(searchResult.getResults());
+            Set<Species> species = genes.stream().map(Gene::getSpecies).collect(Collectors.toSet());
+
+            assertTrue("At least 2 species must be found from gene list", species.size() >= 2);
+
+            Set<GeneFilter> geneFilters = genes.stream()
+                    .collect(Collectors.groupingBy(g -> g.getSpecies().getId(),
+                            Collectors.mapping(Gene::getGeneId, Collectors.toSet())))
+                    .entrySet().stream()
+                    .map(e -> new GeneFilter(e.getKey(), e.getValue()))
+                    .collect(Collectors.toSet());
+
+            int lcaId = serviceFactory.getTaxonService().loadLeastCommonAncestor(
+                    species.stream().map(Species::getId).collect(Collectors.toSet())).getId();
+
+            // Build condition filter matching loadMultispecConditionFilter for anat_entity_id=SUMMARY, cell_type_id=SUMMARY
+            Set<String> summaryAnatIds = Set.of(
+                    "UBERON:0001062", "UBERON:0000010", "UBERON:0000211", "UBERON:0000309", "UBERON:0000468",
+                    "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007", "UBERON:0001008",
+                    "UBERON:0001009", "UBERON:0001015", "UBERON:0001017", "UBERON:0001032", "UBERON:0001434",
+                    "UBERON:0002193", "UBERON:0002330", "UBERON:0002384", "UBERON:0002405", "UBERON:0002416",
+                    "UBERON:0015204");
+            Set<String> summaryCellIds = Set.of(ConditionDAO.CELL_TYPE_ROOT_ID);
+
+            ComposedFilterIds<String> anatCellComposed = new ComposedFilterIds<>(List.of(
+                    new FilterIds<>(summaryAnatIds, false),
+                    new FilterIds<>(summaryCellIds, false)));
+            Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+            condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatCellComposed);
+
+            ConditionFilter2 condFilter = new ConditionFilter2(
+                    null, condParamToFilter,
+                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false);
+            Collection<ConditionFilter2> condFilters = Collections.singletonList(condFilter);
+
+            MultiSpeciesCallService callService = serviceFactory.getMultiSpeciesCallService();
+            List<SimilarityExpressionCall2> results = callService.loadSimilarityExpressionCalls2(
+                    lcaId, geneFilters, condFilters, false, SummaryQuality.SILVER)
+                    .collect(Collectors.toList());
+
+            assertNotNull("Results should not be null", results);
+
+            Set<Integer> speciesInResults = results.stream()
+                    .map(sec -> sec.getGene().getSpecies().getId())
+                    .collect(Collectors.toSet());
+
+            assertTrue("Results should include species from at least 2 gene filters",
+                    speciesInResults.size() >= 2);
+
             for (SimilarityExpressionCall2 sec : results) {
                 assertNotNull(sec.getGene());
                 assertNotNull(sec.getMultiSpeciesCondition());

@@ -1062,6 +1062,12 @@ public class MultiSpeciesCallService extends CommonService {
             allCellTypeIds = Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID);
         }
 
+        // Use user's filter IDs for loading when provided; otherwise use similarity-derived IDs.
+        // AnatEntitySimilarity may not include high-level terms (e.g. UBERON:0000468 "multicellular organism")
+        // that exist in expression data, so loading with only similarity-derived IDs can miss data.
+        Set<String> anatIdsForLoad = !filterAnatEntityIds.isEmpty() ? filterAnatEntityIds : allAnatEntityIds;
+        Set<String> cellIdsForLoad = !filterCellTypeIds.isEmpty() ? filterCellTypeIds : allCellTypeIds;
+
         SummaryQuality qualToUse = summaryQuality != null ? summaryQuality : SummaryQuality.BRONZE;
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, qualToUse);
@@ -1071,8 +1077,8 @@ public class MultiSpeciesCallService extends CommonService {
         Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
         condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
                 new ComposedFilterIds<>(List.of(
-                        new FilterIds<>(allAnatEntityIds, false),
-                        new FilterIds<>(allCellTypeIds, false))));
+                        new FilterIds<>(anatIdsForLoad, false),
+                        new FilterIds<>(cellIdsForLoad, false))));
 
         ExpressionCallService exprCallService = this.getServiceFactory().getExpressionCallService();
 
@@ -1089,8 +1095,8 @@ public class MultiSpeciesCallService extends CommonService {
                     Collections.singleton(speciesCondFilter),
                     null,
                     Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
-                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
-                    true);
+                    ConditionParameter.noneOf(),
+                    null);
             org.bgee.model.expressiondata.call.ExpressionCallLoader loader =
                     exprCallService.loadCallLoader(exprCallFilter);
             List<ExpressionCall2> speciesCalls = loader.loadData(0L,

@@ -695,7 +695,7 @@ public class InsertTaxa extends MySQLDAOUser {
 
             speciesTOs.add(new SpeciesTO(speciesId, commonName, genus, speciesName, displayOrder,
                     parentTaxonId, genomeFilePath, genomeVersion, genomeAssemblyXRef, dataSourceId,
-                    genomeSpeciesId, devOntologyXRef));
+                    genomeSpeciesId, false, devOntologyXRef));
         }
         if (speciesTOs.size() != allSpecies.size()) {
             throw log.throwing(new IllegalStateException("The taxonomy ontology " +

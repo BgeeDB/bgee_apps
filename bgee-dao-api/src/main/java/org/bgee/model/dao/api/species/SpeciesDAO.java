@@ -39,11 +39,12 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID("speciesId"), COMMON_NAME("name"), GENUS("genus"), SPECIES_NAME("speciesName"),
-        PARENT_TAXON_ID("parentTaxonId"), GENOME_FILE_PATH("genomeFilePath"),
-        GENOME_VERSION("genomeVersion"), GENOME_ASSEMBLY_XREF("getGenomeAssemblyXRef"),
-        DATA_SOURCE_ID("dataSourceId"), GENOME_SPECIES_ID("genomeSpeciesId"),
-        DEV_ONTOLOGY_XREF("devOntologyXRef"), DISPLAY_ORDER("speciesDisplayOrder");
+        ID("speciesId"), GENUS("genus"), SPECIES_NAME("speciesName"), COMMON_NAME("name"),
+        DISPLAY_ORDER("speciesDisplayOrder"), PARENT_TAXON_ID("parentTaxonId"),
+        GENOME_FILE_PATH("genomeFilePath"), GENOME_VERSION("genomeVersion"),
+        GENOME_ASSEMBLY_XREF("getGenomeAssemblyXRef"), DATA_SOURCE_ID("dataSourceId"),
+        GENOME_SPECIES_ID("genomeSpeciesId"), HIDDEN_SPECIES("hiddenSpecies"),
+        DEV_ONTOLOGY_XREF("devOntologyXRef");
 
         /**
          * A {@code String} that is the corresponding field name in {@code RelationTO} class.
@@ -191,6 +192,12 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         private final String genomeAssemblyXRef;
 
         /**
+         * A {@code Boolean} used to define if the species is hidden. A hidden species is
+         * a species inserted in the database but not taken into account by the API.
+         */
+        private final Boolean hiddenSpecies;
+
+        /**
          * @see #getDataSourceId()
          */
         private final Integer dataSourceId;
@@ -237,7 +244,8 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          */
         public SpeciesTO(Integer id, String commonName, String genus, String speciesName, 
                 Integer displayOrder, Integer parentTaxonId, String genomeFilePath, String genomeVersion, 
-                String genomeAssemblyXRef, Integer dataSourceId, Integer genomeSpeciesId, String devOntologyXRef) {
+                String genomeAssemblyXRef, Integer dataSourceId, Integer genomeSpeciesId, Boolean hiddenSpecies,
+                String devOntologyXRef) {
             super(id, commonName);
             
             this.genus = genus;
@@ -249,6 +257,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             this.genomeAssemblyXRef = genomeAssemblyXRef;
             this.dataSourceId = dataSourceId;
             this.genomeSpeciesId = genomeSpeciesId;
+            this.hiddenSpecies = hiddenSpecies;
             this.devOntologyXRef = devOntologyXRef;
         }
         
@@ -336,6 +345,10 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             return genomeSpeciesId;
         }
 
+        public Boolean getHiddenSpecies() {
+            return hiddenSpecies;
+        }
+
         public String getDevOntologyXRef() {
             return devOntologyXRef;
         }
@@ -344,8 +357,9 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         public String toString() {
             return "SpeciesTO [genus=" + genus + ", speciesName=" + speciesName + ", displayOrder=" + displayOrder
                     + ", parentTaxonId=" + parentTaxonId + ", genomeFilePath=" + genomeFilePath + ", genomeVersion="
-                    + genomeVersion + ", genomeAssemblyXRef=" + genomeAssemblyXRef + ", dataSourceId=" + dataSourceId
-                    + ", genomeSpeciesId=" + genomeSpeciesId + ", devOntologyXRef=" + devOntologyXRef + "]";
+                    + genomeVersion + ", genomeAssemblyXRef=" + genomeAssemblyXRef + ", hiddenSpecies=" + hiddenSpecies
+                    + ", dataSourceId=" + dataSourceId + ", genomeSpeciesId=" + genomeSpeciesId + ", devOntologyXRef="
+                    + devOntologyXRef + "]";
         }
 
     }

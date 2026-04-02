@@ -1690,7 +1690,9 @@ public class CommandData extends CommandParent {
                 EXPR_CALL_RESULT_CACHE_DEF,
                 cacheKey,
 //                () -> callLoader.loadData(offset, limit),
-                () -> callLoader.loadDataOnTheFly().values().stream().collect(Collectors.toList()),
+                () -> callLoader.loadDataOnTheFly().values().stream()
+                        .flatMap(Set::stream)
+                        .collect(Collectors.toList()),
                 COMPUTE_TIME_RESULT_CACHE_MS);
         return log.traceExit(results);
     }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -429,7 +430,9 @@ public class FrontController extends HttpServlet {
         ConditionGraphCacheService cacheManager = new ConditionGraphCacheService(serviceFactoryProvider.get());
 
         // Fetch all species IDs from DB
-        List<Integer> speciesIds = List.of(7227);
+        List<Integer> speciesIds = this.serviceFactoryProvider.get().getSpeciesService()
+                .loadSpeciesByIds(null, false).stream()
+                .map(s -> s.getId()).collect(Collectors.toList());
 
         log.info("Loading condition graph cache for {} species...", speciesIds.size());
         cacheManager.loadAllSpeciesGraphs(speciesIds);

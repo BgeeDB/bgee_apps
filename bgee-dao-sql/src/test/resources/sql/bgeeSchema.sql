@@ -26,42 +26,41 @@ ALTER DATABASE CHARACTER SET utf8 COLLATE utf8_general_ci;
 -- GENERAL
 -- ****************************************************
 create table author (
-    authorId smallInt unsigned not null,
-    authorName varchar(255) not null COMMENT 'Bgee team author names'
+    authorId   smallInt unsigned not null,
+    authorName varchar(255)      not null COMMENT 'Bgee team author names'
 ) engine = innodb;
 
 create table dataSource (
-    dataSourceId smallInt unsigned not null,
-    dataSourceName varchar(255) not null COMMENT 'Data source name',
-    XRefUrl varchar(255) not null default '' COMMENT 'URL for cross-references to data sources',
+    dataSourceId          smallInt unsigned not null,
+    dataSourceName        varchar(55)       not null             COMMENT 'Data source name',
+    XRefUrl               varchar(255)      not null default ''  COMMENT 'URL for cross-references to data sources',
 -- path to experiment for expression data sources (ArrayExpress, GEO, NCBI, in situ databases, ...)
 -- parameters such as experimentId are defined by the syntax [experimentId] for instance
-    experimentUrl varchar(255) not null default '' COMMENT 'URL to experiment for expression data sources',
--- path to in situ evidence for in situ databases,
--- to Affymetrix chips for affymetrix data
+    experimentUrl         varchar(100)      not null default ''  COMMENT 'URL to experiment for expression data sources',
+-- path to in situ evidence for in situ databases
 -- parameters such as experimentId are defined by the syntax [experimentId] for instance
-    evidenceUrl varchar(255) not null default '' COMMENT 'URL to evidence for expression data sources',
+    evidenceUrl           varchar(100)      not null default ''  COMMENT 'URL to evidence for expression data sources',
 -- url to the home page of the ressource
-    baseUrl varchar(255) not null default '' COMMENT 'URL to the home page of data sources',
-    releaseDate date null COMMENT 'Date of data source used',
+    baseUrl               varchar(100)      not null default ''  COMMENT 'URL to the home page of data sources',
+    releaseDate           date                  null             COMMENT 'Date of data source used',
 -- e.g.: Ensembl 87, git version xxx
-    releaseVersion varchar(255) not null default '' COMMENT 'Version of data source used',
-    dataSourceDescription TEXT COMMENT 'Description of data source',
+    releaseVersion        varchar(35)       not null default ''  COMMENT 'Version of data source used',
+    dataSourceDescription varchar(200)                           COMMENT 'Description of data source',
 -- to define if this dataSource should be displayed on the page listing data sources
-    toDisplay boolean not null default 0 COMMENT 'Display this data source in listing data source page?',
+    toDisplay             boolean           not null default 0   COMMENT 'Display this data source in listing data source page?',
 -- a cat to organize the display
-    category enum('', 'Genomics database', 'Proteomics database',
-        'In situ data source', 'Affymetrix data source', 'EST data source', 'RNA-Seq data source',
-        'Ontology') COMMENT 'Data source category to organize the display',
+    category              enum('', 'Genomics database', 'Proteomics database',
+                               'In situ data source', 'RNA-Seq data source',
+                               'Single-cell RNA-Seq data source', 'Ontology') COMMENT 'Data source category to organize the display',
 -- to organize the display. Default value is the highest value, so that this field is the last to be displayed
-    displayOrder tinyint unsigned not null default 255 COMMENT 'Data source display ordering'
+    displayOrder          tinyint unsigned  not null default 255 COMMENT 'Data source display ordering'
 ) engine = innodb;
 
 create table dataSourceToSpecies (
-    dataSourceId smallInt unsigned not null COMMENT 'Data source id',
-    speciesId mediumint unsigned not null COMMENT 'NCBI species taxon id',
-    dataType enum('affymetrix', 'est', 'in situ', 'rna-seq') not null COMMENT 'Data type',
-    infoType enum('data', 'annotation') not null COMMENT 'Information type'
+    dataSourceId smallInt  unsigned  not null COMMENT 'Data source id',
+    speciesId    mediumint unsigned  not null COMMENT 'NCBI species taxon id',
+    dataType     enum('in situ', 'rna-seq', 'single-cell RNA-Seq') not null COMMENT 'Data type',
+    infoType     enum('data', 'annotation') not null COMMENT 'Information type'
 ) engine = innodb;
 
 create table keyword (
@@ -125,6 +124,7 @@ create table species (
 -- (for instance, chimp genome for bonobo species).
     genomeFilePath varchar(100) not null COMMENT 'GTF annotation path used to map this species in Ensembl FTP',
     genomeVersion varchar(50) not null,
+    genomeAssemblyXRef varchar(250) not null default '' COMMENT 'XRef to the genome assembly',
     dataSourceId smallInt unsigned not null COMMENT 'source for genome information',
 -- ID of the species whose the genome was used for this species. This is used
 -- when a genome is not in Ensembl. For instance, for bonobo (ID 9597), we use the chimp
@@ -132,7 +132,8 @@ create table species (
 -- We don't use a foreign key constraint here, because maybe the species whose the genome
 -- was used does not have any data in Bgee, and thus is not in the taxon table.
 -- If the correct genome of the species was used, the value of this field is 0.
-    genomeSpeciesId mediumint unsigned not null default 0 COMMENT 'NCBI species taxon id used for mapping (0 if the same species)'
+    genomeSpeciesId mediumint unsigned not null default 0 COMMENT 'NCBI species taxon id used for mapping (0 if the same species)',
+    devOntologyXRef varchar(250) not null default '' COMMENT 'XRef to the developmental stage ontology of that species'
 ) engine = innodb;
 
 -- which sex values are permitted for each species.
@@ -283,6 +284,27 @@ create table anatEntityNameSynonym (
     anatEntityNameSynonym varchar(255) not null COMMENT 'Anatomical entity name synonym'
 ) engine = innodb;
 
+-- Note:
+-- * query to obtain list of tissues:
+-- we select the list of terms that are descendants of 'UBERON:0001062 anatomical entity',
+-- and that are not part of the cell type graph. Indeed, a term such as
+-- 'CL:0002252 epithelial cell of esophagus' is both a cell type,
+-- and part of esophagus. We don't want to retrieve those. The query is:
+-- ```
+-- select distinct t1.anatEntityId from anatEntity as t1
+-- inner join anatEntityRelation as t2 on t1.anatEntityId = t2.anatEntitySourceId
+--     and t2.anatEntityTargetId = 'UBERON:0001062' and t2.relationType = 'is_a part_of'
+-- left outer join anatEntityRelation as t3 on t1.anatEntityId = t3.anatEntitySourceId
+--     and t3.anatEntityTargetId = 'GO:0005575' and t3.relationType = 'is_a part_of'
+-- where t3.anatEntitySourceId is null;
+-- ```
+-- * query to obtain list of cell types:
+-- simply retrieve the descendants of 'GO:0005575 cellular component'. The query is:
+-- ```
+-- select distinct t1.anatEntityId from anatEntity as t1
+-- inner join anatEntityRelation as t2 on t1.anatEntityId = t2.anatEntitySourceId
+-- where t2.anatEntityTargetId = 'GO:0005575' and relationType = 'is_a part_of';
+-- ```
 create table anatEntityRelation (
     anatEntityRelationId int unsigned not null,
     anatEntitySourceId varchar(20) not null COMMENT 'Anatomical entity source id',
@@ -417,29 +439,6 @@ create table rawSimilarityAnnotation (
 -- ****************************************************
 -- GENE AND TRANSCRIPT INFO
 -- ****************************************************
--- Hierarchical Orthologous Groups from OMA.
-
--- All the nodes of a particular group are stored in a nested set model.
--- A node in the tree could be a speciation node or a duplication node.
--- The OMANodeLeftBound and OMANodeRightBound correspond to the left and right bound IDs of the nested set model.
--- Note: to use the nested set model, we often need to join this table to itself,
--- using a range condition on left and right bounds for the join clause; sadly,
--- there is a performance issue for such queries in MySQL, see
--- http://www.percona.com/blog/2010/05/17/joining-on-range-wrong/
-create table OMAHierarchicalGroup (
-    -- A unique ID for each node inside an OMA Hierarchical Orthologous Group.
-    -- Auto generated by us, unique over all groups (use as primary key)
-    OMANodeId int unsigned not null COMMENT 'OMA Hierarchical Orthologous node id',
-    -- The ID of Hierarchical Orthologous Group as provided by OMA.
-    -- Only for Xref purpose.
-    OMAGroupId varchar(255) not null COMMENT 'OMA Hierarchical Orthologous Group id',
-    -- Bounds generated over all groups.
-    OMANodeLeftBound int unsigned not null COMMENT 'OMA left bound id in the nested set model',
-    OMANodeRightBound int unsigned not null COMMENT 'OMA right bound id in the nested set model',
-    -- The ID corresponding to the level of taxonomy as in NCBI.
-    -- Some nodes have no taxonomy ID because they correspond to a duplication node (paralogy group).
-    taxonId mediumint unsigned COMMENT 'NCBI taxon id corresponding to the level of taxonomy'
-) engine = innodb;
 
 create table geneOntologyTerm (
     goId char(10) not null COMMENT 'Gene Ontology id',
@@ -481,21 +480,19 @@ create table geneParalogs (
 create table gene (
 -- warning, maybe this bgeeGeneId will need to be changed to an 'int' when we reach around 200 species
     bgeeGeneId mediumint unsigned not null COMMENT 'Numeric internal gene ID used for improving performances',
-    geneId varchar(20) not null COMMENT 'Real gene id',
+    geneId varchar(64) not null COMMENT 'Real gene id',
     geneName varchar(255) not null default '' COMMENT 'Gene name',
     geneDescription TEXT COMMENT 'Gene description',
     speciesId mediumint unsigned not null COMMENT 'NCBI species taxon id this gene belongs to',
 -- TODO: check if we should add 'not null' to geneBioTypeId.
 -- This depends on pipeline. If we update biotype after insertion of gene, it's not possible to set 'not null'.
     geneBioTypeId smallint unsigned COMMENT 'Gene BioType id (type of gene)',
--- can be null if the gene does not belong to a hierarchical group
--- a gene can belong to one and only one group
--- OMA parent node ID instead of OMA node ID to avoid create group for all genes
-    OMAParentNodeId int unsigned default null COMMENT 'OMA Hierarchical Orthologous parent node id',
 -- defines whether the gene ID is present in Ensembl. For some species, they are not
 -- (for instance, bonobo; we use chimp genome)
     ensemblGene boolean not null default 1 COMMENT 'Is the gene in Ensembl (default) (= 1), if not (= 0)',
-    geneMappedToGeneIdCount tinyint unsigned not null default 1 COMMENT 'number of genes in the Bgee database with the same gene ID. In Bgee, for some species with no genome available, we use the genome of a closely-related species, such as chimpanzee genome for analyzing bonobo data. For this reason, a same gene ID can be mapped to several species in Bgee. The value returned here is equal to 1 when the gene ID is uniquely used in the Bgee database.'
+    seqRegionName varchar(255) not null default '' COMMENT 'Chromosomal or assembly name where this gene is',
+    geneMappedToGeneIdCount tinyint unsigned not null default 1 COMMENT 'number of genes in the Bgee database with the same Ensembl gene ID. In Bgee, for some species with no genome available, we use the genome of a closely-related species, such as chimpanzee genome for analyzing bonobo data. For this reason, a same Ensembl gene ID can be mapped to several species in Bgee. The value returned here is equal to 1 when the Ensembl gene ID is uniquely used in the Bgee database.',
+    expressionSummary varchar(255) not null default '' COMMENT 'Sentence generated from propagated expression calls that summarizes the expression for the anatomical entity and the celltype'
 ) engine = innodb;
 
 create table geneNameSynonym (
@@ -542,11 +539,12 @@ create table transcript (
 -- ****************************************************
 -- 'condition' is a reserved keyword in MySQL, we can't use it as table name
 create table cond (
-    conditionId           mediumint unsigned not null COMMENT 'Internal condition ID. Each condition is species-specific',
-    exprMappedConditionId mediumint unsigned not null COMMENT 'the condition ID that should be used for insertion into the expression table: too-granular conditions (e.g., 43 yo human stage, or sexInferred=1) are mapped to less granular conditions for summary. Equal to conditionId if condition is not too granular.',
-    anatEntityId          varchar(20)  not null       COMMENT 'Uberon anatomical entity ID',
-    stageId               varchar(20)  not null       COMMENT 'Uberon stage ID',
-    speciesId             mediumint unsigned not null COMMENT 'NCBI species taxon ID',
+    conditionId           mediumint unsigned not null      COMMENT 'Internal condition ID. Each condition is species-specific',
+    exprMappedConditionId mediumint unsigned not null      COMMENT 'the condition ID that should be used for insertion into the expression table: too-granular conditions (e.g., 43 yo human stage, or sexInferred=1) are mapped to less granular conditions for summary. Equal to conditionId if condition is not too granular.',
+    anatEntityId          varchar(20)        not null      COMMENT 'Uberon anatomical entity ID',
+    cellTypeId            varchar(20)        default null  COMMENT 'A second uberon anatomical entity ID used to manage composition of anatomical entities. Used only for single cell data for postcomposition of anatomical entity ID and cell type ID',
+    stageId               varchar(20)        not null      COMMENT 'Uberon stage ID',
+    speciesId             mediumint unsigned not null      COMMENT 'NCBI species taxon ID',
 -- NA: not available from source information
 -- not annotated: information not captured by Bgee
 -- If an ENUM column is declared NOT NULL, its default value is the first element of the list
@@ -566,18 +564,23 @@ create table remapCond (
     remappedConditionId mediumint unsigned not null
 ) engine = innodb COMMENT 'This table is used as an intermediary step for condition remapping, see remap_conditions.pl';
 
+create table remapExpression (
+    incorrectExpressionId int unsigned not null,
+    remappedExpressionId int unsigned not null
+) engine = innodb COMMENT 'This table is used as an intermediary step for condition remapping, see remap_conditions.sql';
+
 create table globalCond (
     globalConditionId mediumint unsigned not null,
     anatEntityId          varchar(20)  COMMENT 'Uberon anatomical entity ID. Can be null in this table if this condition aggregates data according to other condition parameters (e.g., grouping all data in a same stage whatever the organ is).',
+    cellTypeId            varchar(20)  default null COMMENT 'A second uberon anatomical entity ID used to manage composition of anatomical entities. Used only for single cell data for postcomposition of anatomical entity ID and cell type ID',
     stageId               varchar(20)  COMMENT 'Uberon stage ID. Can be null in this table if this condition aggregates data according to other condition parameters (e.g., grouping all data in a same organ whatever the dev. stage is).',
     speciesId             mediumint unsigned not null COMMENT 'NCBI species taxon ID',
 -- NA: not available from source information
 -- not annotated: information not captured by Bgee
 -- If an ENUM column is declared NOT NULL, its default value is the first element of the list
--- In this table, only 'not annotated' is used to replace 'NA', as for conditions
--- used in expression table
-    sex enum('not annotated', 'hermaphrodite', 'female', 'male', 'mixed')
-    COMMENT 'Sex information. NA: not available from source information; not annotated: not used in this table, since all conditions used in the expression tables have "NA" replaced with "not annotated". Can be null in this table if this condition aggregates data according to other condition parameters (e.g., grouping all data in a same organ whatever the sex is).',
+-- In this table, only 'any' is used to replace 'not annotated', 'NA', 'mixed'
+-- and also represents the propagation of calls along the sex 'ontology'.
+    sex enum('any', 'hermaphrodite', 'female', 'male'),
 -- For now, strains are captured as free-text format, only 4 term are "standardized":
 -- 'NA', 'not annotated', 'wild-type', 'confidential_restricted_data'.
 -- In this table, only 'wild-type' is used to replace 'NA', 'not annotated', and
@@ -587,211 +590,30 @@ create table globalCond (
 
 -- ** RANKS **
 -- max ranks in each data type and condition, notably used to allow normalization
--- between data types and conditions. For EST and in situ data, they are also used for computation
--- of weighted mean between data types: for these data types, because we pool together all data
+-- between data types and conditions. For in situ data, they are also used for computation
+-- of weighted mean between data types: for these data type, because we pool together all data
 -- in a same condition, instead of computing a mean between samples, and because we use "dense ranking"
 -- instead of fractional ranking (so that the max rank is equal to the number of distinct ranks),
 -- it is irrelevant to consider a sum of the number of distinct ranks in each sample for weighting
--- the mean, as for Affymetrix and EST data.
+-- the mean.
 -- Note: these values are the same for all genes in a condition-species, this is why they are stored in this table.
-    affymetrixMaxRank decimal(9,2) unsigned,
-    rnaSeqMaxRank decimal(9,2) unsigned,
-    estMaxRank decimal(9,2) unsigned,
-    inSituMaxRank decimal(9,2) unsigned,
+    bulkMaxRank decimal(9,2) unsigned,
+    singleCellMaxRank decimal(9,2) unsigned,
+    inSituMaxRank decimal(9,2) unsigned
+) engine = innodb COMMENT 'This table includes "real" conditions used in the raw expression table, but mostly conditions resulting from the propagation of expression calls. It results from the computation of propagated calls according to different condition parameters combination (e.g., grouping all data in a same anat. entity, or all data in a same anat. entity - stage, or data in anat. entity - sex). This is why the fields anatEntityId, stageId, sex, strain, can be null in this table (but not all of them at the same time).';
 
-    affymetrixGlobalMaxRank decimal(9,2) unsigned COMMENT 'This max rank is computed by taking into account all data in this condition, but also in all child conditions.',
-    rnaSeqGlobalMaxRank decimal(9,2) unsigned COMMENT 'This max rank is computed by taking into account all data in this condition, but also in all child conditions.',
-    estGlobalMaxRank decimal(9,2) unsigned COMMENT 'This max rank is computed by taking into account all data in this condition, but also in all child conditions.',
-    inSituGlobalMaxRank decimal(9,2) unsigned COMMENT 'This max rank is computed by taking into account all data in this condition, but also in all child conditions.'
-) engine = innodb COMMENT 'This table contains all condition used in the globalExpression table. It thus includes "real" conditions used in the raw expression table, but mostly conditions resulting from the propagation of expression calls in the globalExpression table. It results from the computation of propagated calls according to different condition parameters combination (e.g., grouping all data in a same anat. entity, or all data in a same anat. entity - stage, or data in anat. entity - sex). This is why the fields anatEntityId, stageId, sex, strain, can be null in this table (but not all of them at the same time).';
+CREATE TABLE globalCondRelation (
+    sourceGlobalConditionId mediumint unsigned NOT NULL,
+    targetGlobalConditionId mediumint unsigned NOT NULL
+) engine = innodb COMMENT 'This table stores the relations between global conditions, allowing to reconstruct the global condition graph used for call propagation. A relation exists between a source global condition and a target global condition, when the target is a parent of the source in the global condition graph (e.g., when the anatEntityId of the target is a parent of the anatEntityId of the source in the anatomical entity ontology).';
 
-create table globalCondToCond (
+create table condToSelfGlobalCond (
+    conditionId mediumint unsigned not null,
     globalConditionId mediumint unsigned not null,
-    conditionId mediumint unsigned not null,
-    conditionRelationOrigin enum('self', 'descendant', 'parent') not null COMMENT 'Define whether the data from the raw conditions used for production of global calls in this global condition comes from raw conditions mapped to the globalCondition itself, a descendant global condition, or a parent global condition.'
+    -- subsetMask indicates which condition parameters were used to map an observed condition to the corresponding globalCondition. For instance, a subset mask of 3 (binary 11000) indicates that only anatEntityId and stageId were used to define the globalCondition for this mapping. A subset Mask of 7 (binary 11100) indicates that anatEntityId, stageId and cellTypeId were used, and so on. It is really useful to retrieve all observed global condition for a given subset of condition parameters and then be able to subset the condition graph only for these global conditions and their parents.
+    subsetMask tinyint unsigned NOT NULL COMMENT '5-bit mask, values 1..31. bit 1: anatEntityId, bit 2: stageId, bit 3: celltypeId, bit 4: sex, bit 5: strain'
 ) engine = innodb
-comment = 'this table allows to link globalConditions to the raw conditions that were aggregated to produce global expression calls in the globalExpression table.';
-
--- ****************************************************
--- RAW EST DATA
--- ****************************************************
-create table estLibrary (
-    estLibraryId varchar(50) not null,
-    estLibraryName varchar(255) not null,
-    estLibraryDescription text,
-    conditionId mediumint unsigned not null,
-    dataSourceId smallInt unsigned not null
-) engine = innodb;
-
-create table estLibraryToKeyword (
-    estLibraryId varchar(50) not null,
-    keywordId int unsigned not null
-) engine = innodb;
-
-create table expressedSequenceTag (
-    estId varchar(50) not null,
--- ESTs have two IDs in Unigene
-    estId2 varchar(50) not null default '',
-    estLibraryId varchar(50) not null,
-    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
-    UniGeneClusterId varchar(70) not null default '',
-    expressionId int unsigned,
--- Warning, qualities must be ordered, the index in the enum is used in many queries
-    estData enum('no data', 'poor quality', 'high quality') default 'no data'
-) engine = innodb;
-
-create table estLibraryExpression (
-    expressionId int unsigned not null,
-    estLibraryId varchar(50) not null,
-    estCount mediumint unsigned not null default 0
-        comment 'number of ESTs in this library mapped to the gene associated to this expressionId',
--- no 'callDirection' column for ESTs, only 'present' calls are generated from ESTs
-    estLibraryCallQuality enum('poor quality', 'high quality') not null
-        comment 'Inferred quality for this call based on this library (based on the number of ESTs mapped to gene, see Audic and Claverie 1997). Value "poor quality" instead of "low quality" for historical reasons.'
-) engine = innodb
-comment = 'This table stores information about expression calls produced from EST libraries, that is then used in Bgee to compute global summary expression calls and qualities. Only "present" calls are generated from ESTs (no "absent" calls).';
-
--- ****************************************************
--- RAW AFFYMETRIX DATA
--- ****************************************************
-create table microarrayExperiment (
-    microarrayExperimentId varchar(70) not null,
-    microarrayExperimentName varchar(255) not null default '',
-    microarrayExperimentDescription text,
-    dataSourceId smallInt unsigned not null
-) engine = innodb;
-
-create table microarrayExperimentToKeyword (
-    microarrayExperimentId varchar(70) not null,
-    keywordId int unsigned not null
-) engine = innodb;
-
-create table chipType (
-    chipTypeId varchar(70) not null,
-    chipTypeName varchar(255) not null,
-    cdfName varchar(255) not null,
-    isCompatible tinyint(1) not null default 1,
-    qualityScoreThreshold decimal(10, 2) unsigned not null default 0,
--- percentage of present probesets
--- 100.00
-    percentPresentThreshold decimal(5, 2) unsigned not null default 0,
-
--- this field is used for rank computations, and is set after all expression data insertion,
--- this is why null value is permitted.
-    chipTypeMaxRank decimal(9,2) unsigned COMMENT 'The max fractional rank in this chip type (see `rank` field in affymetrixProbeset table)'
-) engine = innodb;
-
--- this table represents mapping of affymetrix probesets in general,
--- not constrainted by the tables chipType and afymetrixProbeset
--- (that means for instance that you can insert in this table a mapping
--- for a probeset not present in the table affymetrixProbeset)
--- => so, NO foreign keys to the tables affymetrixProbeset and chipType.
--- moreover, the probeset mapping can be use for other tables
--- (deaAffymetrixProbesetGroups)
--- create table affymetrixProbesetMapping(
--- chipTypeId varchar(70) not null,
--- affymetrixProbesetId varchar(70) not null,
--- bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID'
--- ) engine = innodb;
-
-create table affymetrixChip (
--- affymetrixChipId are not unique (couple affymetrixChipId - microarrayExperimentId is)
--- then we need an internal ID to link to affymetrixProbeset
--- warning, SMALLINT UNSIGNED only allows for 65535 chips to be inserted (we have 12,996 as of Bgee 14)
-    bgeeAffymetrixChipId smallint unsigned not null,
-    affymetrixChipId varchar(255) not null,
-    microarrayExperimentId varchar(70) not null,
--- define only if CEL file available, normalization gcRMA, detection schuster
-    chipTypeId varchar(70),
-    scanDate varchar(70) not null default '',
--- An <code>enum</code> listing the different methods used ib Bgee
--- to normalize Affymetrix data:
--- * MAS5: normalization using the MAS5 software. Using
--- this naormalization usually means that only the processed MAS5 files
--- were available, otherwise another method would be used.
--- * RMA: normalization by RMA method.
--- * gcRMA: normalization by gcRMA method. This is the default
--- method in Bgee when raw data are available.
-    normalizationType enum('MAS5', 'RMA', 'gcRMA') not null,
--- An <code>enum</code> listing the different methods to generate expression calls
--- on Affymetrix chips:
--- * MAS5: expression calls from the MAS5 software. Such calls
--- are usually taken from a processed MAS5 file, and imply that the data
--- were also normalizd using MAS5.
--- * Schuster: Wilcoxon test on the signal of probesets
--- against a subset of weakly expressed probesets, to generate expression calls
--- (see https://www.ncbi.nlm.nih.gov/pubmed/17594492). Such calls usually implies
--- that raw data were available, and were normalized using gcRMA.
-    detectionType enum('MAS5', 'Schuster') not null,
-    conditionId mediumint unsigned not null,
--- arIQR_score Marta score
--- can be set to 0 if it is a MAS5 file
--- 99999999.99
-    qualityScore decimal(10, 2) unsigned not null default 0,
--- percentage of present probesets
--- 100.00
-    percentPresent decimal(5, 2) unsigned not null,
-
--- the following fields are used for rank computations, and are set after all expression data insertion,
--- this is why null value is permitted.
-    chipMaxRank decimal(9,2) unsigned COMMENT 'The max fractional rank in this chip (see `rank` field in affymetrixProbeset table)',
-    chipDistinctRankCount mediumint unsigned COMMENT 'The count of distinct rank in this chip (see `rank` field in affymetrixProbeset table, used for weighted mean rank computations)'
-) engine = innodb;
-
-create table affymetrixProbeset (
-    affymetrixProbesetId varchar(70) not null,
-    bgeeAffymetrixChipId smallint unsigned not null,
-    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
-    normalizedSignalIntensity decimal(13,5) unsigned not null default 0,
--- Warning, flags must be ordered, the index in the enum is used in many queries
-    detectionFlag enum('undefined', 'absent', 'marginal', 'present') not null default 'undefined',
-    expressionId int unsigned,
--- rank is not "not null" because we update this information afterwards.
--- note that this corresponds to the rank of the gene, not of the probeset
--- (so, all probesets mapped to a same gene have the same rank, based on its highest signal intensity)
-    rank decimal(9, 2) unsigned,
--- Warning, qualities must be ordered, the index in the enum is used in many queries
-    affymetrixData enum('no data', 'poor quality', 'high quality') not null default 'no data',
--- When expressionId is null, the result is not used for the summary of expression.
--- Reasons are:
--- * pre filtering: Probesets always seen as "absent" or "marginal" over the whole dataset are removed
--- * noExpression conflict: a "noExpression" result has been removed because of expression in a sub-condition.
--- Note: as of Bgee 14, we haven't remove this reason for exclusion, but we don't use it for now,
--- as we might want to take into account noExpression in parent conditions for generating
--- a global expression calls, where there is expression in a sub-condition.
--- Maybe we'll discard them again, but I don't think so, it'll allow to present absolutely
--- all data available about a call to users.
--- * undefined: only 'undefined' calls have been seen
---
--- Note that, as of Bgee 14, 2 reasons for exclusion were removed: 'bronze quality' and 'absent low quality'.
--- 'bronze quality' exclusion was removed, because now we always propagate expression evidence,
--- so a 'bronze quality' call can provide additional evidence to a parent structure.
--- 'bronze quality' used to be: for a gene/condition, no "present high" and mix of "present low" and "absent".
--- 'absent low quality' was removed, because we now use a same consistent mechanism for present/absent calls,
--- taking also into account 'absent low quality' evidence.
--- 'absent low quality' used to be: probesets always "absent" for this gene/condition,
--- but only seen by MAS5 (that we do not trust = "low quality" - "noExpression" should always be "high quality").
-    reasonForExclusion enum('not excluded', 'pre-filtering',
-        'noExpression conflict', 'undefined') not null default 'not excluded'
-) engine = innodb;
-
-create table microarrayExperimentExpression (
-    expressionId int unsigned not null,
-    microarrayExperimentId varchar(70) not null,
-    presentHighMicroarrayChipCount smallint unsigned not null default 0
-        comment 'number of chips in this experiment that produced this call as present high quality',
-    presentLowMicroarrayChipCount  smallint unsigned not null default 0
-        comment 'number of chips in this experiment that produced this call as present low quality',
-    absentHighMicroarrayChipCount  smallint unsigned not null default 0
-        comment 'number of chips in this experiment that produced this call as absent high quality',
-    absentLowMicroarrayChipCount   smallint unsigned not null default 0
-        comment 'number of chips in this experiment that produced this call as absent low quality',
-    microarrayExperimentCallDirection enum('present', 'absent') not null
-        comment 'Inferred direction for this call based on this experiment ("present" chips always win over "absent" chips)',
-    microarrayExperimentCallQuality enum('poor quality', 'high quality') not null
-        comment 'Inferred quality for this call based on this experiment (from all chips, "present high" > "present low" > "absent high" > "absent low"). Value "poor quality" instead of "low quality" for historical reasons.'
-) engine = innodb
-comment = 'This table stores information about expression calls produced from microarray experiments, that is then used in Bgee to compute global summary expression calls and qualities.';
+comment = 'this table allows to link cond to their self globalCondition depending on the subset of condition parameters used to define the globalCondition';
 
 -- ****************************************************
 -- IN SITU HYBRIDIZATION DATA
@@ -836,6 +658,7 @@ create table inSituSpot (
     expressionId int unsigned,
 -- Warning, qualities must be ordered, the index in the enum is used in many queries
     inSituData enum('no data', 'poor quality', 'high quality') default 'no data',
+    pValue decimal(31, 30) unsigned default null,
 -- When expressionId is null, the result is not used for the summary of expression.
 -- Reasons are:
 -- * pre filtering: Probesets always seen as "absent" or "marginal" over the whole dataset are removed
@@ -855,8 +678,7 @@ create table inSituSpot (
 -- taking also into account 'absent low quality' evidence.
 -- 'absent low quality' used to be: probesets always "absent" for this gene/condition,
 -- but only seen by MAS5 (that we do not trust = "low quality" - "noExpression" should always be "high quality").
-    reasonForExclusion enum('not excluded', 'pre-filtering',
-        'noExpression conflict', 'undefined') not null default 'not excluded'
+    reasonForExclusion enum('not excluded', 'pre-filtering', 'undefined') not null default 'not excluded'
 ) engine = innodb;
 
 create table inSituExperimentExpression (
@@ -877,102 +699,30 @@ create table inSituExperimentExpression (
 ) engine = innodb
 comment = 'This table stores information about expression calls produced from in situ hybridization experiments, that is then used in Bgee to compute global summary expression calls and qualities.';
 
--- ****************************************************
--- RNA-Seq DATA
--- ****************************************************
-create table rnaSeqExperiment (
--- primary exp ID, from GEO, patterns GSExxx
-    rnaSeqExperimentId varchar(70) not null,
-    rnaSeqExperimentName varchar(255) not null default '',
-    rnaSeqExperimentDescription text,
-    dataSourceId smallInt unsigned not null
-) engine = innodb;
-
-create table rnaSeqExperimentToKeyword (
-    rnaSeqExperimentId varchar(70) not null,
-    keywordId int unsigned not null
-) engine = innodb;
-
-create table rnaSeqPlatform (
-    rnaSeqPlatformId varchar(255) not null,
-    rnaSeqPlatformDescription text
-) engine = innodb;
-
--- corresponds to one sample
--- uses to produce several runs
-create table rnaSeqLibrary (
--- primary ID, from GEO, pattern GSMxxx
-    rnaSeqLibraryId varchar(70) not null,
-    rnaSeqExperimentId varchar(70) not null,
-    rnaSeqPlatformId varchar(255) not null,
-    conditionId mediumint unsigned not null,
--- TMM normalization factor
-    tmmFactor decimal(8, 6) not null default 1.0,
--- FPKM threshold to consider a gene as expressed
-    fpkmThreshold decimal(16, 6) not null,
--- TPM threshold to consider a gene as expressed
-    tpmThreshold decimal(16, 6) not null,
-    allGenesPercentPresent decimal(5, 2) unsigned not null default 0,
-    proteinCodingGenesPercentPresent decimal(5, 2) unsigned not null default 0,
-    intergenicRegionsPercentPresent decimal(5, 2) unsigned not null default 0,
-    thresholdRatioIntergenicCodingPercent decimal(5, 2) unsigned not null default 0
-            COMMENT 'Proportion intergenic/coding region used to define the threshold to consider a gene as expressed (should always be 5%, but some libraries do not allow to reach this value)',
--- total number of reads in library, including those not mapped.
--- In case of paired-end libraries, it's the number of pairs of reads;
--- In case of single read, it's the total number of reads
-    allReadsCount bigint unsigned not null default 0,
--- total number of reads in library that were mapped to anything.
--- if it is not a paired-end library, this number is equal to leftMappedReadsCount
-    mappedReadsCount bigint unsigned not null default 0,
--- a library is an assembly of different runs, and the runs can have different read lengths,
--- so we store the min and max read lengths
-    minReadLength int unsigned not null default 0,
-    maxReadLength int unsigned not null default 0,
--- Is the library built using paired end?
--- NA: info not used for pseudo-mapping. Default value in an enum is the first one.
-    libraryType enum('NA', 'single', 'paired') not null,
-    libraryOrientation enum('NA', 'forward', 'reverse', 'unstranded') not null,
-
--- the following fields are used for rank computations, and are set after all expression data insertion,
--- this is why null value is permitted.
-    rnaSeqLibraryAnnotatedSampleMaxRank decimal(9,2) unsigned COMMENT 'The max fractional rank in this library (see `rank` field in rnaSeqResult table)',
-    rnaSeqLibraryAnnotatedSampleDistinctRankCount mediumint unsigned COMMENT 'The count of distinct rank in this library (see `rank` field in rnaSeqResult table, used for weighted mean rank computations)'
-) engine = innodb;
-
--- Store the information of runs used, pool together to generate the results
--- for a given library.
-create table rnaSeqRun (
--- same ID in GEO and SRA, pattern SRR...
-    rnaSeqRunId varchar(70) not null,
-    rnaSeqLibraryId varchar(70) not null
-) engine = innodb;
-
--- We sometimes discard some runs associated to a library, because of low mappability.
--- We keep track of these discarded runs in this table.
--- UPDATE Bgee 14: for pseudo-mapping using Kallisto, runs are pooled, so we can only exclude libraries,
--- not specific runs.
-create table rnaSeqLibraryDiscarded (
-    rnaSeqLibraryId varchar(70) not null
-) engine = innodb;
-
--- This table contains TPM/RPKM/read count values for each gene for each library
--- and link them to an expressionId
-create table rnaSeqResult (
-    rnaSeqLibraryId varchar(70) not null,
+-- this table contains counts and abundance level for each gene at the level of an annotated
+-- sample. Each pair of bgeeGeneId and rnaSeqLibraryAnnotatedSampleId is unique.
+-- * for bulk RNA-Seq one result corresponds to one gene at one organ level.
+-- * for BRB-Seq one result corresponds to one gene at one organ level (after demultiplexing of pooled libraries)
+-- * for full length single cell RNA-Seq one result corresponds to one gene at one cell level
+-- * for droplet base single cell RNA-Seq one result corresponds to one gene at one cell-type population level (combine all counts of same cell-type per library)
+create table rnaSeqLibraryAnnotatedSampleGeneResult (
+    rnaSeqLibraryAnnotatedSampleId mediumint unsigned not null COMMENT 'Internal ID used to define one library at one annotated condition',
     bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
--- FPRKM and TPM values inserted here are NOT TMM normalized,
--- these are the raw data before any normalization
-    fpkm decimal(16, 6) not null COMMENT 'FPKM values, NOT log transformed',
-    tpm decimal(16, 6) not null COMMENT 'TPM values, NOT log transformed',
--- rank is not "not null" because we update this information afterwards
-    rank decimal(9, 2) unsigned,
--- for information, measure not normalized for reads or genes lengths
+--  abundance values inserted here are NOT TMM normalized,
+--  these are the raw data before any normalization
+    abundanceUnit enum ('tpm','cpm'),
+    abundance decimal(16, 6) not null COMMENT 'abundance values, NOT log transformed',
+--  rawRank is not "not null" because we update this information afterwards
+    rawRank decimal(9, 2) unsigned,
+--  for information, measure not normalized for reads or genes lengths
     readsCount decimal(16, 6) unsigned not null COMMENT 'As of Bgee 14, read counts are "estimated counts" produced using the Kallisto software. They are not normalized for read or gene lengths.',
+    UMIsCount decimal(16, 6) unsigned not null COMMENT 'As of Bgee 15, UMI counts are "estimated counts" produced using the Kallisto software. They are not normalized for read or gene lengths.',
+-- zScore can be negative
+    zScore decimal(35, 30),
+    pValue decimal(31, 30) unsigned default null COMMENT 'present calls are based on the pValue',
     expressionId int unsigned,
+-- TODO: to remove as not used anymore since Bgee 15. pValues are now used to consider a call as present/absent.
     detectionFlag enum('undefined', 'absent', 'present') default 'undefined',
--- Warning, qualities must be ordered, the index in the enum is used in many queries.
--- We should only see genes with 'high quality' here
-    rnaSeqData enum('no data', 'poor quality', 'high quality') default 'no data',
 -- When expressionId is null, the result is not used for the summary of expression.
 -- Reasons are:
 -- * pre filtering: Probesets always seen as "absent" or "marginal" over the whole dataset are removed
@@ -983,158 +733,182 @@ create table rnaSeqResult (
 -- Maybe we'll discard them again, but I don't think so, it'll allow to present absolutely
 -- all data available about a call to users.
 -- * undefined: only 'undefined' calls have been seen
---
--- Note that, as of Bgee 14, 2 reasons for exclusion were removed: 'bronze quality' and 'absent low quality'.
--- 'bronze quality' exclusion was removed, because now we always propagate expression evidence,
--- so a 'bronze quality' call can provide additional evidence to a parent structure.
--- 'bronze quality' used to be: for a gene/condition, no "present high" and mix of "present low" and "absent".
--- 'absent low quality' was removed, because we now use a same consistent mechanism for present/absent calls,
--- taking also into account 'absent low quality' evidence.
--- 'absent low quality' used to be: probesets always "absent" for this gene/condition,
--- but only seen by MAS5 (that we do not trust = "low quality" - "noExpression" should always be "high quality").
-    reasonForExclusion enum('not excluded', 'pre-filtering',
-        'noExpression conflict', 'undefined') not null default 'not excluded'
+    rnaSeqData enum('no data','poor quality','high quality') default 'no data',
+    reasonForExclusion enum('not excluded', 'pre-filtering', 'biotype not targeted',
+    'undefined') not null default 'not excluded'
 ) engine = innodb;
 
--- This table contains TPM/RPKM/read count values for each transcript for each library
--- NOTE Bgee 14: as of Bgee 14 this table is not filled
-create table rnaSeqTranscriptResult (
-    rnaSeqLibraryId varchar(70) not null,
-    bgeeTranscriptId int unsigned not null COMMENT 'Internal transcript ID',
-    fpkm decimal(16, 6) not null,
-    tpm decimal(16, 6) not null,
--- for information, measure not normalized for reads or genes lengths
-    readsCount int unsigned not null
-) engine = innodb;
-
-create table rnaSeqExperimentExpression (
-    expressionId int unsigned not null,
+create table rnaSeqExperiment (
+-- primary exp ID, from GEO, patterns GSExxx
     rnaSeqExperimentId varchar(70) not null,
-    presentHighRNASeqLibraryCount smallint unsigned not null default 0
-        comment 'number of RNA-Seq libraries in this experiment that produced this call as present high quality',
-    presentLowRNASeqLibraryCount  smallint unsigned not null default 0
-        comment 'number of RNA-Seq libraries in this experiment that produced this call as present low quality',
-    absentHighRNASeqLibraryCount  smallint unsigned not null default 0
-        comment 'number of RNA-Seq libraries in this experiment that produced this call as absent high quality',
-    absentLowRNASeqLibraryCount   smallint unsigned not null default 0
-        comment 'number of RNA-Seq libraries in this experiment that produced this call as absent low quality',
-    rnaSeqExperimentCallDirection enum('present', 'absent') not null
-        comment 'Inferred direction for this call based on this experiment ("present" libraries always win over "absent" libraries)',
-    rnaSeqExperimentCallQuality enum('poor quality', 'high quality') not null
-        comment 'Inferred quality for this call based on this experiment (from all libraries, "present high" > "present low" > "absent high" > "absent low"). Value "poor quality" instead of "low quality" for historical reasons.'
-) engine = innodb
-comment = 'This table stores information about expression calls produced from RNA-Seq experiments, that is then used in Bgee to compute global summary expression calls and qualities.';
-
--- ****************************************************
--- RAW DIFFERENTIAL EXPRESSION ANALYSES
--- Note: dea = Differential Expression Analyses ;)
--- ****************************************************
-
--- several differential expression analyses can be performed
--- on the same experiment
-create table differentialExpressionAnalysis (
-    deaId smallint unsigned not null,
-    detectionType enum('Limma - MCM'),
--- defines whether different organs at a same (broad) developmental stage
--- were compared ('anatomy'), or a same organ at different developmental stages
--- ('development')
-    comparisonFactor enum('anatomy', 'development'),
--- microarrayExperimentId and rnaSeqExperimentId cannot be both null, ot both not null
--- at the same time. We use these fields rather than an association table,
--- because a DEA can belong to only one experiment, and because this would make
--- one join less needed.
-    microarrayExperimentId varchar(70) default null,
-    rnaSeqExperimentId varchar(70) default null
+    rnaSeqExperimentName varchar(255) not null default '',
+    rnaSeqExperimentDescription text,
+    dataSourceId smallInt unsigned not null,
+    numberOfAnnotatedCells int unsigned not null default 0,
+    DOI varchar(255)
 ) engine = innodb;
 
--- a DEA can only be performed by comparing different conditions
--- (a condition being an organ at a developmental stage), with each condition
--- represented by several replicates. Such a group of replicates of a same condition
--- in a same DEA is a 'deaSampleGroup'.
--- While it would be possible to determine the condition (anatEntityId + stageId)
--- of a deaSampleGroup by looking at the individual samples (for instance,
--- looking at the condition of an affymetrixChip member of a deaSampleGroup),
--- this information is also present in this table (see anatEntityId and stageId fields).
--- This is because, for the sake of performing the analyses, too granular
--- developmental stages can be mapped to a broader parent stage (for instance,
--- mapping '24 yo human' to 'young adult'), otherwise the analyses could be
--- meaningless (e.g., performing a DEA on '24 yo human' vs. '25 yo human').
--- So the anatEntityId and stageId in this table can actually be different than
--- the annotated anatDevId and stageId of the samples (meaning, different than
--- in the table affymetrixChip or rnaSeqLibrary).
--- As of Bgee 13, a deaSampleGroup can either be a group of affymetrixChips,
--- or a group of rnaSeqLibraries. Their related samples will then be find
--- respectively in deaSampleGroupToAffymetrixChip, or deaSampleGroupToRnaSeqLibrary.
--- this can be determined by checking in the table differentialExpressionAnalysis
--- the fields microarrayExperimentId and rnaSeqExperimentId, to determine whether
--- the DEA was using Affymetrix, or RNA-Seq.
-create table deaSampleGroup (
-    deaSampleGroupId mediumint unsigned not null,
-    deaId smallint unsigned not null,
-    conditionId mediumint unsigned not null
+create table rnaSeqExperimentToKeyword (
+    rnaSeqExperimentId varchar(70) not null,
+    keywordId int unsigned not null
 ) engine = innodb;
 
--- An association table to link an affymetrixChip to the deaSampleGroup it belongs to.
--- A same chip can be part of several groups, for instance if it was use for DEAs
--- with different comparisonFactors. But all the affymetrixChips inside a deaSampleGroup
--- are unique
-create table deaSampleGroupToAffymetrixChip (
-    deaSampleGroupId mediumint unsigned not null,
-    bgeeAffymetrixChipId smallint unsigned not null
+-- Corresponds to one library in the sense of one sequencing library. It can contains several
+-- sample libraries each one of them potentially having different condition in case of library (e.g BRB-Seq)
+-- or sample (e.g 10x) multiplexing
+-- uses to produce several runs
+create table rnaSeqLibrary (
+-- primary ID, from GEO, pattern GSMxxx
+    rnaSeqLibraryId varchar(70) not null,
+    rnaSeqExperimentId varchar(70) not null,
+    rnaSeqSequencerName varchar(255) not null,
+    rnaSeqTechnologyName varchar(255) not null,
+    rnaSeqTechnologyIsSingleCell tinyint(1) not null,
+    sampleMultiplexing boolean not null default 0,
+    libraryMultiplexing boolean not null default 0,
+--  **** Columns related to the sampling protocol ***
+--  TODO: check validity of enum
+    strandSelection enum ('NA', 'forward', 'revert', 'unstranded'),
+    cellCompartment enum('NA', 'nucleus', 'cell'),
+    sequencedTranscriptPart enum ('NA', '3prime', '5prime', 'full length'),
+    fragmentation smallint unsigned not null default 0 COMMENT 'corresponds to fragmentation of cDNA. 0 for long reads',
+    rnaSeqPopulationCaptureId varchar(255) not null,
+    genotype varchar(70),
+    -- In case of single read, it's the total number of reads
+    allReadsCount bigint unsigned not null default 0,
+-- total number of reads in library that were mapped to anything.
+-- if it is not a paired-end library, this number is equal to leftMappedReadsCount
+    mappedReadsCount bigint unsigned not null default 0,
+-- a library is an assembly of different runs, and the runs can have different read lengths,
+-- so we store the min and max read lengths
+    minReadLength int unsigned not null default 0,
+    maxReadLength int unsigned not null default 0,
+    -- Is the library built using paired end?
+-- NA: info not used for pseudo-mapping. Default value in an enum is the first one.
+    libraryType enum('NA', 'single', 'paired') not null,
+    usedInPropagatedCalls tinyint(1) not null default 0
 ) engine = innodb;
 
--- An association table to link a rnaSeqLibrary to the deaSampleGroup it belongs to.
--- A same library can be part of several groups, for instance if it was use for DEAs
--- with different comparisonFactors. But all the rnaSeqLibraries inside a deaSampleGroup
--- are unique
-create table deaSampleGroupToRnaSeqLibrary (
-    deaSampleGroupId mediumint unsigned not null,
+-- XXX should we keep discarded info at rnaSeqLibrary level, at rnaSeqLibraryAnnotatedSample level,
+-- or at both levels? IfrnaSeqLibraryAnnotatedSample level or both do we want to provide condition ?
+--
+-- We sometimes discard some runs associated to a library, because of low mappability.
+-- We keep track of these discarded runs in this table.
+-- UPDATE Bgee 14: for pseudo-mapping using Kallisto, runs are pooled, so we can only exclude libraries,
+-- not specific runs.
+create table rnaSeqLibraryDiscarded (
+    rnaSeqLibraryId varchar(70) not null,
+    rnaSeqLibraryDiscardReason varchar(255) not null default ''
+) engine = innodb;
+
+-- Store the information of runs used, pool together to generate the results
+-- for a given library.
+create table rnaSeqRun (
+-- same ID in GEO and SRA, pattern SRR...
+    rnaSeqRunId varchar(70) not null,
     rnaSeqLibraryId varchar(70) not null
 ) engine = innodb;
 
--- differentialExpressionAnalysisProbesetsSummary
--- a line in this table is a summary of a set of probesets, used for the
--- differential expression analysis, belonging to different
--- affymetrix chips, corresponding to one group of chips
-create table deaAffymetrixProbesetSummary (
--- deaAffymetrixProbesetSummaryId corresponds to the IDs of the probesets used for this summary
--- (all of them have the same of course). These probesets belong to the affymetrix chips, retrieved using the field `deaChipsGroupId`
--- and the table `deaChipsGroupToAffymetrixChip`
-    deaAffymetrixProbesetSummaryId varchar(70) not null,
-    deaSampleGroupId mediumint unsigned not null,
-    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
-    foldChange decimal(7,2) not null default 0,
-    differentialExpressionId int unsigned,
--- Warning, qualities must be ordered, the index in the enum is used in many queries
--- 'not expressed' = gene never seen as 'expressed' in the conditions studied ('marginal' is not considered)
--- 'no diff expression' = gene has expression, but no significant fold change observed
-    differentialExpressionAffymetrixData enum('no data', 'not expressed', 'no diff expression', 'poor quality', 'high quality') default 'no data',
--- p-value adjusted by Benjamini-Hochberg procedure
--- "number of digits to the right of the decimal point (the scale). It has a range of 0 to 30"
-    deaRawPValue decimal(31, 30) unsigned not null default 1,
--- excluded if not expressed in ALL samples in a given analysis
--- (it is not excluded if expressed in at least one condition)
-    reasonForExclusion enum('not excluded', 'not expressed') not null default 'not excluded'
+-- corresponds to one library as it was annotated
+-- * for bulk RNA-Seq one library corresponds to one sample. For such data there is a
+--   1-to-1 relation between rnaSeqLibrary and rnaSeqLibraryAnnotatedSample.
+-- * for BRB-Seq one library contains several libraries pooled together. Each pooled library has its
+--   own annotation. For such data there will be 1-to-many relation between rnaSeqLibrary and
+--   rnaSeqLibraryAnnotatedSample.
+-- * for full length single cell RNA-Seq one library corresponds to one sample. For such data
+--   there is a 1-to-1 relation between rnaSeqLibrary and rnaSeqLibraryAnnotatedSample.
+-- * for droplet base single cell RNA-Seq one library corresponds to a cell population. Each cell has
+--   been annotated with a different barcode and each barcode has its own annotation. For such data
+--   there will be 1-to-many relation between rnaSeqLibrary and rnaSeqLibraryAnnotatedSample.
+create table rnaSeqLibraryAnnotatedSample (
+    rnaSeqLibraryAnnotatedSampleId mediumint unsigned not null,
+    rnaSeqLibraryId varchar(70) not null,
+    conditionId mediumint unsigned not null,
+--  all *AuthorAnnotation columns correspond to free text retrieved from paper by Bgee curators.
+--  anatEntityAuthorAnnotation and stageAuthorAnnotation are at the library level they are unique
+--  for a given combination of rnaSeqLibraryId and conditionId. However, it is possible to have different
+--  cellTypeAuthorAnnotation for a given combination of rnaSeqLibraryId and conditionId as different
+--  cellTypeAuthorAnnotation can be annotated with the same cellTypeId, especially when the cell ontology does
+--  not contain terms precise enough.
+    cellTypeAuthorAnnotation varchar(255) not null,
+    anatEntityAuthorAnnotation varchar(255) not null,
+    stageAuthorAnnotation varchar(255) not null,
+    abundanceUnit enum('tpm', 'cpm'),
+    meanAbundanceReferenceIntergenicDistribution decimal(16, 6) not null default -1 COMMENT 'mean TPM of the distribution of the reference intergenics regions in this library, NOT log transformed',
+    sdAbundanceReferenceIntergenicDistribution decimal(16, 6) not null default -1 COMMENT 'standard deviation in TPM of the distribution of the reference intergenics regions in this library, NOT log transformed',
+-- TMM normalization factor
+    tmmFactor decimal(8, 6) not null default 1.0,
+--  abundance threshold to consider a gene as expressed
+    abundanceThreshold decimal(16, 6) not null default -1,
+    allGenesPercentPresent decimal(5, 2) unsigned not null default 0,
+    proteinCodingGenesPercentPresent decimal(5, 2) unsigned not null default 0,
+    intergenicRegionsPercentPresent decimal(5, 2) unsigned not null default 0,
+    pValueThreshold decimal(5, 4) unsigned not null default 0 COMMENT 'pValue threshold used to consider genes present/absent. (for Bgee15 this threshold should always be 0.05)',
+-- total number of reads in library, including those not mapped.
+-- In case of paired-end libraries, it's the number of pairs of reads;
+-- total number of UMIs in library, including those not mapped.
+    allUMIsCount int unsigned not null default 0,
+-- total number of UMIs in library that were mapped to anything.
+    mappedUMIsCount int unsigned not null default 0,
+-- the following fields are used for rank computations, and are set after all expression data insertion,
+-- this is why null value is permitted.
+    rnaSeqLibraryAnnotatedSampleMaxRank decimal(9,2) unsigned COMMENT 'The max fractional rank in this sample (see `rank` field in rnaSeqLibraryAnnotatedSampleGeneResult table)',
+    rnaSeqLibraryAnnotatedSampleDistinctRankCount mediumint unsigned COMMENT 'The count of distinct rank in this sample (see `rank` field in rnaSeqLibraryAnnotatedSampleGeneResult table, used for weighted mean rank computations)',
+    multipleLibraryIndividualSample boolean not null default 0 COMMENT 'boolean true if the annotated sample contains several individual samples. e.g true for 10x as one annotated sample corresponds to one cell population and individual sample will correspond to each cell of this cell population',
+    --  can be null as it is applicable only to pooled bulk samples like BRB-Seq
+    barcode varchar(70) COMMENT 'barcode used to pool several samples in the same library',
+-- these 3 columns have been added to be able to insert precise Salmon condition information
+    time decimal(5, 2) unsigned default null,
+    timeUnit varchar(35) default null,
+    physiologicalStatus varchar(255) default null
 ) engine = innodb;
 
--- deaRNASeqSummary
--- a line in this table is a summary of a set of RNA-Seq results, used for the
--- differential expression analysis, belonging to different runs, corresponding to one group of runs
-create table deaRNASeqSummary (
-    geneSummaryId mediumint unsigned not null,
-    deaSampleGroupId mediumint unsigned not null,
-    foldChange decimal(7,2) not null default 0,
-    differentialExpressionId int unsigned,
--- Warning, qualities must be ordered, the index in the enum is used in many queries
--- 'not expressed' = gene never seen as 'expressed' in the conditions studied ('marginal' is not considered)
--- 'no diff expression' = gene has expression, but no significant fold change observed
-    differentialExpressionRNASeqData enum('no data', 'not expressed', 'no diff expression', 'poor quality', 'high quality') default 'no data',
--- p-value adjusted by Benjamini-Hochberg procedure
--- "number of digits to the right of the decimal point (the scale). It has a range of 0 to 30"
-    deaRawPValue decimal(31, 30) unsigned not null default 1,
--- excluded if not expressed in ALL samples in a given analysis
--- (it is not excluded if expressed in at least one condition)
-    reasonForExclusion enum('not excluded', 'not expressed') not null default 'not excluded'
+--  TO CLARIFY:
+--  * comment from Fred :comes from sample and library demultiplexing. In scRNA-Seq, 1 sample = 1 cell. In bulk, 1 sample = 1 organ for instance)
+--  * my feeling : comes only from sample demultiplexing with barcodes describing each cell. For library demultiplexing like BRB-Seq all librariesq
+--    are already described in the table `rnaSeqLibraryAnnotatedSample` So for me for BRB-Seq
+--    rnaSeqLibraryAnnotatedSample.multipleLibraryIndividualSample == 0.
+create table rnaSeqLibraryIndividualSample (
+    rnaSeqLibraryIndividualSampleId int unsigned not null,
+    rnaSeqLibraryAnnotatedSampleId mediumint unsigned not null,
+    barcode varchar(70) COMMENT 'barcode used to pool several samples in the same library',
+    sampleName varchar(70),
+    -- total number of UMIs in library that were mapped to this individual sample
+    mappedUMIsCount int unsigned not null default 0
+) engine = innodb;
+
+-- gene result at individual sample level (e.g for each cell for 10x)
+create table rnaSeqLibraryIndividualSampleGeneResult (
+    rnaSeqLibraryIndividualSampleId int unsigned not null COMMENT 'Internal ID used to define one individual sample',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
+    abundanceUnit enum ('tpm','cpm'),
+    abundance decimal(16, 6) not null COMMENT 'abundance values, NOT log transformed',
+    readsCount decimal(16, 6) unsigned not null COMMENT 'As of Bgee 14, read counts are "estimated counts" produced using the Kallisto software. They are not normalized for read or gene lengths.',
+    UMIsCount decimal(16, 6) unsigned not null ,
+    rnaSeqData enum('no data','poor quality','high quality') default 'no data',
+    reasonForExclusion enum('not excluded', 'pre-filtering', 'biotype not targeted',
+    'undefined') not null default 'not excluded'
+) engine = innodb;
+
+-- called protocol until Bgee 15 but updated the name as protocol now regroup
+-- a lot of different parameters (e.g population captured, strand, fragmentation size, ...)
+create table rnaSeqPopulationCapture (
+    rnaSeqPopulationCaptureId varchar(255) not null
+) engine = innodb;
+
+-- this table stores the biotypes for which calls will be generated in a given population captured (e.g. polyA, lncRNA, etc). For instance, for polyA, we might want to generate calls only for biotype having a polyA tail. This table allows to manage this information.
+create table rnaSeqPopulationCaptureToBiotype (
+    rnaSeqPopulationCaptureId varchar(255) not null COMMENT 'protocol ID for which a biotype will not be used to generate absent calls',
+    geneBioTypeId smallint unsigned not null COMMENT 'biotype ID for which absent calls will not be generated.'
+) engine = innodb;
+
+-- this table stores the max rank for each population captured , presence or not of multiplexing, is single cell, and species. This max rank is used for normalization.
+create table rnaSeqPopulationCaptureSpeciesMaxRank (
+    rnaSeqPopulationCaptureId varchar(255) not null,
+    rnaSeqTechnologyIsSingleCell tinyint unsigned not null,
+    sampleMultiplexing tinyint unsigned not null,
+    speciesId mediumint unsigned not null,
+    maxRank decimal(9,2) unsigned not null COMMENT 'The max fractional rank in this protocol and species (see `rank` field in rnaSeqLibraryAnnotatedSampleGeneResult table)'
 ) engine = innodb;
 
 -- ****************************************************
@@ -1147,278 +921,25 @@ create table deaRNASeqSummary (
 create table expression (
     expressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
     bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.'
+    conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
+    bulkScore decimal(9,2) unsigned not null COMMENT 'The score of the expression call in the bulk RNA-Seq protocol',
+    bulkPValue decimal(31,30) unsigned not null COMMENT 'The p-value of the expression call in the bulk RNA-Seq protocol',
+    bulkWeight bigint unsigned not null COMMENT 'The weight of the expression call in the bulk RNA-Seq protocol',
+    bulkNumberObs smallint unsigned not null COMMENT 'The number of observations for the expression call in the bulk RNA-Seq protocol',
+    fullLengthScore decimal(9,2) unsigned not null COMMENT 'The score of the expression call in the full-length single-cell RNA-Seq protocol',
+    fullLengthPValue decimal(31,30) unsigned not null COMMENT 'The p-value of the expression call in the full-length single-cell RNA-Seq protocol',
+    fullLengthWeight bigint unsigned not null COMMENT 'The weight of the expression call in the full-length single-cell RNA-Seq protocol',
+    fullLengthNumberObs smallint unsigned not null COMMENT 'The number of observations for the expression call in the full-length single-cell RNA-Seq protocol',
+    dropletScore decimal(9,2) unsigned not null COMMENT 'The score of the expression call in the droplet-based single-cell RNA-Seq protocol',
+    dropletPValue decimal(31,30) unsigned not null COMMENT 'The p-value of the expression call in the droplet-based single-cell RNA-Seq protocol',
+    dropletWeight bigint unsigned not null COMMENT 'The weight of the expression call in the droplet-based single-cell RNA-Seq protocol',
+    dropletNumberObs smallint unsigned not null COMMENT 'The number of observations for the expression call in the droplet-based single-cell RNA-Seq protocol',
+    inSituScore decimal(9,2) unsigned not null COMMENT 'The score of the expression call in the in situ hybridization protocol',
+    inSituPValue decimal(31,30) unsigned not null COMMENT 'The p-value of the expression call in the in situ hybridization protocol',
+    inSituWeight bigint unsigned not null COMMENT 'The weight of the expression call in the in situ hybridization protocol',
+    inSituNumberObs smallint unsigned not null COMMENT 'The number of observations for the expression call in the in situ hybridization protocol'
 ) engine = innodb
 comment = 'This table is a summary of expression calls for a given gene-condition (anatomical entity - developmental stage - sex- strain), over all the experiments and data types, with no propagation nor experiment expression summary.';
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - developmental stage - sex- strain, over all the experiments
--- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
--- DESIGN note: this table uses an ugly design with enumerated columns. For a discussion about this decision,
--- see http://stackoverflow.com/q/42781299/1768736
-create table globalExpression (
-    globalExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    globalConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
-
--- ** OBSERVED DATA STATES ** --
--- It is not enough to only know that there are some data in the condition itself
--- (see 'SELF' expression summaries below), because we need to distinguish between
--- data propagated along a condition parameter (e.g., a developmental stage),
--- but observed in another (e.g., an anat. entity).
--- Note that these enum values must stay in sync with org.bgee.model.dao.api.expressiondata.call.DAOPropagationState.
--- And these enum are null when the expression calls were propagated without taking into account
--- the related condition parameter.
--- Note that for EST data, there is no propagation of ABSENT calls from parent conditions,
--- so this simplifies its enum.
-    estAnatEntityPropagationState ENUM('self', 'descendant', 'self and descendant') COMMENT 'The origin of the propagated EST data related to the anatomical entity of the related condition. If null, it means that anatomical entities were not considered in this propagated call, or that the call is not supported by any EST data.',
-    estStagePropagationState ENUM('self', 'descendant', 'self and descendant') COMMENT 'The origin of the propagated EST data related to the developmental stage of the related condition. If null, it means that developmental stages were not considered in this propagated call, or that the call is not supported by any EST data.',
-    estConditionObservedData BOOLEAN COMMENT 'Whether some EST data were observed in this condition itself. If null, it means that the call is not supported by any EST data. This field is redundant as compared to the "self" experiment counts below, but is more practical to use.',
-
-    affymetrixAnatEntityPropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
-    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated Affymetrix data related to the anatomical entity of the related condition. If null, it means that anatomical entities were not considered in this propagated call, or that the call is not supported by any Affymetrix data.',
-    affymetrixStagePropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
-    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated Affymetrix data related to the developmental stage of the related condition. If null, it means that developmental stages were not considered in this propagated call, or that the call is not supported by any Affymetrix data.',
-    affymetrixConditionObservedData BOOLEAN COMMENT 'Whether some Affymetrix data were observed in this condition itself. If null, it means that the call is not supported by any Affymetrix data. This field is redundant as compared to the "self" experiment counts below, but is more practical to use.',
-
-    inSituAnatEntityPropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
-    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated in situ hybridization data related to the anatomical entity of the related condition. If null, it means that anatomical entities were not considered in this propagated call, or that the call is not supported by any in situ hybridization data.',
-    inSituStagePropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
-    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated in situ hybridization data related to the developmental stage of the related condition. If null, it means that developmental stages were not considered in this propagated call, or that the call is not supported by any in situ hybridization data.',
-    inSituConditionObservedData BOOLEAN COMMENT 'Whether some in situ hybridization data were observed in this condition itself. If null, it means that the call is not supported by any in situ hybridization data. This field is redundant as compared to the "self" experiment counts below, but is more practical to use.',
-
-    rnaSeqAnatEntityPropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
-    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated RNA-Seq data related to the anatomical entity of the related condition. If null, it means that anatomical entities were not considered in this propagated call, or that the call is not supported by any RNA-Seq data.',
-    rnaSeqStagePropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
-    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated RNA-Seq data related to the developmental stage of the related condition. If null, it means that developmental stages were not considered in this propagated call, or that the call is not supported by any RNA-Seq data.',
-    rnaSeqConditionObservedData BOOLEAN COMMENT 'Whether some RNA-Seq data were observed in this condition itself. If null, it means that the call is not supported by any RNA-Seq data. This field is redundant as compared to the "self" experiment counts below, but is more practical to use.',
-
--- ** EXPRESSION SUMMARIES **
--- Note: EST data are not used to produce no-expression calls
-    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.',
-    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.',
-    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.',
-    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.',
-    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition or in sub-conditions with a high quality.',
-    estLibPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition or in sub-conditions with a low quality.',
-    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries used to show presence of expression (low or high) in sub-conditions of this condition.',
-
-    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.',
-    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.',
-    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a high quality.',
-    affymetrixExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a low quality.',
-    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.',
-    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.',
-    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a high quality.',
-    affymetrixExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a low quality.',
-    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition or in sub-conditions with a high quality.',
-    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition or in sub-conditions with a low quality.',
-    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition or valid parent conditions with a high quality.',
-    affymetrixExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition or valid parent conditions with a low quality.',
-    affymetrixExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments used either to show presence of expression (low or high) in sub-conditions of this condition, or absence of expression (low or high) in parent conditions of this condition.',
-
-    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.',
-    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.',
-    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a high quality.',
-    inSituExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a low quality.',
-    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.',
-    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.',
-    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a high quality.',
-    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a low quality.',
-    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition or in sub-conditions with a high quality.',
-    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition or in sub-conditions with a low quality.',
-    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition or valid parent conditions with a high quality.',
-    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition or valid parent conditions with a low quality.',
-    inSituExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments used either to show presence of expression (low or high) in sub-conditions of this condition, or absence of expression (low or high) in parent conditions of this condition.',
-
-    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.',
-    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.',
-    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a high quality.',
-    rnaSeqExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a low quality.',
-    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.',
-    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.',
-    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a high quality.',
-    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a low quality.',
-    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition or in sub-conditions with a high quality.',
-    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition or in sub-conditions with a low quality.',
-    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition or valid parent conditions with a high quality.',
-    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition or valid parent conditions with a low quality.',
-    rnaSeqExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments used either to show presence of expression (low or high) in sub-conditions of this condition, or absence of expression (low or high) in parent conditions of this condition.',
-
--- ** RANKS **
--- For RNA-Seq data: mean ranks before normalization between data types and conditions.
--- Used for convenience during rank computations. It corresponds to the following:
--- gene ranks are computed for each sample, then a mean is computed for each gene and condition
--- of the expression table, weighted by the number of distinct ranks in each sample.
-    rnaSeqMeanRank decimal(9, 2) unsigned COMMENT 'RNA-Seq mean rank for this gene-condition before normalization over all data types, conditions and species.',
--- For Affymetrix:
--- mean ranks *after within-datatype normalization*, before normalization between data types and conditions.
--- Used for convenience during rank computations. It corresponds to the following:
--- ranks are computed for each sample, then "normalized" between samples in a same condition
--- of the expression table ("within-datatype normalization", based on the genomic coverage of each chip type);
--- then a mean is computed for each gene and condition, weighted by the number of distinct ranks
--- in each sample.
-    affymetrixMeanRank decimal(9, 2) unsigned COMMENT 'Affymetrix mean rank for this gene-condition, after normalization between different chip types, but before normalization over all data types, conditions and species.',
--- For EST and in situ data: ranks before normalization between data types and conditions.
--- Used for convenience during rank computations. It corresponds to the following:
--- For each condition of the expression table, all data are pooled together; they are not first
--- analyzed independently per libraries or experiments, as for Affymetrix and RNA-Seq data.
--- This is because the genomic coverage of EST or in situ experiments is usually very low,
--- and highly variable. Genes are ranked based on number of ESTs or of in situ evidence in each condition.
--- They are ranked using "dense ranking" instead of fractional ranking.
-    estRank decimal(9, 2) unsigned COMMENT 'EST rank for this gene-condition before normalization over all data types, conditions and species. All EST libraries in a same condition are pulled together, so there is no concept of "mean", only a single rank is computed from EST data for each gene-condition.',
-    inSituRank decimal(9, 2) unsigned COMMENT 'In situ hybridization rank for this gene-condition before normalization over all data types, conditions and species. All in situ evidence in a same condition are pulled together, so there is no concept of "mean", only a single rank is computed from in situ data for each gene-condition.',
-
--- All ranks are normalized between all data types and conditons, this is what we use to compute
--- the global mean rank of a gene in a condition. Basically, the max rank over all data types
--- and all conditions is retrieved, and used to normalize all ranks.
--- normalized rank = rank * (max of max rank over all conditions and data types) / (max rank for this condition and data type)
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned COMMENT 'RNA-Seq normalized mean rank for this gene-condition after normalization over all data types, conditions and species, computed from the field rnaSeqMeanRank, and rnaSeqMaxRank in the related condition table.',
-    affymetrixMeanRankNorm decimal(9, 2) unsigned COMMENT 'Affymetrix normalized mean rank for this gene-condition after normalization over all data types, conditions and species, computed from the field affymetrixMeanRank, and affymetrixMaxRank in the related condition table.',
--- For EST and in situ, the rank is not a mean
-    estRankNorm decimal(9, 2) unsigned COMMENT 'EST normalized rank for this gene-condition after normalization over all data types, conditions and species, computed from the field estRank, and estMaxRank in the related condition table.',
-    inSituRankNorm decimal(9, 2) unsigned COMMENT 'In situ hybridization normalized rank for this gene-condition after normalization over all data types, conditions and species, computed from the field inSituRank, and inSituMaxRank in the related condition table.',
-
--- For Affymetrix and RNA-Seq data: sum of the number of distinct ranks in each sample
--- where this gene is considered, in this condition and data type (for RNA-Seq: the same set of genes
--- is considered in all conditions, so these values are all the same for all genes in a same condition-species;
--- for Affymetrix, it depends on the chip types, so it can vary between genes of same condition-species ).
--- Distinct ranks in samples are used to weight the mean rank of genes for each data type and condition.
--- By storing the sum of the distinct rank count, we will be able to compute the weighted mean
--- over all data types in a condition.
--- XXX: shoud we store this information in the condition table for RNA-Seq?
--- Or maybe we shouldn't constrain to have the same genomic coverage in all libraries of a condition?
---
--- For EST and in situ data, this is irrelevant as we pool all data for a same condition together,
--- and use dense ranking instead of fractional ranking. As a result, the max rank in each condition
--- is used for weighted mean computation between data types.
-    rnaSeqDistinctRankSum int unsigned COMMENT 'Factor used to weight the RNA-Seq normalized mean rank (rnaSeqMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.',
-    affymetrixDistinctRankSum int unsigned COMMENT 'Factor used to weight the Affymetrix normalized mean rank (affymetrixMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.',
-
--- Same fields, but dedicated to "global" ranks, computed by taking into account
--- all data in a condition, but also all data in its descendant conditions.
-    rnaSeqGlobalMeanRank decimal(9, 2) unsigned COMMENT 'RNA-Seq global mean rank for this gene in this condition and all its descendant conditions, before normalization over all data types, conditions and species.',
-    affymetrixGlobalMeanRank decimal(9, 2) unsigned COMMENT 'Affymetrix global mean rank for this gene in this condition and all its descendant conditions, after normalization between different chip types, but before normalization over all data types, conditions and species.',
-    estGlobalRank decimal(9, 2) unsigned COMMENT 'EST global rank for this gene in this condition and all its descendant conditions, before normalization over all data types, conditions and species. All EST libraries in a same condition in this condition and its descendant conditions are pulled together, so there is no concept of "mean", only a single rank is computed from EST data for each gene-condition.',
-    inSituGlobalRank decimal(9, 2) unsigned COMMENT 'In situ hybridization global rank for this gene in this condition and all its descendant conditions, before normalization over all data types, conditions and species. All in situ evidence in a same condition and its descendant conditions are pulled together, so there is no concept of "mean", only a single rank is computed from in situ data for each gene-condition.',
-
-    rnaSeqGlobalMeanRankNorm decimal(9, 2) unsigned COMMENT 'RNA-Seq normalized mean rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field rnaSeqMeanRank, and rnaSeqMaxRank in the related condition table.',
-    affymetrixGlobalMeanRankNorm decimal(9, 2) unsigned COMMENT 'Affymetrix normalized mean rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field affymetrixMeanRank, and affymetrixMaxRank in the related condition table.',
-    estGlobalRankNorm decimal(9, 2) unsigned COMMENT 'EST normalized rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field estRank, and estMaxRank in the related condition table.',
-    inSituGlobalRankNorm decimal(9, 2) unsigned COMMENT 'In situ hybridization normalized rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field inSituRank, and inSituMaxRank in the related condition table.',
-
-    rnaSeqGlobalDistinctRankSum int unsigned COMMENT 'Factor used to weight the RNA-Seq normalized global mean rank (rnaSeqGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.',
-    affymetrixGlobalDistinctRankSum int unsigned COMMENT 'Factor used to weight the Affymetrix normalized global mean rank (affymetrixGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.'
-) engine = innodb
-comment = 'This table is a summary of expression calls for a given gene-condition (anatomical entity - developmental stage - sex- strain), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
-
--- ****************************************************
--- SUMMARY DIFF EXPRESSION CALLS
--- ****************************************************
-
-create table differentialExpression (
-    differentialExpressionId int unsigned not null,
-    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
-    conditionId mediumint unsigned not null,
--- defines whether different organs at a same (broad) developmental stage
--- were compared ('anatomy'), or a same organ at different developmental stages
--- ('development')
-    comparisonFactor enum('anatomy', 'development'),
--- *** Affymetrix ***
--- the diff expression call generated by Affymetrix
--- 'not expressed' = gene never seen as 'expressed' in the conditions studied ('marginal' is not considered)
--- 'no diff expression' = gene has expression, but no significant fold change observed
-    diffExprCallAffymetrix enum('no data', 'not expressed', 'no diff expression', 'under-expression', 'over-expression') not null default 'no data',
--- confidence in the call generated by Affymetrix data
--- 'no data' is redundant but it is kept to keep the same indexes for all data states (for instance, rnaSeqData in expression table)
-    diffExprAffymetrixData enum('no data', 'poor quality', 'high quality') default 'no data',
--- among all the analyses using Affymetrix comparing this condition, best p-value associated to this call
--- "number of digits to the right of the decimal point (the scale). It has a range of 0 to 30"
-    bestPValueAffymetrix decimal(31, 30) unsigned not null default 1,
--- number of analyses using Affymetrix data where the same call is found
-    consistentDEACountAffymetrix smallint unsigned not null default 0,
--- number of analyses using Affymetrix data where a different call is found
-    inconsistentDEACountAffymetrix smallint unsigned not null default 0,
--- *** RNA-Seq ***
--- the diff expression call generated by RNA-Seq
--- 'not expressed' = gene never seen as 'expressed' in the conditions studied ('marginal' is not considered)
--- 'no diff expression' = gene has expression, but no significant fold change observed
-    diffExprCallRNASeq enum('no data','not expressed', 'no diff expression', 'under-expression', 'over-expression') not null default 'no data',
--- confidence in the call generated by RNA-Seq data
--- 'no data' is redundant but it is kept to keep the same indexes for all data states (for instance, rnaSeqData in expression table)
-    diffExprRNASeqData enum('no data', 'poor quality', 'high quality') default 'no data',
--- among all the analyses using RNA-Seq comparing this condition, best p-value associated to this call
--- "number of digits to the right of the decimal point (the scale). It has a range of 0 to 30"
-    bestPValueRNASeq decimal(31, 30) unsigned not null default 1,
--- number of analyses using RNA-Seq data where the same call is found
-    consistentDEACountRNASeq smallint unsigned not null default 0,
--- number of analyses using RNA-Seq data where a different call is found
-    inconsistentDEACountRNASeq smallint unsigned not null default 0
-) engine = innodb;
-
--- this version of the diff expression table is not considered as of Bgee 13
-/*create table differentialExpression (
-    differentialExpressionId int unsigned not null,
-    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
-    conditionId mediumint unsigned not null,
--- defines whether different organs at a same (broad) developmental stage
--- were compared ('anatomy'), or a same organ at different developmental stages
--- ('development')
-    comparisonFactor enum('anatomy', 'development'),
--- Warning, differentialExpressionCall must be ordered this way, the index in the enum
--- is used in many queries
-    differentialExpressionCall enum('no diff expression', 'under-expression', 'over-expression'),
--- the maximum number of conditions compared for which this differential expression call
--- is valid. For instance, if a differential expression analysis comparing 3 conditions
--- generated a call for a given gene-organ-stage, and another analysis comparing
--- 6 conditions generated another call for the same gene-organ-stage (with different
--- direction and/or qualities), then maxNumberOfConditions will be 3 for the call
--- generated by the first analysis, and 6 for the other call.
---
--- But if the two analyses were generating the same call, then they would be only
--- one call in this table for the given gene-organ-stade, with a maxNumberOfConditions
--- equals to 6
---
--- default is 3, because as of Bgee 13, this is the minimum number of conditions
--- to perform a diff expression analysis
---
--- Examples of queries:
---
--- query to retrieve diff expression calls for a given Gene with no minimum number
--- of conditions compared requested:
--- select * from differentialExpression as t1 inner join
--- (
--- select geneId, organId, stageId, comparisonFactor, min(maxNumberOfConditions) as min
--- from differentialExpression where geneId = ? group by geneId, organId, stageId,
--- comparisonFactor)
--- ) as t2 on t1.geneId = t2.geneId and t1.organId = t2.organId and t1.stageId = t2.stageId
--- and t1.comparisonFactor = t2.comparisonFactor and t1.maxNumberOfConditions = t2.min
--- where t1.geneId = ?;
---
--- Alternatively: TO TEST, IT SEEMS WRONG
---
--- select * from differentialExpression as t1
--- where t1.geneId = ? and t1.maxNumberOfConditions =
--- (select min(maxNumberOfConditions) from differentialExpression as t2 where
--- t2.geneId = t1.geneId and t2.organId = t1.organId and t2.stageId = t1.geneId and
--- t2.comparisonFactor = t1.comparisonFactor);
---
--- Example of query to select the calls with the maximum number of conditions compared
--- for a given gene-organ-stage, with no minimum defined (select only the "best" calls):
---
--- select * from differentialExpression as t1 inner join
--- (
--- select geneId, organId, stageId, comparisonFactor, max(maxNumberOfConditions) as max
--- from differentialExpression where geneId = ? group by geneId, organId, stageId,
--- comparisonFactor)
--- ) as t2 on t1.geneId = t2.geneId and t1.organId = t2.organId and t1.stageId = t2.stageId
--- and t1.comparisonFactor = t2.comparisonFactor and t1.maxNumberOfConditions = t2.max
--- where t1.geneId = ?;
-   maxNumberOfConditions smallint unsigned not null default 3,
--- Warning, qualities must be ordered this way, the index in the enum is used in many queries
-    differentialExpressionAffymetrixData enum('no data', 'poor quality', 'high quality') default 'no data',
-    differentialExpressionRnaSeqData enum('no data', 'poor quality', 'high quality') default 'no data'
-) engine = innodb;*/
 
 
 -- select((select count(1) from rnaSeqExperiment) + (select count(1) from rnaSeqLibrary) + (select count(1) from rnaSeqResults) + (select count(1) from rnaSeqExperimentToKeyword) + (select count(1) from affymetrixChip) + (select count(1) from affymetrixProbeset) + (select count(1) from author) + (select count(1) from chipType) + (select count(1) from dataSource) + (select count(1) from dataType) + (select count(1) from deaAffymetrixProbesetSummary) + (select count(1) from deaChipsGroup) + (select count(1) from deaChipsGroupToAffymetrixChip) + (select count(1) from detectionType) + (select count(1) from differentialExpression) + (select count(1) from differentialExpressionAnalysis) + (select count(1) from differentialExpressionAnalysisType) + (select count(1) from estLibrary) + (select count(1) from estLibraryToKeyword) + (select count(1) from expressedSequenceTag) + (select count(1) from expression) + (select count(1) from gene) + (select count(1) from geneBioType) + (select count(1) from geneFamily) + (select count(1) from geneFamilyPredictionMethod) + (select count(1) from geneNameSynonym) + (select count(1) from geneOntologyDescendants) + (select count(1) from geneOntologyTerm) + (select count(1) from geneToTerm) + (select count(1) from geneXRef) + (select count(1) from globalExpression) + (select count(1) from globalExpressionToExpression) + (select count(1) from hogDescendants) + (select count(1) from hogExpression) + (select count(1) from hogExpressionSummary) + (select count(1) from hogExpressionToExpression) + (select count(1) from hogNameSynonym) + (select count(1) from hogRelationship) + (select count(1) from hogXRef) + (select count(1) from homologousOrgansGroup) + (select count(1) from inSituEvidence) + (select count(1) from inSituExperiment) + (select count(1) from inSituExperimentToKeyword) + (select count(1) from inSituSpot) + (select count(1) from keyword) + (select count(1) from metaStage) + (select count(1) from metaStageNameSynonym) + (select count(1) from microarrayExperiment) + (select count(1) from microarrayExperimentToKeyword) + (select count(1) from normalizationType) + (select count(1) from organ) + (select count(1) from organDescendants) + (select count(1) from organNameSynonym) + (select count(1) from organRelationship) + (select count(1) from species) + (select count(1) from stage) + (select count(1) from stageNameSynonym) + (select count(1) from stageXRef));
@@ -1426,7 +947,7 @@ create table differentialExpression (
 -- ******************************************
 -- AVAILABLE FILES FOR DOWNLOAD
 -- ******************************************
--- see (https://github.com/BgeeDB/bgee_apps/issues/31)
+-- see (https://gitlab.sib.swiss/Bgee/bgee_apps/issues/31)
 create table downloadFile (
   downloadFileId mediumint unsigned not null,
 -- path relative to the root of the download file directory, including file name
@@ -1434,12 +955,13 @@ create table downloadFile (
 -- currently, just the name of the file
   downloadFileName varchar(255) not null,
   downloadFileDescription text,
-  downloadFileCategory enum("expr_simple", "expr_complete", "diff_expr_anatomy_complete", "diff_expr_anatomy_simple"
-   , "diff_expr_dev_complete", "diff_expr_dev_simple", "ortholog",
-   "affy_annot","rnaseq_annot","affy_data","rnaseq_data"),
+  downloadFileCategory enum('expr_simple', 'expr_complete', 'diff_expr_anatomy_complete', 'diff_expr_anatomy_simple'
+   , 'diff_expr_dev_complete', 'diff_expr_dev_simple', 'ortholog',
+   'affy_annot','rnaseq_annot','affy_data','rnaseq_data', 'full_length_annot', 'full_length_data', 'droplet_based_annot',
+   'droplet_based_data', 'droplet_based_h5ad', 'full_length_h5ad'),
   speciesDataGroupId mediumint unsigned not null,
   downloadFileSize int unsigned not null,
-  downloadFileConditionParameters set('anatomicalEntity', 'developmentalStage')
+  downloadFileConditionParameters set('anatomicalEntity', 'developmentalStage', 'sex', 'strain')
 ) engine = innodb;
 
 -- *****************************************

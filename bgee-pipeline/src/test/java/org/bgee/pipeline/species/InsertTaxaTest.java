@@ -117,13 +117,13 @@ public class InsertTaxaTest extends TestAncestor {
         Set<SpeciesTO> expectedSpeciesTOs = new HashSet<SpeciesTO>();
         expectedSpeciesTOs.add(
                 new SpeciesTO(8, "my common nameA", "my genusA", "my speciesA", 2, 16, 
-                        "file/pathA", "versionA", "assemblyXRefA", 2, null, false, null));
+                        "file/pathA", "versionA", "assemblyXRefA", 2, null, null));
         expectedSpeciesTOs.add(
                 new SpeciesTO(13, "my common nameB", "my genusB", "my speciesB", 1, 12, 
-                        "file/pathB", "versionB", "assemblyXRefB", 24, 20, false, null));
+                        "file/pathB", "versionB", "assemblyXRefB", 24, 20, null));
         expectedSpeciesTOs.add(
                 new SpeciesTO(15, "", "my genusC", "my speciesC", 3, 14, 
-                        "file/pathC", "versionC", "assemblyXRefC", 2, null, false, null));
+                        "file/pathC", "versionC", "assemblyXRefC", 2, null, null));
         ArgumentCaptor<Set> speciesTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockSpeciesDAO).insertSpecies(speciesTOsArg.capture());
         if (!this.areSpeciesTOCollectionsEqual(

@@ -149,12 +149,12 @@ public abstract class TestAncestor {
     //*************************
     protected static final Map<Integer, SpeciesTO> SPECIES_TOS = unmodifiableLinkedHashMap(List.of(
             Map.entry(1, new SpeciesTO(1, "spe1", "spe", "1", 1, 100, "genomeFilePath1",
-                    "genomeVersion1", "genomeAssemblyXRef1", 1, 1, false, null)),
+                    "genomeVersion1", "genomeAssemblyXRef1", 1, 1, null)),
             Map.entry(2, new SpeciesTO(2, "spe2", "spe", "2", 2, 100, "genomeFilePath2",
-                    "genomeVersion2", "genomeAssemblyXRef2", 2, 2, false, null)),
+                    "genomeVersion2", "genomeAssemblyXRef2", 2, 2, null)),
             Map.entry(3, new SpeciesTO(3, "spe3", "spe", "3", 3, 200, "genomeFilePath3",
                     "genomeVersion2", "genomeAssemblyXRef2", 2,
-                    2, false, null //use the same genome as species 2
+                    2, null //use the same genome as species 2
                     ))));
     protected static Map<Integer, Species> loadSpeciesMap(boolean withSpeciesSourceInfo) {
         return unmodifiableLinkedHashMap(SPECIES_TOS.values().stream().map(speciesTO ->

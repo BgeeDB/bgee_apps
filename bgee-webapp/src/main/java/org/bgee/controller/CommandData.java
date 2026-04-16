@@ -1261,55 +1261,55 @@ public class CommandData extends CommandParent {
      */
     private Collection<ConditionFilter2> loadMultispecConditionFilter(boolean consideringFilters)
             throws InvalidRequestException {
-        List<String> filterAnatCell = consideringFilters
-                ? this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance().getParamFilterAnatEntity())
-                : null;
+        // Currently there is only one filter parameter for both anat. entities and cell types.
+        List<String> filterAnatEntityCellTypeIds = !consideringFilters ? null
+                : this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance()
+                        .getParamFilterAnatEntity());
 
-        List<String> anatIds = filterAnatCell != null && !filterAnatCell.isEmpty()
-                ? new ArrayList<>(filterAnatCell)
-                : (this.requestParameters.getAnatEntity() != null ? new ArrayList<>(this.requestParameters.getAnatEntity()) : new ArrayList<>());
-        List<String> cellIds = filterAnatCell != null && !filterAnatCell.isEmpty()
-                ? new ArrayList<>(filterAnatCell)
-                : (this.requestParameters.getCellType() != null ? new ArrayList<>(this.requestParameters.getCellType()) : new ArrayList<>());
-
-        // If we receive the magic value "SUMMARY", use the same fixed list of terms as the single-species endpoint.
-        if (filterAnatCell != null && !filterAnatCell.isEmpty()) {
-            if (anatIds.contains(ID_PARAM_SUMMARY_VALUE)) {
-                anatIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
-                anatIds.addAll(SUMMARY_CELL_TYPE_IDS);
-                anatIds.remove(ID_PARAM_SUMMARY_VALUE);
-            }
-            cellIds = anatIds;
-        } else {
-            if (anatIds.contains(ID_PARAM_SUMMARY_VALUE)) {
-                anatIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
-                anatIds.remove(ID_PARAM_SUMMARY_VALUE);
-            }
-            if (cellIds.contains(ID_PARAM_SUMMARY_VALUE)) {
-                cellIds.addAll(SUMMARY_CELL_TYPE_IDS);
-                cellIds.remove(ID_PARAM_SUMMARY_VALUE);
-            }
+        // Keep search parameters distinct from filter parameters, similarly to loadExprCallFilter.
+        List<String> anatIds = this.requestParameters.getAnatEntity() == null ? new ArrayList<>()
+                : new ArrayList<>(this.requestParameters.getAnatEntity());
+        if (anatIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            anatIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
+            anatIds.remove(ID_PARAM_SUMMARY_VALUE);
+        }
+        List<String> cellIds = this.requestParameters.getCellType() == null ? new ArrayList<>()
+                : new ArrayList<>(this.requestParameters.getCellType());
+        if (cellIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            cellIds.addAll(SUMMARY_CELL_TYPE_IDS);
+            cellIds.remove(ID_PARAM_SUMMARY_VALUE);
         }
 
-        if (anatIds.isEmpty() && cellIds.isEmpty()) {
-            return null;
-        }
+        List<String> anatEntityIdsToUse = filterAnatEntityCellTypeIds != null
+                && !filterAnatEntityCellTypeIds.isEmpty()
+                        ? filterAnatEntityCellTypeIds
+                        : anatIds;
+        List<String> cellTypeIdsToUse = filterAnatEntityCellTypeIds != null
+                && !filterAnatEntityCellTypeIds.isEmpty()
+                        ? filterAnatEntityCellTypeIds
+                        : cellIds;
+
         try {
-            List<FilterIds<String>> composedFilterIds = new ArrayList<>();
-            FilterIds<String> anatFilter = !anatIds.isEmpty()
-                    ? new FilterIds<>(new HashSet<>(anatIds), false) : null;
-            FilterIds<String> cellFilter = !cellIds.isEmpty()
-                    ? new FilterIds<>(new HashSet<>(cellIds), false) : null;
-            if (anatFilter != null) {
-                composedFilterIds.add(anatFilter);
-            }
-            if (cellFilter != null && !cellFilter.equals(anatFilter)) {
-                if (composedFilterIds.isEmpty()) {
-                    composedFilterIds.add(new FilterIds<>(Set.of(ConditionDAO.ANAT_ENTITY_ROOT_ID), false));
-                }
+            FilterIds<String> anatFilter = new FilterIds<>(
+                    anatEntityIdsToUse,
+                    false);
+            FilterIds<String> cellFilter = new FilterIds<>(
+                    cellTypeIdsToUse,
+                    false);
+
+            List<FilterIds<String>> composedFilterIds = new ArrayList<>(List.of(anatFilter));
+            // In case we used the filters, anatFilter and cellFilter should be equal,
+            // and we thus don't use the cellFilter.
+            if (!anatFilter.equals(cellFilter)) {
                 composedFilterIds.add(cellFilter);
             }
-            ComposedFilterIds<String> anatCellComposed = new ComposedFilterIds<>(composedFilterIds);
+            ComposedFilterIds<String> anatCellComposed = new ComposedFilterIds<>(
+                    composedFilterIds.stream()
+                            .filter(f -> !f.isEmpty())
+                            .collect(Collectors.toList()));
+            if (anatCellComposed.isEmpty()) {
+                return null;
+            }
             Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
             condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatCellComposed);
 

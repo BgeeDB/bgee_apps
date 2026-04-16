@@ -1394,6 +1394,11 @@ public class CommandData extends CommandParent {
             condParamToComposedFilterIds.put(ConditionParameter.STRAIN,
                     new ComposedFilterIds<>(strainFilter));
 
+            // As in processExprCallPage, requests without any condition filters must remain valid.
+            if (condParamToComposedFilterIds.values().stream().allMatch(f -> f.isEmpty())) {
+                return null;
+            }
+
             ConditionFilter2 condFilter = new ConditionFilter2(
                     null,
                     condParamToComposedFilterIds,

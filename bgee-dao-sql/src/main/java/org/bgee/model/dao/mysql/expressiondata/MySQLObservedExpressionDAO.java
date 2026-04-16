@@ -188,9 +188,10 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, conditionId = null, bgeeGeneId = null;
-                Integer bulkNumberObs = null, singleCellNumberObs = null, inSituNumberObs = null;
+                Integer bulkNumberObs = null, fullLengthNumberObs = null, dropletNumberObs = null, inSituNumberObs = null;
                 BigDecimal bulkRank = null, bulkPValue = null, bulkWeight = null;
-                BigDecimal singleCellRank = null, singleCellPValue = null, singleCellWeight = null;
+                BigDecimal fullLengthRank = null, fullLengthPValue = null, fullLengthWeight = null;
+                BigDecimal dropletRank = null, dropletPValue = null, dropletWeight = null;
                 BigDecimal inSituRank = null, inSituPValue = null, inSituWeight = null;
                 Map<String, ObservedExpressionDAO.Attribute> colNameToAttr = EnumSet.allOf(ObservedExpressionDAO.Attribute.class)
                         .stream().collect(Collectors.toMap(a -> a.getTOFieldName(), a -> a));
@@ -223,17 +224,29 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
                         case BULK_NUM_OBS:
                             bulkNumberObs = currentResultSet.getInt(columnName);
                             break;
-                        case SINGLE_CELL_SCORE:
-                            singleCellRank = currentResultSet.getBigDecimal(columnName);
+                        case FULL_LENGTH_SCORE:
+                            fullLengthRank = currentResultSet.getBigDecimal(columnName);
                             break;
-                        case SINGLE_CELL_PVALUE:
-                            singleCellPValue = currentResultSet.getBigDecimal(columnName);
+                        case FULL_LENGTH_PVALUE:
+                            fullLengthPValue = currentResultSet.getBigDecimal(columnName);
                             break;
-                        case SINGLE_CELL_WEIGHT:
-                            singleCellWeight = currentResultSet.getBigDecimal(columnName);
+                        case FULL_LENGTH_WEIGHT:
+                            fullLengthWeight = currentResultSet.getBigDecimal(columnName);
                             break;
-                        case SINGLE_CELL_NUM_OBS:
-                            singleCellNumberObs = currentResultSet.getInt(columnName);
+                        case FULL_LENGTH_NUM_OBS:
+                            fullLengthNumberObs = currentResultSet.getInt(columnName);
+                            break;
+                        case DROPLET_SCORE:
+                            dropletRank = currentResultSet.getBigDecimal(columnName);
+                            break;
+                        case DROPLET_PVALUE:
+                            dropletPValue = currentResultSet.getBigDecimal(columnName);
+                            break;
+                        case DROPLET_WEIGHT:
+                            dropletWeight = currentResultSet.getBigDecimal(columnName);
+                            break;
+                        case DROPLET_NUM_OBS:
+                            dropletNumberObs = currentResultSet.getInt(columnName);
                             break;
                         case IN_SITU_SCORE:
                             inSituRank = currentResultSet.getBigDecimal(columnName);
@@ -252,8 +265,9 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
                     }
                 }
                 return log.traceExit(new ObservedExpressionTO(id, conditionId, bgeeGeneId, bulkRank, bulkPValue,
-                        bulkWeight, bulkNumberObs, singleCellRank, singleCellPValue, singleCellWeight,
-                        singleCellNumberObs, inSituRank, inSituPValue, inSituWeight, inSituNumberObs));
+                        bulkWeight, bulkNumberObs, fullLengthRank, fullLengthPValue, fullLengthWeight,
+                        fullLengthNumberObs, dropletRank, dropletPValue, dropletWeight, dropletNumberObs,
+                        inSituRank, inSituPValue, inSituWeight, inSituNumberObs));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

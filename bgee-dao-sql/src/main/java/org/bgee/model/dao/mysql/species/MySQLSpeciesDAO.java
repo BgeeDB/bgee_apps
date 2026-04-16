@@ -48,7 +48,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
         COL_TO_ATTR_MAP.put("genomeAssemblyXRef", SpeciesDAO.Attribute.GENOME_ASSEMBLY_XREF);
         COL_TO_ATTR_MAP.put("dataSourceId", SpeciesDAO.Attribute.DATA_SOURCE_ID);
         COL_TO_ATTR_MAP.put("genomeSpeciesId", SpeciesDAO.Attribute.GENOME_SPECIES_ID);
-        COL_TO_ATTR_MAP.put("hiddenSpecies", SpeciesDAO.Attribute.HIDDEN_SPECIES);
         COL_TO_ATTR_MAP.put("devOntologyXRef", SpeciesDAO.Attribute.DEV_ONTOLOGY_XREF);
     }
     /**
@@ -268,7 +267,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
                     dataSourceId = null;
             String genus = null, species = null, speciesCommonName = null, devOntologyXRef = null,
                    genomeFilePath = null, genomeVersion = null, genomeAssemblyXRef = null;
-            Boolean hiddenSpecies = null;
             // Get results
             try {
                 for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -309,8 +307,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
                     case GENOME_SPECIES_ID:
                         genomeSpeciesId = this.getCurrentResultSet().getInt(columnIndex);
                         break;
-                    case HIDDEN_SPECIES:
-                        hiddenSpecies = this.getCurrentResultSet().getBoolean(columnIndex);
                     case DEV_ONTOLOGY_XREF:
                         devOntologyXRef = this.getCurrentResultSet().getString(columnIndex);
                         break;
@@ -324,7 +320,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
             //Set SpeciesTO
             return log.traceExit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
                     displayOrder, taxonId, genomeFilePath, genomeVersion, genomeAssemblyXRef,
-                    dataSourceId, genomeSpeciesId, hiddenSpecies, devOntologyXRef));
+                    dataSourceId, genomeSpeciesId, devOntologyXRef));
         }
     }
 }

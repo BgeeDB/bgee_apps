@@ -1361,7 +1361,9 @@ public class CommandData extends CommandParent {
                     composedFilterIds.stream()
                             .filter(f -> !f.isEmpty())
                             .collect(Collectors.toList()));
-            condParamToComposedFilterIds.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatCellComposed);
+            if (condParams.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
+                condParamToComposedFilterIds.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatCellComposed);
+            }
 
             FilterIds<String> devStageFilter = new FilterIds<>(
                     // Filters override the related parameter from the form.
@@ -1375,15 +1377,19 @@ public class CommandData extends CommandParent {
                                     : Boolean.TRUE.equals(this.requestParameters.getFirstValue(
                                             this.requestParameters.getUrlParametersInstance()
                                                     .getParamStageDescendant())));
-            condParamToComposedFilterIds.put(ConditionParameter.DEV_STAGE,
-                    new ComposedFilterIds<>(devStageFilter));
+            if (condParams.contains(ConditionParameter.DEV_STAGE)) {
+                condParamToComposedFilterIds.put(ConditionParameter.DEV_STAGE,
+                        new ComposedFilterIds<>(devStageFilter));
+            }
 
             FilterIds<String> sexFilter = new FilterIds<>(
                     // Filters override the related parameter from the form.
                     filterSexIds != null && !filterSexIds.isEmpty() ? filterSexIds : sexes,
                     false);
-            condParamToComposedFilterIds.put(ConditionParameter.SEX,
-                    new ComposedFilterIds<>(sexFilter));
+            if (condParams.contains(ConditionParameter.SEX)) {
+                condParamToComposedFilterIds.put(ConditionParameter.SEX,
+                        new ComposedFilterIds<>(sexFilter));
+            }
 
             FilterIds<String> strainFilter = new FilterIds<>(
                     // Filters override the related parameter from the form.
@@ -1391,11 +1397,14 @@ public class CommandData extends CommandParent {
                             ? filterStrains
                             : this.requestParameters.getStrain(),
                     false);
-            condParamToComposedFilterIds.put(ConditionParameter.STRAIN,
-                    new ComposedFilterIds<>(strainFilter));
+            if (condParams.contains(ConditionParameter.STRAIN)) {
+                condParamToComposedFilterIds.put(ConditionParameter.STRAIN,
+                        new ComposedFilterIds<>(strainFilter));
+            }
 
             // As in processExprCallPage, requests without any condition filters must remain valid.
-            if (condParamToComposedFilterIds.values().stream().allMatch(f -> f.isEmpty())) {
+            if (condParamToComposedFilterIds.isEmpty()
+                    || condParamToComposedFilterIds.values().stream().allMatch(f -> f.isEmpty())) {
                 return null;
             }
 

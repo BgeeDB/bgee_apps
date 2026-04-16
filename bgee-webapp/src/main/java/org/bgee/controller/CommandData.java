@@ -1115,7 +1115,7 @@ public class CommandData extends CommandParent {
                         .filter(p -> selectedCondParams.contains(p.getParameterName()))
                         .collect(Collectors.toCollection(LinkedHashSet::new));
         EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
-        Collection<ConditionFilter2> condFilters = this.loadMultispecConditionFilter(true);
+        Collection<ConditionFilter2> condFilters = this.loadMultispecConditionFilter(true, condParams);
 
         SummaryQuality qual = SummaryQuality.values()[0];
         if (this.requestParameters.getDataQuality() != null &&
@@ -1253,23 +1253,48 @@ public class CommandData extends CommandParent {
     /**
      * Loads condition filter for the multispec endpoint. Returns {@code ConditionFilter2}
      * for use with {@link MultiSpeciesCallService#loadSimilarityExpressionCalls2}.
-     * Only anat entity and cell type are used for filtering similarity groups.
+     * Uses the same parameter handling rules as {@link #loadExprCallFilter(boolean, Set, EnumSet)}
+     * to keep search and filter parameters behavior aligned.
      *
      * @param consideringFilters Whether to consider filter parameters from the request.
+     * @param condParams         The requested {@code ConditionParameter}s.
      * @return A {@code Collection} of one {@code ConditionFilter2} with {@code speciesId=null},
      *         or {@code null} when no filter parameters are specified.
      */
-    private Collection<ConditionFilter2> loadMultispecConditionFilter(boolean consideringFilters)
+    private Collection<ConditionFilter2> loadMultispecConditionFilter(boolean consideringFilters,
+            Set<ConditionParameter<?, ?>> condParams)
             throws InvalidRequestException {
         // Currently there is only one filter parameter for both anat. entities and cell types.
         List<String> filterAnatEntityCellTypeIds = !consideringFilters ? null
                 : this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance()
                         .getParamFilterAnatEntity());
+        List<String> filterDevStageIds = !consideringFilters ? null
+                : this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance()
+                        .getParamFilterDevStage());
+        List<String> filterSexIds = !consideringFilters ? null
+                : this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance()
+                        .getParamFilterSex());
+        List<String> filterStrains = !consideringFilters ? null
+                : this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance()
+                        .getParamFilterStrain());
+
+        List<String> sexes = this.requestParameters.getSex();
+        if (sexes != null && (sexes.contains(RequestParameters.ALL_VALUE)
+                || sexes.containsAll(EnumSet.allOf(SexEnum.class).stream()
+                        .map(e -> e.name())
+                        .collect(Collectors.toSet())))) {
+            sexes = null;
+        }
+
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds =
+                new HashMap<>();
 
         // Keep search parameters distinct from filter parameters, similarly to loadExprCallFilter.
         List<String> anatIds = this.requestParameters.getAnatEntity() == null ? new ArrayList<>()
                 : new ArrayList<>(this.requestParameters.getAnatEntity());
+        boolean summaryTermsRequested = false;
         if (anatIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            summaryTermsRequested = true;
             anatIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
             anatIds.remove(ID_PARAM_SUMMARY_VALUE);
         }
@@ -1279,23 +1304,52 @@ public class CommandData extends CommandParent {
             cellIds.addAll(SUMMARY_CELL_TYPE_IDS);
             cellIds.remove(ID_PARAM_SUMMARY_VALUE);
         }
-
-        List<String> anatEntityIdsToUse = filterAnatEntityCellTypeIds != null
-                && !filterAnatEntityCellTypeIds.isEmpty()
-                        ? filterAnatEntityCellTypeIds
-                        : anatIds;
-        List<String> cellTypeIdsToUse = filterAnatEntityCellTypeIds != null
-                && !filterAnatEntityCellTypeIds.isEmpty()
-                        ? filterAnatEntityCellTypeIds
-                        : cellIds;
+        List<String> discardAnatEntityIds = this.requestParameters.getDiscardAnatEntity() == null
+                ? new ArrayList<>()
+                : new ArrayList<>(this.requestParameters.getDiscardAnatEntity());
+        if (discardAnatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            discardAnatEntityIds.addAll(SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS);
+            discardAnatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
+            if (!summaryTermsRequested) {
+                discardAnatEntityIds.removeAll(anatIds);
+            }
+        }
+        boolean requestedAnatEntityDescendant = Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                this.requestParameters.getUrlParametersInstance().getParamAnatEntityDescendant()));
+        if (!anatIds.isEmpty() && !discardAnatEntityIds.isEmpty() && !requestedAnatEntityDescendant) {
+            throw log.throwing(new InvalidRequestException("Only when anat. entity descendants are requested "
+                    + "it is possible to exclude anat. entities and their children."));
+        }
+        // And we never include child terms when the parameter comes from a filter.
+        boolean anatEntityDescendant =
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                        || anatIds.isEmpty() ? false
+                                : Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                        this.requestParameters.getUrlParametersInstance()
+                                                .getParamAnatEntityDescendant()));
 
         try {
             FilterIds<String> anatFilter = new FilterIds<>(
-                    anatEntityIdsToUse,
-                    false);
+                    // Filters override the related parameter from the form.
+                    filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                            ? filterAnatEntityCellTypeIds
+                            : anatIds,
+                    anatEntityDescendant,
+                    filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                            ? null
+                            : discardAnatEntityIds,
+                    null);
             FilterIds<String> cellFilter = new FilterIds<>(
-                    cellTypeIdsToUse,
-                    false);
+                    // Filters override the related parameter from the form.
+                    filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                            ? filterAnatEntityCellTypeIds
+                            : cellIds,
+                    // And we never include child terms when the parameter comes from a filter.
+                    filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                            || cellIds.isEmpty() ? false
+                                    : Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                            this.requestParameters.getUrlParametersInstance()
+                                                    .getParamCellTypeDescendant())));
 
             List<FilterIds<String>> composedFilterIds = new ArrayList<>(List.of(anatFilter));
             // In case we used the filters, anatFilter and cellFilter should be equal,
@@ -1307,18 +1361,48 @@ public class CommandData extends CommandParent {
                     composedFilterIds.stream()
                             .filter(f -> !f.isEmpty())
                             .collect(Collectors.toList()));
-            if (anatCellComposed.isEmpty()) {
-                return null;
-            }
-            Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
-            condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatCellComposed);
+            condParamToComposedFilterIds.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatCellComposed);
+
+            FilterIds<String> devStageFilter = new FilterIds<>(
+                    // Filters override the related parameter from the form.
+                    filterDevStageIds != null && !filterDevStageIds.isEmpty()
+                            ? filterDevStageIds
+                            : this.requestParameters.getDevStage(),
+                    // And we never include child terms when the parameter comes from a filter.
+                    filterDevStageIds != null && !filterDevStageIds.isEmpty()
+                            || this.requestParameters.getDevStage() == null
+                            || this.requestParameters.getDevStage().isEmpty() ? false
+                                    : Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                            this.requestParameters.getUrlParametersInstance()
+                                                    .getParamStageDescendant())));
+            condParamToComposedFilterIds.put(ConditionParameter.DEV_STAGE,
+                    new ComposedFilterIds<>(devStageFilter));
+
+            FilterIds<String> sexFilter = new FilterIds<>(
+                    // Filters override the related parameter from the form.
+                    filterSexIds != null && !filterSexIds.isEmpty() ? filterSexIds : sexes,
+                    false);
+            condParamToComposedFilterIds.put(ConditionParameter.SEX,
+                    new ComposedFilterIds<>(sexFilter));
+
+            FilterIds<String> strainFilter = new FilterIds<>(
+                    // Filters override the related parameter from the form.
+                    filterStrains != null && !filterStrains.isEmpty()
+                            ? filterStrains
+                            : this.requestParameters.getStrain(),
+                    false);
+            condParamToComposedFilterIds.put(ConditionParameter.STRAIN,
+                    new ComposedFilterIds<>(strainFilter));
 
             ConditionFilter2 condFilter = new ConditionFilter2(
                     null,
-                    condParamToFilter,
-                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
+                    condParamToComposedFilterIds,
+                    condParams,
                     null,
                     false);
+            if (condFilter.areAllFiltersExceptSpeciesEmpty()) {
+                return null;
+            }
             return Collections.singletonList(condFilter);
         } catch (IllegalArgumentException e) {
             log.catching(e);

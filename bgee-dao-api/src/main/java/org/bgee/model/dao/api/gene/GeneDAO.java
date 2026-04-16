@@ -42,7 +42,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         ID("bgeeGeneId"), GENE_ID("geneId"), NAME("geneName"), DESCRIPTION("geneDescription"),
-        SPECIES_ID("speciesId"), GENE_BIO_TYPE_ID("geneBiotypeId"),ENSEMBL_GENE("ensemblGene"),
+        SPECIES_ID("speciesId"), GENE_BIO_TYPE_ID("geneBioTypeId"),ENSEMBL_GENE("ensemblGene"),
         GENE_MAPPED_TO_SAME_GENE_ID_COUNT("geneMappedToGeneIdCount"),
         EXPRESSION_SUMMARY("expressionSummary");
 

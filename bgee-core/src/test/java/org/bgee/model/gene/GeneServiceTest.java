@@ -78,9 +78,9 @@ public class GeneServiceTest extends TestAncestor {
         GeneDAO dao = mock(GeneDAO.class);
         when(managerMock.getGeneDAO()).thenReturn(dao);
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
-                Arrays.asList(new GeneTO(1, "ID1", "Name1", "Desc1", 11, 1, 1, true, 1, null),
-                        new GeneTO(2, "ID2", "Name2", "Desc2", 22, 1, 1, true, 1, null),
-                        new GeneTO(4, "ID4", "Name4", "Desc4", 44, 2, 1, true, 1, null)));
+                Arrays.asList(new GeneTO(1, "ID1", "Name1", "Desc1", 11, 1, true, "reg1", 1, null),
+                        new GeneTO(2, "ID2", "Name2", "Desc2", 22, 1, true, "reg1", 1, null),
+                        new GeneTO(4, "ID4", "Name4", "Desc4", 44, 2, true, "reg1", 1, null)));
         when(dao.getGenesBySpeciesAndGeneIds(filtersToMap, false)).thenReturn(mockGeneRs);
         GeneBioTypeTOResultSet mockBioTypeRs = getMockResultSet(GeneBioTypeTOResultSet.class,
                 Arrays.asList(new GeneBioTypeTO(1, "type1"), new GeneBioTypeTO(2, "type2")));
@@ -228,7 +228,7 @@ public class GeneServiceTest extends TestAncestor {
 
         // Mock gene DAO
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
-                Arrays.asList(new GeneTO(bgeeGeneId, geneId, "Name1", "", 10090, 1, 1, true, 1, null)));
+                Arrays.asList(new GeneTO(bgeeGeneId, geneId, "Name1", "", 10090, 1, true, "reg1", 1, null)));
         when(geneDao.getGenesByGeneIds(new HashSet<String>(Arrays.asList(geneId)))).thenReturn(mockGeneRs);
 
         // Mock species service

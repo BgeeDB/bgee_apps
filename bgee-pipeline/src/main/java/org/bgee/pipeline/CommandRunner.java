@@ -249,9 +249,9 @@ public class CommandRunner {
             break;
             
         //---------- Hierarchical groups -----------
-        case "ParseOrthoXML":
-            ParseOrthoXML.main(newArgs);
-            break;
+//        case "ParseOrthoXML":
+//            ParseOrthoXML.main(newArgs);
+//            break;
 
         //---------- Call propagation -----------
         case "InsertGlobalCalls":

@@ -214,17 +214,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         BgeePreparedStatement stmt = this.getManager().getConnection()
                 .prepareStatement(query);
         int paramIndex = 1;
-        //ESTs can't have results if an experiment ID is requested
-        //(ESTs don't have experiments).
-        //If all filters request an experiment, we returned a FALSE clause,
-        //thus we have no parameters to set here;
-        //otherwise, we will discard the filters that have an experiment ID,
-        //because the method generateOneFilterWhereClause will skip the experimentId field
-        //for ESTs, and we would obtain some results why we should not
-        if (!processedFilters.isAlwaysExactlyExperimentId()) {
 
-            for (DAORawDataFilter rawDataFilter : processedFilters.getRawDataFilters()) {
-                //discard the filters that have an experiment ID for EST
+        for (DAORawDataFilter rawDataFilter : processedFilters.getRawDataFilters()) {
 
                 Set<Integer> geneIds = rawDataFilter.getGeneIds();
                 Set<Integer> speciesIds = rawDataFilter.getSpeciesIds();
@@ -246,7 +237,6 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
                 if (callTableAssayIds == null) {
                     // parameterize expIds
-                    // ESTs does not have experimentIds
                     if (!expIds.isEmpty()) {
                         stmt.setStrings(paramIndex, expIds, true);
                         paramIndex += expIds.size();
@@ -296,7 +286,6 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     stmt.setBoolean(paramIndex, isSingleCell);
                     paramIndex++;
                 }
-            }
         }
 
         // special cases outside of the DAORawDataFilters

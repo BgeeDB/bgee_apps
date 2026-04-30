@@ -51,7 +51,7 @@ public class DownloadFileServiceTest extends TestAncestor {
 		
 		//expected values
 		List<DownloadFile> expected = Arrays.asList(
-		        new SpeciesDownloadFile("/tmp/foo", "NAME", null, 42L, Category.AFFY_ANNOT, 22,
+		        new SpeciesDownloadFile("/tmp/foo", "NAME", null, 42L, Category.DROPLET_BASED_ANNOT, 22,
 		                Arrays.asList(CallService.Attribute.ANAT_ENTITY_ID)), 
 		        new SpeciesDownloadFile("/tmp/foo", "NAME2", null, 1337L, Category.DIFF_EXPR_ANAT_COMPLETE, 22,
 		                Arrays.asList(CallService.Attribute.ANAT_ENTITY_ID,

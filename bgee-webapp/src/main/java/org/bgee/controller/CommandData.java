@@ -1115,7 +1115,9 @@ public class CommandData extends CommandParent {
                         .filter(p -> selectedCondParams.contains(p.getParameterName()))
                         .collect(Collectors.toCollection(LinkedHashSet::new));
         EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
-        Collection<ConditionFilter2> condFilters = this.loadMultispecConditionFilter(true, condParams);
+        Set<Integer> filterSpeciesIds = species.stream().map(Species::getId).collect(Collectors.toSet());
+        Collection<ConditionFilter2> condFilters = this.loadMultispecConditionFilter(
+                true, condParams, filterSpeciesIds);
 
         SummaryQuality qual = SummaryQuality.values()[0];
         if (this.requestParameters.getDataQuality() != null &&
@@ -1258,11 +1260,12 @@ public class CommandData extends CommandParent {
      *
      * @param consideringFilters Whether to consider filter parameters from the request.
      * @param condParams         The requested {@code ConditionParameter}s.
-     * @return A {@code Collection} of one {@code ConditionFilter2} with {@code speciesId=null},
-     *         or {@code null} when no filter parameters are specified.
+     * @param speciesIds         A {@code Set} of species IDs present in submitted genes.
+     * @return A {@code Collection} of {@code ConditionFilter2}, one per species in
+     *         {@code speciesIds}, or {@code null} when no filter parameters are specified.
      */
     private Collection<ConditionFilter2> loadMultispecConditionFilter(boolean consideringFilters,
-            Set<ConditionParameter<?, ?>> condParams)
+            Set<ConditionParameter<?, ?>> condParams, Set<Integer> speciesIds)
             throws InvalidRequestException {
         // Currently there is only one filter parameter for both anat. entities and cell types.
         List<String> filterAnatEntityCellTypeIds = !consideringFilters ? null
@@ -1408,16 +1411,23 @@ public class CommandData extends CommandParent {
                 return null;
             }
 
-            ConditionFilter2 condFilter = new ConditionFilter2(
-                    null,
-                    condParamToComposedFilterIds,
-                    condParams,
-                    null,
-                    false);
-            if (condFilter.areAllFiltersExceptSpeciesEmpty()) {
+            if (speciesIds == null || speciesIds.isEmpty()) {
+                throw log.throwing(new InvalidRequestException(
+                        "At least one species ID must be available to build multi-species filters."));
+            }
+            Collection<ConditionFilter2> condFilters = speciesIds.stream()
+                    .map(speciesId -> new ConditionFilter2(
+                            speciesId,
+                            condParamToComposedFilterIds,
+                            condParams,
+                            null,
+                            false))
+                    .collect(Collectors.toList());
+            if (condFilters.isEmpty() || condFilters.stream()
+                    .allMatch(ConditionFilter2::areAllFiltersExceptSpeciesEmpty)) {
                 return null;
             }
-            return Collections.singletonList(condFilter);
+            return condFilters;
         } catch (IllegalArgumentException e) {
             log.catching(e);
             throw log.throwing(new InvalidRequestException(e.getMessage()));

@@ -31,6 +31,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityTaxonSummary;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarity;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
@@ -56,6 +57,7 @@ import org.bgee.model.gene.GeneService;
 import org.bgee.model.gene.OrthologousGeneGroup;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.Taxon;
@@ -875,7 +877,7 @@ public class MultiSpeciesCallService extends CommonService {
         // (see method AnatEntitySimilarityService.getValidMultipleEntityAnnotations)
         Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntityFromAnatFilter =
                 anatEntitySimilaritiesFromAnatFilter.stream()
-                        .flatMap(sim -> sim.getSourceAnatEntities().stream()
+                        .flatMap(sim -> sim.getAllAnatEntities().stream()
                                 .map(ae -> new SimpleEntry<>(ae, sim)))
                         .collect(Collectors.groupingBy(SimpleEntry::getKey,
                                 Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
@@ -884,7 +886,7 @@ public class MultiSpeciesCallService extends CommonService {
                 .collect(Collectors.toSet());
         Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntityFromCellTypeFilter =
                 anatEntitySimilaritiesFromCellTypeFilter.stream()
-                        .flatMap(sim -> sim.getSourceAnatEntities().stream()
+                        .flatMap(sim -> sim.getAllAnatEntities().stream()
                                 .map(ae -> new SimpleEntry<>(ae, sim)))
                         .collect(Collectors.groupingBy(SimpleEntry::getKey,
                                 Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
@@ -1012,10 +1014,36 @@ public class MultiSpeciesCallService extends CommonService {
                     FilterIds<String> anatIds = composed.getFilterIds(0);
                     FilterIds<String> cellIds = composed.getFilterIds(1);
                     if (anatIds != null) {
-                        filterAnatEntityIds.addAll(anatIds.getIds());
+                        Set<String> expandedAnatIds = new HashSet<>(anatIds.getIds());
+                        if (anatIds.isIncludeChildTerms() && !anatIds.getIds().isEmpty()) {
+                            Ontology<AnatEntity, String> anatOntology = this.ontologyService
+                                    .getAnatEntityOntology(
+                                            cf.getSpeciesId(),
+                                            anatIds.getIds(),
+                                            EnumSet.of(RelationType.ISA_PARTOF),
+                                            false,
+                                            true);
+                            expandedAnatIds.addAll(anatIds.getIds().stream()
+                                    .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
+                                    .collect(Collectors.toSet()));
+                        }
+                        filterAnatEntityIds.addAll(expandedAnatIds);
                     }
                     if (cellIds != null) {
-                        filterCellTypeIds.addAll(cellIds.getIds());
+                        Set<String> expandedCellIds = new HashSet<>(cellIds.getIds());
+                        if (cellIds.isIncludeChildTerms() && !cellIds.getIds().isEmpty()) {
+                            Ontology<AnatEntity, String> anatOntology = this.ontologyService
+                                    .getAnatEntityOntology(
+                                            cf.getSpeciesId(),
+                                            cellIds.getIds(),
+                                            EnumSet.of(RelationType.ISA_PARTOF),
+                                            false,
+                                            true);
+                            expandedCellIds.addAll(cellIds.getIds().stream()
+                                    .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
+                                    .collect(Collectors.toSet()));
+                        }
+                        filterCellTypeIds.addAll(expandedCellIds);
                     }
                 }
             }
@@ -1111,6 +1139,24 @@ public class MultiSpeciesCallService extends CommonService {
                 new ElementGroupFromListSpliterator<>(allCalls.stream(),
                         ExpressionCall2::getGene, Gene.COMPARATOR), false);
 
+        Taxon requestedTaxon = Stream.concat(
+                anatEntitySimilaritiesFromAnatFilter.stream(),
+                anatEntitySimilaritiesFromCellTypeFilter.stream())
+                .findFirst()
+                .map(AnatEntitySimilarity::getRequestedTaxon)
+                .orElseGet(() -> this.getServiceFactory().getTaxonService()
+                        .loadLeastCommonAncestor(clnGeneFilters.stream()
+                                .map(GeneFilter::getSpeciesId)
+                                .collect(Collectors.toSet())));
+        Ontology<Taxon, Integer> taxonOntology = Stream.concat(
+                anatEntitySimilaritiesFromAnatFilter.stream(),
+                anatEntitySimilaritiesFromCellTypeFilter.stream())
+                .findFirst()
+                .map(AnatEntitySimilarity::getTaxonOntology)
+                .orElseGet(() -> this.ontologyService.getTaxonOntology());
+        Map<String, AnatEntitySimilarity> fallbackAnatSimsById = new HashMap<>();
+        Map<String, AnatEntitySimilarity> fallbackCellSimsById = new HashMap<>();
+
         // Build SimilarityExpressionCall2 for each Gene/MultiSpeciesCondition
         Stream<SimilarityExpressionCall2> result = callsByGene.flatMap(callList -> {
             LinkedHashMap<MultiSpeciesCondition, List<ExpressionCall2>> callsPerSimilarity =
@@ -1120,10 +1166,24 @@ public class MultiSpeciesCallService extends CommonService {
                                 AnatEntity cellType = getCellTypeFromCondition2(c.getCondition());
                                 Set<AnatEntitySimilarity> anatSims = similaritiesByAnatEntityFromAnatFilter
                                         .getOrDefault(anatEntity, Collections.emptySet());
+                                if (anatSims.isEmpty()) {
+                                    anatSims = Collections.singleton(fallbackAnatSimsById.computeIfAbsent(
+                                            anatEntity.getId(),
+                                            id -> createFallbackAnatEntitySimilarity(
+                                                    anatEntity, requestedTaxon, taxonOntology)));
+                                }
                                 Set<AnatEntitySimilarity> cellSims = similaritiesByAnatEntityFromCellTypeFilter
                                         .getOrDefault(cellType, Collections.emptySet());
-                                return anatSims.stream()
-                                        .flatMap(anatSim -> cellSims.stream()
+                                if (cellSims.isEmpty()) {
+                                    cellSims = Collections.singleton(fallbackCellSimsById.computeIfAbsent(
+                                            cellType.getId(),
+                                            id -> createFallbackAnatEntitySimilarity(
+                                                    cellType, requestedTaxon, taxonOntology)));
+                                }
+                                final Set<AnatEntitySimilarity> anatSimsForCall = anatSims;
+                                final Set<AnatEntitySimilarity> cellSimsForCall = cellSims;
+                                return anatSimsForCall.stream()
+                                        .flatMap(anatSim -> cellSimsForCall.stream()
                                                 .map(cellSim -> new SimpleEntry<>(
                                                         new MultiSpeciesCondition(anatSim, null, cellSim, null),
                                                         new ArrayList<>(Arrays.asList(c)))));
@@ -1145,6 +1205,16 @@ public class MultiSpeciesCallService extends CommonService {
             });
         });
         return log.traceExit(result);
+    }
+
+    private static AnatEntitySimilarity createFallbackAnatEntitySimilarity(AnatEntity entity,
+            Taxon requestedTaxon, Ontology<Taxon, Integer> taxonOntology) {
+        return new AnatEntitySimilarity(
+                Collections.singleton(entity),
+                Collections.emptySet(),
+                requestedTaxon,
+                Collections.singleton(new AnatEntitySimilarityTaxonSummary(requestedTaxon, true, true)),
+                taxonOntology);
     }
 
     /**

@@ -145,36 +145,56 @@ implements RawDataConditionDAO {
         // that are always propagated.
         boolean onlyUsedInPropagatedCalls = processedFilters.getRawDataFilters().stream()
                 .allMatch(item -> item.usedInPropagatedCallsIsTheOnlyPotentialNotBlank());
-        sb.append(" WHERE ");
-        if ( !processedFilters.getRawDataFilters().isEmpty() && !dataType.isAlwaysPropagated() ||
+        boolean needFiltersClause = !processedFilters.getRawDataFilters().isEmpty() && !dataType.isAlwaysPropagated() ||
                 !onlyUsedInPropagatedCalls && dataType.isAlwaysPropagated() ||
-                isSingleCell != null) {
-            sb.append("(")
-              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping,
-                      isSingleCell))
-              .append(") AND ");
-        }
-        //We at least always need to check that results are from conditions
-        //used in annotations of the requested data type.
-        //Since it is annoying to check whether generateFromClauseRawData made indeed a join
-        //to the assay table, we always add this clause
+                isSingleCell != null;
+        // Determine whether the assay table was already joined by generateFromClauseRawData.
+        // If so, the EXISTS check below is redundant and can be skipped.
+        boolean assayTableJoined;
         switch(dataType) {
         case IN_SITU:
-            sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLInSituSpotDAO.TABLE_NAME)
-              .append(" WHERE ").append(MySQLInSituSpotDAO.TABLE_NAME).append(".")
-              .append(InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
-              .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
-              .append(")");
+            assayTableJoined = rawDataFiltersToDatabaseMapping.getJoinedTables()
+                    .contains(MySQLInSituSpotDAO.TABLE_NAME);
             break;
         case RNA_SEQ:
-            sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)
-              .append(" WHERE ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME).append(".")
-              .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
-              .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
-              .append(")");
+            assayTableJoined = rawDataFiltersToDatabaseMapping.getJoinedTables()
+                    .contains(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
             break;
         default:
             throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
+        }
+        sb.append(" WHERE ");
+        if (needFiltersClause) {
+            sb.append("(")
+              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping,
+                      isSingleCell))
+              .append(")");
+        }
+        // We at least always need to check that results are from conditions
+        // used in annotations of the requested data type, unless the assay table
+        // was already joined in the FROM clause (making this EXISTS redundant).
+        if (!assayTableJoined) {
+            if (needFiltersClause) {
+                sb.append(" AND ");
+            }
+            switch(dataType) {
+            case IN_SITU:
+                sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLInSituSpotDAO.TABLE_NAME)
+                  .append(" WHERE ").append(MySQLInSituSpotDAO.TABLE_NAME).append(".")
+                  .append(InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
+                  .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+                  .append(")");
+                break;
+            case RNA_SEQ:
+                sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)
+                  .append(" WHERE ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME).append(".")
+                  .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
+                  .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+                  .append(")");
+                break;
+            default:
+                throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
+            }
         }
 
         try {

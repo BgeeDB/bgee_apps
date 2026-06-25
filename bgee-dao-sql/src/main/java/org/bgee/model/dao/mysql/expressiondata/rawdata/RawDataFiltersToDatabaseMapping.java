@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -33,6 +34,7 @@ public class RawDataFiltersToDatabaseMapping {
     private final Map<RawDataColumn, String> colToTableName;
     private final Map<RawDataColumn, String> colToColumnName;
     private final DAODataType datatype;
+    private final Set<String> joinedTables;
 
     private final static Logger log =
             LogManager.getLogger(RawDataFiltersToDatabaseMapping.class);
@@ -48,7 +50,7 @@ public class RawDataFiltersToDatabaseMapping {
         ASSAY_ID, CALL_TABLE_ASSAY_ID, GENE_ID}
 
     public RawDataFiltersToDatabaseMapping(Map<RawDataColumn, String> ambiguousColToTableName,
-            DAODataType datatype) {
+            DAODataType datatype, Set<String> joinedTables) {
         if (datatype == null) {
             throw log.throwing(new IllegalArgumentException("datatype can not be null"));
         }
@@ -60,11 +62,17 @@ public class RawDataFiltersToDatabaseMapping {
         this.colToColumnName = Collections.unmodifiableMap(RawDataFiltersToDatabaseMapping
                 .generateColToColName(datatype));
         this.datatype = datatype;
+        this.joinedTables = joinedTables == null ?
+                Collections.emptySet() : Collections.unmodifiableSet(joinedTables);
         log.debug(this.toString());
     }
 
     public Map<RawDataColumn, String> getColToTableName() {
         return colToTableName;
+    }
+
+    public Set<String> getJoinedTables() {
+        return joinedTables;
     }
 
     public Map<RawDataColumn, String> getColToColumnName() {
@@ -130,7 +138,7 @@ public class RawDataFiltersToDatabaseMapping {
 
     @Override
     public int hashCode() {
-        return Objects.hash(colToColumnName, colToTableName, datatype);
+        return Objects.hash(colToColumnName, colToTableName, datatype, joinedTables);
     }
 
     @Override
@@ -143,13 +151,14 @@ public class RawDataFiltersToDatabaseMapping {
             return false;
         RawDataFiltersToDatabaseMapping other = (RawDataFiltersToDatabaseMapping) obj;
         return Objects.equals(colToColumnName, other.colToColumnName)
-                && Objects.equals(colToTableName, other.colToTableName) && datatype == other.datatype;
+                && Objects.equals(colToTableName, other.colToTableName) && datatype == other.datatype
+                && Objects.equals(joinedTables, other.joinedTables);
     }
 
     @Override
     public String toString() {
         return "RawDataFiltersToDatabaseMapping [colToTableName=" + colToTableName + ", colToColumnName="
-                + colToColumnName + ", datatype=" + datatype + "]";
+                + colToColumnName + ", datatype=" + datatype + ", joinedTables=" + joinedTables + "]";
     }
 
 }

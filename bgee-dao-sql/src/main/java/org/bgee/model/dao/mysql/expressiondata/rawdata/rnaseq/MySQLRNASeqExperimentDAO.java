@@ -53,7 +53,7 @@ implements RNASeqExperimentDAO{
 
         // add boolean isTargetBase to the SELECT clause
         //XXX in the future this boolean could be added to the DB
-        if (isSingleCell) {
+        if (isSingleCell != null && isSingleCell) {
             sb.append(", (CASE WHEN tb.rnaSeqExperimentId IS NOT NULL THEN 1 ELSE 0 END) AS isTargetBase ");
         }
 
@@ -62,7 +62,7 @@ implements RNASeqExperimentDAO{
                 processedFilters, isSingleCell, Set.of(TABLE_NAME),
                 DAODataType.RNA_SEQ);
         //left join clause used to quickly retrieve isTargetBased information
-        if (isSingleCell) {
+        if (isSingleCell != null && isSingleCell) {
             sb.append(" LEFT JOIN (")
               .append("    SELECT DISTINCT l2.rnaSeqExperimentId ")
               .append("    FROM rnaSeqLibrary AS l2 ")

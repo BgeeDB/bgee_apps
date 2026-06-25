@@ -387,18 +387,19 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         log.traceEntry("{}, {}, {}, {}, {}", sb, processedFilters, isSingleCell, necessaryTables,
                 datatype);
         Map<RawDataColumn, String> ambiguousColToTable = new HashMap<>();
+        Set<String> joinedTables = new LinkedHashSet<>();
         if (datatype.equals(DAODataType.IN_SITU)) {
             ambiguousColToTable = generateFromClauseRawDataInSitu(sb,
-                    (DAOProcessedRawDataFilter<String>) processedFilters, necessaryTables);
+                    (DAOProcessedRawDataFilter<String>) processedFilters, necessaryTables, joinedTables);
         } else if (datatype.equals(DAODataType.RNA_SEQ)) {
             ambiguousColToTable = generateFromClauseRawDataRnaSeq(sb,
                     (DAOProcessedRawDataFilter<Integer>) processedFilters, isSingleCell,
-                    necessaryTables);
+                    necessaryTables, joinedTables);
         } else {
             throw log.throwing(new IllegalStateException("dataType " + datatype
                     + "not recognized."));
         }
-        return log.traceExit(new RawDataFiltersToDatabaseMapping(ambiguousColToTable, datatype));
+        return log.traceExit(new RawDataFiltersToDatabaseMapping(ambiguousColToTable, datatype, joinedTables));
     }
 
     /**
@@ -423,7 +424,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                          {@code String} as value defining the table to use.
      */
     private Map<RawDataColumn, String> generateFromClauseRawDataInSitu(StringBuilder sb,
-            DAOProcessedRawDataFilter<String> processedFilters, Set<String> necessaryTables) {
+            DAOProcessedRawDataFilter<String> processedFilters, Set<String> necessaryTables,
+            Set<String> joinedTablesOut) {
         log.traceEntry("{}, {}, {}", sb, processedFilters, necessaryTables);
 
         if (necessaryTables.size() == 2 && !necessaryTables.containsAll(
@@ -514,6 +516,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         log.debug("orderedTables: {}", orderedTables);
 
         sb.append(writeFromClauseInSitu(orderedTables));
+        joinedTablesOut.addAll(orderedTables);
 
         return log.traceExit(colToTableMap);
     }
@@ -631,7 +634,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      */
     protected Map<RawDataColumn, String> generateFromClauseRawDataRnaSeq(StringBuilder sb,
             DAOProcessedRawDataFilter<Integer> processedFilters, Boolean isSingleCell,
-            Set<String> necessaryTables) {
+            Set<String> necessaryTables, Set<String> joinedTablesOut) {
         log.traceEntry("{}, {}, {}, {}", sb, processedFilters, isSingleCell, necessaryTables);
 
         // possibilities : experiment or library or annotated samples or result or condition or
@@ -757,6 +760,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         log.debug("orderedTables: {}", orderedTables);
 
         sb.append(writeFromClauseRnaSeq(orderedTables));
+        joinedTablesOut.addAll(orderedTables);
 
         return log.traceExit(colToTableMap);
     }

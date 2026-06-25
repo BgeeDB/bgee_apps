@@ -1,14 +1,45 @@
 package org.bgee.model.expressiondata.call;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.gene.Gene;
 
 public class OTFExpressionCall {
+
+    private final static Logger log = LogManager.getLogger(OTFExpressionCall.class.getName());
+
+    //TODO: implement method allowing advanced ordering options using ordering attributes
+    /**
+     * Sorts all calls from the provided map into a single list ordered by decreasing
+     * {@code expressionScore}. Calls with a {@code null} expression score are placed last.
+     *
+     * @param propagatedExpressionCalls a map of genes to their propagated calls
+     * @return a flat list of all calls sorted by decreasing expression score
+     */
+    public static List<OTFExpressionCall> sortByDecreasingExpressionScore(
+            Map<Gene, Set<OTFExpressionCall>> propagatedExpressionCalls) {
+        return propagatedExpressionCalls.values().stream()
+                .flatMap(Set::stream)
+                .sorted(Comparator.comparing(
+                        OTFExpressionCall::getExpressionScore,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
+    }
 
     private final Gene gene;
     private final Condition2 condition;

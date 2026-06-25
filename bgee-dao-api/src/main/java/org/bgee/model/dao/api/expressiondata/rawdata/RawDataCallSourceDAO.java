@@ -151,7 +151,7 @@ public class RawDataCallSourceDAO {
         public enum ExclusionReason implements EnumDAOField {
             NOT_EXCLUDED("not excluded"), PRE_FILTERING("pre-filtering"),
             UNDEFINED("undefined"), NO_EXPRESSION_CONFLICT("noExpression conflict"),
-            ABSENT_NOT_RELIABLE("absent call not reliable");
+            BIOTYPE_NOT_TARGETED("biotype not targeted");
 
             /**
              * Convert the {@code String} representation of a exclusion reason (for instance, 

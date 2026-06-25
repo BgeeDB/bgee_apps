@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOObservedExpressionFilter;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
@@ -154,8 +155,45 @@ public class MySQLObservedExpressionDAO extends MySQLDAO<ObservedExpressionDAO.A
                     MySQLRawDataConditionDAO.TABLE_NAME));
             andClauseRequired = true;
         }
+        if (!filter.getDatatypes().equals(EnumSet.allOf(DAODataType.class))) {
+            StringBuilder datatypeSb = new StringBuilder();
+            boolean orRequired = false;
+            for (DAODataType datatype : filter.getDatatypes()) {
+                switch (datatype) {
+                    case RNA_SEQ:
+                        if (orRequired) datatypeSb.append(" OR");
+                        datatypeSb.append(" ").append(TABLE_NAME).append(".").append(
+                                ObservedExpressionDAO.Attribute.BULK_NUM_OBS.getTOFieldName()).append(" IS NOT NULL");
+                        orRequired = true;
+                        break;
+                    case SC_RNA_SEQ:
+                        if (orRequired) datatypeSb.append(" OR");
+                        datatypeSb.append(" ").append(TABLE_NAME).append(".").append(
+                                ObservedExpressionDAO.Attribute.FULL_LENGTH_NUM_OBS.getTOFieldName()).append(" IS NOT NULL");
+                        datatypeSb.append(" OR ").append(TABLE_NAME).append(".").append(
+                                ObservedExpressionDAO.Attribute.DROPLET_NUM_OBS.getTOFieldName()).append(" IS NOT NULL");
+                        orRequired = true;
+                        break;
+                    case IN_SITU:
+                        if (orRequired) datatypeSb.append(" OR");
+                        datatypeSb.append(" ").append(TABLE_NAME).append(".").append(
+                                ObservedExpressionDAO.Attribute.IN_SITU_NUM_OBS.getTOFieldName()).append(" IS NOT NULL");
+                        orRequired = true;
+                        break;
+                    default:
+                        throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + datatype));
+                }
+            }
+            if (andClauseRequired) {
+                sb.append(" AND");
+            }
+            sb.append(" (").append(datatypeSb).append(")");
+            andClauseRequired = true;
+        }
         return log.traceExit(sb.toString());
-    }    private String generateOneWhereClause(Set<?> condParamsSet, String fieldName,
+    }
+
+    private String generateOneWhereClause(Set<?> condParamsSet, String fieldName,
             boolean andClauseRequired, String tableName) {
         StringBuilder sb = new StringBuilder();
         if (andClauseRequired) {

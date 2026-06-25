@@ -48,6 +48,17 @@ public final class ConditionGraphCacheService extends CommonService{
     }
 
     /**
+     * Retrieve cached graph for a species, building and caching it on-demand if not yet loaded.
+     */
+    public ConditionGraphCache getOrLoadGraph(int speciesId) {
+        return speciesGraphs.computeIfAbsent(speciesId, id -> {
+            log.warning("ConditionGraphCache not pre-loaded for species " + id
+                    + " — building on-demand.");
+            return buildConditionGraph(id);
+        });
+    }
+
+    /**
      * Build and cache the graph for one species.
      */
     private ConditionGraphCache buildConditionGraph(Integer speciesId) {

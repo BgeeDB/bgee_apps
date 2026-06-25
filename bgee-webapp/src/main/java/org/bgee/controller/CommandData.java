@@ -942,8 +942,8 @@ public class CommandData extends CommandParent {
             //to set them in a ConditionFilter without providing a species ID,
             //so we don't have to explicitly check here if some are provided.
             if (this.requestParameters.getSpeciesId() != null ||
-                    !condParams.isEmpty() && !condParams.containsAll(ConditionParameter.allOf()) ||
-                        !dataTypes.isEmpty() && !dataTypes.equals(EnumSet.allOf(DataType.class))) {
+                    (!condParams.isEmpty() && !condParams.containsAll(ConditionParameter.allOf())) ||
+                    (!dataTypes.isEmpty() && !dataTypes.equals(EnumSet.allOf(DataType.class)))) {
 
                 if (this.requestParameters.getGeneIds() == null ||
                     this.requestParameters.getGeneIds().isEmpty()) {

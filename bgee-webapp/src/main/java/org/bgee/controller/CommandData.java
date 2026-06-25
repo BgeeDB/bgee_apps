@@ -1,65 +1,5 @@
 package org.bgee.controller;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.bgee.controller.exception.InvalidRequestException;
-import org.bgee.controller.exception.PageNotFoundException;
-import org.bgee.controller.user.User;
-import org.bgee.controller.utils.BgeeCacheService;
-import org.bgee.controller.utils.BgeeCacheService.CacheDefinition;
-import org.bgee.controller.utils.BgeeCacheService.CacheType;
-import org.bgee.model.BgeeEnum;
-import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.anatdev.Sex;
-import org.bgee.model.anatdev.Sex.SexEnum;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
-import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
-import org.bgee.model.expressiondata.baseelements.ConditionParameter;
-import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
-import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
-import org.bgee.model.expressiondata.call.ConditionFilter2;
-import org.bgee.model.expressiondata.call.ExpressionCallLoader;
-import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
-import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
-import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
-import org.bgee.model.expressiondata.call.ExpressionCallService;
-import org.bgee.model.expressiondata.call.OTFExpressionCall;
-import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
-import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
-import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithExperiment;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
-import org.bgee.model.expressiondata.rawdata.RawDataConditionFilter;
-import org.bgee.model.expressiondata.rawdata.RawDataFilter;
-import org.bgee.model.expressiondata.rawdata.RawDataLoader;
-import org.bgee.model.expressiondata.rawdata.RawDataLoader.InformationType;
-import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
-import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter;
-import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter.RawDataProcessedFilterConditionPart;
-import org.bgee.model.expressiondata.rawdata.RawDataService;
-import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.job.Job;
-import org.bgee.model.job.JobService;
-import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
-import org.bgee.model.job.exception.TooManyJobsException;
-import org.bgee.model.ontology.Ontology;
-import org.bgee.model.search.SearchMatchResultService;
-import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
-import org.bgee.view.DataDisplay;
-import org.bgee.view.ViewFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,6 +19,66 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.controller.user.User;
+import org.bgee.controller.utils.BgeeCacheService;
+import org.bgee.controller.utils.BgeeCacheService.CacheDefinition;
+import org.bgee.controller.utils.BgeeCacheService.CacheType;
+import org.bgee.model.BgeeEnum;
+import org.bgee.model.ComposedEntity;
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
+import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.call.ConditionFilter2;
+import org.bgee.model.expressiondata.call.ExpressionCallLoader;
+import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
+import org.bgee.model.expressiondata.rawdata.RawDataConditionFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataLoader;
+import org.bgee.model.expressiondata.rawdata.RawDataLoader.InformationType;
+import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter.RawDataProcessedFilterConditionPart;
+import org.bgee.model.expressiondata.rawdata.RawDataService;
+import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
+import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
+import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithExperiment;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.job.Job;
+import org.bgee.model.job.JobService;
+import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
+import org.bgee.model.job.exception.TooManyJobsException;
+import org.bgee.model.ontology.Ontology;
+import org.bgee.model.search.SearchMatchResultService;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
+import org.bgee.view.DataDisplay;
+import org.bgee.view.ViewFactory;
 
 /**
  * Controller that handles requests for the raw data page.
@@ -643,17 +643,12 @@ public class CommandData extends CommandParent {
      * for convenience when comparing to start and end times provided as {@code long}.
      *
      * @see #loadRawDataCounts(RawDataLoader, EnumSet)
-     * @see #loadExprCallCounts(ExpressionCallLoader)
      */
     private final static long COMPUTE_TIME_COUNT_CACHE_MS = 1000L;
 
     private final static CacheDefinition<RawDataCacheKey, RawDataCountContainer>
     RAW_DATA_COUNT_CACHE_DEF = new CacheDefinition<>("rawDataCountCache",
             RawDataCacheKey.class, RawDataCountContainer.class, CacheType.LRU, 300);
-
-    private final static CacheDefinition<ExpressionCallFilter2, Long>
-    EXPR_CALL_COUNT_CACHE_DEF = new CacheDefinition<>("exprCallCountCache",
-            ExpressionCallFilter2.class, Long.class, CacheType.LRU, 60);
 
     /**
      * A {@code long} that is the execution time in milliseconds of the processing of
@@ -720,9 +715,6 @@ public class CommandData extends CommandParent {
     RAW_DATA_POST_FILTER_CACHE_DEF = new CacheDefinition<>("rawDataPostFilterCache",
             RawDataCacheKey.class, RawDataPostFilter.class, CacheType.LRU, 100);
 
-    private final static CacheDefinition<ExpressionCallFilter2, ExpressionCallPostFilter>
-    EXPR_CALL_POST_FILTER_CACHE_DEF = new CacheDefinition<>("exprCallPostFilterCache",
-            ExpressionCallFilter2.class, ExpressionCallPostFilter.class, CacheType.LRU, 20);
 
     /**
      * A {@code String} to recognize the action of requesting an experiment page
@@ -965,31 +957,52 @@ public class CommandData extends CommandParent {
                 job = this.jobService.registerNewJob(this.user.getUUID().toString());
                 job.startJob();
                 //If filters are provided, they will be considered with this ExpressionCallLoader
+                long startTimeLoader = System.currentTimeMillis();
                 ExpressionCallLoader callLoader = this.loadExprCallLoader(true, condParams, dataTypes);
+                log.debug("ExpressionCallLoader generated in {} ms", System.currentTimeMillis() - startTimeLoader);
 
-                //results
-                if (this.requestParameters.isGetResults()) {
-//                    calls = this.loadExprCallResults(callLoader);
-                    calls = this.loadExprCallResults(callLoader);
+                // Run OTF propagation once and reuse the result for results, count, and post-filters.
+                List<OTFExpressionCall> allOtfCalls = null;
+                if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount()
+                        || (this.requestParameters.isGetFilters() && postFilter == null)) {
+                    long startTimeOtf = System.currentTimeMillis();
+                    allOtfCalls = loadExprCallResults(callLoader);
+                    log.debug("loadDataOnTheFly() completed in {} ms, {} calls retrieved",
+                            System.currentTimeMillis() - startTimeOtf, allOtfCalls.size());
                 }
-                //Raw data counts
+
+                //Count derived from OTF result size
                 if (this.requestParameters.isGetResultCount()) {
-                    count = this.loadExprCallCount(callLoader);
+                    count = (long) allOtfCalls.size();
+                    log.debug("Result count: {}", count);
                 }
-                //Filters. PostFilter is not null and is an empty filter if no genes are specified,
+
+                //Post-filters derived from OTF result conditions.
+                //PostFilter is not null and is an empty filter if no genes are specified,
                 //in that case we don't retrieve filters.
                 if (this.requestParameters.isGetFilters() && postFilter == null) {
-                    //For requesting getFilters, well, the filter parameters must be ignored
-                    ExpressionCallLoader loaderToUse = callLoader;
-                    ExpressionCallFilter2 noFilterParamFilter = this.loadExprCallFilter(
-                            false, condParams, dataTypes);
-                    //We try to avoid requesting a ProcessedFilter if not necessary,
-                    //by comparing the RawDataFilters
-                    if (!callLoader.getProcessedFilter()
-                            .getSourceFilter().equals(noFilterParamFilter)) {
-                        loaderToUse = this.loadExprCallLoader(noFilterParamFilter);
+                    long startTimePostFilter = System.currentTimeMillis();
+                    postFilter = this.buildPostFilterFromOtfCalls(allOtfCalls, condParams);
+                    log.debug("Post-filter built in {} ms", System.currentTimeMillis() - startTimePostFilter);
+                }
+
+                //Paginated results
+                if (this.requestParameters.isGetResults()) {
+                    long offset = this.requestParameters.getOffset() == null? 0L:
+                            this.requestParameters.getOffset();
+                    if (offset < 0) {
+                        throw log.throwing(new InvalidRequestException("Offset must be non-negative."));
                     }
-                    postFilter = this.loadExprCallPostFilters(loaderToUse);
+                    int limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
+                            this.requestParameters.getLimit();
+                    if (limit > LIMIT_MAX) {
+                        throw log.throwing(new InvalidRequestException(
+                                "Limit cannot be greater than " + LIMIT_MAX));
+                    }
+                    long startTimePagination = System.currentTimeMillis();
+                    calls = allOtfCalls.stream().skip(offset).limit(limit).collect(Collectors.toList());
+                    log.debug("Pagination (offset={}, limit={}) completed in {} ms",
+                            offset, limit, System.currentTimeMillis() - startTimePagination);
                 }
 
                 job.completeWithSuccess();
@@ -1269,8 +1282,11 @@ public class CommandData extends CommandParent {
                     throws InvalidRequestException {
         log.traceEntry("{}, {}, {}", consideringFilters, condParams, dataTypes);
 
-        return log.traceExit(this.loadExprCallLoader(
-                this.loadExprCallFilter(consideringFilters, condParams, dataTypes)));
+        long startTimeFilter = System.currentTimeMillis();
+        ExpressionCallFilter2 filter = this.loadExprCallFilter(consideringFilters, condParams, dataTypes);
+        log.debug("ExpressionCallFilter2 built in {} ms", System.currentTimeMillis() - startTimeFilter);
+
+        return log.traceExit(this.loadExprCallLoader(filter));
     }
 
     private RawDataLoader loadRawDataLoader(RawDataFilter filter) {
@@ -1294,6 +1310,7 @@ public class CommandData extends CommandParent {
 
         ExpressionCallService callService = this.serviceFactory.getExpressionCallService();
         //Try to get the processed condition part of the processed filter from cache
+        long startTimeProcessFilter = System.currentTimeMillis();
         ExpressionCallProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
                 EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF,
                 new ExprCallCondPartProcessingCacheKey(filter.getConditionFilters()),
@@ -1302,8 +1319,14 @@ public class CommandData extends CommandParent {
                 condPart -> callService.processExpressionCallFilter(filter,
                         null, condPart, null),
                 COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS);
+        log.debug("processExpressionCallFilter (via cache) completed in {} ms",
+                System.currentTimeMillis() - startTimeProcessFilter);
 
-        return log.traceExit(callService.getCallLoader(processedFilter));
+        long startTimeGetLoader = System.currentTimeMillis();
+        ExpressionCallLoader loader = callService.getCallLoader(processedFilter);
+        log.debug("getCallLoader() completed in {} ms", System.currentTimeMillis() - startTimeGetLoader);
+
+        return log.traceExit(loader);
     }
 
     private RawDataFilter loadRawDataFilter(boolean consideringFilters) {
@@ -1689,9 +1712,8 @@ public class CommandData extends CommandParent {
         List<OTFExpressionCall> results = this.cacheService.useCacheNonAtomic(
                 EXPR_CALL_RESULT_CACHE_DEF,
                 cacheKey,
-//                () -> callLoader.loadData(offset, limit),
                 () -> callLoader.loadDataOnTheFly().values().stream()
-                        .flatMap(Set::stream)
+                        .flatMap(List::stream)
                         .collect(Collectors.toList()),
                 COMPUTE_TIME_RESULT_CACHE_MS);
         return log.traceExit(results);
@@ -1756,14 +1778,6 @@ public class CommandData extends CommandParent {
 
         return log.traceExit(counts);
     }
-    private long loadExprCallCount(ExpressionCallLoader callLoader) {
-        log.traceEntry("{}", callLoader);
-        return log.traceExit(this.cacheService.useCacheNonAtomic(
-                EXPR_CALL_COUNT_CACHE_DEF,
-                callLoader.getProcessedFilter().getSourceFilter(),
-                () -> callLoader.loadDataCount(),
-                COMPUTE_TIME_COUNT_CACHE_MS));
-    }
 
     private EnumMap<DataType, RawDataPostFilter> loadRawDataPostFilters(RawDataLoader rawDataLoader,
             EnumSet<DataType> dataTypes, InformationType infoType) {
@@ -1790,14 +1804,33 @@ public class CommandData extends CommandParent {
                         (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
                         () -> new EnumMap<>(DataType.class))));
     }
-    private ExpressionCallPostFilter loadExprCallPostFilters(ExpressionCallLoader callLoader) {
-        log.traceEntry("{}", callLoader);
-        return log.traceExit(this.cacheService.useCacheNonAtomic(
-                EXPR_CALL_POST_FILTER_CACHE_DEF,
-                callLoader.getProcessedFilter().getSourceFilter(),
-                () -> callLoader.loadPostFilter(),
-                COMPUTE_TIME_POST_FILTER_CACHE_MS
-                ));
+
+    /**
+     * Build an {@link ExpressionCallPostFilter} by extracting the distinct condition-parameter
+     * entities that appear in the given OTF propagation results.
+     */
+    private ExpressionCallPostFilter buildPostFilterFromOtfCalls(List<OTFExpressionCall> allCalls,
+            Set<ConditionParameter<?, ?>> condParams) {
+        log.traceEntry("{}, {}", allCalls, condParams);
+        if (allCalls == null || allCalls.isEmpty()) {
+            return log.traceExit(new ExpressionCallPostFilter());
+        }
+        Map<ConditionParameter<?, ?>, Set<? extends Object>> condParamEntities = new HashMap<>();
+        for (ConditionParameter<?, ?> cp : condParams) {
+            Set<Object> entities = new HashSet<>();
+            for (OTFExpressionCall c : allCalls) {
+                if (c.getCondition() == null) continue;
+                ComposedEntity<?> compEnt = c.getCondition().getConditionParameterValue(cp);
+                if (compEnt == null) continue;
+                for (Object e : compEnt.getEntities()) {
+                    if (e != null) entities.add(e);
+                }
+            }
+            if (!entities.isEmpty()) {
+                condParamEntities.put(cp, entities);
+            }
+        }
+        return log.traceExit(new ExpressionCallPostFilter(condParamEntities));
     }
 
     private EnumMap<DataType, List<ColumnDescription>> getColumnDescriptions(String action,

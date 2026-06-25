@@ -414,7 +414,9 @@ public class ConditionGraphService extends CommonService {
                         propStages.retainAll(devStagesUsedInAnnots);
                     }
                 }
-                
+                //to make sure we don't exclude the annotated term, we add it afterwards
+                propStages.add(cond.getDevStage());
+
                 Set<AnatEntity> propAnatEntities = new HashSet<>();
                 if (anatEntityOntToUse != null && cond.getAnatEntityId() != null) {
                     if (inferAncestralConds) {

@@ -80,6 +80,27 @@ public class OTFExpressionCall {
         return dataPropagation;
     }
 
+    public String getFormattedAllDatatypePValue() {
+        log.traceEntry();
+        NumberFormat formatter = NumberFormat.getInstance(Locale.US);
+        formatter.setRoundingMode(RoundingMode.HALF_UP);
+        // do not use scientific notation when FDR pValue is bigger than 0.001 or equal
+        // to 0
+        if(allDataTypePValue.compareTo(new BigDecimal(0.001)) >= 0 || 
+                allDataTypePValue.compareTo(new BigDecimal(0)) == 0) {
+            formatter.setMaximumFractionDigits(3);
+            formatter.setMinimumFractionDigits(0);
+        } else if (formatter instanceof DecimalFormat) {
+            ((DecimalFormat) formatter).applyPattern("0.00E0");
+        } else {
+            throw log.throwing(new IllegalStateException("No formatter could be defined "
+                    + "for " + allDataTypePValue));
+        }
+        //In Bgee 16 we limited the precision to 30 digits
+        return log.traceExit((allDataTypePValue.compareTo(new BigDecimal("1E-30")) <= 0? "<= ": "")
+                + formatter.format(allDataTypePValue).toLowerCase(Locale.US));
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(allDataTypePValue, bestDirectDescendantAllDataTypePValue,

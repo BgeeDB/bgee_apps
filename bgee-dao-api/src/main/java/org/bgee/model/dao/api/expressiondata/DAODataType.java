@@ -23,6 +23,7 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * @version Bgee 14 Mar. 2017
  * @since Bgee 14 Mar. 2017
  */
+//FIXME: review these fields as some are probably not required anymore with OTF propagation
 public enum DAODataType implements EnumDAOField {
     //The order of these Enum elements is important and is used to generate field names
     IN_SITU("in situ", "inSitu", "InSitu", "inSituRank", "inSituGlobalRank", "inSituRankNorm",

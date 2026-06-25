@@ -284,6 +284,7 @@ public class ExpressionCallService extends CallServiceParent {
                 ABSENT_HIGH_GREATER_THAN));
     }
 
+    //XXX As of Bgee 16.0 the max rank is not required anymore.
     private ExpressionCallProcessedFilterInvariablePart loadIfNecessaryAndGetInvariablePart() {
         //We don't fear a race condition here, because this information is cheap to compute
         //and does not change, so no problem to retrieve and set it multiple times.
@@ -296,15 +297,15 @@ public class ExpressionCallService extends CallServiceParent {
             //Retrieve max rank for the requested species if EXPRESSION_SCORE requested
             //(the max rank is required to convert mean ranks into expression scores)
             //TODO: in a future version with Attributes, to retrieve only if necessary
-            Map<Integer, ConditionRankInfoTO> maxRankPerSpecies = conditionDAO
-                    .getMaxRanks(null,
-                            //We always request the max rank over all data types,
-                            //independently of the data types requested in the query,
-                            //because ranks are all normalized based on the max rank over all data types
-                            null);
+//            Map<Integer, ConditionRankInfoTO> maxRankPerSpecies = conditionDAO
+//                    .getMaxRanks(null,
+//                            //We always request the max rank over all data types,
+//                            //independently of the data types requested in the query,
+//                            //because ranks are all normalized based on the max rank over all data types
+//                            null);
             PROCESSED_FILTER_INVARIABLE_PART =
                     new ExpressionCallProcessedFilterInvariablePart(geneBioTypeMap, sourceMap,
-                            maxRankPerSpecies);
+                            null);
         } else {
             log.debug("loadIfNecessaryAndGetInvariablePart: cache hit, reusing invariable part");
         }

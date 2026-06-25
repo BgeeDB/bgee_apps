@@ -160,8 +160,11 @@ public class ExpressionCallService extends CallServiceParent {
             throw log.throwing(new IllegalArgumentException("The ExpressionCallProcessedFilterConditionPart "
                     + "does not correspond to the ExpressionCallFilter2"));
         }
+        long startTimeInvariable = System.currentTimeMillis();
         final ExpressionCallProcessedFilterInvariablePart procInvariablePart = invariablePart != null?
                 invariablePart: loadIfNecessaryAndGetInvariablePart();
+        log.debug("loadIfNecessaryAndGetInvariablePart() completed in {} ms",
+                System.currentTimeMillis() - startTimeInvariable);
         final ExpressionCallProcessedFilterGeneSpeciesPart procGeneSpeciesPart =
                 geneSpeciesPart != null?
                     geneSpeciesPart:
@@ -189,8 +192,12 @@ public class ExpressionCallService extends CallServiceParent {
 
         //At this point, the filter cannot be null and we can use the method loadConditionPart
         assert filter != null;
+        long startTimeCondPart = System.currentTimeMillis();
         final ExpressionCallProcessedFilterConditionPart procConditionPart = conditionPart != null?
                 conditionPart: loadConditionPart(filter, procGeneSpeciesPart.getSpeciesMap());
+        log.debug("loadConditionPart() completed in {} ms, {} conditions found",
+                System.currentTimeMillis() - startTimeCondPart,
+                procConditionPart.getRequestedConditionMap().size());
 
 
         //At this point, there should always be at least a GeneFilter, it is mandatory
@@ -298,6 +305,8 @@ public class ExpressionCallService extends CallServiceParent {
             PROCESSED_FILTER_INVARIABLE_PART =
                     new ExpressionCallProcessedFilterInvariablePart(geneBioTypeMap, sourceMap,
                             maxRankPerSpecies);
+        } else {
+            log.debug("loadIfNecessaryAndGetInvariablePart: cache hit, reusing invariable part");
         }
         return log.traceExit(PROCESSED_FILTER_INVARIABLE_PART);
     }
@@ -335,9 +344,13 @@ public class ExpressionCallService extends CallServiceParent {
 
         //Now, we load specific conditions that can be queried. Again, we need to retrieve
         //all of them to configure the DAOCallFilter, even if there is a large number.
+        long t0 = System.currentTimeMillis();
         Set<DAOConditionFilter2> daoCondFilters =
                 this.utils.convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
                         this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered());
+        log.debug("convertConditionFiltersToDAOConditionFilters() completed in {} ms ({} DAO filters)",
+                System.currentTimeMillis() - t0, daoCondFilters.size());
+        t0 = System.currentTimeMillis();
         Map<Integer, Condition2> requestedCondMap = daoCondFilters.isEmpty()?
                 new HashMap<>():
                     this.utils.loadGlobalConditionMap(speciesMap.values(),
@@ -345,6 +358,8 @@ public class ExpressionCallService extends CallServiceParent {
                             this.utils.convertCondParamsToDAOCondAttributes(filter.getCondParamCombination()),
                             this.conditionDAO, this.anatEntityService, this.devStageService,
                             this.sexService, this.strainService);
+        log.debug("loadGlobalConditionMap() completed in {} ms ({} conditions)",
+                System.currentTimeMillis() - t0, requestedCondMap.size());
         return log.traceExit(new ExpressionCallProcessedFilterConditionPart(
                 filter.getConditionFilters(),
                 requestedCondMap));

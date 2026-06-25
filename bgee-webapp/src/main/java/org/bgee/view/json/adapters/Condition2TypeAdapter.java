@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.ComposedEntity;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.Condition2;
 
@@ -26,6 +27,12 @@ public class Condition2TypeAdapter extends TypeAdapter<Condition2> {
     @Override
     public void write(JsonWriter out, Condition2 value) throws IOException {
         log.traceEntry("{}, {}", out, value);
+        write(out, value, false);
+        log.traceExit();
+    }
+    
+    public void write(JsonWriter out, Condition2 value, boolean removeRootCellType) throws IOException {
+        log.traceEntry("{}, {}", out, value, removeRootCellType);
         if (value == null) {
             out.nullValue();
             log.traceExit(); return;
@@ -54,13 +61,15 @@ public class Condition2TypeAdapter extends TypeAdapter<Condition2> {
                 } else {
                     out.value("NA");
                 }
-                out.name("cellType");
-                //We don't write NA anymore instead of the root of the cell types,
-                //because we need all values to link to processed expression values through filters
-                if (cellType != null/* && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())*/) {
-                    this.utils.writeSimplifiedNamedEntity(out, cellType);
-                } else {
-                    out.value("NA");
+                if (!( removeRootCellType && ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId()))) {
+                    out.name("cellType");
+                    //We don't write NA anymore instead of the root of the cell types,
+                    //because we need all values to link to processed expression values through filters
+                    if (cellType != null/* && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())*/) {
+                        this.utils.writeSimplifiedNamedEntity(out, cellType);
+                    } else {
+                        out.value("NA");
+                    }
                 }
             } else {
                 //For now none of the remaining cond params cannot be post-composed

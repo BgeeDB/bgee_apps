@@ -13,6 +13,7 @@ import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.easybgee.BgeeToEasyBgee;
 import org.bgee.pipeline.expression.GenoFishProject;
+import org.bgee.pipeline.expression.InsertPropagatedConditions;
 //import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateXRefsFilesWithExprInfo;
@@ -20,7 +21,6 @@ import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateBioSODAFi
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateOncoMXFile;
 //import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
-import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
 import org.bgee.pipeline.ontologycommon.InsertECO;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
@@ -253,6 +253,10 @@ public class CommandRunner {
 //            ParseOrthoXML.main(newArgs);
 //            break;
 
+        //---------- Condition propagation -----------
+        case "InsertPropagatedConditions":
+            InsertPropagatedConditions.main(newArgs);
+            break;
         //---------- Call propagation -----------
         case "InsertGlobalCalls":
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));

@@ -169,7 +169,8 @@ public class InsertPropagatedConditions extends CallService {
             //the try-with-resource clause.
             commonManager.releaseResources();
 
-            speciesIdsToUse.parallelStream().forEach(speciesId -> {
+            // do not use parallelstream here as we already parallelize the insertion of direct ancestor relationships, which is the most time-consuming part of the process and whom time is really different between species. We want to process species one by one to avoid having some threads idle while waiting for the longest one to finish.
+            speciesIdsToUse.stream().forEach(speciesId -> {
                 //Give as argument a Supplier of ServiceFactory so that this object
                 //can provide a new connection to each parallel thread.
                 InsertPropagatedConditions insert = new InsertPropagatedConditions(
@@ -290,21 +291,49 @@ public class InsertPropagatedConditions extends CallService {
     }
 
     private static Set<GlobalConditionToDirectAncestorTO> insertGlobalConditionDirectRelation(ConditionGraph conditionGraph,
-            Map<Condition, Integer> globalCondToCondId, ConditionDAO condDAO) {
+            Map<Condition, Integer> globalCondToCondId, MySQLDAOManager daoManager, ConditionDAO condDAO)
+            throws Exception {
         log.traceEntry("{}, {}", conditionGraph, globalCondToCondId);
-        // First retrieve conditionId and their direct ancestor conditionIds
+
+        int total = globalCondToCondId.size();
+        log.info("Computing direct ancestor relationships for {} conditions...", total);
+        long startTime = System.currentTimeMillis();
+        AtomicInteger processedCount = new AtomicInteger(0);
+
+        // Release the DB connection before the long parallel computation. Without this the
+        // connection sits idle long enough for MySQL wait_timeout to expire.
+        daoManager.getConnection().getRealConnection().setAutoCommit(true);
+        daoManager.releaseResources();
+
+        // Use parallelStream so each condition is processed independently on separate threads.
+        // getAncestorConditions(directRelOnly=true) computes all ancestor conditions then applies
+        // a pairwise two-check filter (direct ontology step OR no intermediate in the graph).
+        // Memory usage is O(|relativeConds|) per call — no shared cache, so no risk of OOM.
+        // getAncestorConditions only reads immutable/unmodifiable data → thread-safe.
         Set<GlobalConditionToDirectAncestorTO> globalConditionToDirectAncestorTOs = globalCondToCondId.entrySet()
-                .stream()
+                .parallelStream()
                 .flatMap(entry -> {
                     Integer condId = entry.getValue();
-                    Set<Integer> parentIds = conditionGraph.getAncestorConditions(entry.getKey(), true)
+                    int count = processedCount.incrementAndGet();
+                    if (count % 10_000 == 0) {
+                        log.info("Progress: {}/{} conditions processed ({} ms elapsed)",
+                                count, total, System.currentTimeMillis() - startTime);
+                    }
+                    return conditionGraph.getAncestorConditions(entry.getKey(), true)
                             .stream()
                             .map(globalCondToCondId::get)
-                            .collect(Collectors.toSet());
-                    return parentIds.stream()
+                            // Guard: ancestors are always in globalCondToCondId, but skip nulls
+                            // defensively to avoid inserting corrupt TOs.
+                            .filter(java.util.Objects::nonNull)
                             .map(parentId -> new GlobalConditionToDirectAncestorTO(condId, parentId));
                 })
                 .collect(Collectors.toSet());
+
+        log.info("Generated {} ancestor relationships in {} ms total",
+                globalConditionToDirectAncestorTOs.size(), System.currentTimeMillis() - startTime);
+
+        // Re-acquire a fresh connection and start a transaction before the INSERT.
+        startTransaction(daoManager);
 
         // then insert GlobalConditionDirectRelationTO
         if (!globalConditionToDirectAncestorTOs.isEmpty()) {
@@ -375,6 +404,12 @@ public class InsertPropagatedConditions extends CallService {
             assert globalCondToSelfRawCondIds.values().stream().flatMap(s -> s.stream())
                     .collect(Collectors.toSet()).equals(rawCondIdToRawCondMap.keySet());
 
+            // Release the DB connection before the long CPU-only computation (condition graph
+            // inference). Without this the connection sits idle long enough for MySQL
+            // wait_timeout to expire, causing a CommunicationsException on the next query.
+            ((MySQLDAOManager) mainManager).getConnection().getRealConnection().setAutoCommit(true);
+            mainManager.releaseResources();
+
             final ConditionGraph conditionGraph = loadConditionGraph(
                     this.getServiceFactory().getConditionGraphService(),
                     globalCondToSelfRawCondIds.keySet(),
@@ -407,7 +442,8 @@ public class InsertPropagatedConditions extends CallService {
 
             //Finally insert direct relations between propagated conditions
             Set<GlobalConditionToDirectAncestorTO> globalCondToDirectAncestorTOs = InsertPropagatedConditions
-                    .insertGlobalConditionDirectRelation(conditionGraph, globalCondsToglobalCondId, condDAO);
+                    .insertGlobalConditionDirectRelation(conditionGraph, globalCondsToglobalCondId,
+                            (MySQLDAOManager) mainManager, condDAO);
             log.info("{} relations between global conndition and their direct ancestors have been inserted for species {}",
                     globalCondToDirectAncestorTOs.size(), speciesId);
 
@@ -510,6 +546,10 @@ public class InsertPropagatedConditions extends CallService {
             if (!speMap.keySet().contains(condTO.getSpeciesId())) {
                 throw log.throwing(new IllegalArgumentException(
                         "The retrieved ConditionTOs do not match the provided Species."));
+            }
+            // We propagate only conditions that are mapped to expression
+            if (!condTO.getId().equals(condTO.getExprMappedConditionId())) {
+                continue;
             }
             conditionTOs.add(condTO);
             //As of Bgee 15.0, only the cellTypeId could be null

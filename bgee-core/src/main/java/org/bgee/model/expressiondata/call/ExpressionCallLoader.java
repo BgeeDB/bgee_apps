@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -323,8 +324,35 @@ public class ExpressionCallLoader extends CommonService {
                 geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds);
         log.debug("Calls propagated ({} genes) in {} ms",
                 propagatedExpressionCalls.size(), System.currentTimeMillis() - startTimePropagation);
+        // remove condition needed for on-the--fly propagation but not requested by the condition filters
+        // happens when a condition parameter value is provided for anat. entity, cell type of dev. stage
+        // but child terms are not expected.
+        //TODO: benchmark advantage of doing that step during propagation. It would probably be harder to debug
+        //      but would be faster
+        Predicate<OTFExpressionCall> filter =
+                OTFExpressionCallFilterEngine.compile(this.processedFilter.getSourceFilter().getConditionFilters());
+        Map<Gene, Set<OTFExpressionCall>> filtered =
+                propagatedExpressionCalls.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().stream()
+                            .filter(filter)
+                            .collect(Collectors.toSet())
+                        ));
+        //order result if required.
+        Map<Gene, List<OTFExpressionCall>> sortedCalls =
+                filtered.entrySet().stream()
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                e -> e.getValue().stream()
+                                        .sorted(Comparator.comparing(
+                                                OTFExpressionCall::getExpressionScore,
+                                                Comparator.nullsLast(Comparator.reverseOrder())
+                                        ))
+                                        .toList()
+                        ));
 
-        return log.traceExit(propagatedExpressionCalls);
+        return log.traceExit(sortedCalls);
     }
 
     private Map<Gene, Set<OTFExpressionCall>> propagateCalls(

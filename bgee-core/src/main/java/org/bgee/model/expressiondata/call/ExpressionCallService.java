@@ -173,6 +173,9 @@ public class ExpressionCallService extends CallServiceParent {
                         loadGeneSpeciesPart(filter, procInvariablePart.getGeneBioTypeMap()));
 
         //It's OK that the filter is null or empty if we want to retrieve any raw data
+        //TODO: In which context do we allow null or empty filter?
+        //      Filter should never be null and at least one gene/species should be provided
+        //      => should be removed as OTF propagation does not work in that context
         if (filter == null || filter.isEmptyFilter()) {
             return log.traceExit(new ExpressionCallProcessedFilter(filter,
                     //Important to provide a HashSet here, a null value means
@@ -346,12 +349,16 @@ public class ExpressionCallService extends CallServiceParent {
         //Now, we load specific conditions that can be queried. Again, we need to retrieve
         //all of them to configure the DAOCallFilter, even if there is a large number.
         long t0 = System.currentTimeMillis();
+        //FIXME: creation of daoCondFilters does not require to use the ontologies.
+        //       Everything is available in the database to create a DAO that would return values
+        //       of condition parameters with there descendants. It would be way way faster.
         Set<DAOConditionFilter2> daoCondFilters =
                 this.utils.convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
                         this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered());
         log.debug("convertConditionFiltersToDAOConditionFilters() completed in {} ms ({} DAO filters)",
                 System.currentTimeMillis() - t0, daoCondFilters.size());
         t0 = System.currentTimeMillis();
+        //TODO: check that we really want to allow empty daoCondFilters
         Map<Integer, Condition2> requestedCondMap = daoCondFilters.isEmpty()?
                 new HashMap<>():
                     this.utils.loadGlobalConditionMap(speciesMap.values(),

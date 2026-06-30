@@ -1311,14 +1311,18 @@ public class CommandData extends CommandParent {
         ExpressionCallService callService = this.serviceFactory.getExpressionCallService();
         //Try to get the processed condition part of the processed filter from cache
         long startTimeProcessFilter = System.currentTimeMillis();
-        ExpressionCallProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
-                EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF,
-                new ExprCallCondPartProcessingCacheKey(filter.getConditionFilters()),
-                () -> callService.processExpressionCallFilter(filter),
-                pf -> pf.getConditionPart(),
-                condPart -> callService.processExpressionCallFilter(filter,
-                        null, condPart, null),
-                COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS);
+        //TODO: remove includeChildTerms and excludeTermsAndChildrenIds from the filter used
+        // to retrieve the cache key of the processedfilters. With OTF propagations all conditions from the condition
+        // graph have to be processed and the removal of children has to be done after the propagation.
+        // Of course filterIds has to be kept as part of the caching key.
+       ExpressionCallProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
+               EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF,
+               new ExprCallCondPartProcessingCacheKey(filter.getConditionFilters()),
+               () -> callService.processExpressionCallFilter(filter),
+               pf -> pf.getConditionPart(),
+               condPart -> callService.processExpressionCallFilter(filter,
+                       null, condPart, null),
+               COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS);
         log.debug("processExpressionCallFilter (via cache) completed in {} ms",
                 System.currentTimeMillis() - startTimeProcessFilter);
 

@@ -302,8 +302,8 @@ public class CallServiceUtils {
         log.traceEntry("{}, {}, {}, {}", condFilters, ontService, anatEntityService, consideredSpeciesIds);
         if (condFilters == null || condFilters.isEmpty()) {
             if(consideredSpeciesIds == null || consideredSpeciesIds.isEmpty()) {
-            return log.traceExit(new HashSet<>());
-        }
+                return log.traceExit(new HashSet<>());
+            }
             return log.traceExit(Set.of(new DAOConditionFilter2(consideredSpeciesIds, null, null, null, null, null, null, null)));
         }
     
@@ -321,12 +321,17 @@ public class CallServiceUtils {
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(0);
             FilterIds<String> cellTypeFilterIds = filter.getComposedFilterIds(
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(1);
-            if (anatEntityFilterIds != null && anatEntityFilterIds.isIncludeChildTerms()) {
+            //XXX: we used to consider isIncludeChildTerms == true detect terms to retrieve for anat. enttiy,
+            //     Cell type and dev. stage.
+            //     Since Bgee 16.0 we generate the calls on the fly. All descendant condition of a requested
+            //     one have to be processed. Then we always need to retrieve all child terms of a requested term.
+            //     The subseting of condition is done later once the propagation has been done.
+            if (anatEntityFilterIds != null) {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(anatEntityFilterIds.getIds());
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(anatEntityFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithAnatCellChildrenRequested.add(filter.getSpeciesId());
             }
-            if (cellTypeFilterIds != null && cellTypeFilterIds.isIncludeChildTerms()) {
+            if (cellTypeFilterIds != null) {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(cellTypeFilterIds.getIds());
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(cellTypeFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithAnatCellChildrenRequested.add(filter.getSpeciesId());
@@ -335,7 +340,7 @@ public class CallServiceUtils {
             assert !filter.getComposedFilterIds(ConditionParameter.DEV_STAGE).isComposed();
             FilterIds<String> devStageFilterIds = filter.getComposedFilterIds(
                     ConditionParameter.DEV_STAGE).getFilterIds(0);
-            if (devStageFilterIds != null && devStageFilterIds.isIncludeChildTerms()) {
+            if (devStageFilterIds != null) {
                 devStageIdsWithChildrenRequested.addAll(devStageFilterIds.getIds());
                 devStageIdsWithChildrenRequested.addAll(devStageFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithDevStageChildrenRequested.add(filter.getSpeciesId());
@@ -398,7 +403,6 @@ public class CallServiceUtils {
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(1);
             if (anatEntityFilterIds != null) {
                 anatEntityIds.addAll(anatEntityFilterIds.getIds());
-                if (anatEntityFilterIds.isIncludeChildTerms()) {
                     anatEntityIds.addAll(
                             anatEntityFilterIds.getIds().stream()
                             .flatMap(id -> anatOntology.getDescendantIds(
@@ -406,27 +410,9 @@ public class CallServiceUtils {
                                     .stream())
                             .collect(Collectors.toSet())
                     );
-                }
-                if (!anatEntityFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
-                    Set<String> anatEntityIdsToExclude = new HashSet<>();
-                    anatEntityIdsToExclude.addAll(anatEntityFilterIds.getExcludeTermsAndChildrenIds());
-                    anatEntityIdsToExclude.addAll(
-                            anatEntityFilterIds.getExcludeTermsAndChildrenIds().stream()
-                            .flatMap(id -> anatOntology.getDescendantIds(
-                                    id, false, Collections.singleton(filter.getSpeciesId()))
-                                    .stream())
-                            .collect(Collectors.toSet())
-                    );
-                    anatEntityIdsToExclude.removeAll(anatEntityFilterIds.getNotToExcludeIds());
-                    if (anatEntityIds.removeAll(anatEntityIdsToExclude) && anatEntityIds.isEmpty()) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "No result should be retrieved because of anat. entity exclusion"));
-                    }
-                }
             }
             if (cellTypeFilterIds != null) {
                 cellTypeIds.addAll(cellTypeFilterIds.getIds());
-                if (cellTypeFilterIds.isIncludeChildTerms()) {
                     cellTypeIds.addAll(
                             cellTypeFilterIds.getIds().stream()
                             .flatMap(id -> anatOntology.getDescendantIds(
@@ -434,24 +420,6 @@ public class CallServiceUtils {
                                     .stream())
                             .collect(Collectors.toSet())
                     );
-                }
-                if (!cellTypeFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
-                    Set<String> cellTypeIdsToExclude = new HashSet<>();
-                    cellTypeIdsToExclude.addAll(cellTypeFilterIds.getExcludeTermsAndChildrenIds());
-                    cellTypeIdsToExclude.addAll(
-                            cellTypeFilterIds.getExcludeTermsAndChildrenIds().stream()
-                            .flatMap(id -> anatOntology.getDescendantIds(
-                                    id, false, Collections.singleton(filter.getSpeciesId()))
-                                    .stream())
-                            .collect(Collectors.toSet())
-                    );
-                    //we don't want to exclude the selected terms themselves
-                    cellTypeIdsToExclude.removeAll(cellTypeFilterIds.getNotToExcludeIds());
-                    if (cellTypeIds.removeAll(cellTypeIdsToExclude) && cellTypeIds.isEmpty()) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "No result should be retrieved because of cell type exclusion"));
-                    }
-                }
             }
 
             //For now we consider there is no composition for dev. stages
@@ -460,7 +428,6 @@ public class CallServiceUtils {
                     ConditionParameter.DEV_STAGE).getFilterIds(0);
             if (devStageFilterIds != null) {
                 devStageIds.addAll(devStageFilterIds.getIds());
-                if (devStageFilterIds.isIncludeChildTerms()) {
                     devStageIds.addAll(
                             devStageFilterIds.getIds().stream()
                             .flatMap(id -> stageOntology.getDescendantIds(
@@ -468,24 +435,6 @@ public class CallServiceUtils {
                                     .stream())
                             .collect(Collectors.toSet())
                     );
-                }
-                if (!devStageFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
-                    Set<String> devStageIdsToExclude = new HashSet<>();
-                    devStageIdsToExclude.addAll(devStageFilterIds.getExcludeTermsAndChildrenIds());
-                    devStageIdsToExclude.addAll(
-                            devStageFilterIds.getExcludeTermsAndChildrenIds().stream()
-                            .flatMap(id -> stageOntology.getDescendantIds(
-                                    id, false, Collections.singleton(filter.getSpeciesId()))
-                                    .stream())
-                            .collect(Collectors.toSet())
-                    );
-                    //we don't want to exclude the selected terms themselves
-                    devStageIdsToExclude.removeAll(devStageFilterIds.getNotToExcludeIds());
-                    if (devStageIds.removeAll(devStageIdsToExclude) && devStageIds.isEmpty()) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "No result should be retrieved because of dev. stage exclusion"));
-                    }
-                }
             }
 
             //For now we consider there is no composition for sexes and strains

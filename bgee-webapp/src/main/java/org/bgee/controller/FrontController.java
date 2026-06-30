@@ -271,7 +271,7 @@ public class FrontController extends HttpServlet {
                 
             } else if (requestParameters.isAGenePageCategory()){
                 controller = new CommandGene(response, requestParameters, this.prop, factory,
-                        serviceFactory);
+                        serviceFactory, cacheService);
 
             } else if (requestParameters.isAExprComparisonPageCategory()){
                 controller = new CommandExpressionComparison(response, requestParameters, this.prop, factory, serviceFactory);

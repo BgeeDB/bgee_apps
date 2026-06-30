@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall.ClusteringMethod;
@@ -54,7 +55,7 @@ import org.bgee.view.ViewFactory;
  * @version Bgee 15.1, Jan. 2024
  * @since   Bgee 13, Nov. 2015
  */
-public class CommandGene extends CommandParent {
+public class CommandGene extends CommandExpressionSupport {
 
     private final static Logger log = LogManager.getLogger(CommandGene.class.getName());
 
@@ -223,8 +224,9 @@ public class CommandGene extends CommandParent {
      * @param serviceFactory            A {@code ServiceFactory} that provides bgee services.
      */
     public CommandGene(HttpServletResponse response, RequestParameters requestParameters,
-                       BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory);
+                       BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
+                       BgeeCacheService cacheService) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, cacheService);
     }
 
     @Override
@@ -557,7 +559,7 @@ public class CommandGene extends CommandParent {
         }
     }
 
-    private static GeneExpressionResponse loadExpression(ExpressionSummary callType,
+    private GeneExpressionResponse loadExpression(ExpressionSummary callType,
             String geneId, Integer speciesId, EnumSet<CallService.Attribute> condParamAttrs,
             EnumSet<DataType> dataTypes, CallService callService,
             ExpressionCallService expressionCallService,
@@ -579,7 +581,7 @@ public class CommandGene extends CommandParent {
                 convertCondParamAttrsToCondParams(condParamAttrs),
                 convertCondParamAttrsToCondParams(condParamAttrs),
                 true);
-            ExpressionCallLoader callLoader = expressionCallService.loadCallLoader(exprCallFilter);
+            ExpressionCallLoader callLoader = this.loadExprCallLoader(exprCallFilter);
                 List<OTFExpressionCall> calls = callLoader.loadDataOnTheFly().values().stream()
                     .flatMap(List::stream)
                     .collect(Collectors.toList());

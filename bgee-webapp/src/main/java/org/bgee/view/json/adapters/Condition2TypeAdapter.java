@@ -61,7 +61,7 @@ public class Condition2TypeAdapter extends TypeAdapter<Condition2> {
                 } else {
                     out.value("NA");
                 }
-                if (!( removeRootCellType && ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId()))) {
+                if (!( removeRootCellType && cellType != null && ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId()))) {
                     out.name("cellType");
                     //We don't write NA anymore instead of the root of the cell types,
                     //because we need all values to link to processed expression values through filters

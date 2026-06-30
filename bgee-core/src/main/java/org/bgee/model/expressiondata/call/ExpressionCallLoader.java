@@ -353,10 +353,10 @@ public class ExpressionCallLoader extends CommonService {
 
             //Init the Set of conditions to parse. Once empty, propagation is over.
             Set<Integer> conditionToParse = new HashSet<>(globalCondIdToObservedExpressionTOs.keySet());
-            // Pre-load the initial leaf conditions into conditionMap so that
-            // generateOTFExpressionCall can look them up even when conditionMap was
-            // seeded from an empty condition filter.
-            updateConditionMap(conditionToParse);
+//            // Pre-load the initial leaf conditions into conditionMap so that
+//            // generateOTFExpressionCall can look them up even when conditionMap was
+//            // seeded from an empty condition filter.
+//            updateConditionMap(conditionToParse);
 
             Set<Integer> parsedConditions = new HashSet<>();
             // Collected during propagation; removed after the loop so that every ancestor
@@ -390,7 +390,7 @@ public class ExpressionCallLoader extends CommonService {
                             conditionToParse.add(parentId);
                         }
                     }
-                    updateConditionMap(parentIdSet);
+//                    updateConditionMap(parentIdSet);
 
                     // retrieve self expression
                     Set<ObservedExpressionTO> selfExpressionTOs = globalCondIdToObservedExpressionTOs.get(condId);

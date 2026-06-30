@@ -319,7 +319,7 @@ public class ExpressionCallLoader extends CommonService {
         //   propagation stops at the filter boundary so no wasteful scores are computed
         //   for ancestor conditions (e.g. "nervous system" when only "brain" was requested).
         long startTimePropagation = System.currentTimeMillis();
-        Map<Gene, List<OTFExpressionCall>> propagatedExpressionCalls = propagateCalls(
+        Map<Gene, Set<OTFExpressionCall>> propagatedExpressionCalls = propagateCalls(
                 geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds);
         log.debug("Calls propagated ({} genes) in {} ms",
                 propagatedExpressionCalls.size(), System.currentTimeMillis() - startTimePropagation);
@@ -327,7 +327,7 @@ public class ExpressionCallLoader extends CommonService {
         return log.traceExit(propagatedExpressionCalls);
     }
 
-    private Map<Gene, List<OTFExpressionCall>> propagateCalls(
+    private Map<Gene, Set<OTFExpressionCall>> propagateCalls(
             Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneToGlobalCondIdToRawExpressionCall,
             ConditionGraphCache condGraphCache, Set<Integer> filterConditionIds) {
         log.traceEntry("{}, {}, {}", geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds);
@@ -336,7 +336,7 @@ public class ExpressionCallLoader extends CommonService {
         Map<Integer, int[]> descendantCondIds = condGraphCache.getGlobalCondToDirectDescendants();
         int[] topoOrder = condGraphCache.getTopoOrder();
 
-        Map<Gene, List<OTFExpressionCall>> geneToExpressionCall = new HashMap<>();
+        Map<Gene, Set<OTFExpressionCall>> geneToExpressionCall = new HashMap<>();
 
         // For each gene independently
         for (Map.Entry<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneEntry :
@@ -431,12 +431,8 @@ public class ExpressionCallLoader extends CommonService {
                 globalCondIdToExpressionCall.keySet().removeAll(redundantCondIds);
             }
 
-            List<OTFExpressionCall> sortedCalls = globalCondIdToExpressionCall.values().stream()
-                    .sorted(Comparator.comparing(
-                            OTFExpressionCall::getExpressionScore,
-                            Comparator.nullsLast(Comparator.reverseOrder())))
-                    .collect(Collectors.toList());
-            geneToExpressionCall.put(geneMap.get(geneId), sortedCalls);
+            geneToExpressionCall.put(geneMap.get(geneId),
+                    globalCondIdToExpressionCall.values().stream().collect(Collectors.toSet()));
             log.debug("Propagation for gene {} completed in {} ms, {} calls generated",
                     geneId, System.currentTimeMillis() - startTimeGene,
                     globalCondIdToExpressionCall.size());
@@ -763,7 +759,8 @@ public class ExpressionCallLoader extends CommonService {
         Set<Integer> missingCondIds = new HashSet<>(condIds);
         missingCondIds.removeAll(this.conditionMap.keySet());
         if (missingCondIds.isEmpty()) {
-            log.traceExit(); return;
+            log.traceExit();
+            return;
         }
         Map<Integer, Species> speciesMap = this.processedFilter.getSpeciesMap();
         Map<Integer, Condition2> missingCondMap = this.utils.loadConditionMapFromResultSet(
@@ -779,7 +776,8 @@ public class ExpressionCallLoader extends CommonService {
         }
         this.conditionMap.putAll(missingCondMap);
 
-        log.traceExit(); return;
+        log.traceExit();
+        return;
     }
     private void updateGeneMap(Set<Integer> bgeeGeneIds) {
         log.traceEntry("{}", bgeeGeneIds);

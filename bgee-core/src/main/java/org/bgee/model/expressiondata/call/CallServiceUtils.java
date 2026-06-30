@@ -301,7 +301,10 @@ public class CallServiceUtils {
             AnatEntityService anatEntityService, Set<Integer> consideredSpeciesIds) {
         log.traceEntry("{}, {}, {}, {}", condFilters, ontService, anatEntityService, consideredSpeciesIds);
         if (condFilters == null || condFilters.isEmpty()) {
+            if(consideredSpeciesIds == null || consideredSpeciesIds.isEmpty()) {
             return log.traceExit(new HashSet<>());
+        }
+            return log.traceExit(Set.of(new DAOConditionFilter2(consideredSpeciesIds, null, null, null, null, null, null, null)));
         }
     
         //First, in order to load appropriately the ontologies,

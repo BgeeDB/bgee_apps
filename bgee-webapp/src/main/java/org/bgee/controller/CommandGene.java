@@ -22,10 +22,12 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall.ClusteringMethod;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
@@ -576,6 +578,7 @@ public class CommandGene extends CommandExpressionSupport {
             condParamAttrs, dataTypes, callService, expressionCallService, clusteringFunction);
 
         try {
+            Set<ConditionParameter<?, ?>> condParams = convertCondParamAttrsToCondParams(condParamAttrs);
             // Build and execute an ExpressionCallLoader as in CommandData.
             ExpressionCallFilter2 exprCallFilter = new ExpressionCallFilter2(
                 Collections.singletonMap(
@@ -583,10 +586,10 @@ public class CommandGene extends CommandExpressionSupport {
                         ExpressionSummary.NOT_EXPRESSED: ExpressionSummary.EXPRESSED,
                     SummaryQuality.SILVER),
                 new GeneFilter(speciesId, geneId),
-                null,
+                buildConditionFilters(speciesId, condParams),
                 dataTypes,
-                convertCondParamAttrsToCondParams(condParamAttrs),
-                convertCondParamAttrsToCondParams(condParamAttrs),
+                condParams,
+                condParams,
                 true);
             ExpressionCallLoader callLoader = this.loadExprCallLoader(exprCallFilter);
                 List<OTFExpressionCall> calls = this.loadExprCallResults(
@@ -646,6 +649,23 @@ public class CommandGene extends CommandExpressionSupport {
             condParams.addAll(ConditionParameter.allOf());
         }
         return log.traceExit(condParams);
+    }
+
+    private static Set<ConditionFilter2> buildConditionFilters(Integer speciesId,
+            Set<ConditionParameter<?, ?>> condParams) {
+        log.traceEntry("{}, {}", speciesId, condParams);
+
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds =
+                new HashMap<>();
+        for (ConditionParameter<?, ?> condParam: ConditionParameter.allOf()) {
+            condParamToComposedFilterIds.put(condParam, new ComposedFilterIds<>());
+        }
+        ConditionFilter2 condFilter = new ConditionFilter2(speciesId,
+                condParamToComposedFilterIds,
+                condParams,
+                null,
+                false);
+        return log.traceExit(condFilter.areAllFiltersExceptSpeciesEmpty()? null: Set.of(condFilter));
     }
 
     /**

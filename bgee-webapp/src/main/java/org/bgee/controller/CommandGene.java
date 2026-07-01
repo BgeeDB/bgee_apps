@@ -69,7 +69,6 @@ public class CommandGene extends CommandExpressionSupport {
      * to retrieve in one request. Value: 100.
      */
     private final static int DEFAULT_LIMIT = 100;
-
     public static class GeneExpressionResponse {
         //Deactivated as long as we don't retrieve the Gene when there is no expression data
 //        private final Gene gene;
@@ -433,6 +432,7 @@ public class CommandGene extends CommandExpressionSupport {
         log.traceEntry("{}, {}, {}", callService, expressionCallService, display);
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
+        long startTime = System.currentTimeMillis();
         URLParameters urlParameters = requestParameters.getUrlParametersInstance();
 
         //Condition parameters
@@ -471,10 +471,17 @@ public class CommandGene extends CommandExpressionSupport {
         }
 //        GeneExpressionResponse exprResponse = loadExpression(callType, geneId, speciesId, condParamAttrs,
 //            dataTypes, callService, expressionCallService, getClusteringFunction());
+        log.debug("request parameters retrieved in {} ms",
+                System.currentTimeMillis() - startTime);
+        startTime = System.currentTimeMillis();
         GeneExpressionResponse exprResponse = loadExpression(callType, geneId, speciesId, condParamAttrs,
                 dataTypes, callService, expressionCallService, null);
+        log.debug("expression data loaded in {} ms",
+                System.currentTimeMillis() - startTime);
+        startTime = System.currentTimeMillis();
         display.displayGeneExpression(exprResponse);
-
+        log.debug("expression data displayed in {} ms",
+                System.currentTimeMillis() - startTime);
         log.traceExit();
     }
 
@@ -564,7 +571,7 @@ public class CommandGene extends CommandExpressionSupport {
             EnumSet<DataType> dataTypes, CallService callService,
             ExpressionCallService expressionCallService,
             Function<List<OTFExpressionCall>, Map<OTFExpressionCall, Integer>> clusteringFunction)
-                    throws PageNotFoundException {
+                throws PageNotFoundException, InvalidRequestException {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", callType, geneId, speciesId,
             condParamAttrs, dataTypes, callService, expressionCallService, clusteringFunction);
 
@@ -582,9 +589,8 @@ public class CommandGene extends CommandExpressionSupport {
                 convertCondParamAttrsToCondParams(condParamAttrs),
                 true);
             ExpressionCallLoader callLoader = this.loadExprCallLoader(exprCallFilter);
-                List<OTFExpressionCall> calls = callLoader.loadDataOnTheFly().values().stream()
-                    .flatMap(List::stream)
-                    .collect(Collectors.toList());
+                List<OTFExpressionCall> calls = this.loadExprCallResults(
+                    callLoader, DEFAULT_LIMIT, LIMIT_MAX);
 
             if (calls.isEmpty()) {
                 log.debug("No calls for gene {} in species {}", geneId, speciesId);
@@ -641,7 +647,7 @@ public class CommandGene extends CommandExpressionSupport {
         }
         return log.traceExit(condParams);
     }
-    
+
     /**
      * Return the {@code Function} corresponding to the clustering method to used, 
      * based on the properties {@link BgeeProperties#getGeneScoreClusteringMethod()} 
@@ -655,6 +661,7 @@ public class CommandGene extends CommandExpressionSupport {
      *                                 allowing to parameterize the clustering function.
      * @see ExpressionCall#generateMeanRankScoreClustering(List, ClusteringMethod, double)
      */
+    @SuppressWarnings("unused")
     private Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> getClusteringFunction() 
             throws IllegalStateException {
         log.traceEntry();

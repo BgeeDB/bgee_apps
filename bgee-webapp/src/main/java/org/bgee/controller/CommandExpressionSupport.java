@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,7 +15,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.CommandData.ExprCallCondPartProcessingCacheKey;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.user.User;
 import org.bgee.controller.utils.BgeeCacheService;
@@ -34,6 +34,7 @@ import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
 import org.bgee.model.gene.GeneFilter;
@@ -44,11 +45,101 @@ public abstract class CommandExpressionSupport extends CommandParent{
 
     private final static Logger log = LogManager.getLogger(CommandExpressionSupport.class.getName());
     
+        public static class ExprCallCondPartProcessingCacheKey {
+                private final Set<ConditionFilter2> condFilters;
+                public ExprCallCondPartProcessingCacheKey(Set<ConditionFilter2> condFilters) {
+                        this.condFilters = condFilters;
+                }
+                public Set<ConditionFilter2> getCondFilters() {
+                        return condFilters;
+                }
+                @Override
+                public int hashCode() {
+                        return Objects.hash(condFilters);
+                }
+                @Override
+                public boolean equals(Object obj) {
+                        if (this == obj)
+                                return true;
+                        if (obj == null)
+                                return false;
+                        if (getClass() != obj.getClass())
+                                return false;
+                        ExprCallCondPartProcessingCacheKey other = (ExprCallCondPartProcessingCacheKey) obj;
+                        return Objects.equals(condFilters, other.condFilters);
+                }
+                @Override
+                public String toString() {
+                        StringBuilder builder = new StringBuilder();
+                        builder.append("ExprCallCondPartProcessingCacheKey [condFilters=")
+                                   .append(condFilters)
+                                   .append("]");
+                        return builder.toString();
+                }
+        }
+
+        public static class ExprCallResultCacheKey {
+
+                private final ExpressionCallFilter2 sourceFilter;
+                private final Long offset;
+                private final Integer limit;
+
+                public ExprCallResultCacheKey(ExpressionCallFilter2 sourceFilter, Long offset, Integer limit) {
+                        this.sourceFilter = sourceFilter;
+                        this.offset = offset;
+                        this.limit = limit;
+                }
+
+                public ExpressionCallFilter2 getSourceFilter() {
+                        return sourceFilter;
+                }
+                public Long getOffset() {
+                        return offset;
+                }
+                public Integer getLimit() {
+                        return limit;
+                }
+
+                @Override
+                public int hashCode() {
+                        return Objects.hash(limit, offset, sourceFilter);
+                }
+                @Override
+                public boolean equals(Object obj) {
+                        if (this == obj)
+                                return true;
+                        if (obj == null)
+                                return false;
+                        if (getClass() != obj.getClass())
+                                return false;
+                        ExprCallResultCacheKey other = (ExprCallResultCacheKey) obj;
+                        return Objects.equals(limit, other.limit) && Objects.equals(offset, other.offset)
+                                        && Objects.equals(sourceFilter, other.sourceFilter);
+                }
+
+                @Override
+                public String toString() {
+                        StringBuilder builder = new StringBuilder();
+                        builder.append("ExprCallResultCacheKey [")
+                                   .append("offset=").append(offset)
+                                   .append(", limit=").append(limit)
+                                   .append(", sourceFilter=").append(sourceFilter)
+                                   .append("]");
+                        return builder.toString();
+                }
+        }
+
     private final static CacheDefinition<ExprCallCondPartProcessingCacheKey, ExpressionCallProcessedFilterConditionPart>
     EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF = new CacheDefinition<>("exprCallProcessedCondPartCache",
             ExprCallCondPartProcessingCacheKey.class,
             ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart.class,
             CacheType.LRU, 20);
+
+        //Suppress warning for List generic type to have inference working with 'List.class'
+        @SuppressWarnings("rawtypes")
+        private final static CacheDefinition<ExprCallResultCacheKey, List>
+        EXPR_CALL_RESULT_CACHE_DEF = new CacheDefinition<>("exprCallResultCache",
+                        ExprCallResultCacheKey.class, List.class, CacheType.LRU, 20);
 
     /**
      * A {@code String} to recognize the action of requesting an experiment page
@@ -57,6 +148,7 @@ public abstract class CommandExpressionSupport extends CommandParent{
      */
 
     protected final static long COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS = 1000L;
+        private final static long COMPUTE_TIME_RESULT_CACHE_MS = 2000L;
 
     private final static String ID_PARAM_SUMMARY_VALUE = "SUMMARY";
     private final static Set<String> SUMMARY_ANAT_ENTITY_IDS = Set.of(
@@ -126,6 +218,36 @@ public abstract class CommandExpressionSupport extends CommandParent{
 
         return log.traceExit(loader);
     }
+
+        protected List<OTFExpressionCall> loadExprCallResults(ExpressionCallLoader callLoader,
+                        int defaultLimit, int limitMax) throws InvalidRequestException {
+                log.traceEntry("{}, {}, {}", callLoader, defaultLimit, limitMax);
+
+                Integer limit = this.requestParameters.getLimit() == null? defaultLimit:
+                        this.requestParameters.getLimit();
+                if (limit > limitMax) {
+                        throw log.throwing(new InvalidRequestException("It is not possible to request more than "
+                                        + limitMax + " results."));
+                }
+                Long offset = this.requestParameters.getOffset() == null? 0:
+                        this.requestParameters.getOffset();
+                if (offset != null && offset < 0) {
+                        throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
+                }
+                ExprCallResultCacheKey cacheKey = new ExprCallResultCacheKey(
+                                callLoader.getProcessedFilter().getSourceFilter(),
+                                offset, limit);
+                //Suppress warnings because we are responsible for the insertion and know the generic type
+                @SuppressWarnings("unchecked")
+                List<OTFExpressionCall> results = this.cacheService.useCacheNonAtomic(
+                                EXPR_CALL_RESULT_CACHE_DEF,
+                                cacheKey,
+                                () -> callLoader.loadDataOnTheFly().values().stream()
+                                                .flatMap(List::stream)
+                                                .collect(Collectors.toList()),
+                                COMPUTE_TIME_RESULT_CACHE_MS);
+                return log.traceExit(results);
+        }
 
     private ExpressionCallFilter2 loadExprCallFilter(boolean consideringFilters,
             Set<ConditionParameter<?, ?>> condParams, EnumSet<DataType> dataTypes)

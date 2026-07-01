@@ -38,7 +38,6 @@ import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
-import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
@@ -504,56 +503,6 @@ public class CommandData extends CommandExpressionSupport {
             return builder.toString();
         }
     }
-    public static class ExprCallResultCacheKey {
-
-        private final ExpressionCallFilter2 sourceFilter;
-        private final Long offset;
-        private final Integer limit;
-
-        public ExprCallResultCacheKey(ExpressionCallFilter2 sourceFilter, Long offset, Integer limit) {
-            this.sourceFilter = sourceFilter;
-            this.offset = offset;
-            this.limit = limit;
-        }
-
-        public ExpressionCallFilter2 getSourceFilter() {
-            return sourceFilter;
-        }
-        public Long getOffset() {
-            return offset;
-        }
-        public Integer getLimit() {
-            return limit;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(limit, offset, sourceFilter);
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ExprCallResultCacheKey other = (ExprCallResultCacheKey) obj;
-            return Objects.equals(limit, other.limit) && Objects.equals(offset, other.offset)
-                    && Objects.equals(sourceFilter, other.sourceFilter);
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("ExprCallResultCacheKey [")
-                   .append("offset=").append(offset)
-                   .append(", limit=").append(limit)
-                   .append(", sourceFilter=").append(sourceFilter)
-                   .append("]");
-            return builder.toString();
-        }
-    }
     public static class RawDataCondPartProcessingCacheKey {
         private final Set<RawDataConditionFilter> condFilters;
         public RawDataCondPartProcessingCacheKey(Set<RawDataConditionFilter> condFilters) {
@@ -581,36 +530,6 @@ public class CommandData extends CommandExpressionSupport {
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("RawDataCondPartProcessingCacheKey [condFilters=").append(condFilters).append("]");
-            return builder.toString();
-        }
-    }
-    public static class ExprCallCondPartProcessingCacheKey {
-        private final Set<ConditionFilter2> condFilters;
-        public ExprCallCondPartProcessingCacheKey(Set<ConditionFilter2> condFilters) {
-            this.condFilters = condFilters;
-        }
-        public Set<ConditionFilter2> getCondFilters() {
-            return condFilters;
-        }
-        @Override
-        public int hashCode() {
-            return Objects.hash(condFilters);
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ExprCallCondPartProcessingCacheKey other = (ExprCallCondPartProcessingCacheKey) obj;
-            return Objects.equals(condFilters, other.condFilters);
-        }
-        @Override
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("ExprCallCondPartProcessingCacheKey [condFilters=").append(condFilters).append("]");
             return builder.toString();
         }
     }
@@ -676,13 +595,6 @@ public class CommandData extends CommandExpressionSupport {
     private final static CacheDefinition<RawDataResultCacheKey, RawDataContainer>
     RAW_DATA_RESULT_CACHE_DEF = new CacheDefinition<>("rawDataResultCache",
             RawDataResultCacheKey.class, RawDataContainer.class, CacheType.LRU, 100);
-
-    //Suppress warning for List generic type to have inference
-    //working with 'List.class'
-    @SuppressWarnings("rawtypes")
-    private final static CacheDefinition<ExprCallResultCacheKey, List>
-    EXPR_CALL_RESULT_CACHE_DEF = new CacheDefinition<>("exprCallResultCache",
-            ExprCallResultCacheKey.class, List.class, CacheType.LRU, 20);
 
     /**
      * A {@code long} that is the execution time in milliseconds of the generation of post-filters
@@ -928,7 +840,7 @@ public class CommandData extends CommandExpressionSupport {
                 if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount()
                         || (this.requestParameters.isGetFilters() && postFilter == null)) {
                     long startTimeOtf = System.currentTimeMillis();
-                    allOtfCalls = loadExprCallResults(callLoader);
+                    allOtfCalls = this.loadExprCallResults(callLoader, DEFAULT_LIMIT, LIMIT_MAX);
                     log.debug("loadDataOnTheFly() completed in {} ms, {} calls retrieved",
                             System.currentTimeMillis() - startTimeOtf, allOtfCalls.size());
                 }
@@ -1401,36 +1313,6 @@ public class CommandData extends CommandExpressionSupport {
                         },
                         (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
                         () -> new EnumMap<>(DataType.class))));
-    }
-
-    private List<OTFExpressionCall> loadExprCallResults(ExpressionCallLoader callLoader)
-            throws InvalidRequestException {
-        log.traceEntry("{}", callLoader);
-
-        Integer limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
-            this.requestParameters.getLimit();
-        if (limit > LIMIT_MAX) {
-            throw log.throwing(new InvalidRequestException("It is not possible to request more than "
-                    + LIMIT_MAX + " results."));
-        }
-        Long offset = this.requestParameters.getOffset() == null? 0:
-            this.requestParameters.getOffset();
-        if (offset != null && offset < 0) {
-            throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
-        }
-        ExprCallResultCacheKey cacheKey = new ExprCallResultCacheKey(
-                callLoader.getProcessedFilter().getSourceFilter(),
-                offset, limit);
-        //Suppress warnings because we are responsible for the insertion and know the generic type
-        @SuppressWarnings("unchecked")
-        List<OTFExpressionCall> results = this.cacheService.useCacheNonAtomic(
-                EXPR_CALL_RESULT_CACHE_DEF,
-                cacheKey,
-                () -> callLoader.loadDataOnTheFly().values().stream()
-                        .flatMap(List::stream)
-                        .collect(Collectors.toList()),
-                COMPUTE_TIME_RESULT_CACHE_MS);
-        return log.traceExit(results);
     }
 
     private EnumMap<DataType, RawDataCountContainer> loadRawDataCounts(RawDataLoader rawDataLoader,

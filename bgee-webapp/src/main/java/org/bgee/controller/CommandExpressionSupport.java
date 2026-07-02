@@ -197,7 +197,7 @@ public abstract class CommandExpressionSupport extends CommandParent{
         ExpressionCallService callService = this.serviceFactory.getExpressionCallService();
         //Try to get the processed condition part of the processed filter from cache
         long startTimeProcessFilter = System.currentTimeMillis();
-        //TODO: remove includeChildTerms and excludeTermsAndChildrenIds from the filter used
+        //TODO: remove includeChildTerms (and not excludeTermsAndChildrenIds) from the filter used
         // to retrieve the cache key of the processedfilters. With OTF propagations all conditions from the condition
         // graph have to be processed and the removal of children has to be done after the propagation.
         // Of course filterIds has to be kept as part of the caching key.

@@ -71,7 +71,7 @@ public class TaxonTreeService extends Service {
      */
     public TaxonWithSpecies buildTaxonTreeWithSpecies(Collection<Integer> speciesIds,
             Map<Integer, Species> speciesById) {
-        log.traceEntry("{}, {}", speciesIds, speciesById);
+        log.traceEntry("{}, {}", speciesIds, speciesById != null ? "provided" : "to load");
 
         if (speciesIds == null || speciesIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("speciesIds cannot be null or empty"));

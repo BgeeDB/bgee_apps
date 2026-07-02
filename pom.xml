@@ -346,7 +346,7 @@
             <!-- End for the dao-api layer -->
 
             <!-- Needed for the dao-sql layer -->
-            <!-- JDBC logging library -->
+            <!-- JDBC logging library (1.17-SNAPSHOT: see m2_local_repository/README.txt). -->
             <dependency>
                 <groupId>org.bgee.log4jdbc-log4j2</groupId>
                 <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>

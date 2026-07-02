@@ -1,7 +1,9 @@
 package org.bgee.model.species;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A node in a taxon hierarchy tree enriched with species. Each node holds a {@link Taxon},
@@ -29,8 +31,10 @@ public class TaxonWithSpecies {
     public TaxonWithSpecies(Taxon taxon, List<Species> species,
             List<TaxonWithSpecies> children) {
         this.taxon = taxon;
-        this.species = species != null ? species : Collections.emptyList();
-        this.children = children != null ? children : Collections.emptyList();
+        this.species = species == null ? List.of()
+                : Collections.unmodifiableList(new ArrayList<>(species));
+        this.children = children == null ? List.of()
+                : Collections.unmodifiableList(new ArrayList<>(children));
     }
 
     public Taxon getTaxon() {
@@ -43,5 +47,24 @@ public class TaxonWithSpecies {
 
     public List<TaxonWithSpecies> getChildren() {
         return children;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        TaxonWithSpecies that = (TaxonWithSpecies) o;
+        return Objects.equals(taxon, that.taxon)
+                && Objects.equals(species, that.species)
+                && Objects.equals(children, that.children);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(taxon, species, children);
     }
 }

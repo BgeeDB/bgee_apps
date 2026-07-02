@@ -64,13 +64,14 @@ public class TaxonTreeService extends Service {
      * with species attached at their respective parent taxon (typically genus).
      *
      * @param speciesIds   A {@code Collection} of species IDs to include in the tree.
-     * @param speciesById  Optional map of species by ID. If non-{@code null}, these species
-     *                     are used instead of loading from {@link SpeciesService}.
+     * @param speciesById  A {@code Map} of {@code Integer} as key corresponding to species ID,
+     *                     associated to the corresponding {@code Species}. If {@code null},
+     *                     species are loaded from {@link SpeciesService}.
      * @return The root {@code TaxonWithSpecies} of the hierarchy.
      */
     public TaxonWithSpecies buildTaxonTreeWithSpecies(Collection<Integer> speciesIds,
             Map<Integer, Species> speciesById) {
-        log.traceEntry("{}, {}", speciesIds, speciesById != null ? "provided" : "to load");
+        log.traceEntry("{}, {}", speciesIds, speciesById);
 
         if (speciesIds == null || speciesIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("speciesIds cannot be null or empty"));

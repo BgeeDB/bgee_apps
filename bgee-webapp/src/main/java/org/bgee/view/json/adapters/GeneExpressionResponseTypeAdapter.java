@@ -2,13 +2,20 @@ package org.bgee.view.json.adapters;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
+import org.bgee.model.ComposedEntity;
+import org.bgee.model.NamedEntity;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition2;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataType;
 
@@ -74,8 +81,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
 
             out.beginObject();
             out.name("condition");
-            Condition2TypeAdapter cond2Adapter = new Condition2TypeAdapter(this.utils);
-            cond2Adapter.write(out, call.getCondition(), true);
+            this.writeGeneExpressionCondition(out, call.getCondition(), condParams);
 
             out.name("expressionScore");
             out.beginObject();
@@ -119,6 +125,64 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             out.name("gene");
             this.utils.writeSimplifiedGene(out, value.getCalls().iterator().next().getGene(),
                     true, dataTypesWithData);
+        }
+
+        out.endObject();
+        log.traceExit();
+    }
+
+    private void writeGeneExpressionCondition(JsonWriter out, Condition2 condition,
+            Collection<CallService.Attribute> requestedCondParams) throws IOException {
+        log.traceEntry("{}, {}, {}", out, condition, requestedCondParams);
+        if (condition == null) {
+            out.nullValue();
+            log.traceExit();
+            return;
+        }
+
+        out.beginObject();
+
+        boolean anatRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.ANAT_ENTITY_ID);
+        boolean cellTypeRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.CELL_TYPE_ID);
+        boolean devStageRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.DEV_STAGE_ID);
+        boolean sexRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.SEX_ID);
+        boolean strainRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.STRAIN_ID);
+
+        ComposedEntity<AnatEntity> anatCellValue =
+                condition.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (!anatCellValue.isEmpty()) {
+            AnatEntity anatEntity = anatCellValue.size() > 1? anatCellValue.getEntity(1): anatCellValue.getEntity(0);
+            AnatEntity cellType = anatCellValue.size() > 1? anatCellValue.getEntity(0): null;
+            if (anatRequested) {
+                out.name("anatEntity");
+                this.utils.writeSimplifiedNamedEntity(out, anatEntity);
+            }
+            if (cellTypeRequested && cellType != null &&
+                    !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+                out.name("cellType");
+                this.utils.writeSimplifiedNamedEntity(out, cellType);
+            }
+        }
+
+        if (devStageRequested && !condition.getConditionParameterValue(ConditionParameter.DEV_STAGE).isEmpty()) {
+            out.name(ConditionParameter.DEV_STAGE.getAttributeName());
+            this.utils.writeSimplifiedNamedEntity(out,
+                    condition.getConditionParameterValue(ConditionParameter.DEV_STAGE).getEntity(0));
+        }
+        if (sexRequested && !condition.getConditionParameterValue(ConditionParameter.SEX).isEmpty()) {
+            out.name(ConditionParameter.SEX.getAttributeName());
+            NamedEntity<?> sexEntity = condition.getConditionParameterValue(ConditionParameter.SEX).getEntity(0);
+            out.value(sexEntity.getName());
+        }
+        if (strainRequested && !condition.getConditionParameterValue(ConditionParameter.STRAIN).isEmpty()) {
+            out.name(ConditionParameter.STRAIN.getAttributeName());
+            NamedEntity<?> strainEntity = condition.getConditionParameterValue(ConditionParameter.STRAIN).getEntity(0);
+            out.value(strainEntity.getName());
         }
 
         out.endObject();

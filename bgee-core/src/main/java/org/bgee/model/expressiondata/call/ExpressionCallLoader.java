@@ -282,7 +282,6 @@ public class ExpressionCallLoader extends CommonService {
                 condGraphCache.getGlobalCondToDirectAncestors().keySet():
                 conditionMap.keySet();
         long startTimeRawConds = System.currentTimeMillis();
-        //TODO: retrieval of Map<Integer, Integer> rawCondIdToGlobalCondIds could be implemented in a Service
         List<RawConditionToSelfGlobalConditionTO> rawCondToSeflGlobalCondTOs = this.condDAO
         .getRawConditionToSelfGlobalConditionFromGlobalConditionIds(globalCondIdsToQuery,
                 daoCondParams).getAllTOs();
@@ -293,6 +292,11 @@ public class ExpressionCallLoader extends CommonService {
         log.debug("Raw condition IDs retrieved ({} entries) in {} ms",
                 rawCondIdToGlobalCondIds.size(), System.currentTimeMillis() - startTimeRawConds);
 
+        if (rawCondIdToGlobalCondIds.isEmpty()) {
+            log.debug("No raw conditions matched the requested global conditions; returning empty result");
+            return log.traceExit(new HashMap<>());
+        }
+
         //3. retrieve the rawExpressionCalls filtering on rawConditionIds and datatypes
         ObservedExpressionDAO obsExprDAO = this.getDaoManager().getObservedExpressionDAO();
         // generate the filter from all info we already have
@@ -302,9 +306,19 @@ public class ExpressionCallLoader extends CommonService {
 
         // first key -> bgeeGeneId, 2nd key globalConditionId
         long startTimeObsExpr = System.currentTimeMillis();
+        List<ObservedExpressionTO> observedExpressionTOs =
+            obsExprDAO.getObservedExpression(obsExprFilter, null).stream().toList();
+        Set<Integer> unmatchedRawCondIds = observedExpressionTOs.stream()
+            .map(ObservedExpressionTO::getConditionId)
+            .filter(id -> !rawCondIdToGlobalCondIds.containsKey(id))
+            .collect(Collectors.toSet());
+        if (!unmatchedRawCondIds.isEmpty()) {
+            throw log.throwing(new IllegalStateException(
+                "Observed expression rows reference raw condition IDs missing from "
+                + "raw-to-global mapping: " + unmatchedRawCondIds));
+        }
         Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneToGlobalCondIdToRawExpressionCall =
-                obsExprDAO.getObservedExpression(obsExprFilter, null)
-                    .stream()
+            observedExpressionTOs.stream()
                     .collect(Collectors.groupingBy(
                         ObservedExpressionTO::getBgeeGeneId,
                         Collectors.groupingBy(

@@ -30,11 +30,11 @@ import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOPropagationState;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -403,23 +403,56 @@ public class CallServiceUtils {
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(1);
             if (anatEntityFilterIds != null) {
                 anatEntityIds.addAll(anatEntityFilterIds.getIds());
-                    anatEntityIds.addAll(
-                            anatEntityFilterIds.getIds().stream()
+                anatEntityIds.addAll(
+                        anatEntityFilterIds.getIds().stream()
+                        .flatMap(id -> anatOntology.getDescendantIds(
+                                id, false, Collections.singleton(filter.getSpeciesId()))
+                                .stream())
+                        .collect(Collectors.toSet())
+                        );
+                if (!anatEntityFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
+                    Set<String> anatEntityIdsToExclude = new HashSet<>();
+                    anatEntityIdsToExclude.addAll(anatEntityFilterIds.getExcludeTermsAndChildrenIds());
+                    anatEntityIdsToExclude.addAll(
+                            anatEntityFilterIds.getExcludeTermsAndChildrenIds().stream()
                             .flatMap(id -> anatOntology.getDescendantIds(
                                     id, false, Collections.singleton(filter.getSpeciesId()))
                                     .stream())
                             .collect(Collectors.toSet())
-                    );
+                            );
+                    anatEntityIdsToExclude.removeAll(anatEntityFilterIds.getNotToExcludeIds());
+                    if (anatEntityIds.removeAll(anatEntityIdsToExclude) && anatEntityIds.isEmpty()) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No result should be retrieved because of anat. entity exclusion"));
+                    }
+                }
             }
             if (cellTypeFilterIds != null) {
                 cellTypeIds.addAll(cellTypeFilterIds.getIds());
-                    cellTypeIds.addAll(
-                            cellTypeFilterIds.getIds().stream()
+                cellTypeIds.addAll(
+                        cellTypeFilterIds.getIds().stream()
+                        .flatMap(id -> anatOntology.getDescendantIds(
+                                id, false, Collections.singleton(filter.getSpeciesId()))
+                                .stream())
+                        .collect(Collectors.toSet())
+                        );
+                if (!cellTypeFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
+                    Set<String> cellTypeIdsToExclude = new HashSet<>();
+                    cellTypeIdsToExclude.addAll(cellTypeFilterIds.getExcludeTermsAndChildrenIds());
+                    cellTypeIdsToExclude.addAll(
+                            cellTypeFilterIds.getExcludeTermsAndChildrenIds().stream()
                             .flatMap(id -> anatOntology.getDescendantIds(
                                     id, false, Collections.singleton(filter.getSpeciesId()))
                                     .stream())
                             .collect(Collectors.toSet())
-                    );
+                            );
+                    //we don't want to exclude the selected terms themselves
+                    cellTypeIdsToExclude.removeAll(cellTypeFilterIds.getNotToExcludeIds());
+                    if (cellTypeIds.removeAll(cellTypeIdsToExclude) && cellTypeIds.isEmpty()) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No result should be retrieved because of cell type exclusion"));
+                    }
+                }
             }
 
             //For now we consider there is no composition for dev. stages

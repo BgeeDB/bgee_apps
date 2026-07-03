@@ -45,12 +45,32 @@ public class SimilarityExpressionCall2 {
      */
     private final Set<ExpressionCall2> calls;
 
+    /**
+     * @param gene                  See {@link #getGene()}.
+     * @param multiSpeciesCondition   See {@link #getMultiSpeciesCondition()}.
+     * @param calls                 See {@link #getCalls()}. The summary call type is
+     *                              {@link ExpressionSummary#EXPRESSED} if any supporting call
+     *                              is expressed, otherwise {@link ExpressionSummary#NOT_EXPRESSED}.
+     */
     public SimilarityExpressionCall2(Gene gene, MultiSpeciesCondition multiSpeciesCondition,
-                                    Collection<ExpressionCall2> calls, ExpressionSummary summaryCallType) {
+            Collection<ExpressionCall2> calls) {
+        this(gene, multiSpeciesCondition, calls, computeSummaryCallType(calls));
+    }
+
+    public SimilarityExpressionCall2(Gene gene, MultiSpeciesCondition multiSpeciesCondition,
+            Collection<ExpressionCall2> calls, ExpressionSummary summaryCallType) {
         this.gene = gene;
         this.multiSpeciesCondition = multiSpeciesCondition;
         this.summaryCallType = summaryCallType;
         this.calls = Collections.unmodifiableSet(calls == null ? new HashSet<>() : new HashSet<>(calls));
+    }
+
+    private static ExpressionSummary computeSummaryCallType(Collection<ExpressionCall2> calls) {
+        if (calls == null || calls.isEmpty()) {
+            return ExpressionSummary.NOT_EXPRESSED;
+        }
+        return calls.stream().anyMatch(c -> ExpressionSummary.EXPRESSED.equals(c.getSummaryCallType()))
+                ? ExpressionSummary.EXPRESSED : ExpressionSummary.NOT_EXPRESSED;
     }
 
     public Gene getGene() {

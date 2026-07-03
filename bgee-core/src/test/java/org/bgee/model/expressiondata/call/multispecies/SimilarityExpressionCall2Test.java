@@ -15,6 +15,7 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link SimilarityExpressionCall2}.
@@ -32,14 +33,44 @@ public class SimilarityExpressionCall2Test {
         MultiSpeciesCondition msc = new MultiSpeciesCondition(null, null, null, null);
 
         SimilarityExpressionCall2 sec = new SimilarityExpressionCall2(
-                gene, msc, Collections.emptyList(), ExpressionSummary.EXPRESSED);
+                gene, msc, Collections.emptyList());
 
         assertNotNull(sec);
         assertEquals(gene, sec.getGene());
         assertEquals(msc, sec.getMultiSpeciesCondition());
-        assertEquals(ExpressionSummary.EXPRESSED, sec.getSummaryCallType());
+        assertEquals(ExpressionSummary.NOT_EXPRESSED, sec.getSummaryCallType());
         assertNotNull(sec.getCalls());
         assertEquals(0, sec.getCalls().size());
+    }
+
+    @Test
+    public void shouldDeriveExpressedSummaryWhenAnySupportingCallIsExpressed() {
+        Species species = new Species(9606);
+        Gene gene = new Gene("ENSG00000130208", species, new GeneBioType("protein_coding"));
+        MultiSpeciesCondition msc = new MultiSpeciesCondition(null, null, null, null);
+        ExpressionCall2 expressedCall = mock(ExpressionCall2.class);
+        when(expressedCall.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
+        ExpressionCall2 notExpressedCall = mock(ExpressionCall2.class);
+        when(notExpressedCall.getSummaryCallType()).thenReturn(ExpressionSummary.NOT_EXPRESSED);
+
+        SimilarityExpressionCall2 sec = new SimilarityExpressionCall2(
+                gene, msc, Arrays.asList(expressedCall, notExpressedCall));
+
+        assertEquals(ExpressionSummary.EXPRESSED, sec.getSummaryCallType());
+    }
+
+    @Test
+    public void shouldDeriveNotExpressedSummaryWhenNoSupportingCallIsExpressed() {
+        Species species = new Species(9606);
+        Gene gene = new Gene("ENSG00000130208", species, new GeneBioType("protein_coding"));
+        MultiSpeciesCondition msc = new MultiSpeciesCondition(null, null, null, null);
+        ExpressionCall2 notExpressedCall = mock(ExpressionCall2.class);
+        when(notExpressedCall.getSummaryCallType()).thenReturn(ExpressionSummary.NOT_EXPRESSED);
+
+        SimilarityExpressionCall2 sec = new SimilarityExpressionCall2(
+                gene, msc, Collections.singletonList(notExpressedCall));
+
+        assertEquals(ExpressionSummary.NOT_EXPRESSED, sec.getSummaryCallType());
     }
 
     @Test

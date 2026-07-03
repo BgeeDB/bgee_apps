@@ -1125,13 +1125,8 @@ public class MultiSpeciesCallService extends CommonService {
                                     LinkedHashMap::new));
 
             Gene gene = callList.get(0).getGene();
-            return callsPerSimilarity.entrySet().stream().map(e -> {
-                MultiSpeciesCondition cond = e.getKey();
-                boolean hasExpression = e.getValue().stream()
-                        .anyMatch(c -> ExpressionSummary.EXPRESSED.equals(c.getSummaryCallType()));
-                return new SimilarityExpressionCall2(gene, cond, e.getValue(),
-                        hasExpression ? ExpressionSummary.EXPRESSED : ExpressionSummary.NOT_EXPRESSED);
-            });
+            return callsPerSimilarity.entrySet().stream()
+                    .map(e -> new SimilarityExpressionCall2(gene, e.getKey(), e.getValue()));
         });
         return log.traceExit(result);
     }

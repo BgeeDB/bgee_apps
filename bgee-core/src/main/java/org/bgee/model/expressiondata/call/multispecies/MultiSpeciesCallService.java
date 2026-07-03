@@ -996,93 +996,36 @@ public class MultiSpeciesCallService extends CommonService {
                                 .stream().map(s -> new GeneFilter(s.getId()))
                                 .collect(Collectors.toSet()) :
                         new HashSet<>(geneFilters));
+        Set<Integer> speciesIds = clnGeneFilters.stream()
+                .map(GeneFilter::getSpeciesId)
+                .collect(Collectors.toSet());
 
-        // Retrieve AnatEntitySimilarity from the provided taxon
-        Set<AnatEntitySimilarity> anatEntitySimilaritiesFromAnatFilter = anatEntitySimilarityService
+        Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
                 .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted);
-        Set<AnatEntitySimilarity> anatEntitySimilaritiesFromCellTypeFilter =
-                new HashSet<>(anatEntitySimilaritiesFromAnatFilter);
-
-        // Extract anat entity and cell type IDs from conditionFilters for filtering similarities
-        Set<String> filterAnatEntityIds = new HashSet<>();
-        Set<String> filterCellTypeIds = new HashSet<>();
-        if (conditionFilters != null && !conditionFilters.isEmpty()) {
-            for (ConditionFilter2 cf : conditionFilters) {
-                ComposedFilterIds<String> composed = cf.getComposedFilterIds(
-                        ConditionParameter.ANAT_ENTITY_CELL_TYPE);
-                if (composed != null && !composed.isEmpty()) {
-                    FilterIds<String> anatIds = composed.getFilterIds(0);
-                    FilterIds<String> cellIds = composed.getFilterIds(1);
-                    if (anatIds != null) {
-                        Set<String> expandedAnatIds = new HashSet<>(anatIds.getIds());
-                        if (anatIds.isIncludeChildTerms() && !anatIds.getIds().isEmpty()) {
-                            Ontology<AnatEntity, String> anatOntology = this.ontologyService
-                                    .getAnatEntityOntology(
-                                            cf.getSpeciesId(),
-                                            anatIds.getIds(),
-                                            EnumSet.of(RelationType.ISA_PARTOF),
-                                            false,
-                                            true);
-                            expandedAnatIds.addAll(anatIds.getIds().stream()
-                                    .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
-                                    .collect(Collectors.toSet()));
-                        }
-                        filterAnatEntityIds.addAll(expandedAnatIds);
-                    }
-                    if (cellIds != null) {
-                        Set<String> expandedCellIds = new HashSet<>(cellIds.getIds());
-                        if (cellIds.isIncludeChildTerms() && !cellIds.getIds().isEmpty()) {
-                            Ontology<AnatEntity, String> anatOntology = this.ontologyService
-                                    .getAnatEntityOntology(
-                                            cf.getSpeciesId(),
-                                            cellIds.getIds(),
-                                            EnumSet.of(RelationType.ISA_PARTOF),
-                                            false,
-                                            true);
-                            expandedCellIds.addAll(cellIds.getIds().stream()
-                                    .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
-                                    .collect(Collectors.toSet()));
-                        }
-                        filterCellTypeIds.addAll(expandedCellIds);
-                    }
-                }
-            }
-        }
-
-        if (!filterAnatEntityIds.isEmpty()) {
-            anatEntitySimilaritiesFromAnatFilter = anatEntitySimilaritiesFromAnatFilter.stream()
-                    .filter(s -> s.getSourceAnatEntities().stream()
-                            .anyMatch(ae -> filterAnatEntityIds.contains(ae.getId())))
+        AnatCellTypeFilterIds userFilterIds = extractAnatAndCellTypeFilterIds(conditionFilters);
+        if (!userFilterIds.anatEntityIds.isEmpty()) {
+            anatEntitySimilarities = anatEntitySimilarities.stream()
+                    .filter(s -> s.getAllAnatEntities().stream()
+                            .anyMatch(ae -> userFilterIds.anatEntityIds.contains(ae.getId())))
                     .collect(Collectors.toSet());
         }
-        if (!filterCellTypeIds.isEmpty()) {
-            anatEntitySimilaritiesFromCellTypeFilter = anatEntitySimilaritiesFromCellTypeFilter.stream()
-                    .filter(s -> s.getSourceAnatEntities().stream()
-                            .anyMatch(ae -> filterCellTypeIds.contains(ae.getId())))
+        if (!userFilterIds.cellTypeIds.isEmpty()) {
+            anatEntitySimilarities = anatEntitySimilarities.stream()
+                    .filter(s -> s.getAllAnatEntities().stream()
+                            .anyMatch(ae -> userFilterIds.cellTypeIds.contains(ae.getId())))
                     .collect(Collectors.toSet());
         }
 
-        // Build maps for grouping (same logic as loadSimilarityExpressionCalls)
-        Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntityFromAnatFilter =
-                anatEntitySimilaritiesFromAnatFilter.stream()
-                        .flatMap(sim -> sim.getSourceAnatEntities().stream()
-                                .map(ae -> new SimpleEntry<>(ae, sim)))
-                        .collect(Collectors.groupingBy(SimpleEntry::getKey,
-                                Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
-        Set<String> allAnatEntityIds = similaritiesByAnatEntityFromAnatFilter.keySet().stream()
+        Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntity =
+                buildSimilaritiesByAnatEntity(anatEntitySimilarities);
+        Set<String> allAnatEntityIds = similaritiesByAnatEntity.keySet().stream()
+                .filter(ae -> !isCellTypeAnatEntity(ae))
                 .map(Entity::getId)
                 .collect(Collectors.toSet());
-        Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntityFromCellTypeFilter =
-                anatEntitySimilaritiesFromCellTypeFilter.stream()
-                        .flatMap(sim -> sim.getSourceAnatEntities().stream()
-                                .map(ae -> new SimpleEntry<>(ae, sim)))
-                        .collect(Collectors.groupingBy(SimpleEntry::getKey,
-                                Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
-        Set<String> allCellTypeIds = similaritiesByAnatEntityFromCellTypeFilter.keySet().stream()
+        Set<String> allCellTypeIds = similaritiesByAnatEntity.keySet().stream()
+                .filter(MultiSpeciesCallService::isCellTypeAnatEntity)
                 .map(Entity::getId)
                 .collect(Collectors.toSet());
-
-        // Use root IDs when empty (ComposedFilterIds requires non-empty FilterIds)
         if (allAnatEntityIds.isEmpty()) {
             allAnatEntityIds = Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID);
         }
@@ -1090,23 +1033,13 @@ public class MultiSpeciesCallService extends CommonService {
             allCellTypeIds = Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID);
         }
 
-        // Use user's filter IDs for loading when provided; otherwise use similarity-derived IDs.
-        // AnatEntitySimilarity may not include high-level terms (e.g. UBERON:0000468 "multicellular organism")
-        // that exist in expression data, so loading with only similarity-derived IDs can miss data.
-        Set<String> anatIdsForLoad = !filterAnatEntityIds.isEmpty() ? filterAnatEntityIds : allAnatEntityIds;
-        Set<String> cellIdsForLoad = !filterCellTypeIds.isEmpty() ? filterCellTypeIds : allCellTypeIds;
-
         SummaryQuality qualToUse = summaryQuality != null ? summaryQuality : SummaryQuality.BRONZE;
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, qualToUse);
         summaryCallTypeQualityFilter.put(ExpressionSummary.NOT_EXPRESSED, qualToUse);
 
-        // Build ConditionFilter2 for each species
-        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
-        condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
-                new ComposedFilterIds<>(List.of(
-                        new FilterIds<>(anatIdsForLoad, false),
-                        new FilterIds<>(cellIdsForLoad, false))));
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter =
+                buildAnatEntityCellTypeCondParamToFilter(userFilterIds, allAnatEntityIds, allCellTypeIds);
 
         ExpressionCallService exprCallService = this.getServiceFactory().getExpressionCallService();
 
@@ -1139,18 +1072,12 @@ public class MultiSpeciesCallService extends CommonService {
                 new ElementGroupFromListSpliterator<>(allCalls.stream(),
                         ExpressionCall2::getGene, Gene.COMPARATOR), false);
 
-        Taxon requestedTaxon = Stream.concat(
-                anatEntitySimilaritiesFromAnatFilter.stream(),
-                anatEntitySimilaritiesFromCellTypeFilter.stream())
+        Taxon requestedTaxon = anatEntitySimilarities.stream()
                 .findFirst()
                 .map(AnatEntitySimilarity::getRequestedTaxon)
                 .orElseGet(() -> this.getServiceFactory().getTaxonService()
-                        .loadLeastCommonAncestor(clnGeneFilters.stream()
-                                .map(GeneFilter::getSpeciesId)
-                                .collect(Collectors.toSet())));
-        Ontology<Taxon, Integer> taxonOntology = Stream.concat(
-                anatEntitySimilaritiesFromAnatFilter.stream(),
-                anatEntitySimilaritiesFromCellTypeFilter.stream())
+                        .loadLeastCommonAncestor(speciesIds));
+        Ontology<Taxon, Integer> taxonOntology = anatEntitySimilarities.stream()
                 .findFirst()
                 .map(AnatEntitySimilarity::getTaxonOntology)
                 .orElseGet(() -> this.ontologyService.getTaxonOntology());
@@ -1162,9 +1089,11 @@ public class MultiSpeciesCallService extends CommonService {
             LinkedHashMap<MultiSpeciesCondition, List<ExpressionCall2>> callsPerSimilarity =
                     callList.stream()
                             .flatMap(c -> {
-                                AnatEntity anatEntity = getAnatEntityFromCondition2(c.getCondition());
-                                AnatEntity cellType = getCellTypeFromCondition2(c.getCondition());
-                                Set<AnatEntitySimilarity> anatSims = similaritiesByAnatEntityFromAnatFilter
+                                AnatEntityAndCellType anatAndCell =
+                                        extractAnatEntityAndCellTypeFromCondition2(c.getCondition());
+                                AnatEntity anatEntity = anatAndCell.anatEntity;
+                                AnatEntity cellType = anatAndCell.cellType;
+                                Set<AnatEntitySimilarity> anatSims = similaritiesByAnatEntity
                                         .getOrDefault(anatEntity, Collections.emptySet());
                                 if (anatSims.isEmpty()) {
                                     anatSims = Collections.singleton(fallbackAnatSimsById.computeIfAbsent(
@@ -1172,7 +1101,7 @@ public class MultiSpeciesCallService extends CommonService {
                                             id -> createFallbackAnatEntitySimilarity(
                                                     anatEntity, requestedTaxon, taxonOntology)));
                                 }
-                                Set<AnatEntitySimilarity> cellSims = similaritiesByAnatEntityFromCellTypeFilter
+                                Set<AnatEntitySimilarity> cellSims = similaritiesByAnatEntity
                                         .getOrDefault(cellType, Collections.emptySet());
                                 if (cellSims.isEmpty()) {
                                     cellSims = Collections.singleton(fallbackCellSimsById.computeIfAbsent(
@@ -1207,6 +1136,171 @@ public class MultiSpeciesCallService extends CommonService {
         return log.traceExit(result);
     }
 
+    /**
+     * Anatomical entity and cell type IDs extracted from user {@code ConditionFilter2}s.
+     * {@code ComposedFilterIds} for {@link ConditionParameter#ANAT_ENTITY_CELL_TYPE} uses
+     * anatomical entity at index 0 and cell type at index 1 (opposite of {@code ComposedEntity}
+     * order in {@link org.bgee.model.expressiondata.call.Condition2}).
+     */
+    private static final class AnatCellTypeFilterIds {
+        private final Set<String> anatEntityIds;
+        private final Set<String> cellTypeIds;
+
+        private AnatCellTypeFilterIds(Set<String> anatEntityIds, Set<String> cellTypeIds) {
+            this.anatEntityIds = anatEntityIds;
+            this.cellTypeIds = cellTypeIds;
+        }
+    }
+
+    private static final class AnatEntityAndCellType {
+        private final AnatEntity anatEntity;
+        private final AnatEntity cellType;
+
+        private AnatEntityAndCellType(AnatEntity anatEntity, AnatEntity cellType) {
+            this.anatEntity = anatEntity;
+            this.cellType = cellType;
+        }
+    }
+
+    private AnatCellTypeFilterIds extractAnatAndCellTypeFilterIds(
+            Collection<ConditionFilter2> conditionFilters) {
+        log.traceEntry("{}", conditionFilters);
+        Set<String> filterAnatEntityIds = new HashSet<>();
+        Set<String> filterCellTypeIds = new HashSet<>();
+        if (conditionFilters != null) {
+            for (ConditionFilter2 cf : conditionFilters) {
+                ComposedFilterIds<String> composed = cf.getComposedFilterIds(
+                        ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+                if (composed == null || composed.isEmpty()) {
+                    continue;
+                }
+                // ComposedFilterIds order: anat entity at 0, cell type at 1.
+                FilterIds<String> anatIds = composed.getFilterIds(0);
+                FilterIds<String> cellIds = composed.getFilterIds(1);
+                Set<String> ontologySeedIds = new HashSet<>();
+                if (anatIds != null) {
+                    ontologySeedIds.addAll(anatIds.getIds());
+                }
+                if (cellIds != null) {
+                    ontologySeedIds.addAll(cellIds.getIds());
+                }
+                Ontology<AnatEntity, String> anatOntology = null;
+                boolean expandAnat = anatIds != null && anatIds.isIncludeChildTerms()
+                        && !anatIds.getIds().isEmpty();
+                boolean expandCell = cellIds != null && cellIds.isIncludeChildTerms()
+                        && !cellIds.getIds().isEmpty();
+                if (!ontologySeedIds.isEmpty() && (expandAnat || expandCell)) {
+                    anatOntology = this.ontologyService.getAnatEntityOntology(
+                            cf.getSpeciesId(),
+                            ontologySeedIds,
+                            EnumSet.of(RelationType.ISA_PARTOF),
+                            false,
+                            true);
+                }
+                filterAnatEntityIds.addAll(expandFilterIds(anatIds, anatOntology));
+                filterCellTypeIds.addAll(expandFilterIds(cellIds, anatOntology));
+            }
+        }
+        return log.traceExit(new AnatCellTypeFilterIds(filterAnatEntityIds, filterCellTypeIds));
+    }
+
+    private static Set<String> expandFilterIds(FilterIds<String> filterIds,
+            Ontology<AnatEntity, String> anatOntology) {
+        if (filterIds == null) {
+            return Collections.emptySet();
+        }
+        Set<String> expanded = new HashSet<>(filterIds.getIds());
+        if (filterIds.isIncludeChildTerms() && !filterIds.getIds().isEmpty() && anatOntology != null) {
+            expanded.addAll(filterIds.getIds().stream()
+                    .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
+                    .collect(Collectors.toSet()));
+        }
+        return expanded;
+    }
+
+    private static Map<AnatEntity, Set<AnatEntitySimilarity>> buildSimilaritiesByAnatEntity(
+            Set<AnatEntitySimilarity> anatEntitySimilarities) {
+        return anatEntitySimilarities.stream()
+                .flatMap(sim -> sim.getAllAnatEntities().stream()
+                        .map(ae -> new SimpleEntry<>(ae, sim)))
+                .collect(Collectors.groupingBy(SimpleEntry::getKey,
+                        Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
+    }
+
+    /**
+     * Builds the condition parameter map for expression call loading.
+     * Anatomical entity and cell type IDs are split using {@link AnatEntity#getIsCellType()}
+     * when building {@code ComposedFilterIds} (index 0 = anat entity, index 1 = cell type).
+     */
+    private static Map<ConditionParameter<?, ?>, ComposedFilterIds<String>>
+    buildAnatEntityCellTypeCondParamToFilter(AnatCellTypeFilterIds userFilterIds,
+            Set<String> similarityAnatEntityIds, Set<String> similarityCellTypeIds) {
+        Set<String> anatIdsForLoad = !userFilterIds.anatEntityIds.isEmpty()
+                ? userFilterIds.anatEntityIds : similarityAnatEntityIds;
+        Set<String> cellIdsForLoad = !userFilterIds.cellTypeIds.isEmpty()
+                ? userFilterIds.cellTypeIds : similarityCellTypeIds;
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                new ComposedFilterIds<>(List.of(
+                        new FilterIds<>(anatIdsForLoad, false),
+                        new FilterIds<>(cellIdsForLoad, false))));
+        return condParamToFilter;
+    }
+
+    private static boolean isCellTypeAnatEntity(AnatEntity anatEntity) {
+        if (anatEntity == null) {
+            return false;
+        }
+        if (anatEntity.getIsCellType() != null) {
+            return anatEntity.getIsCellType();
+        }
+        return ConditionDAO.CELL_TYPE_ROOT_ID.equals(anatEntity.getId());
+    }
+
+    /**
+     * Extracts anatomical entity and cell type from a {@code Condition2} for
+     * {@link ConditionParameter#ANAT_ENTITY_CELL_TYPE}, using {@link AnatEntity#getIsCellType()}
+     * when available. {@code ComposedEntity} order is cell type at index 0 and anatomical entity
+     * at index 1 when both are present (opposite of {@code ComposedFilterIds} order).
+     */
+    private static AnatEntityAndCellType extractAnatEntityAndCellTypeFromCondition2(
+            org.bgee.model.expressiondata.call.Condition2 condition) {
+        if (condition == null) {
+            return new AnatEntityAndCellType(
+                    new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID),
+                    new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID));
+        }
+        org.bgee.model.ComposedEntity<AnatEntity> composed = condition.getConditionParameterValue(
+                ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (composed == null || composed.isEmpty()) {
+            return new AnatEntityAndCellType(
+                    new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID),
+                    new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID));
+        }
+        AnatEntity anatEntity;
+        AnatEntity cellType;
+        if (composed.size() > 1) {
+            cellType = composed.getEntity(0);
+            anatEntity = composed.getEntity(1);
+        } else {
+            AnatEntity single = composed.getEntity(0);
+            if (single != null && isCellTypeAnatEntity(single)) {
+                cellType = single;
+                anatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+            } else {
+                anatEntity = single != null ? single : new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+                cellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+            }
+        }
+        if (anatEntity == null) {
+            anatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+        }
+        if (cellType == null) {
+            cellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+        }
+        return new AnatEntityAndCellType(anatEntity, cellType);
+    }
+
     private static AnatEntitySimilarity createFallbackAnatEntitySimilarity(AnatEntity entity,
             Taxon requestedTaxon, Ontology<Taxon, Integer> taxonOntology) {
         return new AnatEntitySimilarity(
@@ -1215,43 +1309,6 @@ public class MultiSpeciesCallService extends CommonService {
                 requestedTaxon,
                 Collections.singleton(new AnatEntitySimilarityTaxonSummary(requestedTaxon, true, true)),
                 taxonOntology);
-    }
-
-    /**
-     * Extracts the anatomical entity from a {@code Condition2} for ANAT_ENTITY_CELL_TYPE.
-     * ComposedEntity order: cellType at index 0, anatEntity at index 1 when both present.
-     */
-    private static AnatEntity getAnatEntityFromCondition2(
-            org.bgee.model.expressiondata.call.Condition2 condition) {
-        if (condition == null) {
-            return new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
-        }
-        org.bgee.model.ComposedEntity<AnatEntity> composed = condition.getConditionParameterValue(
-                ConditionParameter.ANAT_ENTITY_CELL_TYPE);
-        if (composed == null || composed.isEmpty()) {
-            return new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
-        }
-        // Order: cellType at 0, anatEntity at 1 when both present
-        AnatEntity ae = composed.size() >= 2 ? composed.getEntity(1) : composed.getEntity(0);
-        return ae != null ? ae : new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
-    }
-
-    /**
-     * Extracts the cell type from a {@code Condition2} for ANAT_ENTITY_CELL_TYPE.
-     * ComposedEntity order: cellType at index 0, anatEntity at index 1 when both present.
-     */
-    private static AnatEntity getCellTypeFromCondition2(
-            org.bgee.model.expressiondata.call.Condition2 condition) {
-        if (condition == null) {
-            return new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
-        }
-        org.bgee.model.ComposedEntity<AnatEntity> composed = condition.getConditionParameterValue(
-                ConditionParameter.ANAT_ENTITY_CELL_TYPE);
-        if (composed == null || composed.isEmpty()) {
-            return new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
-        }
-        AnatEntity ct = composed.getEntity(0);
-        return ct != null ? ct : new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
     }
 
 //    /**

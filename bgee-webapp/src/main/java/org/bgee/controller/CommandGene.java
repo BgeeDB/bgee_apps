@@ -33,7 +33,6 @@ import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -456,11 +455,21 @@ public class CommandGene extends CommandExpressionSupport {
                 throw log.throwing(new InvalidRequestException("Only one expression type can be provided"));
             }
             String requestedCallType = this.requestParameters.getExprType().iterator().next();
-            try {
-                callType = SummaryCallType.ExpressionSummary.convertToExpression(requestedCallType);
-            } catch (IllegalArgumentException e) {
-                log.catching(e);
-                throw log.throwing(new InvalidRequestException("Unkown call type: " + requestedCallType));
+            String expressedValue = ExpressionSummary.EXPRESSED.getStringRepresentation();
+            String notExpressedValue = ExpressionSummary.NOT_EXPRESSED.getStringRepresentation();
+            if (RequestParameters.ALL_VALUE.equalsIgnoreCase(requestedCallType)) {
+                throw log.throwing(new InvalidRequestException(
+                        "Expression type 'all' is not supported for this endpoint. "
+                        + "Please use either '" + expressedValue + "' or '" + notExpressedValue + "'."));
+            }
+            if (expressedValue.equalsIgnoreCase(requestedCallType)) {
+                callType = ExpressionSummary.EXPRESSED;
+            } else if (notExpressedValue.equalsIgnoreCase(requestedCallType)) {
+                callType = ExpressionSummary.NOT_EXPRESSED;
+            } else {
+                throw log.throwing(new InvalidRequestException(
+                        "Unknown call type: " + requestedCallType + ". "
+                        + "Accepted values are '" + expressedValue + "' and '" + notExpressedValue + "'."));
             }
         }
 
@@ -592,7 +601,7 @@ public class CommandGene extends CommandExpressionSupport {
                 condParams,
                 true);
             ExpressionCallLoader callLoader = this.loadExprCallLoader(exprCallFilter);
-                List<OTFExpressionCall> calls = this.loadExprCallResults(
+            List<OTFExpressionCall> calls = this.loadExprCallResults(
                     callLoader, DEFAULT_LIMIT, LIMIT_MAX);
 
             if (calls.isEmpty()) {

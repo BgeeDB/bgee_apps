@@ -338,10 +338,11 @@ public class ExpressionCallLoader extends CommonService {
                 geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds);
         log.debug("Calls propagated ({} genes) in {} ms",
                 propagatedExpressionCalls.size(), System.currentTimeMillis() - startTimePropagation);
-        // remove condition needed for on-the--fly propagation but not requested by the condition filters
+        // filter condition needed for on-the-fly propagation but not requested by the condition filters
         // happens when a condition parameter value is provided for anat. entity, cell type of dev. stage
         // but child terms are not expected.
-        //TODO: benchmark advantage of doing that step during propagation. It would probably be harder to debug
+        // ALSO filter on the requested summary call type (present/absent) if any.
+        //TODO: benchmark advantage of doing these steps during propagation. It would probably be harder to debug
         //      but would be faster
         Predicate<OTFExpressionCall> filter =
                 OTFExpressionCallFilterEngine.compile(this.processedFilter.getSourceFilter().getConditionFilters());
@@ -351,9 +352,10 @@ public class ExpressionCallLoader extends CommonService {
                         Map.Entry::getKey,
                         e -> e.getValue().stream()
                             .filter(filter)
+                            .filter(this::matchesRequestedSummaryCallType)
                             .collect(Collectors.toSet())
                         ));
-        //order result if required.
+        //order result and filter present/absent if required.
         Map<Gene, List<OTFExpressionCall>> sortedCalls =
                 filtered.entrySet().stream()
                         .collect(Collectors.toMap(
@@ -367,6 +369,80 @@ public class ExpressionCallLoader extends CommonService {
                         ));
 
         return log.traceExit(sortedCalls);
+    }
+
+    private boolean matchesRequestedSummaryCallType(OTFExpressionCall call) {
+        log.traceEntry("{}", call);
+
+        Map<ExpressionSummary, SummaryQuality> requestedSummaryCallTypeQualityFilter =
+                this.processedFilter.getSourceFilter().getSummaryCallTypeQualityFilter();
+        if (requestedSummaryCallTypeQualityFilter == null ||
+                requestedSummaryCallTypeQualityFilter.isEmpty() ||
+                requestedSummaryCallTypeQualityFilter.equals(ExpressionCallFilter2.ALL_CALLS)) {
+            return log.traceExit(true);
+        }
+
+        BigDecimal allPValue = call.getAllDataTypePValue();
+        if (allPValue == null) {
+            return log.traceExit(false);
+        }
+
+        boolean match = requestedSummaryCallTypeQualityFilter.entrySet().stream()
+                .anyMatch(e -> {
+                    ExpressionSummary summary = e.getKey();
+                    SummaryQuality quality = e.getValue();
+
+                    if (ExpressionSummary.EXPRESSED.equals(summary)) {
+                        if (SummaryQuality.GOLD.equals(quality)) {
+                            return allPValue.compareTo(this.processedFilter.getPresentHighThreshold()) <= 0;
+                        }
+                        // SILVER and BRONZE: present in self+descendant.
+                        if (allPValue.compareTo(this.processedFilter.getPresentLowThreshold()) <= 0) {
+                            return true;
+                        }
+                        // BRONZE also accepts calls present in at least one descendant condition.
+                        return SummaryQuality.BRONZE.equals(quality)
+                                && call.getBestDirectDescendantAllDataTypePValue() != null
+                                && call.getBestDirectDescendantAllDataTypePValue()
+                                        .compareTo(this.processedFilter.getPresentLowThreshold()) <= 0;
+                    }
+                    if (ExpressionSummary.NOT_EXPRESSED.equals(summary)) {
+                        BigDecimal absentThreshold = SummaryQuality.GOLD.equals(quality)?
+                                this.processedFilter.getAbsentHighThreshold():
+                                this.processedFilter.getAbsentLowThreshold();
+
+                        // Must be absent in self+descendant considering all requested data types.
+                        if (allPValue.compareTo(absentThreshold) <= 0) {
+                            return false;
+                        }
+                        // Must have observed data in self condition.
+                        if (!Boolean.TRUE.equals(call.getDataPropagation().isIncludingObservedData())) {
+                            return false;
+                        }
+                        // Must have no PRESENT evidence in descendants (all requested data types).
+                        if (call.getBestDirectDescendantAllDataTypePValue() != null &&
+                                call.getBestDirectDescendantAllDataTypePValue()
+                                        .compareTo(this.processedFilter.getPresentLowThreshold()) <= 0) {
+                            return false;
+                        }
+
+                        if (SummaryQuality.BRONZE.equals(quality)) {
+                            return true;
+                        }
+
+                        // SILVER/GOLD: same constraints must hold on trusted data types.
+                        BigDecimal trustedPValue = call.getTrustedDataTypePValue();
+                        if (trustedPValue == null || trustedPValue.compareTo(absentThreshold) <= 0) {
+                            return false;
+                        }
+                        return call.getBestDirectDescendantTrustedDataTypePValue() == null ||
+                                call.getBestDirectDescendantTrustedDataTypePValue()
+                                        .compareTo(this.processedFilter.getPresentLowThreshold()) > 0;
+                    }
+                    return false;
+                });
+
+        return log.traceExit(match);
     }
 
     private Map<Gene, Set<OTFExpressionCall>> propagateCalls(

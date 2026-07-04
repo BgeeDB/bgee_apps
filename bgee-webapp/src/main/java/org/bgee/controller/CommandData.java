@@ -29,6 +29,8 @@ import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCallService;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall2;
+import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCallFilter;
+import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCallLoader;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.SearchResult;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
@@ -816,6 +818,10 @@ public class CommandData extends CommandParent {
             throw log.throwing(new IllegalStateException("The maximum limit allowed by this controller "
                     + "is greater than the maximum limit allowed by the ExpressionCallLoader."));
         }
+        if (LIMIT_MAX > SimilarityExpressionCallLoader.LIMIT_MAX) {
+            throw log.throwing(new IllegalStateException("The maximum limit allowed by this controller "
+                    + "is greater than the maximum limit allowed by the SimilarityExpressionCallLoader."));
+        }
         assert DEFAULT_LIMIT <= LIMIT_MAX;
     }
 
@@ -1133,8 +1139,12 @@ public class CommandData extends CommandParent {
             }
         }
 
-        if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount()
-                || this.requestParameters.isGetFilters()) {
+        if (this.requestParameters.isGetFilters()) {
+            throw log.throwing(new InvalidRequestException(
+                    "Post-filters are not supported for multi-species expression calls."));
+        }
+
+        if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount()) {
             Job job = null;
             try {
                 job = this.jobService.registerNewJob(this.user.getUUID().toString());
@@ -1148,35 +1158,14 @@ public class CommandData extends CommandParent {
                         .collect(Collectors.toSet());
                 int lcaId = this.serviceFactory.getTaxonService().loadLeastCommonAncestor(
                         species.stream().map(Species::getId).collect(Collectors.toSet())).getId();
-                MultiSpeciesCallService multiSpecService = this.serviceFactory.getMultiSpeciesCallService();
-                List<SimilarityExpressionCall2> allCalls = multiSpecService
-                        .loadSimilarityExpressionCalls2(lcaId, geneFilters, condFilters,
-                                false, qual)
-                        .collect(Collectors.toList());
+                SimilarityExpressionCallLoader loader = this.loadMultispecExprCallLoader(
+                        lcaId, geneFilters, condFilters, qual);
 
                 if (this.requestParameters.isGetResultCount()) {
-                    count = (long) allCalls.size();
+                    count = this.loadMultispecExprCallCount(loader);
                 }
                 if (this.requestParameters.isGetResults()) {
-                    Integer limit = this.requestParameters.getLimit() == null ? DEFAULT_LIMIT
-                            : this.requestParameters.getLimit();
-                    if (limit > LIMIT_MAX) {
-                        throw log.throwing(new InvalidRequestException(
-                                "It is not possible to request more than " + LIMIT_MAX + " results."));
-                    }
-                    long offset = this.requestParameters.getOffset() == null ? 0L
-                            : this.requestParameters.getOffset();
-                    if (offset < 0) {
-                        throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
-                    }
-                    calls = allCalls.stream()
-                            .skip(offset)
-                            .limit(limit)
-                            .map(this::toMultispecExprCallItem)
-                            .collect(Collectors.toList());
-                }
-                if (this.requestParameters.isGetFilters()) {
-                    // Multi-species endpoint does not support post-filters; ignore.
+                    calls = this.loadMultispecExprCallResults(loader);
                 }
 
                 job.completeWithSuccess();
@@ -1204,6 +1193,42 @@ public class CommandData extends CommandParent {
                 response, count, null);
 
         log.traceExit();
+    }
+
+    private SimilarityExpressionCallLoader loadMultispecExprCallLoader(int lcaId,
+            Set<GeneFilter> geneFilters, Collection<ConditionFilter2> condFilters,
+            SummaryQuality qual) {
+        log.traceEntry("{}, {}, {}, {}", lcaId, geneFilters, condFilters, qual);
+        SimilarityExpressionCallFilter filter = new SimilarityExpressionCallFilter(
+                lcaId, geneFilters, condFilters, false, qual);
+        return log.traceExit(this.serviceFactory.getMultiSpeciesCallService()
+                .loadSimilarityCallLoader(filter));
+    }
+
+    private List<MultispecExprCallItem> loadMultispecExprCallResults(
+            SimilarityExpressionCallLoader loader) throws InvalidRequestException {
+        log.traceEntry("{}", loader);
+
+        Integer limit = this.requestParameters.getLimit() == null ? DEFAULT_LIMIT
+                : this.requestParameters.getLimit();
+        if (limit > LIMIT_MAX) {
+            throw log.throwing(new InvalidRequestException(
+                    "It is not possible to request more than " + LIMIT_MAX + " results."));
+        }
+        Long offset = this.requestParameters.getOffset() == null ? 0L
+                : this.requestParameters.getOffset();
+        if (offset < 0) {
+            throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
+        }
+
+        return log.traceExit(loader.loadData(offset, limit).stream()
+                .map(this::toMultispecExprCallItem)
+                .collect(Collectors.toList()));
+    }
+
+    private long loadMultispecExprCallCount(SimilarityExpressionCallLoader loader) {
+        log.traceEntry("{}", loader);
+        return log.traceExit(loader.loadDataCount());
     }
 
     private MultispecExprCallItem toMultispecExprCallItem(SimilarityExpressionCall2 sc) {
@@ -1254,7 +1279,7 @@ public class CommandData extends CommandParent {
 
     /**
      * Loads condition filter for the multispec endpoint. Returns {@code ConditionFilter2}
-     * for use with {@link MultiSpeciesCallService#loadSimilarityExpressionCalls2}.
+     * for use with {@link MultiSpeciesCallService#loadSimilarityCallLoader(SimilarityExpressionCallFilter)}.
      * Uses the same parameter handling rules as {@link #loadExprCallFilter(boolean, Set, EnumSet)}
      * to keep search and filter parameters behavior aligned.
      *

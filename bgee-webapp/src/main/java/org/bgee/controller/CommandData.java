@@ -27,11 +27,9 @@ import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCallService;
-import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall2;
 import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCallFilter;
 import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCallLoader;
-import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.SearchResult;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
@@ -68,7 +66,6 @@ import org.bgee.view.DataDisplay;
 import org.bgee.view.ViewFactory;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -124,46 +121,15 @@ public class CommandData extends CommandParent {
     }
 
     /**
-     * A single multi-species expression "call" for API output: gene (with species),
-     * multiSpeciesCondition, and expr_calls-style fields.
+     * Response wrapper for the multi-species expression calls endpoint.
+     * Mirrors {@link ExpressionCallResponse} but uses {@link SimilarityExpressionCall2}.
      */
-    public static class MultispecExprCallItem {
-        private final Gene gene;
-        private final org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition multiSpeciesCondition;
-        private final String formattedExpressionScore;
-        private final String expressionScoreConfidence;
-        private final EnumMap<DataType, Boolean> dataTypesWithData;
-        private final String expressionState;
-        private final String expressionQuality;
-
-        public MultispecExprCallItem(Gene gene,
-                org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition multiSpeciesCondition,
-                String formattedExpressionScore, String expressionScoreConfidence,
-                EnumMap<DataType, Boolean> dataTypesWithData, String expressionState, String expressionQuality) {
-            this.gene = gene;
-            this.multiSpeciesCondition = multiSpeciesCondition;
-            this.formattedExpressionScore = formattedExpressionScore;
-            this.expressionScoreConfidence = expressionScoreConfidence;
-            this.dataTypesWithData = dataTypesWithData;
-            this.expressionState = expressionState;
-            this.expressionQuality = expressionQuality;
-        }
-
-        public Gene getGene() { return gene; }
-        public org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition getMultiSpeciesCondition() { return multiSpeciesCondition; }
-        public String getFormattedExpressionScore() { return formattedExpressionScore; }
-        public String getExpressionScoreConfidence() { return expressionScoreConfidence; }
-        public EnumMap<DataType, Boolean> getDataTypesWithData() { return dataTypesWithData; }
-        public String getExpressionState() { return expressionState; }
-        public String getExpressionQuality() { return expressionQuality; }
-    }
-
     public static class MultispecExprCallResponse {
-        private final List<MultispecExprCallItem> calls;
+        private final List<SimilarityExpressionCall2> calls;
         private final LinkedHashSet<ConditionParameter<?, ?>> condParams;
         private final EnumSet<DataType> requestedDataTypes;
 
-        public MultispecExprCallResponse(List<MultispecExprCallItem> calls,
+        public MultispecExprCallResponse(List<SimilarityExpressionCall2> calls,
                 LinkedHashSet<ConditionParameter<?, ?>> condParams,
                 EnumSet<DataType> requestedDataTypes) {
             this.calls = calls;
@@ -171,7 +137,7 @@ public class CommandData extends CommandParent {
             this.requestedDataTypes = requestedDataTypes;
         }
 
-        public List<MultispecExprCallItem> getCalls() { return calls; }
+        public List<SimilarityExpressionCall2> getCalls() { return calls; }
         public LinkedHashSet<ConditionParameter<?, ?>> getCondParams() { return condParams; }
         public EnumSet<DataType> getRequestedDataTypes() { return requestedDataTypes; }
     }
@@ -1087,7 +1053,7 @@ public class CommandData extends CommandParent {
 
         log.debug("Action identified: {}", this.requestParameters.getAction());
         List<ColumnDescription> colDescriptions = null;
-        List<MultispecExprCallItem> calls = null;
+        List<SimilarityExpressionCall2> calls = null;
         Long count = null;
 
         List<String> userGeneList = Optional.ofNullable(this.requestParameters.getGeneList())
@@ -1205,7 +1171,7 @@ public class CommandData extends CommandParent {
                 .loadSimilarityCallLoader(filter));
     }
 
-    private List<MultispecExprCallItem> loadMultispecExprCallResults(
+    private List<SimilarityExpressionCall2> loadMultispecExprCallResults(
             SimilarityExpressionCallLoader loader) throws InvalidRequestException {
         log.traceEntry("{}", loader);
 
@@ -1221,53 +1187,12 @@ public class CommandData extends CommandParent {
             throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
         }
 
-        return log.traceExit(loader.loadData(offset, limit).stream()
-                .map(this::toMultispecExprCallItem)
-                .collect(Collectors.toList()));
+        return log.traceExit(loader.loadData(offset, limit));
     }
 
     private long loadMultispecExprCallCount(SimilarityExpressionCallLoader loader) {
         log.traceEntry("{}", loader);
         return log.traceExit(loader.loadDataCount());
-    }
-
-    private MultispecExprCallItem toMultispecExprCallItem(SimilarityExpressionCall2 sc) {
-        Gene gene = sc.getGene();
-        MultiSpeciesCondition msc = sc.getMultiSpeciesCondition();
-        List<ExpressionCall2> rawCalls = new ArrayList<>(sc.getCalls());
-        Optional<ExpressionLevelInfo> maxInfo = rawCalls.stream()
-                .map(ExpressionCall2::getExpressionLevelInfo)
-                .filter(Objects::nonNull)
-                .filter(eli -> eli.getExpressionScore() != null)
-                .max(Comparator.comparing(ExpressionLevelInfo::getExpressionScore,
-                        Comparator.nullsFirst(BigDecimal::compareTo)));
-        String formattedScore = maxInfo.map(ExpressionLevelInfo::getFormattedExpressionScore).orElse("NA");
-        EnumSet<DataType> dataTypesWithData = rawCalls.stream()
-                .flatMap(c -> c.getCallData().stream())
-                .map(cd -> cd.getDataType())
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-        boolean highQual = !dataTypesWithData.isEmpty() && (
-                dataTypesWithData.contains(DataType.AFFYMETRIX)
-                        || dataTypesWithData.contains(DataType.RNA_SEQ)
-                        || dataTypesWithData.contains(DataType.SC_RNA_SEQ)
-                        || (maxInfo.isPresent() && maxInfo.get().getExpressionScore() != null
-                                && maxInfo.get().getExpressionScore().compareTo(BigDecimal.valueOf(20000)) < 0));
-        String confidence = highQual ? "high" : "low";
-        EnumMap<DataType, Boolean> dataTypesMap = new EnumMap<>(DataType.class);
-        for (DataType dt : EnumSet.allOf(DataType.class)) {
-            dataTypesMap.put(dt, dataTypesWithData.contains(dt));
-        }
-        String expressionState = sc.getSummaryCallType() != null
-                ? sc.getSummaryCallType().toString().toLowerCase() : "not_expressed";
-        String quality = rawCalls.stream()
-                .map(ExpressionCall2::getSummaryQuality)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .map(q -> q.toString().toLowerCase())
-                .orElse("bronze");
-        return new MultispecExprCallItem(gene, msc, formattedScore, confidence,
-                dataTypesMap, expressionState, quality);
     }
 
     private List<ColumnDescription> getMultispecExprCallColumnDescriptions() {

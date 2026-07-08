@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
-import org.bgee.controller.CommandData.MultispecExprCallItem;
 import org.bgee.controller.CommandData.MultispecExprCallResponse;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.user.User;
@@ -244,13 +243,10 @@ public class CommandDataMultispecTest extends TestAncestor {
 
         MultispecExprCallResponse response = responseCaptor.getValue();
         assertEquals(1, response.getCalls().size());
-        MultispecExprCallItem item = response.getCalls().get(0);
-        assertEquals(humanGene, item.getGene());
-        assertEquals("50.00", item.getFormattedExpressionScore());
-        assertEquals("high", item.getExpressionScoreConfidence());
-        assertEquals("expressed", item.getExpressionState());
-        assertEquals("bronze", item.getExpressionQuality());
-        assertEquals(true, item.getDataTypesWithData().get(DataType.RNA_SEQ));
+        SimilarityExpressionCall2 call = response.getCalls().get(0);
+        assertEquals(humanGene, call.getGene());
+        assertEquals(ExpressionSummary.EXPRESSED, call.getSummaryCallType());
+        assertEquals(1, call.getCalls().size());
         assertEquals(EnumSet.allOf(DataType.class), response.getRequestedDataTypes());
     }
 

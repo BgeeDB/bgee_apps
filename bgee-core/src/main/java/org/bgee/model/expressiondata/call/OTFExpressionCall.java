@@ -128,7 +128,8 @@ public class OTFExpressionCall {
                     + "for " + allDataTypePValue));
         }
         //In Bgee 16 we limited the precision to 30 digits
-        return log.traceExit((allDataTypePValue.compareTo(new BigDecimal("1E-30")) <= 0? "<= ": "")
+        return log.traceExit((allDataTypePValue.compareTo(new BigDecimal("0")) != 0 &&
+                allDataTypePValue.compareTo(new BigDecimal("1E-30")) <= 0 ? "<= ": "")
                 + formatter.format(allDataTypePValue).toLowerCase(Locale.US));
     }
 

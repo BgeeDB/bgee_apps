@@ -4,8 +4,12 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.ConditionParameter> {
 
+    private final static Logger log = LogManager.getLogger(DAOConditionFilter2.class.getName());
     private final Set<Integer> speciesIds;
     /**
      * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs 
@@ -50,6 +54,17 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
                     throws IllegalArgumentException {
         super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds, observedCondForParams,
                 ConditionDAO.ConditionParameter.class, excludedAnatEntityCellTypeIds);
+        if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
+                (devStageIds == null || devStageIds.isEmpty()) &&
+                (cellTypeIds == null || cellTypeIds.isEmpty()) &&
+                (sexIds == null || sexIds.isEmpty()) &&
+                (strainIds == null || strainIds.isEmpty()) &&
+                (observedCondForParams == null || observedCondForParams.isEmpty()) &&
+                (speciesIds == null || speciesIds.isEmpty())) {
+            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs, "
+                    + "developmental stage IDs, cell type IDs, sex IDs, strain IDs, species IDs or observed "
+                    + "data status must be provided."));
+        }
         if (speciesIds != null && speciesIds.stream().anyMatch(id -> id == null || id < 1)) {
             throw new IllegalArgumentException("No speciesId can be null or less than 1");
         }

@@ -154,26 +154,6 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
                         speMap.put(header[columnNumber], species.getName());
                         columnNumber++;
                         break;
-                    case CommandRPackage.SPECIES_AFFYMETRIX_PARAM:
-                        if (species.getDataTypesByDataSourcesForData().values().stream().flatMap(dt -> dt.stream())
-                                .filter(dt -> dt.equals(DataType.AFFYMETRIX)).collect(Collectors.toSet()).size() > 0) {
-                            speMap.put(header[columnNumber], "T");
-                            columnNumber++;
-                            break;
-                        }
-                        speMap.put(header[columnNumber], "F");
-                        columnNumber++;
-                        break;
-                    case CommandRPackage.SPECIES_EST_PARAM:
-                        if (species.getDataTypesByDataSourcesForData().values().stream().flatMap(dt -> dt.stream())
-                                .filter(dt -> dt.equals(DataType.EST)).collect(Collectors.toSet()).size() > 0) {
-                            speMap.put(header[columnNumber], "T");
-                            columnNumber++;
-                            break;
-                        }
-                        speMap.put(header[columnNumber], "F");
-                        columnNumber++;
-                        break;
                     case CommandRPackage.SPECIES_IN_SITU_PARAM:
                         if (species.getDataTypesByDataSourcesForData().values().stream().flatMap(dt -> dt.stream())
                                 .filter(dt -> dt.equals(DataType.IN_SITU)).collect(Collectors.toSet()).size() > 0) {

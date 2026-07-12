@@ -317,10 +317,6 @@ public class CommonService extends Service {
     protected static DataType convertDaoDataTypeToDataType(DAODataType dt) {
         log.traceEntry("{}", dt);
         switch(dt) {
-            case AFFYMETRIX:
-                return log.traceExit(DataType.AFFYMETRIX);
-            case EST:
-                return log.traceExit(DataType.EST);
             case IN_SITU:
                 return log.traceExit(DataType.IN_SITU);
             case RNA_SEQ:
@@ -342,10 +338,6 @@ public class CommonService extends Service {
             return log.traceExit((DAODataType) null);
         }
         switch(dt) {
-        case AFFYMETRIX: 
-            return log.traceExit(DAODataType.AFFYMETRIX);
-        case EST: 
-            return log.traceExit(DAODataType.EST);
         case IN_SITU: 
             return log.traceExit(DAODataType.IN_SITU);
         case RNA_SEQ: 
@@ -401,6 +393,11 @@ public class CommonService extends Service {
         default:
             throw log.throwing(new IllegalStateException("Unrecognized DAORawDataSex: " + daoRawDataSex));
         }
+    }
+    public static DAOSex convertDAORawDataSexToDAOSex(DAORawDataSex daoRawDataSex) {
+        log.traceEntry("{}", daoRawDataSex);
+        return log.traceExit(convertSexToDAOSex(mapRawDataSexToSex(
+                mapDAORawDataSexToRawDataSex(daoRawDataSex))));
     }
     protected static Sex mapRawDataSexToSex(RawDataSex daoRawDataSex) {
         log.traceEntry("{}", daoRawDataSex);
@@ -1054,7 +1051,7 @@ public class CommonService extends Service {
         return log.traceExit(daoCondFilter);
     }
 
-    protected static Strain mapRawDataStrainToStrain(String strain) {
+    public static Strain mapRawDataStrainToStrain(String strain) {
         log.traceEntry("{}", strain);
         if (StringUtils.isBlank(strain)) {
             log.traceExit(); return null;

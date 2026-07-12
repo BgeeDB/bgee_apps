@@ -776,23 +776,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
             if (!fileType.isSimpleFileType()) {
                 // *** Attributes specific to complete file ***
-                if (header[i].equals(AFFYMETRIX_DATA_COLUMN_NAME) ||
-                        header[i].equals(EST_DATA_COLUMN_NAME) ||
-                        header[i].equals(IN_SITU_DATA_COLUMN_NAME) ||
+                if (header[i].equals(IN_SITU_DATA_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_DATA_COLUMN_NAME) ||
                         header[i].equals(SC_RNA_SEQ_DATA_COLUMN_NAME)) {
                     processors[i] = new IsElementOf(expressionSummaries);
-                } else if (header[i].equals(AFFYMETRIX_QUAL_COLUMN_NAME) ||
-                        header[i].equals(EST_QUAL_COLUMN_NAME) ||
-                        header[i].equals(IN_SITU_QUAL_COLUMN_NAME) ||
+                } else if (header[i].equals(IN_SITU_QUAL_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_QUAL_COLUMN_NAME) ||
                         header[i].equals(SC_RNA_SEQ_QUAL_COLUMN_NAME)) {
                     processors[i] = new IsElementOf(qualitySummaries);
-                } else if (header[i].equals(AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
-                        header[i].equals(AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
-                        header[i].equals(EST_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
-                        header[i].equals(EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
-                        header[i].equals(IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                } else if (header[i].equals(IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
                         header[i].equals(IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
@@ -801,22 +793,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         header[i].equals(SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
                         header[i].equals(DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME)) {
                     processors[i] = new LMinMax(0, Long.MAX_VALUE);
-                } else if (header[i].equals(AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME) ||
-                        header[i].equals(EST_OBSERVED_DATA_COLUMN_NAME) ||
-                        header[i].equals(IN_SITU_OBSERVED_DATA_COLUMN_NAME) ||
+                } else if (header[i].equals(IN_SITU_OBSERVED_DATA_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_OBSERVED_DATA_COLUMN_NAME) ||
                         header[i].equals(SC_RNA_SEQ_OBSERVED_DATA_COLUMN_NAME) ||
                         header[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME)) {
                     processors[i] = new IsElementOf(originValues);
-                } else if (header[i].equals(AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME) ||
-                        header[i].equals(AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME) ||
-                        header[i].equals(AFFYMETRIX_WEIGHT_COLUMN_NAME) ||
-                        header[i].equals(AFFYMETRIX_FDR_COLUMN_NAME) ||
-                        header[i].equals(EST_EXPRESSION_SCORE_COLUMN_NAME) ||
-                        header[i].equals(EST_EXPRESSION_RANK_COLUMN_NAME) ||
-                        header[i].equals(EST_WEIGHT_COLUMN_NAME) ||
-                        header[i].equals(EST_FDR_COLUMN_NAME) ||
-                        header[i].equals(IN_SITU_EXPRESSION_SCORE_COLUMN_NAME) ||
+                } else if (header[i].equals(IN_SITU_EXPRESSION_SCORE_COLUMN_NAME) ||
                         header[i].equals(IN_SITU_EXPRESSION_RANK_COLUMN_NAME) ||
                         header[i].equals(IN_SITU_WEIGHT_COLUMN_NAME) ||
                         header[i].equals(IN_SITU_FDR_COLUMN_NAME) ||
@@ -905,24 +887,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             headers[idx++] = INCLUDING_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = SELF_OBSERVATION_COUNT_COLUMN_NAME;
             headers[idx++] = DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_DATA_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_QUAL_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_FDR_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_WEIGHT_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
-            headers[idx++] = EST_DATA_COLUMN_NAME;
-            headers[idx++] = EST_QUAL_COLUMN_NAME;
-            headers[idx++] = EST_FDR_COLUMN_NAME;
-            headers[idx++] = EST_EXPRESSION_SCORE_COLUMN_NAME;
-            headers[idx++] = EST_EXPRESSION_RANK_COLUMN_NAME;
-            headers[idx++] = EST_WEIGHT_COLUMN_NAME;
-            headers[idx++] = EST_OBSERVED_DATA_COLUMN_NAME;
-            headers[idx++] = EST_SELF_OBSERVATION_COUNT_COLUMN_NAME;
-            headers[idx++] = EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
             headers[idx++] = IN_SITU_DATA_COLUMN_NAME;
             headers[idx++] = IN_SITU_QUAL_COLUMN_NAME;
             headers[idx++] = IN_SITU_FDR_COLUMN_NAME;
@@ -1144,25 +1108,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     headers[i].equals(EXPRESSION_RANK_COLUMN_NAME) ||
                     headers[i].equals(EXPRESSION_SCORE_COLUMN_NAME) ||
                     headers[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_DATA_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_QUAL_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_FDR_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_WEIGHT_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
-                    headers[i].equals(AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
-
-                    headers[i].equals(EST_DATA_COLUMN_NAME) ||
-                    headers[i].equals(EST_QUAL_COLUMN_NAME) ||
-                    headers[i].equals(EST_FDR_COLUMN_NAME) ||
-                    headers[i].equals(EST_EXPRESSION_RANK_COLUMN_NAME) ||
-                    headers[i].equals(EST_EXPRESSION_SCORE_COLUMN_NAME) ||
-                    headers[i].equals(EST_WEIGHT_COLUMN_NAME) ||
-                    headers[i].equals(EST_OBSERVED_DATA_COLUMN_NAME) ||
-                    headers[i].equals(EST_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
-                    headers[i].equals(EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
 
                     headers[i].equals(IN_SITU_DATA_COLUMN_NAME) ||
                     headers[i].equals(IN_SITU_QUAL_COLUMN_NAME) ||

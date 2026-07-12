@@ -14,6 +14,7 @@ import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -58,15 +59,13 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
         if (value.getCalls() != null) {
             out.name("expressionCalls");
             out.beginArray();
-            for (ExpressionCall2 call: value.getCalls()) {
-                EnumSet<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData2::getDataType)
-                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+            for (OTFExpressionCall call: value.getCalls()) {
+                EnumSet<DataType> dataTypes = call.getSupportingDataTypes();
                 boolean highQualScore = false;
-                if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) &&
-                        (dataTypes.contains(DataType.AFFYMETRIX) ||
-                                dataTypes.contains(DataType.RNA_SEQ) ||
-                                dataTypes.contains(DataType.SC_RNA_SEQ) ||
-                                call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
+                //FXIME: Need to consider the SummaryQuality once it is implemented. TO be done before Bgee 16.0 release
+                if (/*!SummaryQuality.BRONZE.equals(call.()) &&*/
+                        (dataTypes.contains(DataType.RNA_SEQ) ||
+                                dataTypes.contains(DataType.SC_RNA_SEQ))) {
                     highQualScore = true;
                 }
                 out.beginObject();
@@ -78,7 +77,7 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
 
                 out.name("expressionScore");
                 out.beginObject();
-                out.name("expressionScore").value(call.getFormattedExpressionScore());
+                out.name("expressionScore").value(call.getExpressionScore());
                 out.name("expressionScoreConfidence");
                 if (highQualScore) {
                     out.value("high");
@@ -87,8 +86,7 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
                 }
                 out.endObject();
 
-                String fdr = call.getPValueWithEqualDataTypes(value.getRequestedDataTypes())
-                        .getFormattedPValue();
+                String fdr = call.getFormattedAllDatatypePValue();
                 out.name("fdr").value(fdr);
 
                 out.name("dataTypesWithData");
@@ -103,9 +101,11 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
                     out.name(d.name()).value(dataTypes.contains(d));
                 }
                 out.endObject();
-
-                out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
-                out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());
+                //FIXME: Need to be reactivated before Bgee 16.0 release. 
+//                out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
+//                out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());
+                out.name("expressionState").value(call.getAllDataTypePValue().compareTo(new BigDecimal(0.05)) <= 0 ? "expressed" : "not_expressed");
+                out.name("expressionQuality").value("gold");
 
                 out.endObject();
             }

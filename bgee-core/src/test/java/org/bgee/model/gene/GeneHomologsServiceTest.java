@@ -60,9 +60,9 @@ public class GeneHomologsServiceTest extends TestAncestor {
         GeneDAO geneDao = mock(GeneDAO.class);
         when(managerMock.getGeneDAO()).thenReturn(geneDao);
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
-            Arrays.asList(new GeneTO(123, "ID1", "Name1", "Desc1", 11, 1, 1, true, 1, null),
-                    new GeneTO(124, "ID2", "Name2", "Desc2", 22, 1, 1, true, 1, null),
-                    new GeneTO(223, "ID4", "Name4", "Desc4", 44, 2, 1, true, 1, null)));
+            Arrays.asList(new GeneTO(123, "ID1", "Name1", "Desc1", 11, 1, true, "reg1", 1, null),
+                    new GeneTO(124, "ID2", "Name2", "Desc2", 22, 1, true, "reg1", 1, null),
+                    new GeneTO(223, "ID4", "Name4", "Desc4", 44, 2, true, "reg1", 1, null)));
         when(geneDao.getGenesBySpeciesIds(null)).thenReturn(mockGeneRs);
         GeneBioTypeTOResultSet mockBioTypeRs = getMockResultSet(GeneBioTypeTOResultSet.class,
                 Arrays.asList(new GeneBioTypeTO(1, "type1"), new GeneBioTypeTO(2, "type2")));

@@ -55,16 +55,7 @@ public class DAOConditionFilterBase<T extends Enum<T>> extends DAOBaseConditionF
             Collection<T> observedCondForParams, Class<T> condParamType,
             Collection<String> excludedAnatEntityCellTypeIds) throws IllegalArgumentException {
         super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds, excludedAnatEntityCellTypeIds);
-        if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
-                (devStageIds == null || devStageIds.isEmpty()) &&
-                (cellTypeIds == null || cellTypeIds.isEmpty()) &&
-                (sexIds == null || sexIds.isEmpty()) &&
-                (strainIds == null || strainIds.isEmpty()) &&
-                (observedCondForParams == null || observedCondForParams.isEmpty())) {
-            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs, "
-                    + "developmental stage IDs, cell type IDs, sex IDs, strain IDs or observed "
-                    + "data status must be provided."));
-        }
+
         this.observedCondForParams = observedCondForParams == null || observedCondForParams.isEmpty()?
                 EnumSet.noneOf(condParamType): EnumSet.copyOf(observedCondForParams);
     }

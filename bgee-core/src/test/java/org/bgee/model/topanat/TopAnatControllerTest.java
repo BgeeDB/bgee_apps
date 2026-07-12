@@ -138,7 +138,7 @@ public class TopAnatControllerTest extends TestAncestor {
         AnatEntityService mockAnatEntityService = mock(AnatEntityService.class);
         AnatEntity mockEntity = mock(AnatEntity.class);
         HashMap<String,Set<String>> relations = new HashMap<String,Set<String>>();
-        Set<DataType> dataTypes = new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX));
+        Set<DataType> dataTypes = new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ));
         relations.put("A", new HashSet<String>(Arrays.asList("B","C")));
         ExpressionCall mockCall = mock(ExpressionCall.class);
         Gene myGene = new Gene("ENSG001", new Species(9606), new GeneBioType("type1"));

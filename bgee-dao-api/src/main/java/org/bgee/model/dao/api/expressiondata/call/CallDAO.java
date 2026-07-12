@@ -87,7 +87,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
 
         /**
          * An {@code enum} used to define, for each data type that allowed to generate 
-         * a call (Affymetrix, RNA-Seq, ...), its contribution to the generation 
+         * a call (InSitu, RNA-Seq, ...), its contribution to the generation 
          * of the call.
          * <ul>
          * <li>{@code NODATA}: no data from the associated data type allowed to produce 
@@ -164,16 +164,6 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
         
         //-----------DataState for each data type---------------
         /**
-         * The {@code DataState} defining the contribution of Affymetrix data 
-         * to the generation of this call.
-         */
-        private DataState affymetrixData;
-        /**
-         * The {@code DataState} defining the contribution of EST data 
-         * to the generation of this call.
-         */
-        private DataState estData;
-        /**
          * The {@code DataState} defining the contribution of <em>in situ</em> data 
          * to the generation of this call.
          */
@@ -197,13 +187,12 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
          * Default constructor.
          */
         protected CallTO() {
-            this(null, null, null, DataState.NODATA, DataState.NODATA, 
-                    DataState.NODATA, DataState.NODATA, DataState.NODATA);
+            this(null, null, null, DataState.NODATA, DataState.NODATA, DataState.NODATA);
         }
         
         /**
          * Constructor providing the gene ID, the anatomical entity ID, the developmental stage ID,  
-         * the contribution of Affymetrix, EST, <em>in situ</em>, "relaxed" <em>in situ</em> and, 
+         * the contribution of <em>in situ</em>, "relaxed" <em>in situ</em> and, 
          * RNA-Seq data to the generation of this call.
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
@@ -213,10 +202,6 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
          *                             this call.
          * @param conditionId          An {@code Integer} that is the ID of the condition
          *                             associated to this call. 
-         * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
-         *                             data to the generation of this call.
-         * @param estData              A {@code DataSate} that is the contribution of EST data
-         *                             to the generation of this call.
          * @param inSituData           A {@code DataSate} that is the contribution of 
          *                             <em>in situ</em> data to the generation of this call.
          * @param relaxedInSituData    A {@code DataSate} that is the contribution of "relaxed" 
@@ -225,13 +210,10 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
          *                             to the generation of this call.
          */
         protected CallTO(Integer id, Integer bgeeGeneId, Integer conditionId, 
-                DataState affymetrixData, DataState estData, DataState inSituData, 
-                DataState relaxedInSituData, DataState rnaSeqData) {
+                DataState inSituData, DataState relaxedInSituData, DataState rnaSeqData) {
             super(id);
             this.bgeeGeneId = bgeeGeneId;
             this.conditionId = conditionId;
-            this.affymetrixData = affymetrixData;
-            this.estData = estData;
             this.inSituData = inSituData;
             this.relaxedInSituData = relaxedInSituData;
             this.rnaSeqData = rnaSeqData;
@@ -256,7 +238,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
         /**
          * Retrieve from this {@code CallTO} the data types with a filtering requested, 
          * allowing to parameterize queries to the data source. For instance, to only retrieve 
-         * calls with an Affymetrix data state equal to {@code HIGHQUALITY}, or with some RNA-Seq data 
+         * calls with some RNA-Seq data 
          * of any quality (minimal data state {@code LOWQUALITY}).
          * <p>
          * The data types are represented as {@code Attribute}s allowing to request a data type parameter 
@@ -328,38 +310,6 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
         
         //-----------DataState for each data type---------------
         /**
-         * @return  the {@code DataState} defining the contribution of Affymetrix data 
-         *          to the generation of this call.
-         */
-        public DataState getAffymetrixData() {
-            return affymetrixData;
-        }
-        /**
-         * @param affymetrixData    the {@code DataState} defining the contribution 
-         *                          of Affymetrix data to the generation of this call.
-         */
-        //deprecated because all TOs should now be immutable. 
-        @Deprecated
-        void setAffymetrixData(DataState affymetrixData) {
-            this.affymetrixData = affymetrixData;
-        }
-        /**
-         * @return  the {@code DataState} defining the contribution of EST data 
-         *          to the generation of this call.
-         */
-        public DataState getESTData() {
-            return estData;
-        }
-        /**
-         * @param estData   the {@code DataState} defining the contribution 
-         *                  of EST data to the generation of this call.
-         */
-        //deprecated because all TOs should now be immutable. 
-        @Deprecated
-        void setESTData(DataState estData) {
-            this.estData = estData;
-        }
-        /**
          * @return  the {@code DataState} defining the contribution of <em>in situ</em> data 
          *          to the generation of this call.
          */
@@ -424,8 +374,6 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
         public String toString() {
             return "ID: " + this.getId() + " - Bgee Gene ID: " + this.getBgeeGeneId() + 
                 " - Condition ID: " + this.getConditionId() +
-                " - Affymetrix data: " + this.getAffymetrixData() +
-                " - EST data: " + this.getESTData() +
                 " - in situ data: " + this.getInSituData() +
                 " - relaxed in situ data: " + this.getRelaxedInSituData() +
                 " - RNA-Seq data: " + this.getRNASeqData();

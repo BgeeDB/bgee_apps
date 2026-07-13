@@ -592,6 +592,57 @@ public class CommandData extends CommandParent {
             return builder.toString();
         }
     }
+    public static class MultispecExprCallResultCacheKey {
+
+        private final SimilarityExpressionCallFilter sourceFilter;
+        private final Long offset;
+        private final Integer limit;
+
+        public MultispecExprCallResultCacheKey(SimilarityExpressionCallFilter sourceFilter,
+                Long offset, Integer limit) {
+            this.sourceFilter = sourceFilter;
+            this.offset = offset;
+            this.limit = limit;
+        }
+
+        public SimilarityExpressionCallFilter getSourceFilter() {
+            return sourceFilter;
+        }
+        public Long getOffset() {
+            return offset;
+        }
+        public Integer getLimit() {
+            return limit;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(limit, offset, sourceFilter);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            MultispecExprCallResultCacheKey other = (MultispecExprCallResultCacheKey) obj;
+            return Objects.equals(limit, other.limit) && Objects.equals(offset, other.offset)
+                    && Objects.equals(sourceFilter, other.sourceFilter);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("MultispecExprCallResultCacheKey [")
+                   .append("offset=").append(offset)
+                   .append(", limit=").append(limit)
+                   .append(", sourceFilter=").append(sourceFilter)
+                   .append("]");
+            return builder.toString();
+        }
+    }
     public static class RawDataCondPartProcessingCacheKey {
         private final Set<RawDataConditionFilter> condFilters;
         public RawDataCondPartProcessingCacheKey(Set<RawDataConditionFilter> condFilters) {
@@ -683,6 +734,10 @@ public class CommandData extends CommandParent {
     EXPR_CALL_COUNT_CACHE_DEF = new CacheDefinition<>("exprCallCountCache",
             ExpressionCallFilter2.class, Long.class, CacheType.LRU, 60);
 
+    private final static CacheDefinition<SimilarityExpressionCallFilter, Long>
+    MULTISPEC_EXPR_CALL_COUNT_CACHE_DEF = new CacheDefinition<>("multispecExprCallCountCache",
+            SimilarityExpressionCallFilter.class, Long.class, CacheType.LRU, 60);
+
     /**
      * A {@code long} that is the execution time in milliseconds of the processing of
      * the part of a filter related to condition, that triggers storing the result in cache.
@@ -733,6 +788,13 @@ public class CommandData extends CommandParent {
     private final static CacheDefinition<ExprCallResultCacheKey, List>
     EXPR_CALL_RESULT_CACHE_DEF = new CacheDefinition<>("exprCallResultCache",
             ExprCallResultCacheKey.class, List.class, CacheType.LRU, 20);
+
+    //Suppress warning for List generic type to have inference
+    //working with 'List.class'
+    @SuppressWarnings("rawtypes")
+    private final static CacheDefinition<MultispecExprCallResultCacheKey, List>
+    MULTISPEC_EXPR_CALL_RESULT_CACHE_DEF = new CacheDefinition<>("multispecExprCallResultCache",
+            MultispecExprCallResultCacheKey.class, List.class, CacheType.LRU, 20);
 
     /**
      * A {@code long} that is the execution time in milliseconds of the generation of post-filters
@@ -1187,12 +1249,25 @@ public class CommandData extends CommandParent {
             throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
         }
 
-        return log.traceExit(loader.loadData(offset, limit));
+        MultispecExprCallResultCacheKey cacheKey = new MultispecExprCallResultCacheKey(
+                loader.getFilter(), offset, limit);
+        //Suppress warnings because we are responsible for the insertion and know the generic type
+        @SuppressWarnings("unchecked")
+        List<SimilarityExpressionCall2> results = this.cacheService.useCacheNonAtomic(
+                MULTISPEC_EXPR_CALL_RESULT_CACHE_DEF,
+                cacheKey,
+                () -> loader.loadData(offset, limit),
+                COMPUTE_TIME_RESULT_CACHE_MS);
+        return log.traceExit(results);
     }
 
     private long loadMultispecExprCallCount(SimilarityExpressionCallLoader loader) {
         log.traceEntry("{}", loader);
-        return log.traceExit(loader.loadDataCount());
+        return log.traceExit(this.cacheService.useCacheNonAtomic(
+                MULTISPEC_EXPR_CALL_COUNT_CACHE_DEF,
+                loader.getFilter(),
+                () -> loader.loadDataCount(),
+                COMPUTE_TIME_COUNT_CACHE_MS));
     }
 
     private List<ColumnDescription> getMultispecExprCallColumnDescriptions() {

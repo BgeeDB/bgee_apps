@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -80,6 +81,7 @@ public class CommandDataMultispecTest extends TestAncestor {
     private ViewFactory viewFactory;
     private DataDisplay dataDisplay;
     private SimilarityExpressionCallLoader loader;
+    private BgeeCacheService cacheService;
 
     private Species humanSpecies;
     private Species mouseSpecies;
@@ -104,6 +106,11 @@ public class CommandDataMultispecTest extends TestAncestor {
         viewFactory = mock(ViewFactory.class);
         dataDisplay = mock(DataDisplay.class);
         loader = mock(SimilarityExpressionCallLoader.class);
+        cacheService = mock(BgeeCacheService.class);
+        //Simulate a cache miss: invoke the compute supplier (3rd argument) and return its result,
+        //so the underlying loader is still exercised as in production on a cold cache.
+        when(cacheService.useCacheNonAtomic(any(), any(), any(), any()))
+                .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(2)).get());
 
         when(serviceFactory.getGeneService()).thenReturn(geneService);
         when(serviceFactory.getTaxonService()).thenReturn(taxonService);
@@ -286,7 +293,7 @@ public class CommandDataMultispecTest extends TestAncestor {
                 viewFactory,
                 serviceFactory,
                 jobService,
-                mock(BgeeCacheService.class),
+                cacheService,
                 user);
     }
 }

@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.call.multispecies;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,13 @@ public class SimilarityExpressionCallLoader extends CommonService {
     private final MultiSpeciesCallService multiSpeciesCallService;
     private final Map<String, AnatEntitySimilarity> fallbackAnatSimsById = new HashMap<>();
     private final Map<String, AnatEntitySimilarity> fallbackCellSimsById = new HashMap<>();
-    private Long cachedDataCount;
+    /**
+     * The complete, ordered list of all {@link SimilarityExpressionCall2}s matching this loader's
+     * filter, built lazily by {@link #getAllCalls()}. It is {@code null} until a full pass is
+     * required (by {@link #loadDataCount()} or {@link #stream()}). Once populated, {@link #loadData(Long,
+     * Integer)} serves pages directly from it instead of re-scanning the data source.
+     */
+    private List<SimilarityExpressionCall2> allCalls;
 
     SimilarityExpressionCallLoader(SimilarityExpressionCallPreparedFilter preparedFilter,
             ServiceFactory serviceFactory, MultiSpeciesCallService multiSpeciesCallService) {
@@ -90,6 +97,19 @@ public class SimilarityExpressionCallLoader extends CommonService {
 
         long skip = offset == null ? 0L : offset;
         int take = limit == null ? LIMIT_MAX : limit;
+
+        //If a full pass has already been performed (e.g. by loadDataCount()), serve the page
+        //directly from the cached list rather than re-scanning the data source.
+        if (allCalls != null) {
+            List<SimilarityExpressionCall2> page = new ArrayList<>();
+            for (long i = skip; i < skip + take && i < allCalls.size(); i++) {
+                page.add(allCalls.get((int) i));
+            }
+            return log.traceExit(page);
+        }
+
+        //Otherwise iterate lazily and stop as soon as the requested page is filled,
+        //so a results-only request does not have to build the entire result set.
         List<SimilarityExpressionCall2> page = new ArrayList<>();
         long seen = 0;
 
@@ -129,18 +149,7 @@ public class SimilarityExpressionCallLoader extends CommonService {
      */
     public long loadDataCount() {
         log.traceEntry();
-        if (cachedDataCount != null) {
-            return log.traceExit(cachedDataCount);
-        }
-        long count = 0;
-        for (AnatEntitySimilarity sim : preparedFilter.getOrderedSimilarities()) {
-            count += multiSpeciesCallService.loadSimilarityExpressionCallsForSimilarity(sim,
-                    preparedFilter, fallbackAnatSimsById, fallbackCellSimsById).size();
-        }
-        count += multiSpeciesCallService.loadFallbackSimilarityExpressionCalls(preparedFilter,
-                fallbackAnatSimsById, fallbackCellSimsById).size();
-        cachedDataCount = count;
-        return log.traceExit(count);
+        return log.traceExit((long) getAllCalls().size());
     }
 
     /**
@@ -148,17 +157,30 @@ public class SimilarityExpressionCallLoader extends CommonService {
      */
     public Stream<SimilarityExpressionCall2> stream() {
         log.traceEntry();
-        long total = loadDataCount();
-        if (total == 0) {
-            return log.traceExit(Stream.empty());
+        return log.traceExit(getAllCalls().stream());
+    }
+
+    /**
+     * Builds (once) and returns the complete ordered list of {@link SimilarityExpressionCall2}s
+     * matching this loader's filter. The result is memoized in {@link #allCalls}, so subsequent
+     * calls, as well as {@link #loadData(Long, Integer)}, reuse it without re-scanning the data
+     * source. Determinism of the ordering matches {@link #loadData(Long, Integer)}: ordered
+     * similarities first, then fallback calls.
+     *
+     * @return  An unmodifiable {@code List} of all matching {@code SimilarityExpressionCall2}s.
+     */
+    private List<SimilarityExpressionCall2> getAllCalls() {
+        if (allCalls != null) {
+            return allCalls;
         }
-        Stream.Builder<SimilarityExpressionCall2> builder = Stream.builder();
-        long offset = 0;
-        while (offset < total) {
-            int batchLimit = (int) Math.min(LIMIT_MAX, total - offset);
-            loadData(offset, batchLimit).forEach(builder::add);
-            offset += batchLimit;
+        List<SimilarityExpressionCall2> calls = new ArrayList<>();
+        for (AnatEntitySimilarity sim : preparedFilter.getOrderedSimilarities()) {
+            calls.addAll(multiSpeciesCallService.loadSimilarityExpressionCallsForSimilarity(sim,
+                    preparedFilter, fallbackAnatSimsById, fallbackCellSimsById));
         }
-        return log.traceExit(builder.build());
+        calls.addAll(multiSpeciesCallService.loadFallbackSimilarityExpressionCalls(preparedFilter,
+                fallbackAnatSimsById, fallbackCellSimsById));
+        allCalls = Collections.unmodifiableList(calls);
+        return allCalls;
     }
 }

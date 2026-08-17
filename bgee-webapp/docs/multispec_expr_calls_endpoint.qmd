@@ -222,23 +222,20 @@ flowchart TD
 
     JOB --> BUILD_FILTERS["Build GeneFilters<br/>(genes grouped by species)"]
     BUILD_FILTERS --> LCA["TaxonService.loadLeastCommonAncestor<br/>(all species IDs)"]
-    LCA --> LOAD_CALLS["MultiSpeciesCallService<br/>.loadSimilarityExpressionCalls2<br/>(lcaId, geneFilters, condFilters,<br/>onlyTrusted=false, qual)"]
+    LCA --> LOAD_LOADER["MultiSpeciesCallService<br/>.loadSimilarityCallLoader<br/>(SimilarityExpressionCallFilter)<br/>→ SimilarityExpressionCallLoader"]
 
-    LOAD_CALLS --> COLLECT["Collect Stream →<br/>List&lt;SimilarityExpressionCall2&gt;"]
-
-    COLLECT --> CNT{"get_result_count?"}
-    CNT -->|Yes| SET_COUNT["count = allCalls.size()"]
+    LOAD_LOADER --> CNT{"get_result_count?"}
+    CNT -->|Yes| SET_COUNT["count = loader.loadDataCount()<br/>(cached per filter)"]
     CNT -->|No| RES
     SET_COUNT --> RES
 
     RES{"get_results?"}
     RES -->|Yes| VALIDATE_LIMIT{"limit ≤ 10 000?"}
     VALIDATE_LIMIT -->|No| ERR5["❌ InvalidRequestException:<br/><i>Cannot exceed 10 000 results</i>"]
-    VALIDATE_LIMIT -->|Yes| PAGINATE["Apply <b>offset</b> & <b>limit</b>"]
-    PAGINATE --> MAP["Map each SimilarityExpressionCall2<br/>→ toMultispecExprCallItem()"]
-    RES -->|No| JOB_DONE
+    VALIDATE_LIMIT -->|Yes| PAGINATE["loader.loadData(offset, limit)<br/>(cached per filter+offset+limit)<br/>→ List&lt;SimilarityExpressionCall2&gt;"]
+    PAGINATE --> JOB_DONE
+    RES -->|No| JOB_DONE["job.completeWithSuccess()"]
 
-    MAP --> JOB_DONE["job.completeWithSuccess()"]
     SKIP_LOAD --> TAXON_TREE
 
     JOB_DONE --> TAXON_TREE["TaxonTreeService.buildTaxonTreeWithSpecies<br/>(speciesIds, speciesById)<br/>→ TaxonWithSpecies hierarchy"]
@@ -281,12 +278,20 @@ flowchart TD
     style NODE fill:#e3f2fd,stroke:#1565c0
 ```
 
-### `MultiSpeciesCallService.loadSimilarityExpressionCalls2`
+### `MultiSpeciesCallService.loadSimilarityCallLoader` / `SimilarityExpressionCallLoader`
+
+The controller builds a `SimilarityExpressionCallFilter` (a `CallFilter` subclass accepting
+multiple `GeneFilter`s, the taxon ID, and the `onlyTrusted` flag) and obtains a
+`SimilarityExpressionCallLoader` via `loadSimilarityCallLoader`. The loader exposes
+`loadData(offset, limit)` and `loadDataCount()`, mirroring `ExpressionCallLoader`. The
+aggregation below is performed once per loader and memoized, so paging and counting within a
+request do not re-scan the data source. (The stream-returning `loadSimilarityExpressionCalls2`
+remains as a convenience wrapper over the loader.)
 
 ```{mermaid}
 %%| fig-width: 10
 flowchart TD
-    ENTRY["loadSimilarityExpressionCalls2<br/>(taxonId, geneFilters, conditionFilters,<br/>onlyTrusted, summaryQuality)"]
+    ENTRY["loadSimilarityCallLoader(filter)<br/>→ prepared filter +<br/>SimilarityExpressionCallLoader"]
     ENTRY --> ANNOT["AnatSimilarityService<br/>.loadPositiveAnatEntitySimilarityAnnotations<br/>(taxonId, conditionFilters)"]
     ANNOT --> AE_GROUPS["Extract anatEntity groups &<br/>cellType groups from<br/>similarity annotations"]
 
@@ -298,13 +303,18 @@ flowchart TD
     COLLECT_EC --> GROUP["Group calls by<br/>MultiSpeciesCondition<br/>(similarity-mapped anat entities)"]
     GROUP --> ASSEMBLE["Assemble SimilarityExpressionCall2:<br/>gene + multiSpeciesCondition +<br/>calls with quality"]
 
-    ASSEMBLE --> STREAM["Return Stream&lt;SimilarityExpressionCall2&gt;"]
+    ASSEMBLE --> STREAM["loader.loadData(offset, limit) /<br/>loadDataCount()"]
 
     style ENTRY fill:#e8f5e9,stroke:#2e7d32
     style STREAM fill:#e3f2fd,stroke:#1565c0
 ```
 
-## DTO mapping: `toMultispecExprCallItem`
+## JSON serialization: `MultispecExprCallResponseTypeAdapter`
+
+`SimilarityExpressionCall2`s are serialized directly by
+`MultispecExprCallResponseTypeAdapter` (no intermediate DTO). For each call, the adapter
+derives the `expressionScore`, `expressionScoreConfidence`, `dataTypesWithData`,
+`expressionState`, and `expressionQuality` fields from the underlying `ExpressionCall2`s.
 
 ```{mermaid}
 %%| fig-width: 8
@@ -327,7 +337,7 @@ flowchart TD
     HIGH --> ITEM
     LOW --> ITEM
     DT --> ITEM
-    QUAL --> ITEM["MultispecExprCallItem"]
+    QUAL --> ITEM["JSON call object<br/>(written by type adapter)"]
 
     style SC fill:#fff3e0,stroke:#e65100
     style ITEM fill:#e3f2fd,stroke:#1565c0
@@ -346,7 +356,10 @@ flowchart TD
 | `bgee-core/src/test/java/org/bgee/model/species/TaxonTreeServiceTest.java` | New | Unit tests for `TaxonTreeService.buildTaxonTreeWithSpecies`. |
 | `bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCall2.java` | New | Multi-species expression call container with `Set<ExpressionCall2>`. Same structure as `SimilarityExpressionCall` but uses the new call types. |
 | `bgee-core/src/test/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCall2Test.java` | New | Unit tests for `SimilarityExpressionCall2` (construction, getters, equals/hashCode, unmodifiable calls). |
-| `bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/MultiSpeciesCallService.java` | Modified | Added `loadSimilarityExpressionCalls2` (uses `ExpressionCallFilter2`, `ExpressionCallLoader`, `ExpressionCall2`). Uses `ConditionFilter2` for condition filtering. Legacy `loadSimilarityExpressionCalls` remains for backward compatibility. |
+| `bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/MultiSpeciesCallService.java` | Modified | Added `loadSimilarityCallLoader` and `loadSimilarityExpressionCalls2` (use `ExpressionCallFilter2`, `ExpressionCallLoader`, `ExpressionCall2`). Uses `ConditionFilter2` for condition filtering. Legacy `loadSimilarityExpressionCalls` remains for backward compatibility. |
+| `bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCallFilter.java` | New | `CallFilter` subclass accepting multiple `GeneFilter`s, a taxon ID, and `onlyTrusted`. Parameterizes the loader. |
+| `bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCallLoader.java` | New | Paginated loader for `SimilarityExpressionCall2`s (`loadData`, `loadDataCount`, `stream`), mirroring `ExpressionCallLoader`. |
+| `bgee-core/src/main/java/org/bgee/model/expressiondata/call/multispecies/SimilarityExpressionCallPreparedFilter.java` | New | Immutable prepared context (resolved similarities, ontology, ordered gene filters) built from a `SimilarityExpressionCallFilter`. |
 | `bgee-core/src/main/java/org/bgee/model/ServiceFactory.java` | Modified | Added `getTaxonTreeService()`. |
 | `bgee-core/src/test/java/org/bgee/model/expressiondata/call/multispecies/MultiSpeciesCallServiceTest.java` | Modified | Added unit test `shouldLoadSimilarityExpressionCalls2` and integration test `shouldLoadSimilarityExpressionCalls2Integration`. |
 
@@ -356,7 +369,7 @@ flowchart TD
 |------|------|-------------|
 | `bgee-webapp/src/main/java/org/bgee/view/json/adapters/MultispecExprCallResponseTypeAdapter.java` | New | Gson TypeAdapter for `MultispecExprCallResponse`. Serializes `requestedConditionParameters`, `requestedDataTypes`, and the `expressionCalls` array. |
 | `bgee-webapp/src/main/java/org/bgee/view/json/adapters/TaxonWithSpeciesTypeAdapter.java` | New | Gson TypeAdapter for `TaxonWithSpecies` (from `bgee-core`). Recursively serializes the taxon tree with `taxon`, `species`, and `children` fields. |
-| `bgee-webapp/src/main/java/org/bgee/controller/CommandData.java` | Modified | Added DTOs (`MultispecExprCallItem`, `MultispecExprCallResponse`). Added `processMultispecExprCallPage`, `toMultispecExprCallItem`, `getMultispecExprCallColumnDescriptions`. Uses `TaxonTreeService.buildTaxonTreeWithSpecies` for species hierarchy. **Migration:** `loadMultispecConditionFilter` now returns `Collection<ConditionFilter2>` (anat entity + cell type only). `processMultispecExprCallPage` uses `loadSimilarityExpressionCalls2` and `SimilarityExpressionCall2`. `toMultispecExprCallItem` accepts `SimilarityExpressionCall2` and maps `ExpressionCall2` fields. |
+| `bgee-webapp/src/main/java/org/bgee/controller/CommandData.java` | Modified | Added the `MultispecExprCallResponse` type (wrapping `List<SimilarityExpressionCall2>`), `processMultispecExprCallPage`, `loadMultispecExprCallLoader`, `loadMultispecExprCallResults`, `loadMultispecExprCallCount`, and `getMultispecExprCallColumnDescriptions`. Uses `TaxonTreeService.buildTaxonTreeWithSpecies` for species hierarchy, and caches counts and result pages like the single-species endpoint. **Migration:** `loadMultispecConditionFilter` returns `Collection<ConditionFilter2>` (anat entity + cell type only). Results are `SimilarityExpressionCall2`s serialized directly (no intermediate DTO). |
 | `bgee-webapp/src/main/java/org/bgee/view/DataDisplay.java` | Modified | Added `displayMultispecExprCallPage(TaxonWithSpecies, ...)` method to interface. |
 | `bgee-webapp/src/main/java/org/bgee/view/json/JsonDataDisplay.java` | Modified | Implemented `displayMultispecExprCallPage`: builds response map with `speciesByTaxon` key. |
 | `bgee-webapp/src/main/java/org/bgee/view/json/adapters/BgeeTypeAdapterFactory.java` | Modified | Registered `MultispecExprCallResponseTypeAdapter` and `TaxonWithSpeciesTypeAdapter`. |

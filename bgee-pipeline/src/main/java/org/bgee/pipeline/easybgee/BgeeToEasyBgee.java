@@ -6,8 +6,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +29,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Service;
+import org.bgee.model.ComposedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
@@ -39,7 +41,6 @@ import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
-import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTOResultSet;
@@ -48,18 +49,19 @@ import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
-import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.expressiondata.call.CallService.Attribute;
-import org.bgee.model.expressiondata.call.Condition;
-import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.call.CallServiceParent;
+import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.ExpressionCallLoader;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
+import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.species.Species;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.Utils;
@@ -455,49 +457,44 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             // Note: we can map ID to one Bgee gene ID because we use
             // data for only 1 species
             Map<String, Integer> idToBgeeGeneId = extractGeneTable(speciesId, directory);
-            Map<Condition, String> condToConditionId = extractGlobalCondTable(speciesId, directory);
-            extractGlobalExpressionTable(idToBgeeGeneId, condToConditionId, speciesId, directory);
+            Map<String, String> condKeyToConditionId = extractGlobalCondTable(speciesId, directory);
+            extractGlobalExpressionTable(idToBgeeGeneId, condKeyToConditionId, speciesId, directory);
         }
         log.traceExit();
     }
 
     private void extractGlobalExpressionTable(Map<String, Integer> idToBgeeGeneIds,
-            Map<Condition, String> condToConditionId, Integer speciesId, String directory) {
-        log.traceEntry("{}, {}, {}, {}",idToBgeeGeneIds, condToConditionId, speciesId, directory);
+            Map<String, String> condKeyToConditionId, Integer speciesId, String directory) {
+        log.traceEntry("{}, {}, {}, {}",idToBgeeGeneIds, condKeyToConditionId, speciesId, directory);
 
         log.info("Start extracting global expressions for the species {}...", speciesId);
 
         // use TsvFile enum to generate the CellProcessor
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
 
-        String[] header = new String[] { GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
-                GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY,
-                GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(), GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_FDR_PVALUE,
+        String[] header = new String[] { "BGEE_GENE_ID", "GLOBAL_CONDITION_ID", GLOBAL_EXPRESSION_SUMMARY_QUALITY,
+                "MEAN_RANK", GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_FDR_PVALUE,
                 GLOBAL_EXPRESSION_ORIGIN, GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE };
 
-        // init summaryCallTypeQualityFilter
-        Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter =
-                new HashMap<>();
-        summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
-        summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
+        // init summaryCallTypeQualityFilter: only export calls of at least SILVER quality.
+        // With OTF propagation this is applied by ExpressionCallLoader itself as a
+        // post-propagation filter (see ExpressionCallLoader#matchesRequestedSummaryCallType),
+        // so we don't need to separately filter the results below.
+        Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        summaryCallTypeQualityFilter.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
 
-        // init ordering attributes
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
-        orderingAttributes.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-
-        // We retrieve calls with all attributes that are not condition parameters.
-        EnumSet<CallService.Attribute> attributes = EnumSet.of(CallService.Attribute.GENE,
-                CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
-                CallService.Attribute.MEAN_RANK, CallService.Attribute.EXPRESSION_SCORE,
-                CallService.Attribute.OBSERVED_DATA,
-                //We also want to know the global FDR-corrected p-value
-                CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
-
-        // add condition parameters in attributs, ordering attributes and observed condition filter
-        Set<Attribute> condFilter = EnumSet.of(Attribute.ANAT_ENTITY_ID,Attribute.DEV_STAGE_ID);
-        attributes.addAll(condFilter);
-        orderingAttributes.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
-        orderingAttributes.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+        // TODO Tier 3 (OTF migration, see conversation with Julien): unlike the previous
+        // implementation, which explicitly restricted results to the "root" cell type, sex and
+        // strain (Collections.singleton("GO:0005575")/"any"/"wild-type" in the old
+        // ConditionFilter), the new condition parameter model merges anat. entity and cell type
+        // into a single ConditionParameter (ANAT_ENTITY_CELL_TYPE), so it is no longer possible
+        // to request "anat. entity without cell type" as a condition parameter combination.
+        // As implemented below, calls for specific cell types will now also be exported (not
+        // just whole-organ calls), which is a behavior change from the previous implementation
+        // that needs a decision and validation against real data before being trusted.
+        Collection<ConditionParameter<?, ?>> condParamCombination =
+                List.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE, ConditionParameter.DEV_STAGE);
 
         File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
 
@@ -514,26 +511,22 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
 
                 idToBgeeGeneIds.keySet()
                 .parallelStream().forEach(geneId -> {
-                    final Stream<ExpressionCall> expressedCalls = serviceFactoryProvider
+                    ExpressionCallService callService = serviceFactoryProvider
                             .apply(this.daoManagerSupplier.get())
-                            .getCallService()
-                            .loadExpressionCalls(new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                                    Collections.singleton(new GeneFilter(speciesId, geneId)),
-                                    //TODO could use Set.of instead of Collections.singleton once Java 9 is installed
-                                    //on all our servers
-                                    Collections.singleton(new ConditionFilter(null, 
-                                            null, 
-                                            Collections.singleton("GO:0005575"), 
-                                            Collections.singleton("any"),  
-                                            Collections.singleton("wild-type"), condFilter)),
-                                    null, null),
-                                    attributes, orderingAttributes);
+                            .getExpressionCallService();
+                    ExpressionCallFilter2 filter = new ExpressionCallFilter2(summaryCallTypeQualityFilter,
+                            new GeneFilter(speciesId, geneId), null, null,
+                            condParamCombination, null, null);
+                    ExpressionCallProcessedFilter processedFilter =
+                            callService.processExpressionCallFilter(filter);
+                    ExpressionCallLoader loader = callService.getCallLoader(processedFilter);
+                    Map<Gene, List<OTFExpressionCall>> callsByGene = loader.loadDataOnTheFly();
+                    Stream<OTFExpressionCall> expressedCalls = callsByGene.values().stream()
+                            .flatMap(List::stream);
                     generateGlobalExpressionLines(expressedCalls,
-                            attributes.stream().filter(a -> a.isConditionParameter())
-                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
-                            idToBgeeGeneIds, condToConditionId, header, processors, mapWriter, file);
+                            idToBgeeGeneIds, condKeyToConditionId, header, processors, mapWriter, file);
                 });
-                
+
             }
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
@@ -541,43 +534,39 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         log.traceExit();
     }
 
-    private void generateGlobalExpressionLines(Stream<ExpressionCall> expressionCalls,
-            EnumSet<CallService.Attribute> condParamComb, Map<String, Integer> geneToBgeeGeneId,
-            Map<Condition, String> condToConditionId, String[] header, CellProcessor[] processors,
-            ICsvMapWriter mapWriter, File file) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", expressionCalls, condParamComb, geneToBgeeGeneId,
-                condToConditionId, header, processors, mapWriter, file);
+    private void generateGlobalExpressionLines(Stream<OTFExpressionCall> expressionCalls,
+            Map<String, Integer> geneToBgeeGeneId, Map<String, String> condKeyToConditionId,
+            String[] header, CellProcessor[] processors, ICsvMapWriter mapWriter, File file) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", expressionCalls, geneToBgeeGeneId,
+                condKeyToConditionId, header, processors, mapWriter, file);
 
         List<Map<String, String>> headerToValuePerGene = expressionCalls.map(call -> {
             Map<String, String> headerToValuePerCall = new HashMap<>();
-            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
+            headerToValuePerCall.put("BGEE_GENE_ID",
                     String.valueOf(geneToBgeeGeneId.get(call.getGene().getGeneId())));
-            Condition updatedCond = new Condition(new AnatEntity(call.getCondition().getAnatEntityId()),
-                call.getCondition().getDevStageId() == null ?
-                        new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID) :
-                        new DevStage(call.getCondition().getDevStageId()),
-                call.getCondition().getCellTypeId() == null ?
-                        new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID) :
-                        new AnatEntity(call.getCondition().getCellTypeId()),
-                call.getCondition().getSex() == null ?
-                        new Sex(ConditionDAO.SEX_ROOT_ID) :
-                        new Sex(call.getCondition().getSexId()),
-                call.getCondition().getStrain() == null ?
-                        new Strain(ConditionDAO.STRAIN_ROOT_ID) :
-                        new Strain(call.getCondition().getStrainId()),
-                        new Species(call.getCondition().getSpeciesId()));
 
-            String conditionId = condToConditionId.get(updatedCond);
-            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), conditionId);
+            String condKey = buildConditionKeyFromCondition2(call.getCondition());
+            String conditionId = condKeyToConditionId.get(condKey);
+            if (conditionId == null) {
+                throw log.throwing(new IllegalStateException(
+                        "Could not find a matching exported global condition for key '" + condKey
+                        + "' (condition: " + call.getCondition() + ")"));
+            }
+            headerToValuePerCall.put("GLOBAL_CONDITION_ID", conditionId);
+
+            Map.Entry<ExpressionSummary, SummaryQuality> callQual = inferOTFSummaryCallTypeAndQuality(call);
             headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY,
-                    call.getSummaryQuality().getStringRepresentation());
-            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(),
-                    call.getMeanRank().toString());
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_MEAN_SCORE, call.getExpressionScore().toString());
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_ORIGIN, dataPropagationToString(
-                    call.getDataPropagation(), condParamComb));
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getPValue().toString());
+                    callQual.getValue().getStringRepresentation());
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE,
+                    callQual.getKey().getStringRepresentation());
+
+            headerToValuePerCall.put("MEAN_RANK", computeMeanRank(call));
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_MEAN_SCORE,
+                    call.getExpressionScore() == null? null: call.getExpressionScore().toString());
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_ORIGIN,
+                    dataPropagationToString(call.getDataPropagation()));
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE,
+                    call.getAllDataTypePValue() == null? null: call.getAllDataTypePValue().toString());
             return headerToValuePerCall;
         }).collect(Collectors.toList());
         try {
@@ -587,7 +576,87 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         }
     }
 
-    /** 
+    /**
+     * Port, adapted to {@code OTFExpressionCall}, of the inference logic previously implemented
+     * in {@code CallService.inferSummaryCallTypeAndQuality(Set, Set, Set)}: same thresholds
+     * ({@link CallServiceParent#PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO} etc.), same GOLD/SILVER/
+     * BRONZE cascade, but operating directly on the single "all requested data types" and
+     * "trusted data types" p-values already carried by {@code OTFExpressionCall}, instead of a
+     * {@code Set<FDRPValue>} per data type combination (OTF does not currently precompute a
+     * value per combination the way the old pipeline did).
+     * TODO: this exists here only because {@code ExpressionCallLoader} currently only exposes a
+     * "does this call match a REQUESTED tier" predicate ({@code matchesRequestedSummaryCallType}),
+     * not a "what is the actual tier of this call" method. Consider promoting this to bgee-core
+     * (e.g. next to {@code OTFExpressionCallFilterEngine}) so other callers do not have to
+     * duplicate it.
+     */
+    private static Map.Entry<ExpressionSummary, SummaryQuality> inferOTFSummaryCallTypeAndQuality(
+            OTFExpressionCall call) {
+        log.traceEntry("{}", call);
+
+        BigDecimal allPValue = call.getAllDataTypePValue();
+        BigDecimal trustedPValue = call.getTrustedDataTypePValue();
+        BigDecimal bestDescAllPValue = call.getBestDirectDescendantAllDataTypePValue();
+        BigDecimal bestDescTrustedPValue = call.getBestDirectDescendantTrustedDataTypePValue();
+
+        if (allPValue == null) {
+            throw log.throwing(new IllegalStateException(
+                    "Could not infer ExpressionSummary/SummaryQuality, no p-value available for "
+                    + call));
+        }
+
+        //The order of the comparisons is important, mirrors the old CallService logic.
+        if (allPValue.compareTo(CallServiceParent.PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO) <= 0) {
+            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD));
+        }
+        if (allPValue.compareTo(CallServiceParent.PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0) {
+            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER));
+        }
+        if (bestDescAllPValue != null &&
+                bestDescAllPValue.compareTo(CallServiceParent.PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0) {
+            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE));
+        }
+        //From here, allPValue is necessarily > PRESENT_LOW_LESS_THAN_OR_EQUALS_TO
+        //(= ABSENT_LOW_GREATER_THAN), so we are considering a NOT_EXPRESSED call.
+        boolean absCallCannotBeBetterThanBronze = trustedPValue == null ||
+                (bestDescTrustedPValue != null && bestDescTrustedPValue
+                        .compareTo(CallServiceParent.PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0);
+        if (trustedPValue != null &&
+                allPValue.compareTo(CallServiceParent.ABSENT_HIGH_GREATER_THAN) > 0 &&
+                trustedPValue.compareTo(CallServiceParent.ABSENT_HIGH_GREATER_THAN) > 0) {
+            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED,
+                    absCallCannotBeBetterThanBronze? SummaryQuality.BRONZE: SummaryQuality.GOLD));
+        }
+        if (allPValue.compareTo(CallServiceParent.ABSENT_LOW_GREATER_THAN) > 0) {
+            if (trustedPValue != null &&
+                    trustedPValue.compareTo(CallServiceParent.ABSENT_LOW_GREATER_THAN) > 0) {
+                return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED,
+                        absCallCannotBeBetterThanBronze? SummaryQuality.BRONZE: SummaryQuality.SILVER));
+            }
+            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE));
+        }
+        throw log.throwing(new IllegalStateException(
+                "Could not infer ExpressionSummary/SummaryQuality for " + call));
+    }
+
+    /**
+     * TODO Tier 2 (OTF migration, see conversation with Julien): {@code OTFExpressionCall} does
+     * not track a rank value distinct from {@link OTFExpressionCall#getExpressionScore()}.
+     * Before this export can run for real, we need to decide whether EasyBgee still needs a
+     * distinct mean rank, and if so, add rank propagation to
+     * {@code ExpressionCallLoader}/{@code OTFExpressionCall}. Deliberately throwing rather than
+     * silently writing a placeholder/wrong value, since this TSV is bulk-loaded straight into
+     * the EasyBgee database.
+     */
+    private static String computeMeanRank(OTFExpressionCall call) {
+        throw new UnsupportedOperationException(
+                "MEAN_RANK is not yet available from OTFExpressionCall (Tier 2 gap of the OTF "
+                + "migration of BgeeToEasyBgee, see the propagation architecture discussion). "
+                + "Do not use this export until rank propagation is added to OTFExpressionCall, "
+                + "or MEAN_RANK is dropped from EasyBgee's globalExpression schema.");
+    }
+
+    /**
      * Synchronized method taking care of writing in a thread-safe approach the expression information
      * retrieved from the database into a unique file.
      */
@@ -725,7 +794,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         log.traceExit();
     }
 
-    private Map<Condition, String> extractGlobalCondTable(Integer speciesId, String directory) {
+    private Map<String, String> extractGlobalCondTable(Integer speciesId, String directory) {
         log.traceEntry("{}, {}", speciesId, directory);
         log.info("Start extracting global conditions for the species {}...", speciesId);
 
@@ -905,29 +974,115 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     }
 
     /**
-     * This method is needed because we can not access to the conditionId when
-     * using {@code Condition}. The resulting {@code Map} is then useful to
-     * retrieve the conditionId from one {@code Condition}.
+     * This method is needed because we cannot access the conditionId from a {@code Condition2}
+     * (calls returned by OTF propagation only carry the condition's parameter values, not the
+     * internal ID it was exported with in {@link #extractGlobalCondTable(Integer, String)}).
+     * The resulting {@code Map} is then useful to retrieve the conditionId from a condition,
+     * identified by the {@code String} key built by {@link #buildConditionKey(String, String,
+     * String, String, String, int)}.
      *
      * @param conditionTOs
      *            A {@code List} of {@code ConditionTO}s for which we want to be
      *            able to retrieve the conditionId.
-     * @return A {@code Map} where keys are {@code Condition}s representing
-     *         condition, the associated value being an {@code Integer} that is
-     *         the ID of the associated condition.
+     * @return A {@code Map} where keys are the {@code String} keys built by
+     *         {@link #buildConditionKeyFromConditionTO(ConditionTO)}, the associated value
+     *         being a {@code String} that is the ID of the associated condition.
      */
-    private Map<Condition, String> createCondToConditionIdMap(List<ConditionTO> conditionTOs) {
+    private static Map<String, String> createCondToConditionIdMap(List<ConditionTO> conditionTOs) {
         log.traceEntry("{}", conditionTOs);
         return log
             .traceExit(conditionTOs.stream()
                 .collect(Collectors.toMap(
-                    p -> new Condition(new AnatEntity(p.getAnatEntityId()),
-                    p.getStageId() == null ? null : new DevStage(p.getStageId()),
-                    p.getCellTypeId() == null ? null : new AnatEntity(p.getCellTypeId()),
-                    p.getSex() == null ? null : new Sex(p.getSex().getStringRepresentation()),
-                    p.getStrainId() == null ? null : new Strain(p.getStrainId()),
-                        new Species(p.getSpeciesId())),
+                    BgeeToEasyBgee::buildConditionKeyFromConditionTO,
                     p -> String.valueOf(p.getId()))));
+    }
+
+    /**
+     * Builds the same kind of {@code String} key as {@link #buildConditionKeyFromCondition2(
+     * Condition2)}, but from a {@code ConditionTO} as retrieved by
+     * {@link #extractGlobalCondTable(Integer, String)}. Both methods must build the key the
+     * exact same way, substituting the same "root" sentinel for {@code null}/empty values on
+     * both sides, so that a condition returned by OTF propagation can be matched back to the
+     * exported {@code globalCond} row it corresponds to.
+     */
+    private static String buildConditionKeyFromConditionTO(ConditionTO conditionTO) {
+        log.traceEntry("{}", conditionTO);
+        return log.traceExit(buildConditionKey(conditionTO.getAnatEntityId(), conditionTO.getCellTypeId(),
+                conditionTO.getStageId(),
+                conditionTO.getSex() == null? null: conditionTO.getSex().getStringRepresentation(),
+                conditionTO.getStrainId(), conditionTO.getSpeciesId()));
+    }
+
+    /**
+     * See {@link #buildConditionKeyFromConditionTO(ConditionTO)}.
+     * <p>
+     * The extraction of the anat. entity and cell type IDs from the composed
+     * {@code ANAT_ENTITY_CELL_TYPE} condition parameter relies on the ordering convention
+     * established in {@code OTFExpressionCallFilterEngine} (index 1 = anat. entity, index 0 =
+     * cell type when both are present). This is confirmed by
+     * {@code CallServiceUtils.loadConditionMapFromResultSet}, which is what builds the
+     * {@code Condition2}s returned by OTF propagation: it always inserts the cell type before
+     * the anat. entity into the underlying {@code LinkedHashSet} (in that order, only when
+     * non-null), so a single-entity composed value only ever contains the anat. entity (a
+     * whole-organ condition, no specific cell type), never a cell type alone.
+     */
+    private static String buildConditionKeyFromCondition2(Condition2 cond) {
+        log.traceEntry("{}", cond);
+
+        ComposedEntity<AnatEntity> anatEntityCellType =
+                cond.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        String anatEntityId;
+        String cellTypeId;
+        if (anatEntityCellType == null || anatEntityCellType.isEmpty()) {
+            throw log.throwing(new IllegalStateException(
+                    "A Condition2 must always have an anat. entity: " + cond));
+        } else if (anatEntityCellType.size() == 1) {
+            //Only one entity present: the anat. entity, no specific cell type
+            //(whole-organ condition) -- see the confirmed convention documented above.
+            anatEntityId = anatEntityCellType.getEntity(0).getId();
+            cellTypeId = null;
+        } else if (anatEntityCellType.size() == 2) {
+            AnatEntity anatEntity = anatEntityCellType.getEntity(1);
+            AnatEntity cellType = anatEntityCellType.getEntity(0);
+            if (anatEntity == null) {
+                throw log.throwing(new IllegalStateException(
+                        "Unexpected composed anat. entity/cell type entity: " + anatEntityCellType));
+            }
+            anatEntityId = anatEntity.getId();
+            cellTypeId = cellType == null? null: cellType.getId();
+        } else {
+            throw log.throwing(new IllegalStateException(
+                    "Unexpected number of entities composing anat. entity/cell type: "
+                    + anatEntityCellType));
+        }
+        String stageId = cond.getConditionParameterId(ConditionParameter.DEV_STAGE);
+        String sexId = cond.getConditionParameterId(ConditionParameter.SEX);
+        String strainId = cond.getConditionParameterId(ConditionParameter.STRAIN);
+        return log.traceExit(buildConditionKey(anatEntityId, cellTypeId, stageId, sexId, strainId,
+                cond.getSpeciesId()));
+    }
+
+    /**
+     * Builds a stable {@code String} key identifying a global condition from its component IDs.
+     * Used on both sides of the lookup: from the {@code ConditionTO}s exported by
+     * {@link #extractGlobalCondTable(Integer, String)} ({@link #buildConditionKeyFromConditionTO(
+     * ConditionTO)}), and from the {@code Condition2}s of the calls returned by OTF propagation
+     * ({@link #buildConditionKeyFromCondition2(Condition2)}). {@code null} or empty values are
+     * substituted with the corresponding "root" sentinel ID, matching how
+     * {@link #extractGlobalCondTable(Integer, String)} restricts its own query to root cell
+     * type/sex/strain (see the Tier 3 TODO in {@link #extractGlobalExpressionTable(Map, Map,
+     * Integer, String)} about this restriction no longer being enforceable the same way on the
+     * OTF side).
+     */
+    private static String buildConditionKey(String anatEntityId, String cellTypeId, String stageId,
+            String sexId, String strainId, int speciesId) {
+        return String.join("|",
+                anatEntityId,
+                cellTypeId == null || cellTypeId.isEmpty()? ConditionDAO.CELL_TYPE_ROOT_ID: cellTypeId,
+                stageId == null || stageId.isEmpty()? ConditionDAO.DEV_STAGE_ROOT_ID: stageId,
+                sexId == null || sexId.isEmpty()? ConditionDAO.SEX_ROOT_ID: sexId,
+                strainId == null || strainId.isEmpty()? ConditionDAO.STRAIN_ROOT_ID: strainId,
+                String.valueOf(speciesId));
     }
 
     /**
@@ -1019,26 +1174,28 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         log.traceExit();
     }
 
-    private String dataPropagationToString(DataPropagation dataPropagation,
-            EnumSet<CallService.Attribute> condParamComb) {
-        log.traceEntry("{}, {}", dataPropagation, condParamComb);
-        //TODO: to remove when the API can return all types of propagation
-        if(dataPropagation == null) {
+    /**
+     * Unlike the old {@code DataPropagation}, {@code OTFExpressionCall#getDataPropagation()}
+     * already returns a {@code PropagationState} directly, so no condition parameter
+     * combination is needed here anymore to derive it.
+     */
+    private static String dataPropagationToString(PropagationState propState) {
+        log.traceEntry("{}", propState);
+        if (propState == null) {
             throw log.throwing(
                     new IllegalStateException("no data propagation retrieved"));
         }
-        PropagationState propState = dataPropagation.getPropagationState(condParamComb);
-            if (PropagationState.SELF_AND_DESCENDANT.equals(propState)) {
-                return log.traceExit("self and descendant");
-            }
-            if (PropagationState.SELF.equals(propState)) {
-                return log.traceExit("self");
-            }
-            if (PropagationState.DESCENDANT.equals(propState)) {
-                return log.traceExit("descendant");
-            }
+        if (PropagationState.SELF_AND_DESCENDANT.equals(propState)) {
+            return log.traceExit("self and descendant");
+        }
+        if (PropagationState.SELF.equals(propState)) {
+            return log.traceExit("self");
+        }
+        if (PropagationState.DESCENDANT.equals(propState)) {
+            return log.traceExit("descendant");
+        }
 
         throw log.throwing(new IllegalArgumentException("Unknown data propagation status  "
-                + dataPropagation));
+                + propState));
     }
 }

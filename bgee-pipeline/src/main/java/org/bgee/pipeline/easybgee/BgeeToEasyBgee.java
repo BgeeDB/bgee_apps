@@ -735,7 +735,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 }
                 Set<String> xrefs = manageDuplicatedXrefs.containsKey(geneXRef.getBgeeGeneId()) ?
                         manageDuplicatedXrefs.get(geneXRef.getBgeeGeneId()) :
-                        new HashSet<>();
+                            new HashSet<>();
                 xrefs.add(dataSourceXRefUrl);
                 manageDuplicatedXrefs.put(geneXRef.getBgeeGeneId(), xrefs);
             }

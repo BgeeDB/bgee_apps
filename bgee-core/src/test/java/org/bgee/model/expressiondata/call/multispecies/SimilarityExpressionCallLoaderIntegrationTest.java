@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.call.multispecies;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -100,6 +102,11 @@ public class SimilarityExpressionCallLoaderIntegrationTest extends TestAncestor 
     private static String simKey(AnatEntitySimilarity sim) {
         return sim == null ? "-" : sim.getSourceAnatEntities().stream()
                 .map(ae -> ae.getId()).sorted().collect(Collectors.joining(","));
+    }
+
+    private static List<String> compactKeys(List<SimilarityExpressionCall2> calls) {
+        return calls.stream().map(SimilarityExpressionCallLoaderIntegrationTest::compactKey)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -238,6 +245,103 @@ public class SimilarityExpressionCallLoaderIntegrationTest extends TestAncestor 
             //Repeated count on the same loader must be stable.
             assertEquals("Repeated loadDataCount() must return the same value",
                     count, memoLoader.loadDataCount());
+        }
+    }
+
+    /**
+     * Pagination consistency: concatenating consecutive pages must reproduce the full
+     * result list exactly (same order, no duplicates, no gaps), and pages served by
+     * fresh loader instances (the webapp scenario when the result cache misses) must
+     * match the corresponding slices of the memoized full list.
+     */
+    @Test
+    public void shouldStitchPagesConsistentlyIntegration() {
+        Collection<ConditionFilter2> condFilters = summaryConditionFilter();
+        //Deliberately not a divisor of the expected result count, to exercise a
+        //truncated final page.
+        final int pageSize = 7;
+        try (ServiceFactory serviceFactory = new ServiceFactory()) {
+            SimilarityExpressionCallLoader memoLoader = serviceFactory.getMultiSpeciesCallService()
+                    .loadSimilarityCallLoader(newFilter(SummaryQuality.SILVER, condFilters));
+            long count = memoLoader.loadDataCount();
+            assertTrue("Expected results for known orthologous genes", count > 0);
+            assertTrue("Result set unexpectedly large for this test: " + count,
+                    count <= SimilarityExpressionCallLoader.LIMIT_MAX);
+            List<String> fullKeys = compactKeys(memoLoader.loadData(null, null));
+
+            //Stitch all pages from the memoized loader.
+            List<String> stitchedKeys = new ArrayList<>();
+            for (long offset = 0; offset < count; offset += pageSize) {
+                List<SimilarityExpressionCall2> page = memoLoader.loadData(offset, pageSize);
+                assertTrue("Page at offset " + offset + " must not exceed the requested size",
+                        page.size() <= pageSize);
+                stitchedKeys.addAll(compactKeys(page));
+            }
+            assertEquals("Concatenated pages must reproduce the full result list in order",
+                    fullKeys, stitchedKeys);
+            assertEquals("Concatenated pages must contain no duplicates",
+                    count, stitchedKeys.stream().distinct().count());
+
+            //Fresh loader per page (lazy path, as when the webapp result cache misses):
+            //first, middle, and last page must match the memoized slices.
+            long midOffset = (count / 2 / pageSize) * pageSize;
+            long lastOffset = ((count - 1) / pageSize) * pageSize;
+            for (long offset : new long[] {0L, midOffset, lastOffset}) {
+                SimilarityExpressionCallLoader freshLoader = serviceFactory
+                        .getMultiSpeciesCallService()
+                        .loadSimilarityCallLoader(newFilter(SummaryQuality.SILVER, condFilters));
+                List<String> freshKeys = compactKeys(freshLoader.loadData(offset, pageSize));
+                List<String> expectedKeys = fullKeys.subList((int) offset,
+                        (int) Math.min(offset + pageSize, fullKeys.size()));
+                assertEquals("Fresh-loader page at offset " + offset
+                        + " must match the memoized slice", expectedKeys, freshKeys);
+            }
+        }
+    }
+
+    /**
+     * Pagination boundaries: pages at or past the end of the result set must be empty,
+     * a page crossing the end must be truncated, {@code null} offset must default to 0,
+     * and invalid offset/limit arguments must be rejected.
+     */
+    @Test
+    public void shouldHandlePaginationBoundariesIntegration() {
+        Collection<ConditionFilter2> condFilters = summaryConditionFilter();
+        try (ServiceFactory serviceFactory = new ServiceFactory()) {
+            SimilarityExpressionCallLoader loader = serviceFactory.getMultiSpeciesCallService()
+                    .loadSimilarityCallLoader(newFilter(SummaryQuality.SILVER, condFilters));
+            long count = loader.loadDataCount();
+            assertTrue("Expected results for known orthologous genes", count > 0);
+
+            //Pages at or past the end must be empty.
+            assertTrue("Page at offset == count must be empty",
+                    loader.loadData(count, 10).isEmpty());
+            assertTrue("Page past the end must be empty",
+                    loader.loadData(count + 1000, 10).isEmpty());
+            //A page crossing the end must be truncated.
+            assertEquals("Page crossing the end must be truncated",
+                    1, loader.loadData(count - 1, 10).size());
+            //null offset must behave like offset 0.
+            assertEquals("null offset must default to 0",
+                    compactKeys(loader.loadData(0L, 10)),
+                    compactKeys(loader.loadData(null, 10)));
+
+            //Invalid arguments must be rejected.
+            assertThrows("Negative offset must be rejected",
+                    IllegalArgumentException.class, () -> loader.loadData(-1L, 10));
+            assertThrows("Zero limit must be rejected",
+                    IllegalArgumentException.class, () -> loader.loadData(0L, 0));
+            assertThrows("Limit above LIMIT_MAX must be rejected",
+                    IllegalArgumentException.class, () -> loader.loadData(0L,
+                            SimilarityExpressionCallLoader.LIMIT_MAX + 1));
+
+            //The lazy path (fresh loader, no memoized list) must also return
+            //an empty page past the end.
+            SimilarityExpressionCallLoader freshLoader = serviceFactory
+                    .getMultiSpeciesCallService()
+                    .loadSimilarityCallLoader(newFilter(SummaryQuality.SILVER, condFilters));
+            assertTrue("Lazy page past the end must be empty",
+                    freshLoader.loadData(count + 1000, 10).isEmpty());
         }
     }
 

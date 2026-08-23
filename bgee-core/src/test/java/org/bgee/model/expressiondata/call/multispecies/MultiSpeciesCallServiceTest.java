@@ -33,6 +33,7 @@ import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.Taxon;
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -397,12 +398,24 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
     }
 
     /**
+     * Skips the calling test unless a real database connection is configured through
+     * the {@code bgee.dao.jdbc.url} system property. This prevents integration tests
+     * from failing in environments without database access (e.g. plain {@code mvn test}).
+     */
+    private static void assumeDatabaseConfigured() {
+        Assume.assumeTrue("Integration test skipped: no database configured "
+                + "(system property bgee.dao.jdbc.url not set)",
+                System.getProperty("bgee.dao.jdbc.url") != null);
+    }
+
+    /**
      * Integration test for
      * {@link MultiSpeciesCallService#loadSimilarityExpressionCalls2(int, Collection, Collection, boolean, SummaryQuality)}.
      * Uses real database connection.
      */
     @Test
     public void shouldLoadSimilarityExpressionCalls2Integration() {
+        assumeDatabaseConfigured();
         try (ServiceFactory serviceFactory = new ServiceFactory()) {
             MultiSpeciesCallService callService = serviceFactory.getMultiSpeciesCallService();
             GeneFilter geneFilter1 = new GeneFilter(9606, Arrays.asList("ENSG00000244734", "ENSG00000130208"));
@@ -447,6 +460,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                 "ENSACAG00000004139"  // gorilla
         );
 
+        assumeDatabaseConfigured();
         try (ServiceFactory serviceFactory = new ServiceFactory()) {
             SearchResult<String, Gene> searchResult = serviceFactory.getGeneService().searchGenesByIds(geneList);
             List<Gene> genes = new java.util.ArrayList<>(searchResult.getResults());

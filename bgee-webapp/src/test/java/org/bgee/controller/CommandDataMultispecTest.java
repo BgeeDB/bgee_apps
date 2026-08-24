@@ -5,8 +5,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -255,6 +258,50 @@ public class CommandDataMultispecTest extends TestAncestor {
         assertEquals(ExpressionSummary.EXPRESSED, call.getSummaryCallType());
         assertEquals(1, call.getCalls().size());
         assertEquals(EnumSet.allOf(DataType.class), response.getRequestedDataTypes());
+    }
+
+    /**
+     * When both the count and the result page are served from the cache, the
+     * {@code SimilarityExpressionCallLoader} must never be constructed: its preparation
+     * queries the database and is by far the most expensive part of a warm request.
+     */
+    @Test
+    public void shouldNotBuildLoaderOnCacheHit() throws Exception {
+        stubGeneSearch();
+
+        SimilarityExpressionCall2 similarityCall = buildSimilarityCall();
+        //Simulate cache hits: return canned values without invoking the compute supplier.
+        //The count cache is keyed by the SimilarityExpressionCallFilter itself,
+        //the result cache by a composite key including offset and limit.
+        //doAnswer instead of when(...).thenAnswer(...) to avoid triggering
+        //the cache-miss stub from setUp() while re-stubbing.
+        doAnswer(invocation ->
+                invocation.getArgument(1) instanceof SimilarityExpressionCallFilter
+                        ? 42L
+                        : Collections.singletonList(similarityCall))
+                .when(cacheService).useCacheNonAtomic(any(), any(), any(), any());
+
+        RequestParameters params = newMultispecParams();
+        params.addValues(params.getUrlParametersInstance().getParamGeneList(),
+                Arrays.asList(humanGene.getGeneId(), mouseGene.getGeneId()));
+        params.addValue(params.getUrlParametersInstance().getParamGetResults(), true);
+        params.addValue(params.getUrlParametersInstance().getParamGetResultCount(), true);
+
+        buildController(params).processRequest();
+
+        verify(multiSpeciesCallService, never()).loadSimilarityCallLoader(any());
+        verifyNoInteractions(loader);
+
+        ArgumentCaptor<MultispecExprCallResponse> responseCaptor =
+                ArgumentCaptor.forClass(MultispecExprCallResponse.class);
+        verify(dataDisplay).displayMultispecExprCallPage(
+                any(TaxonWithSpecies.class),
+                eq(null),
+                eq(null),
+                responseCaptor.capture(),
+                eq(42L),
+                eq(null));
+        assertEquals(1, responseCaptor.getValue().getCalls().size());
     }
 
     private void stubGeneSearch() {

@@ -1186,14 +1186,20 @@ public class CommandData extends CommandParent {
                         .collect(Collectors.toSet());
                 int lcaId = this.serviceFactory.getTaxonService().loadLeastCommonAncestor(
                         species.stream().map(Species::getId).collect(Collectors.toSet())).getId();
-                SimilarityExpressionCallLoader loader = this.loadMultispecExprCallLoader(
-                        lcaId, geneFilters, condFilters, qual);
+                SimilarityExpressionCallFilter filter = new SimilarityExpressionCallFilter(
+                        lcaId, geneFilters, condFilters, false, qual);
+                //Loader construction is expensive (it prepares anat. entity similarities
+                //from the database), so it is deferred until a cache miss actually requires
+                //loading data. The supplier memoizes the loader so that count and results
+                //share a single instance (and thus a single data pass) within a request.
+                Supplier<SimilarityExpressionCallLoader> loaderSupplier =
+                        this.lazyMultispecExprCallLoader(filter);
 
                 if (this.requestParameters.isGetResultCount()) {
-                    count = this.loadMultispecExprCallCount(loader);
+                    count = this.loadMultispecExprCallCount(filter, loaderSupplier);
                 }
                 if (this.requestParameters.isGetResults()) {
-                    calls = this.loadMultispecExprCallResults(loader);
+                    calls = this.loadMultispecExprCallResults(filter, loaderSupplier);
                 }
 
                 job.completeWithSuccess();
@@ -1223,19 +1229,35 @@ public class CommandData extends CommandParent {
         log.traceExit();
     }
 
-    private SimilarityExpressionCallLoader loadMultispecExprCallLoader(int lcaId,
-            Set<GeneFilter> geneFilters, Collection<ConditionFilter2> condFilters,
-            SummaryQuality qual) {
-        log.traceEntry("{}, {}, {}, {}", lcaId, geneFilters, condFilters, qual);
-        SimilarityExpressionCallFilter filter = new SimilarityExpressionCallFilter(
-                lcaId, geneFilters, condFilters, false, qual);
-        return log.traceExit(this.serviceFactory.getMultiSpeciesCallService()
-                .loadSimilarityCallLoader(filter));
+    /**
+     * Returns a memoizing {@code Supplier} building the {@link SimilarityExpressionCallLoader}
+     * for {@code filter} on first use. Loader construction is expensive (it prepares
+     * anat. entity similarities from the database), so callers should only invoke the supplier
+     * when data actually needs to be loaded (i.e. on a cache miss). The memoization ensures
+     * that count and result retrieval within the same request share one loader, and thus
+     * benefit from its in-loader memoization of the full result list.
+     */
+    private Supplier<SimilarityExpressionCallLoader> lazyMultispecExprCallLoader(
+            SimilarityExpressionCallFilter filter) {
+        log.traceEntry("{}", filter);
+        return log.traceExit(new Supplier<SimilarityExpressionCallLoader>() {
+            private SimilarityExpressionCallLoader loader;
+            @Override
+            public SimilarityExpressionCallLoader get() {
+                if (loader == null) {
+                    loader = CommandData.this.serviceFactory.getMultiSpeciesCallService()
+                            .loadSimilarityCallLoader(filter);
+                }
+                return loader;
+            }
+        });
     }
 
     private List<SimilarityExpressionCall2> loadMultispecExprCallResults(
-            SimilarityExpressionCallLoader loader) throws InvalidRequestException {
-        log.traceEntry("{}", loader);
+            SimilarityExpressionCallFilter filter,
+            Supplier<SimilarityExpressionCallLoader> loaderSupplier)
+                    throws InvalidRequestException {
+        log.traceEntry("{}, {}", filter, loaderSupplier);
 
         Integer limit = this.requestParameters.getLimit() == null ? DEFAULT_LIMIT
                 : this.requestParameters.getLimit();
@@ -1250,24 +1272,30 @@ public class CommandData extends CommandParent {
         }
 
         MultispecExprCallResultCacheKey cacheKey = new MultispecExprCallResultCacheKey(
-                loader.getFilter(), offset, limit);
+                filter, offset, limit);
         //Suppress warnings because we are responsible for the insertion and know the generic type
+        //Compute-time threshold is null (always cache): when count and results are requested
+        //together, the page is served from the loader's memoized list in ~0 ms and would fall
+        //below any threshold, while recomputing it on a later request always requires
+        //the expensive loader preparation.
         @SuppressWarnings("unchecked")
         List<SimilarityExpressionCall2> results = this.cacheService.useCacheNonAtomic(
                 MULTISPEC_EXPR_CALL_RESULT_CACHE_DEF,
                 cacheKey,
-                () -> loader.loadData(offset, limit),
-                COMPUTE_TIME_RESULT_CACHE_MS);
+                () -> loaderSupplier.get().loadData(offset, limit),
+                null);
         return log.traceExit(results);
     }
 
-    private long loadMultispecExprCallCount(SimilarityExpressionCallLoader loader) {
-        log.traceEntry("{}", loader);
+    private long loadMultispecExprCallCount(SimilarityExpressionCallFilter filter,
+            Supplier<SimilarityExpressionCallLoader> loaderSupplier) {
+        log.traceEntry("{}, {}", filter, loaderSupplier);
+        //Compute-time threshold is null (always cache), see loadMultispecExprCallResults.
         return log.traceExit(this.cacheService.useCacheNonAtomic(
                 MULTISPEC_EXPR_CALL_COUNT_CACHE_DEF,
-                loader.getFilter(),
-                () -> loader.loadDataCount(),
-                COMPUTE_TIME_COUNT_CACHE_MS));
+                filter,
+                () -> loaderSupplier.get().loadDataCount(),
+                null));
     }
 
     private List<ColumnDescription> getMultispecExprCallColumnDescriptions() {

@@ -832,6 +832,9 @@ public class CommandData extends CommandExpressionSupport {
                 job.startJob();
                 //If filters are provided, they will be considered with this ExpressionCallLoader
                 long startTimeLoader = System.currentTimeMillis();
+                //XXX: right now we filter redundant ancestor calls. redundant ancestor calls are
+                // calls that have an expression call for only one descendant. It results on the
+                // call having exactly the same score, pavlue and weight than that descendant.
                 ExpressionCallLoader callLoader = this.loadExprCallLoader(true, condParams, dataTypes);
                 log.debug("ExpressionCallLoader generated in {} ms", System.currentTimeMillis() - startTimeLoader);
 

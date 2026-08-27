@@ -185,7 +185,7 @@ public abstract class CommandExpressionSupport extends CommandParent{
         log.traceEntry("{}, {}, {}", consideringFilters, condParams, dataTypes);
 
         long startTimeFilter = System.currentTimeMillis();
-        ExpressionCallFilter2 filter = this.loadExprCallFilter(consideringFilters, condParams, dataTypes);
+        ExpressionCallFilter2 filter = this.loadExprCallFilter(consideringFilters, condParams, dataTypes, true);
         log.debug("ExpressionCallFilter2 built in {} ms", System.currentTimeMillis() - startTimeFilter);
 
         return log.traceExit(this.loadExprCallLoader(filter));
@@ -250,7 +250,8 @@ public abstract class CommandExpressionSupport extends CommandParent{
         }
 
     private ExpressionCallFilter2 loadExprCallFilter(boolean consideringFilters,
-            Set<ConditionParameter<?, ?>> condParams, EnumSet<DataType> dataTypes)
+            Set<ConditionParameter<?, ?>> condParams, EnumSet<DataType> dataTypes,
+            boolean redundantAncestorCallsFilter)
                     throws InvalidRequestException {
         log.traceEntry("{}, {}, {}", consideringFilters, condParams, dataTypes);
 
@@ -459,7 +460,7 @@ public abstract class CommandExpressionSupport extends CommandParent{
                     dataTypes,
                     condParams,
                     this.requestParameters.getObservedData() == null? null: condParams,
-                    this.requestParameters.getObservedData()));
+                    this.requestParameters.getObservedData(), redundantAncestorCallsFilter));
         } catch (IllegalArgumentException e) {
             log.catching(Level.ERROR, e);
             throw log.throwing(new InvalidRequestException("Incorrect parameters"));

@@ -597,6 +597,11 @@ public class ExpressionCallLoader extends CommonService {
         //We use Lists not to loose equals PValues
         List<BigDecimal> allDataTypePValues = new ArrayList<>();
         List<BigDecimal> trustedDataTypePValues = new ArrayList<>();
+        //The weight of each data type is the total weight of the score it carries (for instance,
+        //for RNA-Seq, the sum of the distinct rank counts of all the samples of that gene in that
+        //condition), not a per-observation weight: it must therefore not be multiplied by the
+        //number of observations here, which would count the number of observations twice. This is
+        //also how the weight of the descendant calls is used below.
         BigDecimal scoreByWeightSum = BigDecimal.ZERO;
         BigDecimal weightSum = BigDecimal.ZERO;
         //XXX: The number of observation is propbably useful to calculate the pvalue. Right now we add the pvalue as many time as number of observation.
@@ -612,11 +617,9 @@ public class ExpressionCallLoader extends CommonService {
                 trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getBulkNumberObs(), obsExpression.getBulkPValue()));
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getBulkScore()
-                                .multiply(obsExpression.getBulkWeight())
-                                .multiply(BigDecimal.valueOf(obsExpression.getBulkNumberObs()))));
+                                .multiply(obsExpression.getBulkWeight())));
                 weightSum = weightSum.
-                        add(obsExpression.getBulkWeight()
-                                .multiply(BigDecimal.valueOf(obsExpression.getBulkNumberObs())));
+                        add(obsExpression.getBulkWeight());
                 supportingDataTypes.add(DataType.RNA_SEQ);
             }
             if (obsExpression.getInSituNumberObs() != null && obsExpression.getInSituNumberObs() != 0) {
@@ -624,11 +627,9 @@ public class ExpressionCallLoader extends CommonService {
                 trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getInSituNumberObs(), obsExpression.getInSituPValue()));
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getInSituScore()
-                                .multiply(obsExpression.getInSituWeight())
-                                .multiply(BigDecimal.valueOf(obsExpression.getInSituNumberObs()))));
+                                .multiply(obsExpression.getInSituWeight())));
                 weightSum = weightSum.
-                        add(obsExpression.getInSituWeight()
-                                .multiply(BigDecimal.valueOf(obsExpression.getInSituNumberObs())));
+                        add(obsExpression.getInSituWeight());
                 supportingDataTypes.add(DataType.IN_SITU);
             }
             if (obsExpression.getFullLengthNumberObs() != null && obsExpression.getFullLengthNumberObs() != 0) {
@@ -636,11 +637,9 @@ public class ExpressionCallLoader extends CommonService {
                 trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getFullLengthNumberObs(), obsExpression.getFullLengthPValue()));
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getFullLengthScore()
-                                .multiply(obsExpression.getFullLengthWeight())
-                                .multiply(BigDecimal.valueOf(obsExpression.getFullLengthNumberObs()))));
+                                .multiply(obsExpression.getFullLengthWeight())));
                 weightSum = weightSum.
-                        add(obsExpression.getFullLengthWeight()
-                                .multiply(BigDecimal.valueOf(obsExpression.getFullLengthNumberObs())));
+                        add(obsExpression.getFullLengthWeight());
                 supportingDataTypes.add(DataType.SC_RNA_SEQ);
             }
             if (obsExpression.getDropletNumberObs() != null && obsExpression.getDropletNumberObs() != 0) {
@@ -648,11 +647,9 @@ public class ExpressionCallLoader extends CommonService {
                 trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getDropletNumberObs(), obsExpression.getDropletPValue()));
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getDropletScore()
-                                .multiply(obsExpression.getDropletWeight())
-                                .multiply(BigDecimal.valueOf(obsExpression.getDropletNumberObs()))));
+                                .multiply(obsExpression.getDropletWeight())));
                 weightSum = weightSum.
-                        add(obsExpression.getDropletWeight()
-                                .multiply(BigDecimal.valueOf(obsExpression.getDropletNumberObs())));
+                        add(obsExpression.getDropletWeight());
                 supportingDataTypes.add(DataType.SC_RNA_SEQ);
             }
         }

@@ -1316,9 +1316,11 @@ public class MultiSpeciesCallService extends CommonService {
                 Set<String> ontologySeedIds = new HashSet<>();
                 if (anatIds != null) {
                     ontologySeedIds.addAll(anatIds.getIds());
+                    ontologySeedIds.addAll(anatIds.getExcludeTermsAndChildrenIds());
                 }
                 if (cellIds != null) {
                     ontologySeedIds.addAll(cellIds.getIds());
+                    ontologySeedIds.addAll(cellIds.getExcludeTermsAndChildrenIds());
                 }
                 Ontology<AnatEntity, String> anatOntology = null;
                 boolean expandAnat = anatIds != null && anatIds.isIncludeChildTerms()
@@ -1340,6 +1342,12 @@ public class MultiSpeciesCallService extends CommonService {
         return log.traceExit(new AnatCellTypeFilterIds(filterAnatEntityIds, filterCellTypeIds));
     }
 
+    /**
+     * Expands {@code filterIds} the same way as
+     * {@link org.bgee.model.expressiondata.call.CallServiceUtils}: include IDs, optionally
+     * their descendants, then subtract excluded terms and their descendants (except
+     * {@link FilterIds#getNotToExcludeIds()}).
+     */
     private static Set<String> expandFilterIds(FilterIds<String> filterIds,
             Ontology<AnatEntity, String> anatOntology) {
         if (filterIds == null) {
@@ -1350,6 +1358,19 @@ public class MultiSpeciesCallService extends CommonService {
             expanded.addAll(filterIds.getIds().stream()
                     .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
                     .collect(Collectors.toSet()));
+        }
+        if (!filterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
+            Set<String> idsToExclude = new HashSet<>(filterIds.getExcludeTermsAndChildrenIds());
+            if (anatOntology != null) {
+                idsToExclude.addAll(filterIds.getExcludeTermsAndChildrenIds().stream()
+                        .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
+                        .collect(Collectors.toSet()));
+            }
+            idsToExclude.removeAll(filterIds.getNotToExcludeIds());
+            if (expanded.removeAll(idsToExclude) && expanded.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException(
+                        "No result should be retrieved because of anat. entity exclusion"));
+            }
         }
         return expanded;
     }

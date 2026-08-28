@@ -695,4 +695,270 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         service.loadPositiveAnatEntitySimilarityAnalysis(requestedSpeciesIds,
                 Arrays.asList("lung"), false);
     }
+
+    /**
+     * Stub the CIO statement DAO so that {@code getAllCIOStatements()} can be consumed multiple
+     * times within a single test. The default mock from {@link #setMockObjects()} only allows a
+     * single consumption because the returned mock {@code DAOResultSet} exposes a single-use
+     * {@code Stream}; the slow path of
+     * {@link AnatEntitySimilarityService#loadAnatEntitySimilaritiesRespectingNegations(int, boolean, Collection)}
+     * also queries CIO statements once for the sub-clade similarity construction, in addition to
+     * the call made by {@code loadPositiveAnatEntitySimilarities}.
+     */
+    private void enableMultiUseCIOStatementMock() {
+        when(this.cioStatementDAO.getAllCIOStatements()).thenAnswer(inv ->
+                getMockResultSet(CIOStatementTOResultSet.class, Arrays.asList(
+                        new CIOStatementTO("CIO:1", "trusted", null, true, null, null, null),
+                        new CIOStatementTO("CIO:2", "nontrusted", null, false, null, null, null))));
+    }
+
+    /**
+     * Unit test for method
+     * {@link AnatEntitySimilarityService#loadAnatEntitySimilaritiesRespectingNegations(int, boolean, Collection)}:
+     * when no negative annotation is valid for the requested taxon (Actinopterygii) or any of its
+     * ancestors, the new method should return the same set of similarities as
+     * {@link AnatEntitySimilarityService#loadPositiveAnatEntitySimilarities(int, boolean, Collection)}.
+     */
+    @Test
+    public void shouldLoadAnatEntitySimilaritiesRespectingNegationsNoNegativeEqualsBaseline() {
+        //No negative annotation valid for Actinopterygii or any ancestor.
+        SummarySimilarityAnnotationTOResultSet emptyNegAnnotRS = getMockResultSet(
+                SummarySimilarityAnnotationTOResultSet.class,
+                Collections.<SummarySimilarityAnnotationTO>emptyList());
+        when(this.sumSimAnnotDAO.getSummarySimilarityAnnotations(7898, true, false, false, null, null))
+                .thenReturn(emptyNegAnnotRS);
+
+        AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
+
+        AnatEntitySimilarity mouthActinoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
+                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(6)));
+        AnatEntitySimilarity anusActinoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
+                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(6)));
+        AnatEntitySimilarity swimBladderActinoSim = new AnatEntitySimilarity(
+                Arrays.asList(new AnatEntity("swimbladder")), Arrays.asList(), taxa.get(6),
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(6), true, true)),
+                taxonToOnt.get(taxa.get(6)));
+        AnatEntitySimilarity lungActinoSim = new AnatEntitySimilarity(
+                Arrays.asList(new AnatEntity("lung")), Arrays.asList(), taxa.get(6),
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)),
+                taxonToOnt.get(taxa.get(6)));
+
+        Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthActinoSim, anusActinoSim,
+                swimBladderActinoSim, lungActinoSim));
+        assertEquals(expectedResults, service.loadAnatEntitySimilaritiesRespectingNegations(7898, false));
+    }
+
+    /**
+     * Unit test for method
+     * {@link AnatEntitySimilarityService#loadAnatEntitySimilaritiesRespectingNegations(int, boolean, Collection)}:
+     * a negative annotation that blocks an inherited positive similarity (here, "mouth" annotated
+     * as not homologous at Cnidaria, while a positive annotation exists at the ancestor Eumetazoa)
+     * and for which no positive annotation exists at any strict descendant of the requested taxon
+     * must cause the blocked similarity to be dropped from the result. In this case Cnidaria has
+     * no descendants in the test taxonomy, so "mouth" is dropped without substitution.
+     */
+    @Test
+    public void shouldLoadAnatEntitySimilaritiesRespectingNegationsBlockAndDrop() {
+        SummarySimilarityAnnotationTO mouthNegCnidariaTO = new SummarySimilarityAnnotationTO(
+                10, 6073 /* Cnidaria */, true /* negated */, "CIO:1");
+        SimAnnotToAnatEntityTO mouthNegCnidariaMappingTO = new SimAnnotToAnatEntityTO(10, "mouth");
+
+        SummarySimilarityAnnotationTOResultSet negAnnotRS = getMockResultSet(
+                SummarySimilarityAnnotationTOResultSet.class, Arrays.asList(mouthNegCnidariaTO));
+        SimAnnotToAnatEntityTOResultSet negMappingRS = getMockResultSet(
+                SimAnnotToAnatEntityTOResultSet.class, Arrays.asList(mouthNegCnidariaMappingTO));
+        SummarySimilarityAnnotationTOResultSet emptyDescPosAnnotRS = getMockResultSet(
+                SummarySimilarityAnnotationTOResultSet.class,
+                Collections.<SummarySimilarityAnnotationTO>emptyList());
+
+        when(this.sumSimAnnotDAO.getSummarySimilarityAnnotations(6073, true, false, false, null, null))
+                .thenReturn(negAnnotRS);
+        when(this.sumSimAnnotDAO.getSimAnnotToAnatEntity(6073, true, false, false, null))
+                .thenReturn(negMappingRS);
+        //No positive annotation at any strict descendant of Cnidaria (Cnidaria is a leaf in the
+        //test taxonomy).
+        when(this.sumSimAnnotDAO.getSummarySimilarityAnnotations(6073, false, true, true, null, null))
+                .thenReturn(emptyDescPosAnnotRS);
+
+        AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
+        //"mouth" was the only similarity returned at Cnidaria (see
+        //shouldLoadPositiveAnatEntitySimilaritiesCnidariaAll); with the new method it is blocked
+        //and discarded.
+        Set<AnatEntitySimilarity> expectedResults = Collections.emptySet();
+        assertEquals(expectedResults, service.loadAnatEntitySimilaritiesRespectingNegations(6073, false));
+    }
+
+    /**
+     * Unit test for method
+     * {@link AnatEntitySimilarityService#loadAnatEntitySimilaritiesRespectingNegations(int, boolean, Collection)}:
+     * when a negative annotation blocks a UBERON term ("swimbladder" annotated as not homologous
+     * at Bilateria) and a positive annotation exists for the same UBERON term at a single strict
+     * descendant of the requested taxon (here, "swimbladder" positively annotated at
+     * Actinopterygii), one sub-clade {@code AnatEntitySimilarity} is emitted, scoped to that
+     * descendant taxon. The blocking negative annotation is preserved as a documentation summary
+     * (with {@link AnatEntitySimilarityTaxonSummary#isPositive()} returning {@code false}).
+     */
+    @Test
+    public void shouldLoadAnatEntitySimilaritiesRespectingNegationsBlockAndSplitSingleSubClade() {
+        enableMultiUseCIOStatementMock();
+
+        SummarySimilarityAnnotationTO swimBladderNegBilateriaTO = new SummarySimilarityAnnotationTO(
+                10, 33213 /* Bilateria */, true /* negated */, "CIO:1");
+        SimAnnotToAnatEntityTO swimBladderNegBilateriaMappingTO = new SimAnnotToAnatEntityTO(
+                10, "swimbladder");
+        //Existing positive annotation for "swimbladder" at Actinopterygii (id 7, see
+        //setMockObjects): we reuse the same TO to drive the descendant-positive query.
+        SummarySimilarityAnnotationTO swimBladderActinoPosTO = new SummarySimilarityAnnotationTO(
+                7, 7898 /* Actinopterygii */, false, "CIO:1");
+        SimAnnotToAnatEntityTO swimBladderActinoPosMappingTO = new SimAnnotToAnatEntityTO(7, "swimbladder");
+
+        SummarySimilarityAnnotationTOResultSet negAnnotRS = getMockResultSet(
+                SummarySimilarityAnnotationTOResultSet.class, Arrays.asList(swimBladderNegBilateriaTO));
+        SimAnnotToAnatEntityTOResultSet negMappingRS = getMockResultSet(
+                SimAnnotToAnatEntityTOResultSet.class, Arrays.asList(swimBladderNegBilateriaMappingTO));
+        SummarySimilarityAnnotationTOResultSet descPosAnnotRS = getMockResultSet(
+                SummarySimilarityAnnotationTOResultSet.class, Arrays.asList(swimBladderActinoPosTO));
+        SimAnnotToAnatEntityTOResultSet descPosMappingRS = getMockResultSet(
+                SimAnnotToAnatEntityTOResultSet.class, Arrays.asList(swimBladderActinoPosMappingTO));
+
+        when(this.sumSimAnnotDAO.getSummarySimilarityAnnotations(33213, true, false, false, null, null))
+                .thenReturn(negAnnotRS);
+        when(this.sumSimAnnotDAO.getSimAnnotToAnatEntity(33213, true, false, false, null))
+                .thenReturn(negMappingRS);
+        when(this.sumSimAnnotDAO.getSummarySimilarityAnnotations(33213, false, true, true, null, null))
+                .thenReturn(descPosAnnotRS);
+        when(this.sumSimAnnotDAO.getSimAnnotToAnatEntity(33213, false, true, true, null))
+                .thenReturn(descPosMappingRS);
+
+        //AnatEntity ontology fetched for the union of blocked anat-entity IDs ({"swimbladder"}).
+        AnatEntity swimBladder = new AnatEntity("swimbladder");
+        TaxonConstraint<String> swimBladderTC = new TaxonConstraint<>("swimbladder", 2);
+        MultiSpeciesOntology<AnatEntity, String> swimBladderOnt = new MultiSpeciesOntology<>(null,
+                Arrays.asList(swimBladder),
+                Arrays.asList(),
+                Arrays.asList(swimBladderTC),
+                Arrays.asList(),
+                EnumSet.of(RelationType.TRANSFORMATIONOF),
+                AnatEntity.class);
+        when(this.ontService.getAnatEntityOntology((Collection<Integer>) null,
+                new HashSet<>(Arrays.asList("swimbladder")),
+                EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))
+                .thenReturn(swimBladderOnt);
+
+        AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
+
+        //Baseline at Bilateria (see shouldLoadPositiveAnatEntitySimilaritiesBilateriaAll).
+        AnatEntitySimilarity mouthBilateriaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
+                null, taxa.get(2), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(2)));
+        AnatEntitySimilarity anusBilateriaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
+                null, taxa.get(2), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(2)));
+        //New sub-clade similarity for "swimbladder" with the positive at Actinopterygii (taxa[6])
+        //and the blocking negative at Bilateria (taxa[2]).
+        AnatEntitySimilarity swimBladderSubCladeSim = new AnatEntitySimilarity(
+                Arrays.asList(new AnatEntity("swimbladder")), Arrays.asList(), taxa.get(2),
+                Arrays.asList(
+                        new AnatEntitySimilarityTaxonSummary(taxa.get(6), true, true),
+                        new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, false)),
+                taxonToOnt.get(taxa.get(2)));
+
+        Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(
+                mouthBilateriaSim, anusBilateriaSim, swimBladderSubCladeSim));
+        assertEquals(expectedResults, service.loadAnatEntitySimilaritiesRespectingNegations(33213, false));
+        assertEquals(taxa.get(6), swimBladderSubCladeSim.getHomologyScopeTaxon());
+    }
+
+    /**
+     * Unit test for method
+     * {@link AnatEntitySimilarityService#loadAnatEntitySimilaritiesRespectingNegations(int, boolean, Collection)}:
+     * when descendant positive annotations are themselves nested (one taxon being an ancestor of
+     * the other in the annotation set), they must be merged into a single sub-clade
+     * {@code AnatEntitySimilarity} carrying both descendant taxon summaries, rather than producing
+     * two separate similarities. Here, "lung" is blocked by a negative at Bilateria, and two
+     * positives exist at descendants: Gnathostomata (ancestor of Sarcopterygii) and Sarcopterygii.
+     * Gnathostomata is maximal, so a single sub-clade similarity is emitted carrying summaries for
+     * both descendant taxa plus the blocking negative.
+     */
+    @Test
+    public void shouldLoadAnatEntitySimilaritiesRespectingNegationsBlockAndSplitNestedDescendantsMerge() {
+        enableMultiUseCIOStatementMock();
+
+        SummarySimilarityAnnotationTO lungNegBilateriaTO = new SummarySimilarityAnnotationTO(
+                11, 33213 /* Bilateria */, true /* negated */, "CIO:1");
+        SimAnnotToAnatEntityTO lungNegBilateriaMappingTO = new SimAnnotToAnatEntityTO(11, "lung");
+        //Existing positive annotations for "lung" at Gnathostomata (id 6) and Sarcopterygii (id 9).
+        SummarySimilarityAnnotationTO lungGnaPosTO = new SummarySimilarityAnnotationTO(
+                6, 7776 /* Gnathostomata */, false, "CIO:1");
+        SummarySimilarityAnnotationTO lungSarcoPosTO = new SummarySimilarityAnnotationTO(
+                9, 8287 /* Sarcopterygii */, false, "CIO:1");
+        SimAnnotToAnatEntityTO lungGnaPosMappingTO = new SimAnnotToAnatEntityTO(6, "lung");
+        SimAnnotToAnatEntityTO lungSarcoPosMappingTO = new SimAnnotToAnatEntityTO(9, "lung");
+
+        SummarySimilarityAnnotationTOResultSet negAnnotRS = getMockResultSet(
+                SummarySimilarityAnnotationTOResultSet.class, Arrays.asList(lungNegBilateriaTO));
+        SimAnnotToAnatEntityTOResultSet negMappingRS = getMockResultSet(
+                SimAnnotToAnatEntityTOResultSet.class, Arrays.asList(lungNegBilateriaMappingTO));
+        SummarySimilarityAnnotationTOResultSet descPosAnnotRS = getMockResultSet(
+                SummarySimilarityAnnotationTOResultSet.class, Arrays.asList(lungGnaPosTO, lungSarcoPosTO));
+        SimAnnotToAnatEntityTOResultSet descPosMappingRS = getMockResultSet(
+                SimAnnotToAnatEntityTOResultSet.class,
+                Arrays.asList(lungGnaPosMappingTO, lungSarcoPosMappingTO));
+
+        when(this.sumSimAnnotDAO.getSummarySimilarityAnnotations(33213, true, false, false, null, null))
+                .thenReturn(negAnnotRS);
+        when(this.sumSimAnnotDAO.getSimAnnotToAnatEntity(33213, true, false, false, null))
+                .thenReturn(negMappingRS);
+        when(this.sumSimAnnotDAO.getSummarySimilarityAnnotations(33213, false, true, true, null, null))
+                .thenReturn(descPosAnnotRS);
+        when(this.sumSimAnnotDAO.getSimAnnotToAnatEntity(33213, false, true, true, null))
+                .thenReturn(descPosMappingRS);
+
+        AnatEntity lung = new AnatEntity("lung");
+        TaxonConstraint<String> lungTC = new TaxonConstraint<>("lung", 1);
+        MultiSpeciesOntology<AnatEntity, String> lungOnt = new MultiSpeciesOntology<>(null,
+                Arrays.asList(lung),
+                Arrays.asList(),
+                Arrays.asList(lungTC),
+                Arrays.asList(),
+                EnumSet.of(RelationType.TRANSFORMATIONOF),
+                AnatEntity.class);
+        when(this.ontService.getAnatEntityOntology((Collection<Integer>) null,
+                new HashSet<>(Arrays.asList("lung")),
+                EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))
+                .thenReturn(lungOnt);
+
+        AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
+
+        AnatEntitySimilarity mouthBilateriaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
+                null, taxa.get(2), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(2)));
+        AnatEntitySimilarity anusBilateriaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
+                null, taxa.get(2), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(2)));
+        //Single sub-clade similarity merging the two nested descendant positives (Gnathostomata
+        //is maximal because Sarcopterygii is one of its descendants).
+        AnatEntitySimilarity lungSubCladeMergedSim = new AnatEntitySimilarity(
+                Arrays.asList(new AnatEntity("lung")), Arrays.asList(), taxa.get(2),
+                Arrays.asList(
+                        new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true),
+                        new AnatEntitySimilarityTaxonSummary(taxa.get(5), true, true),
+                        new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, false)),
+                taxonToOnt.get(taxa.get(2)));
+
+        Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(
+                mouthBilateriaSim, anusBilateriaSim, lungSubCladeMergedSim));
+        assertEquals(expectedResults, service.loadAnatEntitySimilaritiesRespectingNegations(33213, false));
+        assertEquals(taxa.get(4), lungSubCladeMergedSim.getHomologyScopeTaxon());
+    }
+
+    @Test
+    public void shouldReturnHomologyScopeTaxonFromPositiveSummaries() {
+        AnatEntitySimilarity mouthGnaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
+                null, taxa.get(4), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(4)));
+        assertEquals(taxa.get(1), mouthGnaSim.getHomologyScopeTaxon());
+    }
 }

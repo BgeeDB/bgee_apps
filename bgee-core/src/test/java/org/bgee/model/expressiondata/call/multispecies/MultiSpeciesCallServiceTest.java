@@ -564,7 +564,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
         AnatEntitySimilarity aeSim1 = new AnatEntitySimilarity(
                 Arrays.asList(anatEntity1a, anatEntity2a), null, taxon, aeSimTaxonSummaries, taxOnt);
-        when(aeSimService.loadPositiveAnatEntitySimilarities(taxonId, true))
+        when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
                 .thenReturn(new HashSet<>(Arrays.asList(aeSim1)));
 
         org.bgee.model.expressiondata.call.Call.ExpressionCall2 mockCall1 =

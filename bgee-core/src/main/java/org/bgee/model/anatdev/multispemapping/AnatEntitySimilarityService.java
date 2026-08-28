@@ -298,6 +298,256 @@ public class AnatEntitySimilarityService extends Service {
                 .collect(Collectors.toSet()));
     }
 
+    /**
+     * Load anatomical entity similarities valid for the requested {@code taxonId}, while
+     * taking into account negative similarity annotations (explicit assertions of non‑homology).
+     * See {@link #loadAnatEntitySimilaritiesRespectingNegations(int, boolean, Collection)} for details.
+     *
+     * @param taxonId       An {@code int} that is the NCBI ID of the taxon for which the similarity
+     *                      annotations should be valid for.
+     * @param onlyTrusted   A {@code boolean} defining whether results should be restricted
+     *                      to "trusted" annotations.
+     * @return              A {@code Set} of {@link AnatEntitySimilarity}s.
+     * @see #loadAnatEntitySimilaritiesRespectingNegations(int, boolean, Collection)
+     */
+    public Set<AnatEntitySimilarity> loadAnatEntitySimilaritiesRespectingNegations(int taxonId,
+            boolean onlyTrusted) {
+        log.traceEntry("{}, {}", taxonId, onlyTrusted);
+        return log.traceExit(this.loadAnatEntitySimilaritiesRespectingNegations(taxonId, onlyTrusted, null));
+    }
+    /**
+     * Load anatomical entity similarities valid for the requested {@code taxonId}, while
+     * taking into account negative similarity annotations (explicit assertions of non-homology).
+     * <p>
+     * Negative annotations are summary similarity annotations whose {@code negated} flag is
+     * {@code true} (see {@link
+     * org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO#isNegated()}).
+     * They capture the curated assertion that a UBERON term, when applied across the species
+     * of a given taxon, does <strong>not</strong> designate a single homologous structure
+     * (typical example: <i>eye</i> annotated as not homologous at the level of <i>Bilateria</i>,
+     * since vertebrate and arthropod eyes arose independently).
+     * <p>
+     * For the requested taxon, this method behaves like
+     * {@link #loadPositiveAnatEntitySimilarities(int, boolean, Collection)}, with the following
+     * additional rule: a group of anatomical entities (identified by its set of UBERON IDs) is
+     * said to be <i>blocked</i> at the requested taxon if there exists at least one negative
+     * similarity annotation for the same set of UBERON IDs, annotated to the requested taxon or
+     * any of its ancestors. For each blocked group:
+     * <ul>
+     *   <li>any similarity that would otherwise have been returned by
+     *   {@link #loadPositiveAnatEntitySimilarities(int, boolean, Collection)} for the same UBERON
+     *   IDs is discarded (the negative annotation overrides an implicit positive inherited from
+     *   an ancestor);
+     *   <li>positive similarity annotations for the same UBERON IDs that are annotated to
+     *   <i>strict descendants</i> of the requested taxon are then used to emit one or more
+     *   "sub-clade" {@code AnatEntitySimilarity}s. Descendant positive annotations are grouped
+     *   by maximal annotated taxon (a taxon is "maximal" if no other taxon in the set is one
+     *   of its ancestors). Each maximal taxon yields one {@code AnatEntitySimilarity} whose
+     *   {@link AnatEntitySimilarity#getRequestedTaxon() requestedTaxon} is the queried taxon,
+     *   and whose {@link AnatEntitySimilarity#getAnnotTaxonSummaries() annotTaxonSummaries}
+     *   contain the descendant positive support (plus, for documentation purposes, the blocking
+     *   negative summaries with {@link AnatEntitySimilarityTaxonSummary#isPositive()} returning
+     *   {@code false});
+     *   <li>if no positive annotation exists at any strict descendant for the blocked group,
+     *   the group is dropped entirely (a negative annotation alone is not informative enough
+     *   to define a valid comparison unit at the requested taxon).
+     * </ul>
+     * As a consequence, a single UBERON term that is non-homologous at the requested taxon can
+     * be represented by several {@code AnatEntitySimilarity}s sharing the same
+     * {@link AnatEntity}s but scoped to different sub-clades (i.e., supported by positive
+     * annotations at different descendant taxa). No synthetic {@code AnatEntity} is created.
+     * <p>
+     * The matching between negative annotations at the requested taxon (or ancestors) and
+     * positive annotations at descendants is performed on the exact set of UBERON IDs of the
+     * annotation: a negative annotation on {@code {A, B}} is paired with descendant positives
+     * on exactly {@code {A, B}}, not with descendant positives on {@code {A}} or {@code {B}}
+     * alone.
+     *
+     * @param taxonId                   An {@code int} that is the NCBI ID of the taxon for which
+     *                                  the similarity annotations should be valid for.
+     * @param onlyTrusted               A {@code boolean} defining whether results should be
+     *                                  restricted to "trusted" annotations.
+     * @param speciesIdsForFiltering    A {@code Collection} of {@code Integer}s representing IDs
+     *                                  of species to filter valid {@code AnatEntitySimilarity}s.
+     *                                  See {@link
+     *                                  #loadPositiveAnatEntitySimilarities(int, boolean, Collection)}
+     *                                  for details.
+     * @return                          A {@code Set} of {@link AnatEntitySimilarity}s.
+     */
+    public Set<AnatEntitySimilarity> loadAnatEntitySimilaritiesRespectingNegations(int taxonId,
+            boolean onlyTrusted, Collection<Integer> speciesIdsForFiltering) {
+        log.traceEntry("{}, {}, {}", taxonId, onlyTrusted, speciesIdsForFiltering);
+        if (taxonId <= 0) {
+            throw log.throwing(new IllegalArgumentException("Taxon ID must be strictly positive."));
+        }
+        Set<Integer> clonedSpeIds = speciesIdsForFiltering == null ? new HashSet<>()
+                : new HashSet<>(speciesIdsForFiltering);
+
+        Set<AnatEntitySimilarity> baseline = this.loadPositiveAnatEntitySimilarities(
+                taxonId, onlyTrusted, speciesIdsForFiltering);
+
+        Map<Set<String>, Set<SummarySimilarityAnnotationTO>> blockedAnatIdsToNegAnnots =
+                this.loadGroupedAnnotations(taxonId, true, false, false, onlyTrusted);
+        if (blockedAnatIdsToNegAnnots.isEmpty()) {
+            return log.traceExit(baseline);
+        }
+
+        //Drop baseline similarities whose anat-entity ID set is blocked by a negative annotation.
+        //(Both fast and slow paths apply this filter.)
+        Set<AnatEntitySimilarity> result = baseline.stream()
+                .filter(sim -> {
+                    Set<String> simAnatIds = sim.getSourceAnatEntities().stream()
+                            .map(AnatEntity::getId).collect(Collectors.toSet());
+                    return !blockedAnatIdsToNegAnnots.containsKey(simAnatIds);
+                })
+                .collect(Collectors.toCollection(HashSet::new));
+
+        Map<Set<String>, Set<SummarySimilarityAnnotationTO>> anatIdsToDescPosAnnots =
+                this.loadGroupedAnnotations(taxonId, false, true, true, onlyTrusted).entrySet()
+                .stream()
+                //Keep only positives at strict descendants (drop the requested taxon itself).
+                .map(e -> {
+                    Set<SummarySimilarityAnnotationTO> strict = e.getValue().stream()
+                            .filter(a -> a.getTaxonId() != null && a.getTaxonId() != taxonId)
+                            .collect(Collectors.toSet());
+                    return new AbstractMap.SimpleEntry<>(e.getKey(), strict);
+                })
+                .filter(e -> !e.getValue().isEmpty())
+                //Keep only descendant positives whose anat-entity-id set matches a blocked group.
+                .filter(e -> blockedAnatIdsToNegAnnots.containsKey(e.getKey()))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+        //No descendant positive matches a blocked group: blocked entries are simply dropped.
+        if (anatIdsToDescPosAnnots.isEmpty()) {
+            return log.traceExit(result);
+        }
+
+        //Slow path: build sub-clade similarities for each blocked group.
+        Ontology<Taxon, Integer> taxonOnt = this.getServiceFactory().getOntologyService()
+                .getTaxonOntologyFromTaxonIds(Collections.singleton(taxonId), false, true, true);
+        Taxon requestedTaxon = taxonOnt.getElement(taxonId);
+        if (requestedTaxon == null) {
+            throw log.throwing(new IllegalArgumentException("Taxon ID not found: " + taxonId));
+        }
+
+        Set<String> allBlockedAnatIds = anatIdsToDescPosAnnots.keySet().stream()
+                .flatMap(Set::stream).collect(Collectors.toSet());
+        MultiSpeciesOntology<AnatEntity, String> anatOnt = this.getServiceFactory().getOntologyService()
+                .getAnatEntityOntology(
+                        (Collection<Integer>) null,
+                        allBlockedAnatIds,
+                        EnumSet.of(RelationType.TRANSFORMATIONOF),
+                        true, true);
+
+        Map<String, CIOStatementTO> idToCIOStatementTOMap = this.getDaoManager().getCIOStatementDAO()
+                .getAllCIOStatements().stream()
+                .collect(Collectors.toMap(s -> s.getId(), s -> s));
+
+        Set<AnatEntitySimilarity> subCladeSimilarities = new HashSet<>();
+        for (Entry<Set<String>, Set<SummarySimilarityAnnotationTO>> entry
+                : anatIdsToDescPosAnnots.entrySet()) {
+            Set<String> blockedAnatIds = entry.getKey();
+            Set<SummarySimilarityAnnotationTO> descPosAnnots = entry.getValue();
+            Set<SummarySimilarityAnnotationTO> blockingNegs = blockedAnatIdsToNegAnnots.get(blockedAnatIds);
+
+            //Group descendant positives by "maximal" sub-clade: a taxon is maximal in the set of
+            //annotation taxa if no other taxon in the set is one of its ancestors. Each maximal
+            //taxon yields one AnatEntitySimilarity whose annotation summaries include all
+            //descendant positives in the maximal taxon's subtree (so that nested redundant
+            //annotations such as "lung at Gnathostomata" + "lung at Sarcopterygii" produce a
+            //single similarity, while disjoint annotations such as "eye at Vertebrata" + "eye at
+            //Arthropoda" produce two distinct similarities).
+            Set<Taxon> annotTaxa = descPosAnnots.stream()
+                    .map(a -> taxonOnt.getElement(a.getTaxonId()))
+                    .filter(t -> t != null)
+                    .collect(Collectors.toSet());
+            Set<Taxon> maximalTaxa = annotTaxa.stream()
+                    .filter(t -> annotTaxa.stream()
+                            .filter(other -> !other.equals(t))
+                            .noneMatch(other -> taxonOnt.getAncestors(t).contains(other)))
+                    .collect(Collectors.toSet());
+
+            for (Taxon maximalTaxon : maximalTaxa) {
+                Set<Taxon> maximalSubtree = new HashSet<>(taxonOnt.getDescendants(maximalTaxon));
+                maximalSubtree.add(maximalTaxon);
+                Set<SummarySimilarityAnnotationTO> annotsForGroup = descPosAnnots.stream()
+                        .filter(a -> {
+                            Taxon t = taxonOnt.getElement(a.getTaxonId());
+                            return t != null && maximalSubtree.contains(t);
+                        })
+                        .collect(Collectors.toCollection(HashSet::new));
+                //Attach blocking negatives as documentation summaries (isPositive == false).
+                annotsForGroup.addAll(blockingNegs);
+                AnatEntitySimilarity sim = mapToAnatEntitySimilarity(
+                        blockedAnatIds, annotsForGroup, requestedTaxon,
+                        idToCIOStatementTOMap, taxonOnt, anatOnt, allBlockedAnatIds);
+                subCladeSimilarities.add(sim);
+            }
+        }
+
+        Stream<AnatEntitySimilarity> subCladeStream = subCladeSimilarities.stream();
+        if (!clonedSpeIds.isEmpty()) {
+            final MultiSpeciesOntology<AnatEntity, String> finalAnatOnt = anatOnt;
+            subCladeStream = subCladeStream.filter(aes -> aes.getAllAnatEntities().stream()
+                    .anyMatch(ae -> {
+                        Set<Integer> validSpeIds = finalAnatOnt.getSpeciesIdsWithElementValidIn(ae);
+                        return validSpeIds == null
+                                || !Collections.disjoint(clonedSpeIds, validSpeIds);
+                    }));
+        }
+        result.addAll(subCladeStream.collect(Collectors.toSet()));
+
+        return log.traceExit(result);
+    }
+
+    /**
+     * Retrieve similarity annotations from the DAO, grouped by their set of anatomical entity IDs.
+     * Convenience helper used to load either negative or positive annotations across a taxon
+     * subtree.
+     *
+     * @param taxonId               The NCBI ID of the reference taxon.
+     * @param ancestralTaxaAnnots   Whether to include annotations of ancestral taxa.
+     * @param descentTaxaAnnots     Whether to include annotations of descendant taxa.
+     * @param positiveAnnots        {@code true} to load only positive annotations, {@code false}
+     *                              for only negative annotations, {@code null} for both.
+     * @param onlyTrusted           {@code true} to restrict to trusted annotations.
+     * @return                      A {@code Map} where keys are sets of UBERON IDs targeted by an
+     *                              annotation (the set has size > 1 for multi-entity annotations),
+     *                              and values are the corresponding annotations as
+     *                              {@code SummarySimilarityAnnotationTO}s.
+     */
+    private Map<Set<String>, Set<SummarySimilarityAnnotationTO>> loadGroupedAnnotations(
+            int taxonId, boolean ancestralTaxaAnnots, boolean descentTaxaAnnots,
+            Boolean positiveAnnots, boolean onlyTrusted) {
+        log.traceEntry("{}, {}, {}, {}, {}", taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
+                positiveAnnots, onlyTrusted);
+
+        SummarySimilarityAnnotationDAO dao = this.getDaoManager().getSummarySimilarityAnnotationDAO();
+        Map<Integer, SummarySimilarityAnnotationTO> idToAnnot = dao
+                .getSummarySimilarityAnnotations(taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
+                        positiveAnnots, onlyTrusted ? true : null, null)
+                .stream().collect(Collectors.toMap(SummarySimilarityAnnotationTO::getId, a -> a));
+        if (idToAnnot.isEmpty()) {
+            return log.traceExit(Collections.emptyMap());
+        }
+        //Build annot -> anat-entity-id set.
+        Map<SummarySimilarityAnnotationTO, Set<String>> annotToAnatIds = dao
+                .getSimAnnotToAnatEntity(taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
+                        positiveAnnots, onlyTrusted ? true : null)
+                .stream()
+                .filter(s -> idToAnnot.containsKey(s.getSummarySimilarityAnnotationId()))
+                .collect(Collectors.toMap(
+                        s -> idToAnnot.get(s.getSummarySimilarityAnnotationId()),
+                        s -> new HashSet<>(Arrays.asList(s.getAnatEntityId())),
+                        (v1, v2) -> { v1.addAll(v2); return v1; }));
+        //Group annotations by their anat-entity-id set.
+        return log.traceExit(annotToAnatIds.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Entry::getValue,
+                        e -> new HashSet<>(Arrays.asList(e.getKey())),
+                        (v1, v2) -> { v1.addAll(v2); return v1; })));
+    }
+
     public AnatEntitySimilarityAnalysis loadPositiveAnatEntitySimilarityAnalysis(Collection<Integer> speciesIds,
             Collection<String> anatEntityIds, boolean onlyTrusted) {
         log.traceEntry("{}, {}, {}", speciesIds, anatEntityIds, onlyTrusted);

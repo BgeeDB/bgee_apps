@@ -23,6 +23,13 @@ It determines the Least Common Ancestor (LCA) taxon for the requested species
 and returns expression calls mapped to multi-species anatomical entity and cell
 type homology groups.
 
+Homology groups are resolved by
+[`AnatEntitySimilarityService.loadAnatEntitySimilaritiesRespectingNegations`](homology_resolution.qmd),
+which handles both positive curator annotations and **negative** (non-homology)
+annotations. See the dedicated
+[Homology Resolution](homology_resolution.qmd) document for the full algorithm,
+outcome paths, and worked examples.
+
 **URL pattern:**
 
 ```
@@ -154,7 +161,9 @@ Each element in `expressionCalls`:
 | `gene.geneMappedToSameGeneIdCount` | Integer | Number of genes mapped to same ID |
 | `multiSpeciesCondition` | Object | Homology-mapped condition |
 | `multiSpeciesCondition.anatEntities` | Array | Anatomical entities `[{ id, name }]` |
+| `multiSpeciesCondition.anatEntityTaxonScope` | Object | Taxon that scopes this homology group (`AnatEntitySimilarity.getHomologyScopeTaxon()`): `{ id, scientificName, level, lca }`. Distinguishes split homology groups that share the same UBERON term. |
 | `multiSpeciesCondition.cellTypes` | Array | Cell types `[{ id, name }]` |
+| `multiSpeciesCondition.cellTypeTaxonScope` | Object | Same homology-scope semantics as `anatEntityTaxonScope` for the cell-type similarity; `null` when `cellTypes` is empty |
 | `expressionScore` | Object | `{ expressionScore, expressionScoreConfidence }` |
 | `dataTypesWithData` | Object | Boolean per data type: `{ AFFYMETRIX, EST, IN_SITU, RNA_SEQ, SC_RNA_SEQ }` |
 | `expressionState` | String | `"expressed"` or `"not_expressed"` |
@@ -173,7 +182,14 @@ Each element in `expressionCalls`:
   },
   "multiSpeciesCondition": {
     "anatEntities": [{ "id": "UBERON:0002101", "name": "limb" }],
-    "cellTypes": []
+    "anatEntityTaxonScope": {
+      "id": 7776,
+      "scientificName": "Gnathostomata",
+      "level": 11,
+      "lca": true
+    },
+    "cellTypes": [],
+    "cellTypeTaxonScope": null
   },
   "expressionScore": {
     "expressionScore": "72.15",
@@ -292,7 +308,7 @@ remains as a convenience wrapper over the loader.)
 %%| fig-width: 10
 flowchart TD
     ENTRY["loadSimilarityCallLoader(filter)<br/>→ prepared filter +<br/>SimilarityExpressionCallLoader"]
-    ENTRY --> ANNOT["AnatSimilarityService<br/>.loadPositiveAnatEntitySimilarityAnnotations<br/>(taxonId, conditionFilters)"]
+    ENTRY --> ANNOT["AnatEntitySimilarityService<br/>.loadAnatEntitySimilaritiesRespectingNegations<br/>(taxonId, onlyTrusted)"]
     ANNOT --> AE_GROUPS["Extract anatEntity groups &<br/>cellType groups from<br/>similarity annotations"]
 
     AE_GROUPS --> PER_SPECIES["For each species in geneFilters:"]
@@ -323,6 +339,7 @@ flowchart TD
     SC --> MSC["Extract MultiSpeciesCondition<br/>(anatEntities, cellTypes)"]
     SC --> CALLS["Get underlying ExpressionCall2 list"]
 
+    CALLS --> LCA["Compute species LCA<br/>from call species IDs"]
     CALLS --> SCORE["Find max expressionScore<br/>across all calls"]
     CALLS --> DT["Collect DataTypes with data<br/>(from callData)"]
     CALLS --> QUAL["Get first non-null<br/>SummaryQuality"]
@@ -333,6 +350,7 @@ flowchart TD
 
     GENE --> ITEM
     MSC --> ITEM
+    LCA --> ITEM
     SCORE --> ITEM
     HIGH --> ITEM
     LOW --> ITEM

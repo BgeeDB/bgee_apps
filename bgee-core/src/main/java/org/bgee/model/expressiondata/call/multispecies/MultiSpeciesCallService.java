@@ -1029,8 +1029,13 @@ public class MultiSpeciesCallService extends CommonService {
                 .map(GeneFilter::getSpeciesId)
                 .collect(Collectors.toSet());
 
+        // Retrieve AnatEntitySimilarity from the provided taxon. We use the variant that respects
+        // negative similarity annotations (explicit non-homology curations): a UBERON term flagged
+        // as non-homologous at the requested taxon (or an ancestor) is either dropped or split
+        // into one similarity per sub-clade that does carry a positive homology annotation,
+        // so that expression calls from non-homologous structures are never pooled.
         Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
-                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted);
+                .loadAnatEntitySimilaritiesRespectingNegations(taxonId, onlyTrusted);
         AnatCellTypeFilterIds userFilterIds = extractAnatAndCellTypeFilterIds(
                 filter.getConditionFilters());
         if (!userFilterIds.anatEntityIds.isEmpty()) {

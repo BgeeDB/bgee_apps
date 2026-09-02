@@ -496,10 +496,11 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
 
         try {
-            boolean writeHeader = false;
-            if (!file.exists()) {
-                writeHeader = true;
-            }
+            // A stale, possibly empty, file left over from a previous run/attempt would make
+            // file.exists() true and silently skip the header write below even though no header
+            // was ever actually written to that file. Treat "exists but empty" the same as
+            // "does not exist" so we don't get a headerless file again.
+            boolean writeHeader = !file.exists() || file.length() == 0;
             try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file, true), Utils.TSVCOMMENTED)) {
                 if(writeHeader) {
                     file.createNewFile();
@@ -922,10 +923,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             CellProcessor[] processors) {
         log.traceEntry("{}, {}, {}, {}", file, fileLines, header, processors);
         try {
-            boolean writeHeader = false;
-            if (!file.exists()) {
-                writeHeader = true;
-            }
+            // See extractGlobalExpressionTable for why we also treat an existing-but-empty file
+            // (e.g., left over from a previous run) the same as a non-existing one.
+            boolean writeHeader = !file.exists() || file.length() == 0;
             try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file, true), Utils.TSVCOMMENTED)) {
                 if(writeHeader) {
                     file.createNewFile();

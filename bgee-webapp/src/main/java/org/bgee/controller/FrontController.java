@@ -1,8 +1,10 @@
 package org.bgee.controller;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +29,7 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.expressiondata.call.ConditionGraphCacheService;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.TooManyJobsException;
@@ -268,7 +271,7 @@ public class FrontController extends HttpServlet {
                 
             } else if (requestParameters.isAGenePageCategory()){
                 controller = new CommandGene(response, requestParameters, this.prop, factory,
-                        serviceFactory);
+                        serviceFactory, cacheService);
 
             } else if (requestParameters.isAExprComparisonPageCategory()){
                 controller = new CommandExpressionComparison(response, requestParameters, this.prop, factory, serviceFactory);
@@ -422,6 +425,18 @@ public class FrontController extends HttpServlet {
 
         CommandData commandData = this.getPartialCommandData();
         commandData.initializeCaches(sleepBetweenComputeMs);
+        
+     // --- Add condition graph cache initialization here ---
+        ConditionGraphCacheService cacheManager = new ConditionGraphCacheService(serviceFactoryProvider.get());
+
+        // Fetch all species IDs from DB
+        List<Integer> speciesIds = this.serviceFactoryProvider.get().getSpeciesService()
+                .loadSpeciesByIds(null, false).stream()
+                .map(s -> s.getId()).collect(Collectors.toList());
+
+        log.info("Loading condition graph cache for {} species...", speciesIds.size());
+        cacheManager.loadAllSpeciesGraphs(speciesIds);
+        log.info("ConditionGraphCache successfully initialized.");
 
         log.traceExit();
     }

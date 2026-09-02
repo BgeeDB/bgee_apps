@@ -63,10 +63,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         List<GeneTO> expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1, "expression summary"), 
-                new GeneTO(2, "ID2", "genN2", "genDesc2", 21, 0, 2, true, 1, "expression summary"), 
-                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1, "expression summary"), 
-                new GeneTO(4, "ID4", "genN4", "genDesc4", 21, 0, 0, true, 1, "expression summary")); 
+                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, true, "reg1", 1, "expression summary"), 
+                new GeneTO(2, "ID2", "genN2", "genDesc2", 21, 0, true, "reg1", 1, "expression summary"), 
+                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, false, "reg1", 1, "expression summary"), 
+                new GeneTO(4, "ID4", "genN4", "genDesc4", 21, 0, true, "reg1", 1, "expression summary")); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -119,8 +119,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         methGenes = dao.getGenesBySpeciesIds(speciesIds).getAllTOs();
         expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1, "expression summary"), 
-                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1, "expression summary")); 
+                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, true, "reg1", 1, "expression summary"), 
+                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, false, "reg1", 1, "expression summary")); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -201,8 +201,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         methGenes = dao.getGenesBySpeciesAndGeneIds(speciesIds.stream().collect(
                 Collectors.toMap(id -> id, id -> null)), true).getAllTOs();
         expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1, "expression summary"), 
-                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1, "expression summary")); 
+                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, true, "reg1", 1, "expression summary"), 
+                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, false, "reg1", 1, "expression summary")); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -268,8 +268,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         this.populateAndUseDatabase();
 
         Collection<GeneTO> geneTOs = Arrays.asList(
-                new GeneTO(1, "ID1", "GNMod1", "DescMod1", 31, 12, 7, true, 1, "expression summary"),
-                new GeneTO(2, "ID2", "GNMod2", "DescMod2", 11, 12, 6, false, 1, "expression summary"));
+                new GeneTO(1, "ID1", "GNMod1", "DescMod1", 31, 12, true, "reg1", 1, "expression summary"),
+                new GeneTO(2, "ID2", "GNMod2", "DescMod2", 11, 12, false, "reg1", 1, "expression summary"));
         
         Collection<GeneDAO.Attribute> attributesToUpdate1 = Arrays.asList(
                 GeneDAO.Attribute.GENE_BIO_TYPE_ID);

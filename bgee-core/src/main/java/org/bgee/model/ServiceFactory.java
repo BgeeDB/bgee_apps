@@ -13,6 +13,7 @@ import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.ConditionGraphCacheService;
 import org.bgee.model.expressiondata.call.ConditionGraphService;
 import org.bgee.model.expressiondata.call.ConditionService;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
@@ -302,6 +303,14 @@ public class ServiceFactory implements AutoCloseable {
     public ConditionService getConditionService() {
         log.traceEntry();
         return log.traceExit(new ConditionService(this));
+    }
+
+    /**
+     * @return A newly instantiated {@code ConditionGraphCacheService}
+     */
+    public ConditionGraphCacheService getConditionGraphCacheService() {
+        log.traceEntry();
+        return log.traceExit(new ConditionGraphCacheService(this));
     }
 
     /**

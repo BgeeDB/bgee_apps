@@ -560,8 +560,6 @@ public class CommandRPackage extends CommandParent {
             requestedAttrs.add(SPECIES_GENUS_PARAM);
             requestedAttrs.add(SPECIES_NAME_PARAM);
             requestedAttrs.add(SPECIES_COMMON_NAME_PARAM);
-            requestedAttrs.add(DataType.AFFYMETRIX.toString());
-            requestedAttrs.add(DataType.EST.toString());
             requestedAttrs.add(DataType.IN_SITU.toString());
             requestedAttrs.add(DataType.RNA_SEQ.toString());
             requestedAttrs.add(DataType.SC_RNA_SEQ.toString());
@@ -771,8 +769,6 @@ public class CommandRPackage extends CommandParent {
                     && !rqAttr.equals(SPECIES_GENUS_PARAM)
                     && !rqAttr.equals(SPECIES_NAME_PARAM)
                     && !rqAttr.equals(SPECIES_COMMON_NAME_PARAM)
-                    && !rqAttr.equals(DataType.AFFYMETRIX.toString())
-                    && !rqAttr.equals(DataType.EST.toString())
                     && !rqAttr.equals(DataType.IN_SITU.toString())
                     && !rqAttr.equals(DataType.RNA_SEQ.toString())
                     && !rqAttr.equals(DataType.SC_RNA_SEQ.toString())){

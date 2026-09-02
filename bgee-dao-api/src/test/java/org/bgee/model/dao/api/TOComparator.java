@@ -29,14 +29,9 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSo
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO.InSituEvidenceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.InSituExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO.InSituSpotTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO.RNASeqExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
@@ -203,22 +198,12 @@ public class TOComparator {
             return log.traceExit(areTOsEqual((SourceTO) to1, (SourceTO) to2, compareId));
         } else if (to2 instanceof SourceToSpeciesTO) {
             return log.traceExit(areTOsEqual((SourceToSpeciesTO) to1, (SourceToSpeciesTO) to2));
-        } else if (to2 instanceof AffymetrixProbesetTO) {
-            return log.traceExit(areTOsEqual((AffymetrixProbesetTO) to1, (AffymetrixProbesetTO) to2, compareId));
-        } else if (to2 instanceof AffymetrixChipTO) {
-            return log.traceExit(areTOsEqual((AffymetrixChipTO) to1, (AffymetrixChipTO) to2, compareId));
-        } else if (to2 instanceof MicroarrayExperimentTO) {
-            return log.traceExit(areTOsEqual((MicroarrayExperimentTO) to1, (MicroarrayExperimentTO) to2, compareId));
         } else if (to2 instanceof RNASeqResultAnnotatedSampleTO) {
             return log.traceExit(areTOsEqual((RNASeqResultAnnotatedSampleTO) to1, (RNASeqResultAnnotatedSampleTO) to2));
         } else if (to2 instanceof RNASeqLibraryTO) {
             return log.traceExit(areTOsEqual((RNASeqLibraryTO) to1, (RNASeqLibraryTO) to2, compareId));
         } else if (to2 instanceof RNASeqExperimentTO) {
             return log.traceExit(areTOsEqual((RNASeqExperimentTO) to1, (RNASeqExperimentTO) to2, compareId));
-        } else if (to2 instanceof ESTLibraryTO) {
-            return log.traceExit(areTOsEqual((ESTLibraryTO) to1, (ESTLibraryTO) to2, compareId));
-        } else if (to2 instanceof ESTTO) {
-            return log.traceExit(areTOsEqual((ESTTO) to1, (ESTTO) to2, compareId));
         } else if (to2 instanceof InSituExperimentTO) {
             return log.traceExit(areTOsEqual((InSituExperimentTO) to1, (InSituExperimentTO) to2, compareId));
         } else if (to2 instanceof InSituEvidenceTO) {
@@ -486,7 +471,7 @@ public class TOComparator {
                 Objects.equals(geneTO1.getGeneId(), geneTO2.getGeneId()) && 
                 Objects.equals(geneTO1.getSpeciesId(), geneTO2.getSpeciesId()) && 
                 Objects.equals(geneTO1.getGeneBioTypeId(), geneTO2.getGeneBioTypeId()) && 
-                Objects.equals(geneTO1.getOMAParentNodeId(), geneTO2.getOMAParentNodeId()) && 
+                Objects.equals(geneTO1.getSeqRegionName(), geneTO2.getSeqRegionName()) && 
                 Objects.equals(geneTO1.isEnsemblGene(), geneTO2.isEnsemblGene()) &&
                 Objects.equals(geneTO1.getGeneMappedToGeneIdCount(), geneTO2.getGeneMappedToGeneIdCount())) {
             return log.traceExit(true);
@@ -843,8 +828,6 @@ public class TOComparator {
         if (areEntityTOsEqual(to1, to2, compareId) &&
                 Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) &&
                 Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
-                Objects.equals(to1.getAffymetrixData(), to2.getAffymetrixData()) &&
-                Objects.equals(to1.getESTData(), to2.getESTData()) &&
                 Objects.equals(to1.getInSituData(), to2.getInSituData()) &&
                 Objects.equals(to1.getRelaxedInSituData(), to2.getRelaxedInSituData()) &&
                 Objects.equals(to1.getRNASeqData(), to2.getRNASeqData())) {
@@ -982,11 +965,6 @@ public class TOComparator {
         log.entry(to1, to2);
         if (TOComparator.areCallTOsEqual(to1, to2, compareId) && 
                 Objects.equals(to1.getComparisonFactor(), to2.getComparisonFactor()) &&
-                Objects.equals(to1.getDiffExprCallTypeAffymetrix(), to2.getDiffExprCallTypeAffymetrix()) &&
-                TOComparator.areNearlyEqualFloat(
-                        to1.getBestPValueAffymetrix(), to2.getBestPValueAffymetrix()) &&
-                Objects.equals(to1.getConsistentDEACountAffymetrix(), to2.getConsistentDEACountAffymetrix()) &&
-                Objects.equals(to1.getInconsistentDEACountAffymetrix(), to2.getInconsistentDEACountAffymetrix()) &&
                 Objects.equals(to1.getDiffExprCallTypeRNASeq(), to2.getDiffExprCallTypeRNASeq()) &&
                 TOComparator.areNearlyEqualFloat(
                         to1.getBestPValueRNASeq(), to2.getBestPValueRNASeq()) &&
@@ -1201,24 +1179,6 @@ public class TOComparator {
     }
 
     /**
-     * Method to compare two {@code AffymetrixProbesetTO}s, to check for complete
-     * equality of each attribute.
-     *
-     * @param to1       A {@code AffymetrixProbesetTO} to be compared to {@code to2}.
-     * @param to2       A {@code AffymetrixProbesetTO} to be compared to {@code to1}.
-     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
-     */
-    private static boolean areTOsEqual(AffymetrixProbesetTO to1, AffymetrixProbesetTO to2, boolean compareId) {
-        log.entry(to1, to2, compareId);
-        if (areEntityTOsEqual(to1, to2, compareId) &&
-                areBigDecimalEquals(to1.getNormalizedSignalIntensity(), to2.getNormalizedSignalIntensity()) &&
-                areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
-                areCallSourceTOsEqual(to1, to2)) {
-            return log.traceExit(true);
-        }
-        return log.traceExit(false);
-    }
-    /**
      * Method to compare two {@code RNASeqResultTO}s, to check for complete
      * equality of each attribute.
      *
@@ -1254,24 +1214,6 @@ public class TOComparator {
                 Objects.equals(to1.getInSituExpressionPatternId(), to2.getInSituExpressionPatternId()) &&
                 Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
                 areCallSourceTOsEqual(to1, to2)) {
-            return log.traceExit(true);
-        }
-        return log.traceExit(false);
-    }
-    /**
-     * Method to compare two {@code ESTTO}s, to check for complete
-     * equality of each attribute.
-     *
-     * @param to1       A {@code ESTTO} to be compared to {@code to2}.
-     * @param to2       A {@code ESTTO} to be compared to {@code to1}.
-     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
-     */
-    private static boolean areTOsEqual(ESTTO to1, ESTTO to2, boolean compareId) {
-        log.entry(to1, to2);
-        if (areEntityTOsEqual(to1, to2, compareId) &&
-                areCallSourceTOsEqual(to1, to2) &&
-                Objects.equals(to1.getEstId2(), to2.getEstId2()) &&
-                Objects.equals(to1.getUniGeneClusterId(), to2.getUniGeneClusterId())) {
             return log.traceExit(true);
         }
         return log.traceExit(false);
@@ -1313,34 +1255,6 @@ public class TOComparator {
         return log.traceExit(false);
     }
 
-    /**
-     * Method to compare two {@code AffymetrixChipTO}s, to check for complete
-     * equality of each attribute.
-     *
-     * @param to1       An {@code AffymetrixChipTO} to be compared to {@code to2}.
-     * @param to2       An {@code AffymetrixChipTO} to be compared to {@code to1}.
-     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
-     *                  used for comparisons.
-     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
-     */
-    private static boolean areTOsEqual(AffymetrixChipTO to1, AffymetrixChipTO to2, boolean compareId) {
-        log.entry(to1, to2);
-        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
-                Objects.equals(to1.getExperimentId(), to2.getExperimentId()) &&
-                Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
-                Objects.equals(to1.getAffymetrixChipId(), to2.getAffymetrixChipId()) &&
-                Objects.equals(to1.getScanDate(), to2.getScanDate()) &&
-                Objects.equals(to1.getChipTypeId(), to2.getChipTypeId()) &&
-                Objects.equals(to1.getNormalizationType(), to2.getNormalizationType()) &&
-                Objects.equals(to1.getDetectionType(), to2.getDetectionType()) &&
-                Objects.equals(to1.getDistinctRankCount(), to2.getDistinctRankCount()) &&
-                areBigDecimalEquals(to1.getQualityScore(), to2.getQualityScore()) &&
-                areBigDecimalEquals(to1.getPercentPresent(), to2.getPercentPresent()) &&
-                areBigDecimalEquals(to1.getMaxRank(), to2.getMaxRank())) {
-            return log.traceExit(true);
-        }
-        return log.traceExit(false);
-    }
 //    /**
 //     * Method to compare two {@code RNASeqLibraryTO}s, to check for complete
 //     * equality of each attribute.
@@ -1392,43 +1306,6 @@ public class TOComparator {
                 Objects.equals(to1.getExperimentId(), to2.getExperimentId()) &&
                 Objects.equals(to1.getEvidenceDistinguishable(), to2.getEvidenceDistinguishable()) &&
                 Objects.equals(to1.getInSituEvidenceUrlPart(), to2.getInSituEvidenceUrlPart())) {
-            return log.traceExit(true);
-        }
-        return log.traceExit(false);
-    }
-    /**
-     * Method to compare two {@code ESTLibraryTO}s, to check for complete
-     * equality of each attribute.
-     *
-     * @param to1       A {@code ESTLibraryTO} to be compared to {@code to2}.
-     * @param to2       A {@code ESTLibraryTO} to be compared to {@code to1}.
-     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
-     *                  used for comparisons.
-     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
-     */
-    private static boolean areTOsEqual(ESTLibraryTO to1, ESTLibraryTO to2, boolean compareId) {
-        log.entry(to1, to2);
-        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
-                Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
-                Objects.equals(to1.getDataSourceId(), to2.getDataSourceId())) {
-            return log.traceExit(true);
-        }
-        return log.traceExit(false);
-    }
-
-    /**
-     * Method to compare two {@code MicroarrayExperimentTO}s, to check for complete
-     * equality of each attribute.
-     *
-     * @param to1       A {@code MicroarrayExperimentTO} to be compared to {@code to2}.
-     * @param to2       A {@code MicroarrayExperimentTO} to be compared to {@code to1}.
-     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
-     *                  used for comparisons. 
-     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
-     */
-    private static boolean areTOsEqual(MicroarrayExperimentTO to1, MicroarrayExperimentTO to2, boolean compareId) {
-        log.entry(to1, to2);
-        if (areTOsEqual((ExperimentTO<?>) to1, (ExperimentTO<?>) to2, compareId)) {
             return log.traceExit(true);
         }
         return log.traceExit(false);

@@ -149,12 +149,12 @@ public abstract class TestAncestor {
     //*************************
     protected static final Map<Integer, SpeciesTO> SPECIES_TOS = unmodifiableLinkedHashMap(List.of(
             Map.entry(1, new SpeciesTO(1, "spe1", "spe", "1", 1, 100, "genomeFilePath1",
-                    "genomeVersion1", "genomeAssemblyXRef1", 1, 1)),
+                    "genomeVersion1", "genomeAssemblyXRef1", 1, 1, null)),
             Map.entry(2, new SpeciesTO(2, "spe2", "spe", "2", 2, 100, "genomeFilePath2",
-                    "genomeVersion2", "genomeAssemblyXRef2", 2, 2)),
+                    "genomeVersion2", "genomeAssemblyXRef2", 2, 2, null)),
             Map.entry(3, new SpeciesTO(3, "spe3", "spe", "3", 3, 200, "genomeFilePath3",
                     "genomeVersion2", "genomeAssemblyXRef2", 2,
-                    2 //use the same genome as species 2
+                    2, null //use the same genome as species 2
                     ))));
     protected static Map<Integer, Species> loadSpeciesMap(boolean withSpeciesSourceInfo) {
         return unmodifiableLinkedHashMap(SPECIES_TOS.values().stream().map(speciesTO ->
@@ -197,8 +197,8 @@ public abstract class TestAncestor {
                     "geneDescription1", //description
                     1,                  //speciesId
                     1,                  //geneBioTypeId
-                    100,                //OMAParentNodeId
                     true,               //From Ensembl?
+                    "reg1",             //seqRegionName
                     1,                  //Number of genes with same public ID
                     null
                     )),
@@ -206,21 +206,23 @@ public abstract class TestAncestor {
                     2, "geneId2", "geneName2", "geneDescription2",
                     1, //same species as geneId1
                     2, //alternative geneBioType
-                    100, true, 1, "expression summary")),
+                    true, "reg1", 1, "expression summary")),
             Map.entry(3, new GeneTO(3,
                     "geneId3_4", //two different genes with same public ID in species 2 and species 3
                     "geneName3", "geneDescription3",
                     2,           //species 2
-                    1, 100,
+                    1,
                     true,        //species 2 and 3 has a genome from a different database than Ensembl
+                    "reg1", 
                     2,           //two different genes with same public ID in species 2 and species 3
                     null)),
             Map.entry(4, new GeneTO(4,
                     "geneId3_4", //two different genes with same public ID in species 2 and species 3
                     "geneName4", "geneDescription4",
                     2,           //species 3
-                    1, 100,
+                    1,
                     false,       //species 2 and 3 has a genome from a different database than Ensembl
+                    "reg1",
                     2,           //two different genes with same public ID in species 2 and species 3
                     null))));
     protected static final Map<Integer, GeneXRefTO> GENE_X_REF_TOS = unmodifiableLinkedHashMap(List.of(

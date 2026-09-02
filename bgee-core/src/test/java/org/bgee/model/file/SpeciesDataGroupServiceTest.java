@@ -56,9 +56,9 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
         Set<Species> species = new HashSet<>();
 		species.add(v1);
 		species.add(v2);
-		SpeciesDownloadFile df1 = new SpeciesDownloadFile("/tmp/foo", "NAME", null, 42L, Category.AFFY_ANNOT, 22);
-		SpeciesDownloadFile df2 = new SpeciesDownloadFile("/tmp/foo2", "NAME2", null, 1337L, Category.DIFF_EXPR_ANAT_COMPLETE, 22);
-		SpeciesDownloadFile df3 = new SpeciesDownloadFile("/tmp/foo3", "NAME", null, 42L, Category.AFFY_ANNOT, 42);
+		SpeciesDownloadFile df1 = new SpeciesDownloadFile("/tmp/foo", "NAME", null, 42L, Category.RNASEQ_ANNOT, 22);
+		SpeciesDownloadFile df2 = new SpeciesDownloadFile("/tmp/foo2", "NAME2", null, 1337L, Category.DROPLET_BASED_H5AD, 22);
+		SpeciesDownloadFile df3 = new SpeciesDownloadFile("/tmp/foo3", "NAME", null, 42L, Category.RNASEQ_DATA, 42);
 
         List<SpeciesDownloadFile> downloadFiles = Arrays.asList(df1,df2,df3);
 

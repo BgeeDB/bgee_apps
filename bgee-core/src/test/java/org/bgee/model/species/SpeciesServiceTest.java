@@ -64,9 +64,9 @@ public class SpeciesServiceTest extends TestAncestor {
 		// mock behavior
         List<SpeciesTO> speciesTos = Arrays.asList(
                 new SpeciesTO(9606, "human", "Homo", "sapiens", 1, 4312, "3241",
-                        "version1", "assemblyXRef1", 1, 321), 
+                        "version1", "assemblyXRef1", 1, 321, null), 
                 new SpeciesTO(1234, "name", "genus", "someSpecies", 2, 1123, "3432241",
-                        "versionA", "assemblyXRefA", 1, 1321));
+                        "versionA", "assemblyXRefA", 1, 1321, null));
         // ResultSet cannot be reused. As we have 2 tests, we need 2 ResultSet
         SpeciesTOResultSet speciesRS = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
         SpeciesTOResultSet speciesRS2 = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
@@ -74,9 +74,7 @@ public class SpeciesServiceTest extends TestAncestor {
         
         SourceToSpeciesTOResultSet sToSpRS = getMockResultSet(SourceToSpeciesTOResultSet.class, 
                 Arrays.asList(
-                        new SourceToSpeciesTO(1, 9606, DAODataType.EST, InfoType.DATA),
                         new SourceToSpeciesTO(1, 9606, DAODataType.IN_SITU, InfoType.DATA),
-                        new SourceToSpeciesTO(2, 9606, DAODataType.AFFYMETRIX, InfoType.ANNOTATION),
                         new SourceToSpeciesTO(3, 9606, DAODataType.RNA_SEQ, InfoType.DATA),
                         new SourceToSpeciesTO(2, 1234, DAODataType.IN_SITU, InfoType.ANNOTATION)));
         when(sourceToSpeciesDAOMock.getSourceToSpecies(null, 
@@ -92,10 +90,10 @@ public class SpeciesServiceTest extends TestAncestor {
         assertEquals(expectedSpecies, speciesService.loadSpeciesInDataGroups(false));
         
         Map<Source, Set<DataType>> forData9606 = new HashMap<>();
-        forData9606.put(new Source(1), new HashSet<DataType>(Arrays.asList(DataType.EST, DataType.IN_SITU)));
+        forData9606.put(new Source(1), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         forData9606.put(new Source(3), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         Map<Source, Set<DataType>> forAnnot9606 = new HashMap<>();
-        forAnnot9606.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        forAnnot9606.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         Map<Source, Set<DataType>> forAnnot1234 = new HashMap<>();
         forAnnot1234.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         expectedSpecies.clear();
@@ -114,9 +112,9 @@ public class SpeciesServiceTest extends TestAncestor {
     public void prepareMockObjects() {
         List<SpeciesTO> speciesTos = Arrays.asList(
                 new SpeciesTO(9606, "human", "Homo", "sapiens", 1, 4312, "3241",
-                        "version1", "assemblyXRef1", 1, 321), 
+                        "version1", "assemblyXRef1", 1, 321, null), 
                 new SpeciesTO(1234, "name", "genus", "someSpecies", 2, 1123, "3432241",
-                        "versionA", "assemblyXRefA", 1, 1321));
+                        "versionA", "assemblyXRefA", 1, 1321, null));
         // ResultSet cannot be reused. As we have 2 tests, we need 2 ResultSet
         SpeciesTOResultSet speciesRS = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
         SpeciesTOResultSet speciesRS2 = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
@@ -129,9 +127,7 @@ public class SpeciesServiceTest extends TestAncestor {
 
         SourceToSpeciesTOResultSet sToSpRS = getMockResultSet(SourceToSpeciesTOResultSet.class, 
                 Arrays.asList(
-                        new SourceToSpeciesTO(1, 9606, DAODataType.EST, InfoType.DATA),
                         new SourceToSpeciesTO(1, 9606, DAODataType.IN_SITU, InfoType.DATA),
-                        new SourceToSpeciesTO(2, 9606, DAODataType.AFFYMETRIX, InfoType.ANNOTATION),
                         new SourceToSpeciesTO(3, 9606, DAODataType.RNA_SEQ, InfoType.DATA),
                         new SourceToSpeciesTO(2, 1234, DAODataType.IN_SITU, InfoType.ANNOTATION)));
         when(sourceToSpeciesDAO.getSourceToSpecies(null, 
@@ -151,10 +147,10 @@ public class SpeciesServiceTest extends TestAncestor {
         assertEquals(expected, service.loadSpeciesByIds(SPECIES_IDS, false));
         
         Map<Source, Set<DataType>> forData9606 = new HashMap<>();
-        forData9606.put(new Source(1), new HashSet<DataType>(Arrays.asList(DataType.EST, DataType.IN_SITU)));
+        forData9606.put(new Source(1), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         forData9606.put(new Source(3), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         Map<Source, Set<DataType>> forAnnot9606 = new HashMap<>();
-        forAnnot9606.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        forAnnot9606.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         Map<Source, Set<DataType>> forAnnot1234 = new HashMap<>();
         forAnnot1234.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         expected.clear();
@@ -179,10 +175,10 @@ public class SpeciesServiceTest extends TestAncestor {
         assertEquals(expected, service.loadSpeciesByTaxonIds(TAXON_IDS, false));
         
         Map<Source, Set<DataType>> forData9606 = new HashMap<>();
-        forData9606.put(new Source(1), new HashSet<DataType>(Arrays.asList(DataType.EST, DataType.IN_SITU)));
+        forData9606.put(new Source(1), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         forData9606.put(new Source(3), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         Map<Source, Set<DataType>> forAnnot9606 = new HashMap<>();
-        forAnnot9606.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        forAnnot9606.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         Map<Source, Set<DataType>> forAnnot1234 = new HashMap<>();
         forAnnot1234.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         expected.clear();

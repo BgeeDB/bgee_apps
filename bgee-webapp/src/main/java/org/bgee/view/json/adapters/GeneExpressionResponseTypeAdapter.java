@@ -2,18 +2,22 @@ package org.bgee.view.json.adapters;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
+import org.bgee.model.ComposedEntity;
+import org.bgee.model.NamedEntity;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
-import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
@@ -62,27 +66,26 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
         EnumSet<DataType> dataTypesWithData = EnumSet.noneOf(DataType.class);
         out.name("calls");
         out.beginArray();
-        for (ExpressionCall call: value.getCalls()) {
-            Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
-                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+        for (OTFExpressionCall call: value.getCalls()) {
+            Set<DataType> dataTypes = call.getSupportingDataTypes();
             dataTypesWithData.addAll(dataTypes);
             boolean highQualScore = false;
-            if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
-                    (dataTypes.contains(DataType.AFFYMETRIX) ||
-                    dataTypes.contains(DataType.RNA_SEQ) ||
-                    dataTypes.contains(DataType.SC_RNA_SEQ) ||
-                    call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
-                highQualScore = true;
-            }
+            //FIXME: commented for testing OTF propagation. Summary quality should be calculated
+            // as part of OTF propagation before Bgee 16 release.
+//            if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
+//                    (dataTypes.contains(DataType.RNA_SEQ) ||
+//                    dataTypes.contains(DataType.SC_RNA_SEQ) ||
+//                    call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
+//                highQualScore = true;
+//            }
 
             out.beginObject();
-
             out.name("condition");
-            this.utils.writeSimplifiedCondition(out, call.getCondition(), condParams);
+            this.writeGeneExpressionCondition(out, call.getCondition(), condParams);
 
             out.name("expressionScore");
             out.beginObject();
-            out.name("expressionScore").value(call.getFormattedExpressionScore());
+            out.name("expressionScore").value(call.getExpressionScore());
             out.name("expressionScoreConfidence");
             if (highQualScore) {
                 out.value("high");
@@ -91,8 +94,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             }
             out.endObject();
 
-            String fdr = call.getPValueWithEqualDataTypes(value.getDataTypes())
-                    .getFormattedPValue();
+            String fdr = call.getFormattedAllDatatypePValue();
             out.name("fdr").value(fdr);
 
             out.name("dataTypesWithData");
@@ -108,9 +110,11 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             }
             out.endArray();
             
-            out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
-            out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());
-            out.name("clusterIndex").value(value.getClustering().get(call));
+            //FIXME: these 3 values are hardcoded for the sake of testing OTF propagation. Should be computed from the data.
+            //FIXME: TODO BEFORE BGEE 16 RELEASE
+            out.name("expressionState").value(call.getExpressionScore().compareTo(new BigDecimal(0.05)) < 0 ? "not expressed" : "expressed");
+            out.name("expressionQuality").value("gold");
+            out.name("clusterIndex").value(0);
 
             out.endObject();
         }
@@ -121,6 +125,64 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             out.name("gene");
             this.utils.writeSimplifiedGene(out, value.getCalls().iterator().next().getGene(),
                     true, dataTypesWithData);
+        }
+
+        out.endObject();
+        log.traceExit();
+    }
+
+    private void writeGeneExpressionCondition(JsonWriter out, Condition2 condition,
+            Collection<CallService.Attribute> requestedCondParams) throws IOException {
+        log.traceEntry("{}, {}, {}", out, condition, requestedCondParams);
+        if (condition == null) {
+            out.nullValue();
+            log.traceExit();
+            return;
+        }
+
+        out.beginObject();
+
+        boolean anatRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.ANAT_ENTITY_ID);
+        boolean cellTypeRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.CELL_TYPE_ID);
+        boolean devStageRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.DEV_STAGE_ID);
+        boolean sexRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.SEX_ID);
+        boolean strainRequested = requestedCondParams == null
+                || requestedCondParams.contains(CallService.Attribute.STRAIN_ID);
+
+        ComposedEntity<AnatEntity> anatCellValue =
+                condition.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (!anatCellValue.isEmpty()) {
+            AnatEntity anatEntity = anatCellValue.size() > 1? anatCellValue.getEntity(1): anatCellValue.getEntity(0);
+            AnatEntity cellType = anatCellValue.size() > 1? anatCellValue.getEntity(0): null;
+            if (anatRequested) {
+                out.name("anatEntity");
+                this.utils.writeSimplifiedNamedEntity(out, anatEntity);
+            }
+            if (cellTypeRequested && cellType != null &&
+                    !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+                out.name("cellType");
+                this.utils.writeSimplifiedNamedEntity(out, cellType);
+            }
+        }
+
+        if (devStageRequested && !condition.getConditionParameterValue(ConditionParameter.DEV_STAGE).isEmpty()) {
+            out.name(ConditionParameter.DEV_STAGE.getAttributeName());
+            this.utils.writeSimplifiedNamedEntity(out,
+                    condition.getConditionParameterValue(ConditionParameter.DEV_STAGE).getEntity(0));
+        }
+        if (sexRequested && !condition.getConditionParameterValue(ConditionParameter.SEX).isEmpty()) {
+            out.name(ConditionParameter.SEX.getAttributeName());
+            NamedEntity<?> sexEntity = condition.getConditionParameterValue(ConditionParameter.SEX).getEntity(0);
+            out.value(sexEntity.getName());
+        }
+        if (strainRequested && !condition.getConditionParameterValue(ConditionParameter.STRAIN).isEmpty()) {
+            out.name(ConditionParameter.STRAIN.getAttributeName());
+            NamedEntity<?> strainEntity = condition.getConditionParameterValue(ConditionParameter.STRAIN).getEntity(0);
+            out.value(strainEntity.getName());
         }
 
         out.endObject();

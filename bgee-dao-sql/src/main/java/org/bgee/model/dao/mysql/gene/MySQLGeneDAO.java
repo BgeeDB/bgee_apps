@@ -63,6 +63,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         columnToAttributesMap.put("speciesId", GeneDAO.Attribute.SPECIES_ID);
         columnToAttributesMap.put("geneBioTypeId", GeneDAO.Attribute.GENE_BIO_TYPE_ID);
         columnToAttributesMap.put("ensemblGene", GeneDAO.Attribute.ENSEMBL_GENE);
+        columnToAttributesMap.put("seqRegionName", GeneDAO.Attribute.SEQ_REGION_NAME);
         columnToAttributesMap.put("geneMappedToGeneIdCount", GeneDAO.Attribute.GENE_MAPPED_TO_SAME_GENE_ID_COUNT);
         columnToAttributesMap.put("expressionSummary", GeneDAO.Attribute.EXPRESSION_SUMMARY);
     }
@@ -315,15 +316,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         if (attributesToUpdate == null || attributesToUpdate.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No attribute is given, then no gene is updated"));
         }
-        // if
-        // (attributesToUpdate.contains(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID)
-        // ||
-        // attributesToUpdate.contains(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID))
-        // {
-        // throw log.throwing(new IllegalArgumentException(
-        // "'Ancestral OMA' attributes are not store in database, then no gene
-        // is updated"));
-        // }
 
         int geneUpdatedCount = 0;
         // Construct sql query according to currents attributes
@@ -411,8 +403,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         protected GeneTO getNewTO() {
             log.traceEntry();
             String geneId = null, geneName = null, geneDescription = null, expressionSummary = null;
-            Integer id = null, speciesId = null, geneBioTypeId = null, OMAParentNodeId = null,
-                    geneMappedToGeneIdCount = null;
+            String seqRegionName = null;
+            Integer id = null, speciesId = null, geneBioTypeId = null, geneMappedToGeneIdCount = null;
             Boolean ensemblGene = null;
             // Get results
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
@@ -438,6 +430,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                     } else if (column.getValue().equals("ensemblGene")) {
                         ensemblGene = this.getCurrentResultSet().getBoolean(column.getKey());
 
+                    } else if (column.getValue().equals("seqRegionName")) {
+                        seqRegionName = this.getCurrentResultSet().getString(column.getKey());
+
                     } else if (column.getValue().equals("geneMappedToGeneIdCount")) {
                         geneMappedToGeneIdCount = this.getCurrentResultSet().getInt(column.getKey());
 
@@ -455,8 +450,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                 }
             }
             // Set GeneTO
-            return log.traceExit(new GeneTO(id, geneId, geneName, geneDescription, speciesId, geneBioTypeId, OMAParentNodeId,
-                    ensemblGene, geneMappedToGeneIdCount, expressionSummary));
+            return log.traceExit(new GeneTO(id, geneId, geneName, geneDescription, speciesId, geneBioTypeId, ensemblGene,
+                    seqRegionName, geneMappedToGeneIdCount, expressionSummary));
         }
     }
 

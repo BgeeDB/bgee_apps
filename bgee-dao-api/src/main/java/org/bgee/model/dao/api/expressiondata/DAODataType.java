@@ -14,8 +14,6 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * {@code Enum} listing the data types used in Bgee:
  *
  * <ul>
- * <li>{@code AFFYMETRIX}
- * <li>{@code EST}
  * <li>{@code IN_SITU}
  * <li>{@code RNA_SEQ}
  * <li>{@code SC_RNA_SEQ}
@@ -25,25 +23,20 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * @version Bgee 14 Mar. 2017
  * @since Bgee 14 Mar. 2017
  */
+//FIXME: review these fields as some are probably not required anymore with OTF propagation
 public enum DAODataType implements EnumDAOField {
     //The order of these Enum elements is important and is used to generate field names
-    AFFYMETRIX("affymetrix", "affymetrix", "Affy", "affymetrixMeanRank", "affymetrixGlobalMeanRank",
-            "affymetrixMeanRankNorm", "affymetrixGlobalMeanRankNorm", "affymetrixDistinctRankSum",
-            "affymetrixGlobalDistinctRankSum", "affymetrixMaxRank", "affymetrixGlobalMaxRank", false,
-            true, true),
-    EST("est", "est", "Est", "estRank", "estGlobalRank", "estRankNorm", "estGlobalRankNorm",
-            "estMaxRank", "estGlobalMaxRank", "estMaxRank", "estGlobalMaxRank", true, true, true),
     IN_SITU("in situ", "inSitu", "InSitu", "inSituRank", "inSituGlobalRank", "inSituRankNorm",
             "inSituGlobalRankNorm", "inSituMaxRank", "inSituGlobalMaxRank",
             "inSituMaxRank", "inSituGlobalMaxRank", true, false, true),
     RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq", "rnaSeqMeanRank", "rnaSeqGlobalMeanRank",
             "rnaSeqMeanRankNorm", "rnaSeqGlobalMeanRankNorm", "rnaSeqDistinctRankSum",
-            "rnaSeqGlobalDistinctRankSum", "rnaSeqMaxRank", "rnaSeqGlobalMaxRank", false, true, false),
+            "rnaSeqGlobalDistinctRankSum", "bulkMaxRank", "bulkGlobalMaxRank", false, true, false),
     SC_RNA_SEQ("single-cell RNA-Seq", "scRnaSeqFullLength", "ScRnaSeqFL",
             "scRnaSeqFullLengthMeanRank", "scRnaSeqFullLengthGlobalMeanRank",
             "scRnaSeqFullLengthMeanRankNorm", "scRnaSeqFullLengthGlobalMeanRankNorm",
             "scRnaSeqFullLengthDistinctRankSum", "scRnaSeqFullLengthGlobalDistinctRankSum",
-            "scRnaSeqFullLengthMaxRank", "scRnaSeqFullLengthGlobalMaxRank", false, true, false);
+            "singleCellMaxRank", "singleCellGlobalMaxRank", false, true, false);
 
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 

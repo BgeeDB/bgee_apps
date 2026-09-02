@@ -210,29 +210,29 @@ public class ParseOrthoXML extends MySQLDAOUser {
      *                                  by the OrthoXMLReader.
      * @throws IOException              If the mapping file could not be read.
      */
-    public static void main(String[] args) throws IllegalArgumentException, DAOException, 
-            XMLStreamException, XMLParseException, IOException {
-        log.entry((Object[]) args);
-        
-        int expectedArgLengthWithoutMapping = 1;
-        int expectedArgLengthWithMapping = 2;
-        if (args.length != expectedArgLengthWithoutMapping && 
-            args.length != expectedArgLengthWithMapping) {
-            throw log.throwing(new IllegalArgumentException("Incorrect number of " +
-                    "arguments provided, expected " + expectedArgLengthWithoutMapping + 
-                    "or " + expectedArgLengthWithMapping + " arguments, " +
-                    args.length + " provided."));
-        }
-    
-        ParseOrthoXML parser = new ParseOrthoXML();
-        if (args.length == expectedArgLengthWithoutMapping) {
-            parser.parseXML(args[0], null);
-        } else {
-            parser.parseXML(args[0], args[1]);
-        }
-        
-        log.traceExit();
-    }
+//    public static void main(String[] args) throws IllegalArgumentException, DAOException, 
+//            XMLStreamException, XMLParseException, IOException {
+//        log.entry((Object[]) args);
+//        
+//        int expectedArgLengthWithoutMapping = 1;
+//        int expectedArgLengthWithMapping = 2;
+//        if (args.length != expectedArgLengthWithoutMapping && 
+//            args.length != expectedArgLengthWithMapping) {
+//            throw log.throwing(new IllegalArgumentException("Incorrect number of " +
+//                    "arguments provided, expected " + expectedArgLengthWithoutMapping + 
+//                    "or " + expectedArgLengthWithMapping + " arguments, " +
+//                    args.length + " provided."));
+//        }
+//    
+//        ParseOrthoXML parser = new ParseOrthoXML();
+//        if (args.length == expectedArgLengthWithoutMapping) {
+//            parser.parseXML(args[0], null);
+//        } else {
+//            parser.parseXML(args[0], args[1]);
+//        }
+//        
+//        log.traceExit();
+//    }
 
     /**
      * Performs the complete task of reading the Hierarchical Groups orthoxml file and
@@ -259,67 +259,67 @@ public class ParseOrthoXML extends MySQLDAOUser {
      *                                  OrthoXMLReader.
      * @throws IOException              If the mapping file could not be read.
      */
-    public void parseXML(String orthoXMLFile, String geneMappingFile) 
-        throws DAOException, XMLStreamException, XMLParseException, IOException {  
-        log.entry(orthoXMLFile, geneMappingFile);
-        log.info("Start parsing of OrthoXML file...");
-
-        // First, if provided, we read mapping file save data in a map
-        Map<String,String> geneMapping = new HashMap<String, String>();
-        if (geneMappingFile != null) {
-            geneMapping = this.readMappingFile(geneMappingFile);
-        }
-        // Catch any IllegalStateException to wrap it into a IllegalArgumentException 
-        // (a IllegalStateException would be generated because the OrthoXML groups
-        // loaded from the file would be invalid, so it would be a wrong argument).
-        try {
-            // Retrieve gene IDs of the Bgee database to be able to check if OMA genes are
-            // in Bgee and to update OMAParentNodeId in gene table.
-            this.loadGeneIdsFromDb();
-
-            // Retrieve taxon IDs of the Bgee database to be able to check if OMA HOGs 
-            // correspond to taxa present in Bgee.
-            this.loadTaxonIdsFromDb();
-            
-            // Retrieve species from Bgee that use genome of another species.
-            this.loadMappingSpeciesToGenomeSpecies();
-            
-            // Construct HierarchicalNodeTOs and GeneTOs
-            this.generateTOsFromFile(orthoXMLFile, geneMapping);
-
-            // Start a transaction to insert HierarchicalNodeTOs and update GeneTOs
-            // in the Bgee data source. Note that we do not need to call rollback if
-            // an error occurs, calling closeDAO will rollback any ongoing transaction.
-            int nbInsertedGroups = 0, nbUpdatedGenes = 0, nbInsertedGroupToGene = 0;
-
-            this.startTransaction(); 
-
-            log.info("Start inserting of hierarchical groups...");
-            nbInsertedGroups = this.getHierarchicalGroupDAO()
-                    .insertHierarchicalNodes(this.hierarchicalNodeTOs);
-            log.info("Done inserting hierarchical groups");
-
-            log.info("Start updating genes...");
-//            nbUpdatedGenes = this.getGeneDAO().updateGenes(this.geneTOs,
-//                    Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID));
-            log.info("Done updating genes.");
-            log.info("Start inserting gene to hierarchical group mapping...");
-            nbInsertedGroupToGene = this.getHierarchicalGroupDAO()
-            		.insertHierarchicalNodeToGene(this.hierarchicalNodeToGeneTOs);
-            log.info("Done inserting gene to hierarchical group mapping.");
-
-            this.commit();
-            log.info("Done parsing of OrthoXML file: {} hierarchical groups inserted " +
-                    ",{} genes updated, and {} mapping between hierarchical group and genes inserted.", nbInsertedGroups, nbUpdatedGenes, nbInsertedGroupToGene);
-        } catch (IllegalStateException e) {
-            log.catching(e);
-            throw log.throwing(new IllegalArgumentException(
-                    "The OrthoXML file provided is invalid", e));
-        } finally {
-            this.closeDAO();
-        }
-        log.traceExit();
-    }
+//    public void parseXML(String orthoXMLFile, String geneMappingFile) 
+//        throws DAOException, XMLStreamException, XMLParseException, IOException {  
+//        log.entry(orthoXMLFile, geneMappingFile);
+//        log.info("Start parsing of OrthoXML file...");
+//
+//        // First, if provided, we read mapping file save data in a map
+//        Map<String,String> geneMapping = new HashMap<String, String>();
+//        if (geneMappingFile != null) {
+//            geneMapping = this.readMappingFile(geneMappingFile);
+//        }
+//        // Catch any IllegalStateException to wrap it into a IllegalArgumentException 
+//        // (a IllegalStateException would be generated because the OrthoXML groups
+//        // loaded from the file would be invalid, so it would be a wrong argument).
+//        try {
+//            // Retrieve gene IDs of the Bgee database to be able to check if OMA genes are
+//            // in Bgee and to update OMAParentNodeId in gene table.
+//            this.loadGeneIdsFromDb();
+//
+//            // Retrieve taxon IDs of the Bgee database to be able to check if OMA HOGs 
+//            // correspond to taxa present in Bgee.
+//            this.loadTaxonIdsFromDb();
+//            
+//            // Retrieve species from Bgee that use genome of another species.
+//            this.loadMappingSpeciesToGenomeSpecies();
+//            
+//            // Construct HierarchicalNodeTOs and GeneTOs
+//            this.generateTOsFromFile(orthoXMLFile, geneMapping);
+//
+//            // Start a transaction to insert HierarchicalNodeTOs and update GeneTOs
+//            // in the Bgee data source. Note that we do not need to call rollback if
+//            // an error occurs, calling closeDAO will rollback any ongoing transaction.
+//            int nbInsertedGroups = 0, nbUpdatedGenes = 0, nbInsertedGroupToGene = 0;
+//
+//            this.startTransaction(); 
+//
+//            log.info("Start inserting of hierarchical groups...");
+//            nbInsertedGroups = this.getHierarchicalGroupDAO()
+//                    .insertHierarchicalNodes(this.hierarchicalNodeTOs);
+//            log.info("Done inserting hierarchical groups");
+//
+//            log.info("Start updating genes...");
+////            nbUpdatedGenes = this.getGeneDAO().updateGenes(this.geneTOs,
+////                    Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID));
+//            log.info("Done updating genes.");
+//            log.info("Start inserting gene to hierarchical group mapping...");
+//            nbInsertedGroupToGene = this.getHierarchicalGroupDAO()
+//            		.insertHierarchicalNodeToGene(this.hierarchicalNodeToGeneTOs);
+//            log.info("Done inserting gene to hierarchical group mapping.");
+//
+//            this.commit();
+//            log.info("Done parsing of OrthoXML file: {} hierarchical groups inserted " +
+//                    ",{} genes updated, and {} mapping between hierarchical group and genes inserted.", nbInsertedGroups, nbUpdatedGenes, nbInsertedGroupToGene);
+//        } catch (IllegalStateException e) {
+//            log.catching(e);
+//            throw log.throwing(new IllegalArgumentException(
+//                    "The OrthoXML file provided is invalid", e));
+//        } finally {
+//            this.closeDAO();
+//        }
+//        log.traceExit();
+//    }
 
     /**
      * Extract the information about the gene mapping to include in Bgee from the provided 
@@ -497,50 +497,50 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @throws XMLParseException        If there is an error in parsing the XML retrieved
      *                                  by the OrthoXMLReader.
      */
-    private void generateTOsFromFile(String orthoXMLFile, Map<String,String> geneMapping)
-        throws FileNotFoundException,
-            XMLStreamException, XMLParseException {
-        log.entry(orthoXMLFile, geneMapping);
-        OrthoXMLReader reader = new OrthoXMLReader(new File(orthoXMLFile));
-        List<Species> speciesInFile = reader.getSpecies();
-        List<Integer> speciesIdsInFile = new ArrayList<Integer>();  
-        for (Species species : speciesInFile) {
-            speciesIdsInFile.add(species.getNcbiTaxId());
-        }
-        // Common species
-        List<Integer> common = new ArrayList<Integer>(this.speciesIdsInBgee);
-        common.retainAll(speciesIdsInFile);
-        if (!common.isEmpty()) {
-            log.trace("The common species between Bgee and OMA file species are: {}", common);
-        } else {
-            throw log.throwing(new IllegalArgumentException(
-                    "There is no common species between Bgee and OMA file species."));
-        }
-        
-        // Species in Bgee but not in provided OMA file
-        List<Integer> speciesBgeeSpecific = new ArrayList<Integer>(this.speciesIdsInBgee);
-        speciesBgeeSpecific.removeAll(speciesIdsInFile);
-        if (!speciesBgeeSpecific.isEmpty()) {
-            log.trace("The species specific to Bgee are: {}", speciesBgeeSpecific);
-        }
-        
-        // Species in provided OMA file but not in Bgee
-        List<Integer> speciesOMASpecific = new ArrayList<Integer>(speciesIdsInFile);
-        speciesOMASpecific.removeAll(this.speciesIdsInBgee);
-        if (!speciesOMASpecific.isEmpty()) {
-            log.trace("The species specific to OMA file are: {}", speciesOMASpecific);
-        }
-
-        // Read all the groups in the file iteratively
-        Group group = null;
-        while ((group = reader.next()) != null) {
-            this.generateTOsFromGroup(group, group.getId(), geneMapping);
-            // We increment the nestedSetBoundSeed because we move to the next OMA group.
-            this.nestedSetBoundSeed++;
-        }
-        log.info("Done retrieving hierarchical groups.");
-        log.traceExit();
-    }
+//    private void generateTOsFromFile(String orthoXMLFile, Map<String,String> geneMapping)
+//        throws FileNotFoundException,
+//            XMLStreamException, XMLParseException {
+//        log.entry(orthoXMLFile, geneMapping);
+//        OrthoXMLReader reader = new OrthoXMLReader(new File(orthoXMLFile));
+//        List<Species> speciesInFile = reader.getSpecies();
+//        List<Integer> speciesIdsInFile = new ArrayList<Integer>();  
+//        for (Species species : speciesInFile) {
+//            speciesIdsInFile.add(species.getNcbiTaxId());
+//        }
+//        // Common species
+//        List<Integer> common = new ArrayList<Integer>(this.speciesIdsInBgee);
+//        common.retainAll(speciesIdsInFile);
+//        if (!common.isEmpty()) {
+//            log.trace("The common species between Bgee and OMA file species are: {}", common);
+//        } else {
+//            throw log.throwing(new IllegalArgumentException(
+//                    "There is no common species between Bgee and OMA file species."));
+//        }
+//        
+//        // Species in Bgee but not in provided OMA file
+//        List<Integer> speciesBgeeSpecific = new ArrayList<Integer>(this.speciesIdsInBgee);
+//        speciesBgeeSpecific.removeAll(speciesIdsInFile);
+//        if (!speciesBgeeSpecific.isEmpty()) {
+//            log.trace("The species specific to Bgee are: {}", speciesBgeeSpecific);
+//        }
+//        
+//        // Species in provided OMA file but not in Bgee
+//        List<Integer> speciesOMASpecific = new ArrayList<Integer>(speciesIdsInFile);
+//        speciesOMASpecific.removeAll(this.speciesIdsInBgee);
+//        if (!speciesOMASpecific.isEmpty()) {
+//            log.trace("The species specific to OMA file are: {}", speciesOMASpecific);
+//        }
+//
+//        // Read all the groups in the file iteratively
+//        Group group = null;
+//        while ((group = reader.next()) != null) {
+//            this.generateTOsFromGroup(group, group.getId(), geneMapping);
+//            // We increment the nestedSetBoundSeed because we move to the next OMA group.
+//            this.nestedSetBoundSeed++;
+//        }
+//        log.info("Done retrieving hierarchical groups.");
+//        log.traceExit();
+//    }
     
     /**
      * Extract all relevant information from a {@code Group} and create a 
@@ -556,84 +556,84 @@ public class ParseOrthoXML extends MySQLDAOUser {
      *                          {@code HierarchicalNodeTO} has been added representing 
      *                          the given {@code Group}. 
      */
-    private boolean generateTOsFromGroup(Group group, String omaXrefId, 
-                    Map<String,String> geneMapping) {
-        log.entry(group, omaXrefId, geneMapping);
-        // First, we check if the group represents a taxon presents in Bgee or if it's a 
-        // paralog group. If wrong, we don't insert a hierarchical groupTO.
-        String groupTaxId = group.getProperty(TAX_ID_ATTRIBUTE);
-        if (groupTaxId != null && !this.taxonIdsInBgee.contains(Integer.parseInt(groupTaxId))) {
-            log.warn("{} ({}) isn't a taxon relevant to Bgee",
-                    group.getProperty(TAX_RANGE_ATTRIBUTE), groupTaxId);
-            return log.traceExit(false);
-        } 
-
-        // Second, we increment the nestedSetBoundSeed because we will create a new 
-        // hierarchical group
-        this.nestedSetBoundSeed++;
-
-        // We add a HierarchicalNodeTO in collection containing hierarchical groups to be 
-        // inserted into the Bgee database
-        // The last argument is the number of children of the HierarchicalNodeTO to create. 
-        // So, we need to remove 1 to countGroups() to subtract the current group.
-        log.debug("add OMAHierarchicalGroup and GeneToOma for group {}",group.getId());
-        this.addHierarchicalNodeTO(this.omaNodeId, omaXrefId, this.nestedSetBoundSeed,
-                group.getProperty(TAX_ID_ATTRIBUTE), countGroups(group) - 1);
-    	this.addHierarchicalNodeToGeneTO(
-    			group.getProperty(TAX_ID_ATTRIBUTE), group.getNestedGenes(),
-    			this.omaNodeId);
-        // Then, we retrieve gene data.
-        if (group.getGenes() != null) {
-            log.debug("Retrieving genes from group {}", group);
-            for (sbc.orthoxml.Gene groupGene : group.getGenes()) {
-                log.debug("Retrieving gene with identifier {}", groupGene.getGeneIdentifier());
-                boolean isInBgee = false ;
-                for (String omaGeneId : retrieveSplittedGeneIdentifier(groupGene)) {
-                    log.debug("Examining OMA geneId {}", omaGeneId);
-                    if(idToBgeeIdInBgee.containsKey(omaGeneId)){
-	                    for (Integer bgeeGeneId : idToBgeeIdInBgee.get(omaGeneId)){
-	                    	if (this.addGeneTO(new GeneTO(bgeeGeneId,omaGeneId, null, null, null, null, 
-	                                this.omaNodeId,null, null, null),
-	                                omaXrefId)) {
-	                            isInBgee = true;
-	                        } else if (!geneMapping.isEmpty()) {
-	                            log.debug("Trying to find a x-ref for geneId {} from mapping file", omaGeneId);
-	                            if (geneMapping.containsKey(omaGeneId)) {
-	                            	String currentGeneId = geneMapping.get(omaGeneId);
-	                                log.debug("Mapping found for geneId {}: {}", omaGeneId, currentGeneId);
-	                                if (this.addGeneTO(new GeneTO(bgeeGeneId, currentGeneId, null, null, null, null, 
-	                                        this.omaNodeId, null, null, null), omaXrefId)) {
-	                                    isInBgee = true;
-	                                }
-	                            }
-	                        }
-	                    }
-                    }
-                    
-                }
-                if (!isInBgee) {
-                    log.warn("No gene ID {} found in Bgee for the node {}",
-                            groupGene.getGeneIdentifier(), this.omaNodeId);
-                }
-            }
-        }
-
-        // Incrementing the node ID. Done after to be able to set OMA parent node ID
-        // into gene table
-        this.omaNodeId++;
-        
-        if (group.getChildren() != null && group.getChildren().size() > 0) {
-            for (Group childGroup : group.getChildren()) {
-                // Recurse
-                if (generateTOsFromGroup(childGroup, omaXrefId, geneMapping)) {
-                    // We increment the nestedSetBoundSeed because we are at a leaf of the 
-                    // nested set model
-                    this.nestedSetBoundSeed++;
-                }
-            }
-        }
-        return log.traceExit(true);
-    }
+//    private boolean generateTOsFromGroup(Group group, String omaXrefId, 
+//                    Map<String,String> geneMapping) {
+//        log.entry(group, omaXrefId, geneMapping);
+//        // First, we check if the group represents a taxon presents in Bgee or if it's a 
+//        // paralog group. If wrong, we don't insert a hierarchical groupTO.
+//        String groupTaxId = group.getProperty(TAX_ID_ATTRIBUTE);
+//        if (groupTaxId != null && !this.taxonIdsInBgee.contains(Integer.parseInt(groupTaxId))) {
+//            log.warn("{} ({}) isn't a taxon relevant to Bgee",
+//                    group.getProperty(TAX_RANGE_ATTRIBUTE), groupTaxId);
+//            return log.traceExit(false);
+//        } 
+//
+//        // Second, we increment the nestedSetBoundSeed because we will create a new 
+//        // hierarchical group
+//        this.nestedSetBoundSeed++;
+//
+//        // We add a HierarchicalNodeTO in collection containing hierarchical groups to be 
+//        // inserted into the Bgee database
+//        // The last argument is the number of children of the HierarchicalNodeTO to create. 
+//        // So, we need to remove 1 to countGroups() to subtract the current group.
+//        log.debug("add OMAHierarchicalGroup and GeneToOma for group {}",group.getId());
+//        this.addHierarchicalNodeTO(this.omaNodeId, omaXrefId, this.nestedSetBoundSeed,
+//                group.getProperty(TAX_ID_ATTRIBUTE), countGroups(group) - 1);
+//    	this.addHierarchicalNodeToGeneTO(
+//    			group.getProperty(TAX_ID_ATTRIBUTE), group.getNestedGenes(),
+//    			this.omaNodeId);
+//        // Then, we retrieve gene data.
+//        if (group.getGenes() != null) {
+//            log.debug("Retrieving genes from group {}", group);
+//            for (sbc.orthoxml.Gene groupGene : group.getGenes()) {
+//                log.debug("Retrieving gene with identifier {}", groupGene.getGeneIdentifier());
+//                boolean isInBgee = false ;
+//                for (String omaGeneId : retrieveSplittedGeneIdentifier(groupGene)) {
+//                    log.debug("Examining OMA geneId {}", omaGeneId);
+//                    if(idToBgeeIdInBgee.containsKey(omaGeneId)){
+//	                    for (Integer bgeeGeneId : idToBgeeIdInBgee.get(omaGeneId)){
+//	                    	if (this.addGeneTO(new GeneTO(bgeeGeneId,omaGeneId, null, null, null, null, 
+//	                                this.omaNodeId,null, null, null),
+//	                                omaXrefId)) {
+//	                            isInBgee = true;
+//	                        } else if (!geneMapping.isEmpty()) {
+//	                            log.debug("Trying to find a x-ref for geneId {} from mapping file", omaGeneId);
+//	                            if (geneMapping.containsKey(omaGeneId)) {
+//	                            	String currentGeneId = geneMapping.get(omaGeneId);
+//	                                log.debug("Mapping found for geneId {}: {}", omaGeneId, currentGeneId);
+//	                                if (this.addGeneTO(new GeneTO(bgeeGeneId, currentGeneId, null, null, null, null, 
+//	                                        this.omaNodeId, null, null, null), omaXrefId)) {
+//	                                    isInBgee = true;
+//	                                }
+//	                            }
+//	                        }
+//	                    }
+//                    }
+//                    
+//                }
+//                if (!isInBgee) {
+//                    log.warn("No gene ID {} found in Bgee for the node {}",
+//                            groupGene.getGeneIdentifier(), this.omaNodeId);
+//                }
+//            }
+//        }
+//
+//        // Incrementing the node ID. Done after to be able to set OMA parent node ID
+//        // into gene table
+//        this.omaNodeId++;
+//        
+//        if (group.getChildren() != null && group.getChildren().size() > 0) {
+//            for (Group childGroup : group.getChildren()) {
+//                // Recurse
+//                if (generateTOsFromGroup(childGroup, omaXrefId, geneMapping)) {
+//                    // We increment the nestedSetBoundSeed because we are at a leaf of the 
+//                    // nested set model
+//                    this.nestedSetBoundSeed++;
+//                }
+//            }
+//        }
+//        return log.traceExit(true);
+//    }
 
     /**
      * Retrieves the split {@code String} of OMA Gene Identifier.

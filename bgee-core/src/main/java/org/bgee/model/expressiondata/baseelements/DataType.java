@@ -37,7 +37,6 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 //TODO: why don't we have a "ALL" data type?? This would be much cleaner than having to provide "null" 
 //everywhere...
 public enum DataType implements BgeeEnumField {
-    AFFYMETRIX("Affymetrix", true, null, true), EST("EST", false, null, false),
     IN_SITU("in situ hybridization", true, null, true),
     //Note: It is important to keep SC_RNA_SEQ before RNA_SEQ until we fix the issue of retrieving
     // experiment information consisting in different datatype (e.g both RNA_SEQ and SC_RNA_SEQ) as

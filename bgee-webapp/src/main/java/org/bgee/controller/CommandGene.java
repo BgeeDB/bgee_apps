@@ -20,13 +20,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall.ClusteringMethod;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.ConditionFilter2;
+import org.bgee.model.expressiondata.call.ExpressionCallLoader;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneHomologs;
@@ -48,7 +56,7 @@ import org.bgee.view.ViewFactory;
  * @version Bgee 15.1, Jan. 2024
  * @since   Bgee 13, Nov. 2015
  */
-public class CommandGene extends CommandParent {
+public class CommandGene extends CommandExpressionSupport {
 
     private final static Logger log = LogManager.getLogger(CommandGene.class.getName());
 
@@ -62,11 +70,10 @@ public class CommandGene extends CommandParent {
      * to retrieve in one request. Value: 100.
      */
     private final static int DEFAULT_LIMIT = 100;
-
     public static class GeneExpressionResponse {
         //Deactivated as long as we don't retrieve the Gene when there is no expression data
 //        private final Gene gene;
-        private final List<ExpressionCall> calls;
+        private final List<OTFExpressionCall> calls;
         private final ExpressionSummary callType;
         private final EnumSet<CallService.Attribute> condParams;
         private final EnumSet<DataType> dataTypes;
@@ -79,7 +86,7 @@ public class CommandGene extends CommandParent {
          * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
          * @param clustering                    See {@link #getClustering()}.
          */
-        public GeneExpressionResponse(List<ExpressionCall> calls, ExpressionSummary callType,
+        public GeneExpressionResponse(List<OTFExpressionCall> calls, ExpressionSummary callType,
                 EnumSet<CallService.Attribute> condParams, EnumSet<DataType> dataTypes,
                 boolean includingAllRedundantCalls, Map<ExpressionCall, Integer> clustering) {
             this.includingAllRedundantCalls = includingAllRedundantCalls;
@@ -98,7 +105,7 @@ public class CommandGene extends CommandParent {
          *          depending on {@link #isIncludingAllRedundantCalls()}.
          * @see #isIncludingAllRedundantCalls()
          */
-        public List<ExpressionCall> getCalls() {
+        public List<OTFExpressionCall> getCalls() {
             return calls;
         }
         /**
@@ -217,8 +224,9 @@ public class CommandGene extends CommandParent {
      * @param serviceFactory            A {@code ServiceFactory} that provides bgee services.
      */
     public CommandGene(HttpServletResponse response, RequestParameters requestParameters,
-                       BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory);
+                       BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
+                       BgeeCacheService cacheService) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, cacheService);
     }
 
     @Override
@@ -232,6 +240,7 @@ public class CommandGene extends CommandParent {
         GeneService geneService = serviceFactory.getGeneService();
         GeneHomologsService geneHomologsService = serviceFactory.getGeneHomologsService();
         CallService callService = serviceFactory.getCallService();
+        ExpressionCallService expressionCallService = serviceFactory.getExpressionCallService();
 
         //*******************************************
         // GENE SEARCHES
@@ -285,7 +294,7 @@ public class CommandGene extends CommandParent {
             log.traceExit(); return;
         }
         if (RequestParameters.ACTION_GENE_EXPRESSION.equals(action)) {
-            this.processExpressionRequest(callService, display);
+            this.processExpressionRequest(callService, expressionCallService, display);
             log.traceExit(); return;
         }
 
@@ -418,11 +427,13 @@ public class CommandGene extends CommandParent {
      * @throws InvalidRequestException
      * @throws PageNotFoundException
      */
-    private void processExpressionRequest(CallService callService, GeneDisplay display)
+    private void processExpressionRequest(CallService callService,
+            ExpressionCallService expressionCallService, GeneDisplay display)
             throws InvalidRequestException, PageNotFoundException {
-        log.traceEntry("{}, {}", callService, display);
+        log.traceEntry("{}, {}, {}", callService, expressionCallService, display);
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
+        long startTime = System.currentTimeMillis();
         URLParameters urlParameters = requestParameters.getUrlParametersInstance();
 
         //Condition parameters
@@ -444,11 +455,21 @@ public class CommandGene extends CommandParent {
                 throw log.throwing(new InvalidRequestException("Only one expression type can be provided"));
             }
             String requestedCallType = this.requestParameters.getExprType().iterator().next();
-            try {
-                callType = SummaryCallType.ExpressionSummary.convertToExpression(requestedCallType);
-            } catch (IllegalArgumentException e) {
-                log.catching(e);
-                throw log.throwing(new InvalidRequestException("Unkown call type: " + requestedCallType));
+            String expressedValue = ExpressionSummary.EXPRESSED.getStringRepresentation();
+            String notExpressedValue = ExpressionSummary.NOT_EXPRESSED.getStringRepresentation();
+            if (RequestParameters.ALL_VALUE.equalsIgnoreCase(requestedCallType)) {
+                throw log.throwing(new InvalidRequestException(
+                        "Expression type 'all' is not supported for this endpoint. "
+                        + "Please use either '" + expressedValue + "' or '" + notExpressedValue + "'."));
+            }
+            if (expressedValue.equalsIgnoreCase(requestedCallType)) {
+                callType = ExpressionSummary.EXPRESSED;
+            } else if (notExpressedValue.equalsIgnoreCase(requestedCallType)) {
+                callType = ExpressionSummary.NOT_EXPRESSED;
+            } else {
+                throw log.throwing(new InvalidRequestException(
+                        "Unknown call type: " + requestedCallType + ". "
+                        + "Accepted values are '" + expressedValue + "' and '" + notExpressedValue + "'."));
             }
         }
 
@@ -459,10 +480,19 @@ public class CommandGene extends CommandParent {
         if (speciesId == null || speciesId < 1) {
             throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
         }
+//        GeneExpressionResponse exprResponse = loadExpression(callType, geneId, speciesId, condParamAttrs,
+//            dataTypes, callService, expressionCallService, getClusteringFunction());
+        log.debug("request parameters retrieved in {} ms",
+                System.currentTimeMillis() - startTime);
+        startTime = System.currentTimeMillis();
         GeneExpressionResponse exprResponse = loadExpression(callType, geneId, speciesId, condParamAttrs,
-                dataTypes, callService, getClusteringFunction());
+                dataTypes, callService, expressionCallService, null);
+        log.debug("expression data loaded in {} ms",
+                System.currentTimeMillis() - startTime);
+        startTime = System.currentTimeMillis();
         display.displayGeneExpression(exprResponse);
-
+        log.debug("expression data displayed in {} ms",
+                System.currentTimeMillis() - startTime);
         log.traceExit();
     }
 
@@ -547,17 +577,33 @@ public class CommandGene extends CommandParent {
         }
     }
 
-    private static GeneExpressionResponse loadExpression(ExpressionSummary callType,
+    private GeneExpressionResponse loadExpression(ExpressionSummary callType,
             String geneId, Integer speciesId, EnumSet<CallService.Attribute> condParamAttrs,
             EnumSet<DataType> dataTypes, CallService callService,
-            Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> clusteringFunction)
-                    throws PageNotFoundException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", callType, geneId, speciesId, condParamAttrs,
-                dataTypes, callService, clusteringFunction);
+            ExpressionCallService expressionCallService,
+            Function<List<OTFExpressionCall>, Map<OTFExpressionCall, Integer>> clusteringFunction)
+                throws PageNotFoundException, InvalidRequestException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", callType, geneId, speciesId,
+            condParamAttrs, dataTypes, callService, expressionCallService, clusteringFunction);
 
         try {
-            List<ExpressionCall> calls = callService.loadSilverCondObservedCalls(
-                    new GeneFilter(speciesId, geneId), condParamAttrs, callType, dataTypes);
+            Set<ConditionParameter<?, ?>> condParams = convertCondParamAttrsToCondParams(condParamAttrs);
+            // Build and execute an ExpressionCallLoader as in CommandData.
+            ExpressionCallFilter2 exprCallFilter = new ExpressionCallFilter2(
+                Collections.singletonMap(
+                    ExpressionSummary.NOT_EXPRESSED.equals(callType)?
+                        ExpressionSummary.NOT_EXPRESSED: ExpressionSummary.EXPRESSED,
+                    SummaryQuality.SILVER),
+                new GeneFilter(speciesId, geneId),
+                buildConditionFilters(speciesId, condParams),
+                dataTypes,
+                condParams,
+                condParams,
+                true, true);
+            ExpressionCallLoader callLoader = this.loadExprCallLoader(exprCallFilter);
+            List<OTFExpressionCall> calls = this.loadExprCallResults(
+                    callLoader, DEFAULT_LIMIT, LIMIT_MAX);
+
             if (calls.isEmpty()) {
                 log.debug("No calls for gene {} in species {}", geneId, speciesId);
                 //XXX: maybe we should retrieve the gene here with the method loadGenes
@@ -571,10 +617,12 @@ public class CommandGene extends CommandParent {
             }
 
             //Store a clustering of ExpressionCalls
-            Map<ExpressionCall, Integer> clustering = clusteringFunction.apply(calls);
+//            Map<ExpressionCall, Integer> clustering = clusteringFunction.apply(calls);
 
+//            return log.traceExit(new GeneExpressionResponse(calls, callType, condParamAttrs, dataTypes,
+//                    true, clustering));
             return log.traceExit(new GeneExpressionResponse(calls, callType, condParamAttrs, dataTypes,
-                    true, clustering));
+                    true, null));
         //FIXME: actually catching IllegalArgumentException leads to masking real errors.
         //I think it was done because a missing gene can lead to an IllegalArgumentException.
         //To deactivate catching of IllegalArgumentException and to check!
@@ -584,7 +632,51 @@ public class CommandGene extends CommandParent {
                     + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
         }
     }
-    
+
+    private static Set<ConditionParameter<?, ?>> convertCondParamAttrsToCondParams(
+            Set<CallService.Attribute> condParamAttrs) {
+        log.traceEntry("{}", condParamAttrs);
+        Set<ConditionParameter<?, ?>> condParams = new HashSet<>();
+        if (condParamAttrs == null || condParamAttrs.isEmpty()) {
+            condParams.addAll(ConditionParameter.allOf());
+            return log.traceExit(condParams);
+        }
+        if (condParamAttrs.contains(CallService.Attribute.ANAT_ENTITY_ID) ||
+                condParamAttrs.contains(CallService.Attribute.CELL_TYPE_ID)) {
+            condParams.add(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        }
+        if (condParamAttrs.contains(CallService.Attribute.DEV_STAGE_ID)) {
+            condParams.add(ConditionParameter.DEV_STAGE);
+        }
+        if (condParamAttrs.contains(CallService.Attribute.SEX_ID)) {
+            condParams.add(ConditionParameter.SEX);
+        }
+        if (condParamAttrs.contains(CallService.Attribute.STRAIN_ID)) {
+            condParams.add(ConditionParameter.STRAIN);
+        }
+        if (condParams.isEmpty()) {
+            condParams.addAll(ConditionParameter.allOf());
+        }
+        return log.traceExit(condParams);
+    }
+
+    private static Set<ConditionFilter2> buildConditionFilters(Integer speciesId,
+            Set<ConditionParameter<?, ?>> condParams) {
+        log.traceEntry("{}, {}", speciesId, condParams);
+
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds =
+                new HashMap<>();
+        for (ConditionParameter<?, ?> condParam: ConditionParameter.allOf()) {
+            condParamToComposedFilterIds.put(condParam, new ComposedFilterIds<>());
+        }
+        ConditionFilter2 condFilter = new ConditionFilter2(speciesId,
+                condParamToComposedFilterIds,
+                condParams,
+                null,
+                false);
+        return log.traceExit(condFilter.areAllFiltersExceptSpeciesEmpty()? null: Set.of(condFilter));
+    }
+
     /**
      * Return the {@code Function} corresponding to the clustering method to used, 
      * based on the properties {@link BgeeProperties#getGeneScoreClusteringMethod()} 
@@ -598,6 +690,7 @@ public class CommandGene extends CommandParent {
      *                                 allowing to parameterize the clustering function.
      * @see ExpressionCall#generateMeanRankScoreClustering(List, ClusteringMethod, double)
      */
+    @SuppressWarnings("unused")
     private Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> getClusteringFunction() 
             throws IllegalStateException {
         log.traceEntry();

@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -544,9 +545,11 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             String condKey = buildConditionKeyFromCondition2(call.getCondition());
             String conditionId = condKeyToConditionId.get(condKey);
             if (conditionId == null) {
-                throw log.throwing(new IllegalStateException(
-                        "Could not find a matching exported global condition for key '" + condKey
-                        + "' (condition: " + call.getCondition() + ")"));
+                // Expected: OTF propagation runs over the whole condition graph, while
+                // extractGlobalCondTable only exports a subset of it (notably only "meta"
+                // UBERON: stages). Calls in a non-exported condition have no global condition
+                // to point to and are skipped.
+                return null;
             }
             headerToValuePerCall.put("GLOBAL_CONDITION_ID", conditionId);
 
@@ -563,7 +566,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE,
                     call.getAllDataTypePValue() == null? null: call.getAllDataTypePValue().toString());
             return headerToValuePerCall;
-        }).collect(Collectors.toList());
+        }).filter(Objects::nonNull).collect(Collectors.toList());
         try {
             writeExpressionPerGeneToFile(headerToValuePerGene, header, processors, mapWriter);
         } catch (IOException e) {

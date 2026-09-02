@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -465,7 +466,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             Map<String, String> condKeyToConditionId, Integer speciesId, String directory) {
         log.traceEntry("{}, {}, {}, {}",idToBgeeGeneIds, condKeyToConditionId, speciesId, directory);
 
-        log.info("Start extracting global expressions for the species {}...", speciesId);
+        log.info("Start extracting global expressions for the species {}: {} genes to process...",
+                speciesId, idToBgeeGeneIds.size());
 
         // use TsvFile enum to generate the CellProcessor
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
@@ -495,16 +497,40 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
 
         File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
 
+        // Progress logging: this loop does one OTF propagation query per gene, which can be
+        // slow, and idToBgeeGeneIds.keySet().parallelStream() otherwise runs silently until the
+        // whole species is done. logEveryNGenes is deliberately small (unlike the 500k used for
+        // the 37M-row geneXRef export) since a single species is typically tens of thousands of
+        // genes, not tens of millions.
+        int totalGenes = idToBgeeGeneIds.size();
+        long logEveryNGenes = 1000L;
+        AtomicLong geneCount = new AtomicLong(0);
+        // Track how many data rows actually get written, so a "processed N genes but file is
+        // still tiny/empty" situation can be diagnosed directly from the logs (e.g., every call
+        // being filtered out by summaryCallTypeQualityFilter) rather than only from file size.
+        AtomicLong rowCount = new AtomicLong(0);
+        // Calls returned by OTF propagation but discarded because their condition is not part of
+        // the exported global condition table (see generateGlobalExpressionLines). This is
+        // expected, notably because extractGlobalCondTable only exports "meta" (UBERON:) stages
+        // while propagation runs over all stages, but the count must remain visible: a sudden
+        // jump would mean the two sides of the export have drifted apart.
+        AtomicLong discardedCallCount = new AtomicLong(0);
+
         try {
             // A stale, possibly empty, file left over from a previous run/attempt would make
             // file.exists() true and silently skip the header write below even though no header
             // was ever actually written to that file. Treat "exists but empty" the same as
             // "does not exist" so we don't get a headerless file again.
             boolean writeHeader = !file.exists() || file.length() == 0;
+            log.info("Species {}: output file {} ({}), writeHeader={}", speciesId, file,
+                    file.exists() ? "exists, " + file.length() + " bytes" : "does not exist yet",
+                    writeHeader);
             try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file, true), Utils.TSVCOMMENTED)) {
                 if(writeHeader) {
                     file.createNewFile();
                     mapWriter.writeHeader(header);
+                    mapWriter.flush();
+                    log.info("Species {}: header written and flushed to {}", speciesId, file);
                 }
 
                 idToBgeeGeneIds.keySet()
@@ -519,24 +545,44 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                             callService.processExpressionCallFilter(filter);
                     ExpressionCallLoader loader = callService.getCallLoader(processedFilter);
                     Map<Gene, List<OTFExpressionCall>> callsByGene = loader.loadDataOnTheFly();
-                    Stream<OTFExpressionCall> expressedCalls = callsByGene.values().stream()
-                            .flatMap(List::stream);
-                    generateGlobalExpressionLines(expressedCalls,
-                            idToBgeeGeneIds, condKeyToConditionId, header, processors, mapWriter, file);
+                    List<OTFExpressionCall> expressedCallsList = callsByGene.values().stream()
+                            .flatMap(List::stream).collect(Collectors.toList());
+                    long count = geneCount.incrementAndGet();
+                    boolean flushNow = count % logEveryNGenes == 0;
+                    int writtenRows = generateGlobalExpressionLines(expressedCallsList.stream(),
+                            idToBgeeGeneIds, condKeyToConditionId, header, processors, mapWriter, file,
+                            flushNow);
+                    rowCount.addAndGet(writtenRows);
+                    discardedCallCount.addAndGet(expressedCallsList.size() - writtenRows);
+                    if (flushNow) {
+                        log.info("Species {}: {}/{} genes processed so far, {} data rows written, "
+                                + "{} calls discarded (condition not exported)...",
+                                speciesId, count, totalGenes, rowCount.get(),
+                                discardedCallCount.get());
+                    }
                 });
 
             }
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
         }
+        log.info("Species {}: done, {}/{} genes processed, {} data rows written, {} calls "
+                + "discarded (condition not exported).", speciesId, geneCount.get(), totalGenes,
+                rowCount.get(), discardedCallCount.get());
         log.traceExit();
     }
 
-    private void generateGlobalExpressionLines(Stream<OTFExpressionCall> expressionCalls,
+    /**
+     * @return  An {@code int} that is the number of rows actually written to {@code mapWriter}.
+     *          It can be lower than the number of {@code expressionCalls} provided, since calls
+     *          in a condition that is not part of the exported global condition table are skipped.
+     */
+    private int generateGlobalExpressionLines(Stream<OTFExpressionCall> expressionCalls,
             Map<String, Integer> geneToBgeeGeneId, Map<String, String> condKeyToConditionId,
-            String[] header, CellProcessor[] processors, ICsvMapWriter mapWriter, File file) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", expressionCalls, geneToBgeeGeneId,
-                condKeyToConditionId, header, processors, mapWriter, file);
+            String[] header, CellProcessor[] processors, ICsvMapWriter mapWriter, File file,
+            boolean flushAfterWrite) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", expressionCalls, geneToBgeeGeneId,
+                condKeyToConditionId, header, processors, mapWriter, file, flushAfterWrite);
 
         List<Map<String, String>> headerToValuePerGene = expressionCalls.map(call -> {
             Map<String, String> headerToValuePerCall = new HashMap<>();
@@ -549,7 +595,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 // Expected: OTF propagation runs over the whole condition graph, while
                 // extractGlobalCondTable only exports a subset of it (notably only "meta"
                 // UBERON: stages). Calls in a non-exported condition have no global condition
-                // to point to and are skipped.
+                // to point to and are skipped. The caller counts them (see the returned row
+                // count) so that a drift between the two sides remains visible in the logs.
                 return null;
             }
             headerToValuePerCall.put("GLOBAL_CONDITION_ID", conditionId);
@@ -569,10 +616,11 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             return headerToValuePerCall;
         }).filter(Objects::nonNull).collect(Collectors.toList());
         try {
-            writeExpressionPerGeneToFile(headerToValuePerGene, header, processors, mapWriter);
+            writeExpressionPerGeneToFile(headerToValuePerGene, header, processors, mapWriter, flushAfterWrite);
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
         }
+        return log.traceExit(headerToValuePerGene.size());
     }
 
     /**
@@ -640,12 +688,18 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
 
     /**
      * Synchronized method taking care of writing in a thread-safe approach the expression information
-     * retrieved from the database into a unique file.
+     * retrieved from the database into a unique file. {@code flushAfterWrite} is handled inside
+     * this same synchronized block (rather than by the caller) so the flush can never race a
+     * concurrent write from another thread also calling this method.
      */
     private synchronized void writeExpressionPerGeneToFile(List<Map<String,String>> headerToValuePerGene,
-            String [] header, CellProcessor[] processors, ICsvMapWriter mapWriter) throws IOException {
+            String [] header, CellProcessor[] processors, ICsvMapWriter mapWriter,
+            boolean flushAfterWrite) throws IOException {
         for(Map<String,String> headerToValuePerCall : headerToValuePerGene) {
             mapWriter.write(headerToValuePerCall, header, processors);
+        }
+        if (flushAfterWrite) {
+            mapWriter.flush();
         }
     }
 

@@ -60,6 +60,8 @@ import org.bgee.model.expressiondata.call.CallServiceParent;
 import org.bgee.model.expressiondata.call.Condition2;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterInvariablePart;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.gene.Gene;
@@ -516,6 +518,24 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         // jump would mean the two sides of the export have drifted apart.
         AtomicLong discardedCallCount = new AtomicLong(0);
 
+        // The condition part of the processed filter (the global condition map of the species,
+        // with the anat. entities and dev. stages it refers to) depends only on the condition
+        // filters, which are identical for all the genes of a species.
+        ExpressionCallService seedCallService = serviceFactoryProvider
+                .apply(this.daoManagerSupplier.get()).getExpressionCallService();
+        String seedGeneId = idToBgeeGeneIds.keySet().iterator().next();
+        long startTimeCondPart = System.currentTimeMillis();
+        ExpressionCallProcessedFilter seedProcessedFilter = seedCallService
+                .processExpressionCallFilter(new ExpressionCallFilter2(summaryCallTypeQualityFilter,
+                        new GeneFilter(speciesId, seedGeneId), null, null,
+                        condParamCombination, null, null, false));
+        ExpressionCallProcessedFilterConditionPart condPart = seedProcessedFilter.getConditionPart();
+        ExpressionCallProcessedFilterInvariablePart invariablePart =
+                seedProcessedFilter.getInvariablePart();
+        log.info("Species {}: condition part of the processed filter computed in {} ms, "
+                + "reused for all {} genes.", speciesId,
+                System.currentTimeMillis() - startTimeCondPart, totalGenes);
+
         try {
             // A stale, possibly empty, file left over from a previous run/attempt would make
             // file.exists() true and silently skip the header write below even though no header
@@ -541,8 +561,11 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                     ExpressionCallFilter2 filter = new ExpressionCallFilter2(summaryCallTypeQualityFilter,
                             new GeneFilter(speciesId, geneId), null, null,
                             condParamCombination, null, null, false);
+                    //Reuse the condition and invariable parts computed once for this species,
+                    //only the gene part is specific to this gene.
                     ExpressionCallProcessedFilter processedFilter =
-                            callService.processExpressionCallFilter(filter);
+                            callService.processExpressionCallFilter(filter, null, condPart,
+                                    invariablePart);
                     ExpressionCallLoader loader = callService.getCallLoader(processedFilter);
                     Map<Gene, List<OTFExpressionCall>> callsByGene = loader.loadDataOnTheFly();
                     List<OTFExpressionCall> expressedCallsList = callsByGene.values().stream()

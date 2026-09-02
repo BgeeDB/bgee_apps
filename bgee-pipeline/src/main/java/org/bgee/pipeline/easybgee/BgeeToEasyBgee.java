@@ -481,15 +481,14 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         summaryCallTypeQualityFilter.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
 
-        // TODO Tier 3 (OTF migration, see conversation with Julien): unlike the previous
-        // implementation, which explicitly restricted results to the "root" cell type, sex and
-        // strain (Collections.singleton("GO:0005575")/"any"/"wild-type" in the old
-        // ConditionFilter), the new condition parameter model merges anat. entity and cell type
-        // into a single ConditionParameter (ANAT_ENTITY_CELL_TYPE), so it is no longer possible
-        // to request "anat. entity without cell type" as a condition parameter combination.
-        // As implemented below, calls for specific cell types will now also be exported (not
-        // just whole-organ calls), which is a behavior change from the previous implementation
-        // that needs a decision and validation against real data before being trusted.
+        // Unlike the previous implementation, which explicitly restricted results to the "root"
+        // cell type, sex and strain (Collections.singleton("GO:0005575")/"any"/"wild-type" in
+        // the old ConditionFilter), the new condition parameter model merges anat. entity and
+        // cell type into a single ConditionParameter (ANAT_ENTITY_CELL_TYPE), so it is no longer
+        // possible to request "anat. entity without cell type" as a condition parameter
+        // combination. As implemented below, calls for specific cell types are now also
+        // exported (not just whole-organ calls) -- confirmed intentional: cell types are
+        // important data and should be part of EasyBgee.
         Collection<ConditionParameter<?, ?>> condParamCombination =
                 List.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE, ConditionParameter.DEV_STAGE);
 
@@ -786,16 +785,26 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 ConditionDAO.Attribute.CELL_TYPE_ID.name(), ConditionDAO.Attribute.SEX_ID.name(),
                 ConditionDAO.Attribute.STRAIN_ID.name(), ConditionDAO.Attribute.SPECIES_ID.name() };
 
-        // create condition filter using root of sex and strain
-        DAOConditionFilter condFilter = new DAOConditionFilter(null, null,
-                Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID),
+        // Condition filter using root of sex and strain only: those two parameters are not
+        // part of the OTF condParamCombination requested in extractGlobalExpressionTable, so
+        // they always stay collapsed to root there. Cell type, unlike sex/strain, now IS part
+        // of that combination (cell types are exported, not just whole-organ calls -- see
+        // extractGlobalExpressionTable), so it must NOT be restricted to root here either,
+        // otherwise cell-type-specific calls would have no matching row in this table and
+        // buildConditionKeyFromCondition2's lookup would fail for every one of them.
+        DAOConditionFilter condFilter = new DAOConditionFilter(null, null, null,
                 Collections.singleton(ConditionDAO.SEX_ROOT_ID),
                 Collections.singleton(ConditionDAO.STRAIN_ROOT_ID), null);
 
-        // Retrieve all conditions
+        //XXX: With the increasing number of data it is not realistic to generate easybgee
+        // for all developmental stages. It would result in billions of rows. We decided
+        // to only propagate among meta stages as they are shared among species. Meta stages
+        // are all stage IDs with the namespace "UBERON:"
         List<ConditionTO> conditionTOs = daoManagerSupplier.get().getConditionDAO()
                 .getGlobalConditions(Collections.singleton(speciesId),
-                        Collections.singleton(condFilter), attributes).getAllTOs();
+                        Collections.singleton(condFilter), attributes).stream()
+                .filter(c -> c.getStageId().startsWith("UBERON:"))
+                .toList();
 
         //transformation from a List<ConditionTO> to a List<Map<String, String>> in order to easily write conditions in a file
         List<Map<String, String>> allGlobalCondInformation = conditionTOs.stream().map(cond -> {
@@ -1048,10 +1057,10 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
      * ConditionTO)}), and from the {@code Condition2}s of the calls returned by OTF propagation
      * ({@link #buildConditionKeyFromCondition2(Condition2)}). {@code null} or empty values are
      * substituted with the corresponding "root" sentinel ID, matching how
-     * {@link #extractGlobalCondTable(Integer, String)} restricts its own query to root cell
-     * type/sex/strain (see the Tier 3 TODO in {@link #extractGlobalExpressionTable(Map, Map,
-     * Integer, String)} about this restriction no longer being enforceable the same way on the
-     * OTF side).
+     * {@link #extractGlobalCondTable(Integer, String)} restricts its own query to root sex/
+     * strain (cell type is intentionally not restricted to root there, since cell-type-specific
+     * conditions are exported too -- see {@link #extractGlobalExpressionTable(Map, Map, Integer,
+     * String)}).
      */
     private static String buildConditionKey(String anatEntityId, String cellTypeId, String stageId,
             String sexId, String strainId, int speciesId) {

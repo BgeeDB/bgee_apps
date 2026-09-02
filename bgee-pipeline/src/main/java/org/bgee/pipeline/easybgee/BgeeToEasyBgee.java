@@ -256,7 +256,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("BGEE_GENE_ID", "bgeeGeneId");
                         put("GLOBAL_CONDITION_ID", "globalConditionId");
                         put("SUMMARY_QUALITY", "summaryQuality");
-                        put("MEAN_RANK", "globalRank");
                         put("MEAN_SCORE", "score");
                         put("FDR_PVALUE", "pValue");
                         put("ORIGIN", "propagationOrigin");
@@ -267,7 +266,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("BGEE_GENE_ID", Types.INTEGER);
                         put("GLOBAL_CONDITION_ID", Types.INTEGER);
                         put("SUMMARY_QUALITY", Types.VARCHAR);
-                        put("MEAN_RANK", Types.DECIMAL);
                         put("MEAN_SCORE", Types.DECIMAL);
                         put("FDR_PVALUE", Types.DECIMAL);
                         put("ORIGIN", Types.VARCHAR);
@@ -278,7 +276,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("BGEE_GENE_ID", false);
                         put("GLOBAL_CONDITION_ID", false);
                         put("SUMMARY_QUALITY", false);
-                        put("MEAN_RANK", false);
                         put("MEAN_SCORE", false);
                         put("FDR_PVALUE", true);
                         put("ORIGIN", false);
@@ -473,7 +470,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
 
         String[] header = new String[] { "BGEE_GENE_ID", "GLOBAL_CONDITION_ID", GLOBAL_EXPRESSION_SUMMARY_QUALITY,
-                "MEAN_RANK", GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_FDR_PVALUE,
+                GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_FDR_PVALUE,
                 GLOBAL_EXPRESSION_ORIGIN, GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE };
 
         // init summaryCallTypeQualityFilter: only export calls of at least SILVER quality.
@@ -560,7 +557,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE,
                     callQual.getKey().getStringRepresentation());
 
-            headerToValuePerCall.put("MEAN_RANK", computeMeanRank(call));
             headerToValuePerCall.put(GLOBAL_EXPRESSION_MEAN_SCORE,
                     call.getExpressionScore() == null? null: call.getExpressionScore().toString());
             headerToValuePerCall.put(GLOBAL_EXPRESSION_ORIGIN,
@@ -637,23 +633,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         }
         throw log.throwing(new IllegalStateException(
                 "Could not infer ExpressionSummary/SummaryQuality for " + call));
-    }
-
-    /**
-     * TODO Tier 2 (OTF migration, see conversation with Julien): {@code OTFExpressionCall} does
-     * not track a rank value distinct from {@link OTFExpressionCall#getExpressionScore()}.
-     * Before this export can run for real, we need to decide whether EasyBgee still needs a
-     * distinct mean rank, and if so, add rank propagation to
-     * {@code ExpressionCallLoader}/{@code OTFExpressionCall}. Deliberately throwing rather than
-     * silently writing a placeholder/wrong value, since this TSV is bulk-loaded straight into
-     * the EasyBgee database.
-     */
-    private static String computeMeanRank(OTFExpressionCall call) {
-        throw new UnsupportedOperationException(
-                "MEAN_RANK is not yet available from OTFExpressionCall (Tier 2 gap of the OTF "
-                + "migration of BgeeToEasyBgee, see the propagation architecture discussion). "
-                + "Do not use this export until rank propagation is added to OTFExpressionCall, "
-                + "or MEAN_RANK is dropped from EasyBgee's globalExpression schema.");
     }
 
     /**

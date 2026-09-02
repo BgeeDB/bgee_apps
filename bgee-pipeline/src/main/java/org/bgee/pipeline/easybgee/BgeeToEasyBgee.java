@@ -516,7 +516,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                             .getExpressionCallService();
                     ExpressionCallFilter2 filter = new ExpressionCallFilter2(summaryCallTypeQualityFilter,
                             new GeneFilter(speciesId, geneId), null, null,
-                            condParamCombination, null, null);
+                            condParamCombination, null, null, false);
                     ExpressionCallProcessedFilter processedFilter =
                             callService.processExpressionCallFilter(filter);
                     ExpressionCallLoader loader = callService.getCallLoader(processedFilter);

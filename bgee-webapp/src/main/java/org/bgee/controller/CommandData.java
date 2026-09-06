@@ -1278,24 +1278,32 @@ public class CommandData extends CommandParent {
         //together, the page is served from the loader's memoized list in ~0 ms and would fall
         //below any threshold, while recomputing it on a later request always requires
         //the expensive loader preparation.
+        long startMs = System.currentTimeMillis();
         @SuppressWarnings("unchecked")
         List<SimilarityExpressionCall2> results = this.cacheService.useCacheNonAtomic(
                 MULTISPEC_EXPR_CALL_RESULT_CACHE_DEF,
                 cacheKey,
                 () -> loaderSupplier.get().loadData(offset, limit),
                 null);
+        log.info("loadMultispecExprCallResults: offset={} limit={} pageSize={} {} ms",
+                offset, limit, results == null ? 0 : results.size(),
+                System.currentTimeMillis() - startMs);
         return log.traceExit(results);
     }
 
     private long loadMultispecExprCallCount(SimilarityExpressionCallFilter filter,
             Supplier<SimilarityExpressionCallLoader> loaderSupplier) {
         log.traceEntry("{}, {}", filter, loaderSupplier);
+        long startMs = System.currentTimeMillis();
         //Compute-time threshold is null (always cache), see loadMultispecExprCallResults.
-        return log.traceExit(this.cacheService.useCacheNonAtomic(
+        long count = this.cacheService.useCacheNonAtomic(
                 MULTISPEC_EXPR_CALL_COUNT_CACHE_DEF,
                 filter,
                 () -> loaderSupplier.get().loadDataCount(),
-                null));
+                null);
+        log.info("loadMultispecExprCallCount: count={} {} ms",
+                count, System.currentTimeMillis() - startMs);
+        return log.traceExit(count);
     }
 
     private List<ColumnDescription> getMultispecExprCallColumnDescriptions() {

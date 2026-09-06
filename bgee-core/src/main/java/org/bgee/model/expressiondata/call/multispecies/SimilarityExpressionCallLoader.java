@@ -2,24 +2,20 @@ package org.bgee.model.expressiondata.call.multispecies;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 
 /**
- * Loads {@link SimilarityExpressionCall2}s with pagination, driven by
- * {@link AnatEntitySimilarity} iteration rather than loading all expression calls
- * into memory at once.
+ * Loads {@link SimilarityExpressionCall2}s with pagination. Expression calls are retrieved
+ * once per species and mapped onto homology groups in memory.
  *
  * @author  Harald Detering
- * @version Bgee 16, Jul. 2026
+ * @version Bgee 16, Sep. 2026
  * @since   Bgee 16, Jul. 2026
  * @see     SimilarityExpressionCallFilter
  * @see     MultiSpeciesCallService#loadSimilarityCallLoader(SimilarityExpressionCallFilter)
@@ -37,13 +33,10 @@ public class SimilarityExpressionCallLoader extends CommonService {
 
     private final SimilarityExpressionCallPreparedFilter preparedFilter;
     private final MultiSpeciesCallService multiSpeciesCallService;
-    private final Map<String, AnatEntitySimilarity> fallbackAnatSimsById = new HashMap<>();
-    private final Map<String, AnatEntitySimilarity> fallbackCellSimsById = new HashMap<>();
     /**
      * The complete, ordered list of all {@link SimilarityExpressionCall2}s matching this loader's
      * filter, built lazily by {@link #getAllCalls()}. It is {@code null} until a full pass is
-     * required (by {@link #loadDataCount()} or {@link #stream()}). Once populated, {@link #loadData(Long,
-     * Integer)} serves pages directly from it instead of re-scanning the data source.
+     * required. Once populated, {@link #loadData(Long, Integer)} serves pages directly from it.
      */
     private List<SimilarityExpressionCall2> allCalls;
 
@@ -97,50 +90,14 @@ public class SimilarityExpressionCallLoader extends CommonService {
 
         long skip = offset == null ? 0L : offset;
         int take = limit == null ? LIMIT_MAX : limit;
-
-        //If a full pass has already been performed (e.g. by loadDataCount()), serve the page
-        //directly from the cached list rather than re-scanning the data source.
-        if (allCalls != null) {
-            List<SimilarityExpressionCall2> page = new ArrayList<>();
-            for (long i = skip; i < skip + take && i < allCalls.size(); i++) {
-                page.add(allCalls.get((int) i));
-            }
-            return log.traceExit(page);
-        }
-
-        //Otherwise iterate lazily and stop as soon as the requested page is filled,
-        //so a results-only request does not have to build the entire result set.
+        long startMs = System.currentTimeMillis();
+        List<SimilarityExpressionCall2> calls = getAllCalls();
         List<SimilarityExpressionCall2> page = new ArrayList<>();
-        long seen = 0;
-
-        outer: for (AnatEntitySimilarity sim : preparedFilter.getOrderedSimilarities()) {
-            for (SimilarityExpressionCall2 call : multiSpeciesCallService
-                    .loadSimilarityExpressionCallsForSimilarity(sim, preparedFilter,
-                            fallbackAnatSimsById, fallbackCellSimsById)) {
-                if (seen >= skip + take) {
-                    break outer;
-                }
-                if (seen >= skip) {
-                    page.add(call);
-                }
-                seen++;
-            }
+        for (long i = skip; i < skip + take && i < calls.size(); i++) {
+            page.add(calls.get((int) i));
         }
-
-        if (seen < skip + take) {
-            for (SimilarityExpressionCall2 call : multiSpeciesCallService
-                    .loadFallbackSimilarityExpressionCalls(preparedFilter,
-                            fallbackAnatSimsById, fallbackCellSimsById)) {
-                if (seen >= skip + take) {
-                    break;
-                }
-                if (seen >= skip) {
-                    page.add(call);
-                }
-                seen++;
-            }
-        }
-
+        log.info("loadData: offset={} limit={} pageSize={} allCalls={} {} ms",
+                skip, take, page.size(), calls.size(), System.currentTimeMillis() - startMs);
         return log.traceExit(page);
     }
 
@@ -162,10 +119,7 @@ public class SimilarityExpressionCallLoader extends CommonService {
 
     /**
      * Builds (once) and returns the complete ordered list of {@link SimilarityExpressionCall2}s
-     * matching this loader's filter. The result is memoized in {@link #allCalls}, so subsequent
-     * calls, as well as {@link #loadData(Long, Integer)}, reuse it without re-scanning the data
-     * source. Determinism of the ordering matches {@link #loadData(Long, Integer)}: ordered
-     * similarities first, then fallback calls.
+     * matching this loader's filter. The result is memoized in {@link #allCalls}.
      *
      * @return  An unmodifiable {@code List} of all matching {@code SimilarityExpressionCall2}s.
      */
@@ -173,14 +127,14 @@ public class SimilarityExpressionCallLoader extends CommonService {
         if (allCalls != null) {
             return allCalls;
         }
-        List<SimilarityExpressionCall2> calls = new ArrayList<>();
-        for (AnatEntitySimilarity sim : preparedFilter.getOrderedSimilarities()) {
-            calls.addAll(multiSpeciesCallService.loadSimilarityExpressionCallsForSimilarity(sim,
-                    preparedFilter, fallbackAnatSimsById, fallbackCellSimsById));
-        }
-        calls.addAll(multiSpeciesCallService.loadFallbackSimilarityExpressionCalls(preparedFilter,
-                fallbackAnatSimsById, fallbackCellSimsById));
-        allCalls = Collections.unmodifiableList(calls);
+        long startMs = System.currentTimeMillis();
+        allCalls = Collections.unmodifiableList(
+                multiSpeciesCallService.loadOrderedSimilarityExpressionCalls(preparedFilter));
+        log.info("getAllCalls: {} similarities, {} species, {} calls in {} ms",
+                preparedFilter.getOrderedSimilarities().size(),
+                preparedFilter.getOrderedGeneFilters().size(),
+                allCalls.size(),
+                System.currentTimeMillis() - startMs);
         return allCalls;
     }
 }

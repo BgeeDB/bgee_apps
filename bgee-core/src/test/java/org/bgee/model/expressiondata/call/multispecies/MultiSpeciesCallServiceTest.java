@@ -29,6 +29,7 @@ import org.bgee.model.SearchResult;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
@@ -59,11 +60,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -645,13 +650,13 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         GeneFilter geneFilter1 = new GeneFilter(speciesId1, Collections.singleton(gene1.getGeneId()));
 
         @SuppressWarnings("unchecked")
-        Ontology<AnatEntity, String> anatOnt = mock(Ontology.class);
+        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
         when(anatOnt.getDescendantIds(parentId, false)).thenReturn(Set.of(childId, grandchildId));
         when(anatOnt.getDescendantIds(childId, false)).thenReturn(Set.of(grandchildId));
         when(anatOnt.getDescendantIds(grandchildId, false)).thenReturn(Collections.emptySet());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Collection<String>> seedCaptor = ArgumentCaptor.forClass(Collection.class);
-        when(ontService.getAnatEntityOntology(eq(speciesId1), seedCaptor.capture(), any(),
+        when(ontService.getAnatEntityOntology(anyCollection(), seedCaptor.capture(), any(),
                 eq(false), eq(true))).thenReturn(anatOnt);
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
@@ -725,10 +730,10 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         String childId = "anatChild";
 
         @SuppressWarnings("unchecked")
-        Ontology<AnatEntity, String> anatOnt = mock(Ontology.class);
+        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
         when(anatOnt.getDescendantIds(parentId, false)).thenReturn(Set.of(childId));
         when(anatOnt.getDescendantIds(childId, false)).thenReturn(Collections.emptySet());
-        when(ontService.getAnatEntityOntology(eq(speciesId1), any(), any(), eq(false), eq(true)))
+        when(ontService.getAnatEntityOntology(anyCollection(), any(), any(), eq(false), eq(true)))
                 .thenReturn(anatOnt);
 
         when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
@@ -753,6 +758,247 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
             assertEquals("No result should be retrieved because of anat. entity exclusion",
                     e.getMessage());
         }
+    }
+
+    /**
+     * Ontology expansion is shared across species: one {@code getAnatEntityOntology} call
+     * even when the webapp provides one {@code ConditionFilter2} per species.
+     */
+    @Test
+    public void shouldLoadAnatOntologyOnceForMultipleSpecies() {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        org.bgee.model.expressiondata.call.ExpressionCallService exprCallService =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallService.class);
+        org.bgee.model.expressiondata.call.ExpressionCallLoader exprCallLoader =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallLoader.class);
+        AnatEntitySimilarityService aeSimService = mock(AnatEntitySimilarityService.class);
+        OntologyService ontService = mock(OntologyService.class);
+
+        when(serviceFactory.getExpressionCallService()).thenReturn(exprCallService);
+        when(serviceFactory.getAnatEntitySimilarityService()).thenReturn(aeSimService);
+        when(serviceFactory.getSpeciesService()).thenReturn(mock(SpeciesService.class));
+        when(serviceFactory.getCallService()).thenReturn(mock(CallService.class));
+        when(serviceFactory.getDevStageSimilarityService())
+                .thenReturn(mock(org.bgee.model.anatdev.multispemapping.DevStageSimilarityService.class));
+        when(serviceFactory.getOntologyService()).thenReturn(ontService);
+        when(serviceFactory.getGeneService()).thenReturn(mock(org.bgee.model.gene.GeneService.class));
+
+        int taxonId = 10;
+        Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
+        int speciesId1 = 1;
+        int speciesId2 = 2;
+        String parentId = "anatParent";
+        AnatEntity parentAe = new AnatEntity(parentId);
+
+        @SuppressWarnings("unchecked")
+        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
+        when(anatOnt.getDescendantIds(parentId, false)).thenReturn(Collections.emptySet());
+        when(ontService.getAnatEntityOntology(anyCollection(), any(), any(), eq(false), eq(true)))
+                .thenReturn(anatOnt);
+
+        Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
+                new AnatEntitySimilarityTaxonSummary(taxon, true, true));
+        AnatEntitySimilarity simParent = new AnatEntitySimilarity(
+                Arrays.asList(parentAe), null, taxon, aeSimTaxonSummaries, taxOnt);
+        when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
+                .thenReturn(new HashSet<>(Arrays.asList(simParent)));
+
+        FilterIds<String> anatFilter = new FilterIds<>(Set.of(parentId), true);
+        ComposedFilterIds<String> composed = new ComposedFilterIds<>(List.of(anatFilter));
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, composed);
+        Collection<ConditionFilter2> condFilters = List.of(
+                new ConditionFilter2(speciesId1, condParamToFilter,
+                        Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false),
+                new ConditionFilter2(speciesId2, condParamToFilter,
+                        Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false));
+
+        when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
+        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+
+        Set<GeneFilter> geneFilters = Set.of(
+                new GeneFilter(speciesId1, Collections.singleton("gene1a")),
+                new GeneFilter(speciesId2, Collections.singleton("gene2a")));
+        MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
+        service.loadSimilarityExpressionCalls2(taxonId, geneFilters, condFilters, true,
+                SummaryQuality.BRONZE).collect(Collectors.toList());
+
+        verify(ontService, times(1)).getAnatEntityOntology(anyCollection(), any(), any(),
+                eq(false), eq(true));
+        verify(ontService, never()).getAnatEntityOntology(anyInt(), any(), any(), eq(false),
+                eq(true));
+        verify(exprCallService, times(2)).loadCallLoader(any());
+    }
+
+    /**
+     * Organ homology groups and cell-type homology groups are selected independently.
+     * A cell-type root filter must not drop organ groups that do not contain that cell type.
+     */
+    @Test
+    public void shouldKeepOrganSimilarityWhenCellTypeFilterIsOrthogonal() {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        org.bgee.model.expressiondata.call.ExpressionCallService exprCallService =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallService.class);
+        org.bgee.model.expressiondata.call.ExpressionCallLoader exprCallLoader =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallLoader.class);
+        AnatEntitySimilarityService aeSimService = mock(AnatEntitySimilarityService.class);
+
+        when(serviceFactory.getExpressionCallService()).thenReturn(exprCallService);
+        when(serviceFactory.getAnatEntitySimilarityService()).thenReturn(aeSimService);
+        when(serviceFactory.getSpeciesService()).thenReturn(mock(SpeciesService.class));
+        when(serviceFactory.getCallService()).thenReturn(mock(CallService.class));
+        when(serviceFactory.getDevStageSimilarityService())
+                .thenReturn(mock(org.bgee.model.anatdev.multispemapping.DevStageSimilarityService.class));
+        when(serviceFactory.getOntologyService()).thenReturn(mock(OntologyService.class));
+        when(serviceFactory.getGeneService()).thenReturn(mock(org.bgee.model.gene.GeneService.class));
+
+        int taxonId = 10;
+        Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
+        int speciesId1 = 1;
+        Species species1 = new Species(speciesId1);
+        AnatEntity organ = new AnatEntity("heart");
+        Gene gene1 = new Gene("gene1a", species1, new GeneBioType("biotype1"));
+        GeneFilter geneFilter1 = new GeneFilter(speciesId1, Collections.singleton(gene1.getGeneId()));
+
+        Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
+                new AnatEntitySimilarityTaxonSummary(taxon, true, true));
+        AnatEntitySimilarity organSim = new AnatEntitySimilarity(
+                Arrays.asList(organ), null, taxon, aeSimTaxonSummaries, taxOnt);
+        when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
+                .thenReturn(new HashSet<>(Arrays.asList(organSim)));
+
+        org.bgee.model.expressiondata.call.Call.ExpressionCall2 mockCall1 =
+                mock(org.bgee.model.expressiondata.call.Call.ExpressionCall2.class);
+        org.bgee.model.expressiondata.call.Condition2 mockCond1 =
+                mock(org.bgee.model.expressiondata.call.Condition2.class);
+        @SuppressWarnings("unchecked")
+        org.bgee.model.ComposedEntity<AnatEntity> mockComposed = mock(org.bgee.model.ComposedEntity.class);
+        when(mockCall1.getGene()).thenReturn(gene1);
+        when(mockCall1.getCondition()).thenReturn(mockCond1);
+        when(mockCall1.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
+        when(mockCond1.getConditionParameterValue(
+                org.bgee.model.expressiondata.baseelements.ConditionParameter.ANAT_ENTITY_CELL_TYPE))
+                .thenReturn(mockComposed);
+        when(mockComposed.isEmpty()).thenReturn(false);
+        when(mockComposed.size()).thenReturn(2);
+        when(mockComposed.getEntity(0)).thenReturn(new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID));
+        when(mockComposed.getEntity(1)).thenReturn(organ);
+
+        when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
+        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Arrays.asList(mockCall1));
+
+        FilterIds<String> anatFilter = new FilterIds<>(Set.of(organ.getId()), false);
+        FilterIds<String> cellFilter = new FilterIds<>(
+                Set.of(ConditionDAO.CELL_TYPE_ROOT_ID), false);
+        ComposedFilterIds<String> composed = new ComposedFilterIds<>(List.of(anatFilter, cellFilter));
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, composed);
+        ConditionFilter2 condFilter = new ConditionFilter2(speciesId1, condParamToFilter,
+                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false);
+
+        MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
+        List<SimilarityExpressionCall2> results = service.loadSimilarityExpressionCalls2(
+                taxonId, Collections.singleton(geneFilter1), Collections.singleton(condFilter),
+                true, SummaryQuality.BRONZE)
+                .collect(Collectors.toList());
+
+        assertEquals(1, results.size());
+        assertEquals("Organ homology group must be kept when a cell-type filter is also present",
+                organSim, results.get(0).getMultiSpeciesCondition().getAnatSimilarity());
+        verify(exprCallService, times(1)).loadCallLoader(any());
+    }
+
+    /**
+     * SUMMARY + discard SUMMARY is "all organs except discarded subtrees". Expanding
+     * descendants of the anatomy root is unnecessary; only discard IDs are seeded.
+     */
+    @Test
+    public void shouldNotExpandAnatRootWhenDiscardCoversNonRootIncludes() {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        org.bgee.model.expressiondata.call.ExpressionCallService exprCallService =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallService.class);
+        org.bgee.model.expressiondata.call.ExpressionCallLoader exprCallLoader =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallLoader.class);
+        AnatEntitySimilarityService aeSimService = mock(AnatEntitySimilarityService.class);
+        OntologyService ontService = mock(OntologyService.class);
+
+        when(serviceFactory.getExpressionCallService()).thenReturn(exprCallService);
+        when(serviceFactory.getAnatEntitySimilarityService()).thenReturn(aeSimService);
+        when(serviceFactory.getSpeciesService()).thenReturn(mock(SpeciesService.class));
+        when(serviceFactory.getCallService()).thenReturn(mock(CallService.class));
+        when(serviceFactory.getDevStageSimilarityService())
+                .thenReturn(mock(org.bgee.model.anatdev.multispemapping.DevStageSimilarityService.class));
+        when(serviceFactory.getOntologyService()).thenReturn(ontService);
+        when(serviceFactory.getGeneService()).thenReturn(mock(org.bgee.model.gene.GeneService.class));
+
+        int taxonId = 10;
+        Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
+        int speciesId1 = 1;
+        String rootId = "UBERON:0001062";
+        String discardedId = "organDiscarded";
+        String discardedChildId = "organDiscardedChild";
+        String otherId = "organOther";
+        AnatEntity discardedAe = new AnatEntity(discardedId);
+        AnatEntity otherAe = new AnatEntity(otherId);
+
+        @SuppressWarnings("unchecked")
+        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
+        when(anatOnt.getDescendantIds(discardedId, false)).thenReturn(Set.of(discardedChildId));
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Collection<String>> seedCaptor = ArgumentCaptor.forClass(Collection.class);
+        when(ontService.getAnatEntityOntology(anyCollection(), seedCaptor.capture(), any(),
+                eq(false), eq(true))).thenReturn(anatOnt);
+
+        Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
+                new AnatEntitySimilarityTaxonSummary(taxon, true, true));
+        AnatEntitySimilarity simDiscarded = new AnatEntitySimilarity(
+                Arrays.asList(discardedAe), null, taxon, aeSimTaxonSummaries, taxOnt);
+        AnatEntitySimilarity simOther = new AnatEntitySimilarity(
+                Arrays.asList(otherAe), null, taxon, aeSimTaxonSummaries, taxOnt);
+        when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
+                .thenReturn(new HashSet<>(Arrays.asList(simDiscarded, simOther)));
+
+        FilterIds<String> anatFilter = new FilterIds<>(
+                Set.of(rootId, discardedId), true, Set.of(discardedId), null);
+        ComposedFilterIds<String> composed = new ComposedFilterIds<>(List.of(anatFilter));
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, composed);
+        ConditionFilter2 condFilter = new ConditionFilter2(speciesId1, condParamToFilter,
+                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false);
+
+        ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
+                ArgumentCaptor.forClass(ExpressionCallFilter2.class);
+        when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
+        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+
+        MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
+        service.loadSimilarityExpressionCalls2(taxonId,
+                Collections.singleton(new GeneFilter(speciesId1, Collections.singleton("gene1a"))),
+                Collections.singleton(condFilter), true, SummaryQuality.BRONZE)
+                .collect(Collectors.toList());
+
+        assertFalse("Anatomy root must not be an ontology seed when discard already covers non-root includes",
+                seedCaptor.getValue().contains(rootId));
+        assertTrue("Discarded term must still be seeded so its descendants can be excluded",
+                seedCaptor.getValue().contains(discardedId));
+
+        Set<String> loadedAnatIds = exprFilterCaptor.getAllValues().stream()
+                .flatMap(f -> f.getConditionFilters().stream())
+                .map(cf -> cf.getComposedFilterIds(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
+                        .getFilterIds(0))
+                .filter(ids -> ids != null)
+                .flatMap(ids -> ids.getIds().stream())
+                .collect(Collectors.toSet());
+        assertTrue("Non-discarded organ group must be loaded", loadedAnatIds.contains(otherId));
+        assertFalse("Discarded organ group must not be loaded", loadedAnatIds.contains(discardedId));
+        assertFalse("Descendants of discarded organs must not be loaded",
+                loadedAnatIds.contains(discardedChildId));
     }
 
     /**

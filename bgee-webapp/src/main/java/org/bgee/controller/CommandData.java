@@ -26,6 +26,11 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.ConditionFilter2;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCallService;
+import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall2;
+import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCallFilter;
+import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCallLoader;
+import org.bgee.model.SearchResult;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
@@ -55,6 +60,7 @@ import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.species.Species;
+import org.bgee.model.species.TaxonWithSpecies;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.view.DataDisplay;
 import org.bgee.view.ViewFactory;
@@ -113,6 +119,29 @@ public class CommandData extends CommandParent {
             return requestedDataTypes;
         }
     }
+
+    /**
+     * Response wrapper for the multi-species expression calls endpoint.
+     * Mirrors {@link ExpressionCallResponse} but uses {@link SimilarityExpressionCall2}.
+     */
+    public static class MultispecExprCallResponse {
+        private final List<SimilarityExpressionCall2> calls;
+        private final LinkedHashSet<ConditionParameter<?, ?>> condParams;
+        private final EnumSet<DataType> requestedDataTypes;
+
+        public MultispecExprCallResponse(List<SimilarityExpressionCall2> calls,
+                LinkedHashSet<ConditionParameter<?, ?>> condParams,
+                EnumSet<DataType> requestedDataTypes) {
+            this.calls = calls;
+            this.condParams = condParams;
+            this.requestedDataTypes = requestedDataTypes;
+        }
+
+        public List<SimilarityExpressionCall2> getCalls() { return calls; }
+        public LinkedHashSet<ConditionParameter<?, ?>> getCondParams() { return condParams; }
+        public EnumSet<DataType> getRequestedDataTypes() { return requestedDataTypes; }
+    }
+
     public static class ColumnDescription {
         public static enum ColumnType {
             STRING, NUMERIC, INTERNAL_LINK, EXTERNAL_LINK, ANAT_ENTITY, DEV_STAGE,
@@ -563,6 +592,57 @@ public class CommandData extends CommandParent {
             return builder.toString();
         }
     }
+    public static class MultispecExprCallResultCacheKey {
+
+        private final SimilarityExpressionCallFilter sourceFilter;
+        private final Long offset;
+        private final Integer limit;
+
+        public MultispecExprCallResultCacheKey(SimilarityExpressionCallFilter sourceFilter,
+                Long offset, Integer limit) {
+            this.sourceFilter = sourceFilter;
+            this.offset = offset;
+            this.limit = limit;
+        }
+
+        public SimilarityExpressionCallFilter getSourceFilter() {
+            return sourceFilter;
+        }
+        public Long getOffset() {
+            return offset;
+        }
+        public Integer getLimit() {
+            return limit;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(limit, offset, sourceFilter);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            MultispecExprCallResultCacheKey other = (MultispecExprCallResultCacheKey) obj;
+            return Objects.equals(limit, other.limit) && Objects.equals(offset, other.offset)
+                    && Objects.equals(sourceFilter, other.sourceFilter);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("MultispecExprCallResultCacheKey [")
+                   .append("offset=").append(offset)
+                   .append(", limit=").append(limit)
+                   .append(", sourceFilter=").append(sourceFilter)
+                   .append("]");
+            return builder.toString();
+        }
+    }
     public static class RawDataCondPartProcessingCacheKey {
         private final Set<RawDataConditionFilter> condFilters;
         public RawDataCondPartProcessingCacheKey(Set<RawDataConditionFilter> condFilters) {
@@ -654,6 +734,10 @@ public class CommandData extends CommandParent {
     EXPR_CALL_COUNT_CACHE_DEF = new CacheDefinition<>("exprCallCountCache",
             ExpressionCallFilter2.class, Long.class, CacheType.LRU, 60);
 
+    private final static CacheDefinition<SimilarityExpressionCallFilter, Long>
+    MULTISPEC_EXPR_CALL_COUNT_CACHE_DEF = new CacheDefinition<>("multispecExprCallCountCache",
+            SimilarityExpressionCallFilter.class, Long.class, CacheType.LRU, 60);
+
     /**
      * A {@code long} that is the execution time in milliseconds of the processing of
      * the part of a filter related to condition, that triggers storing the result in cache.
@@ -705,6 +789,13 @@ public class CommandData extends CommandParent {
     EXPR_CALL_RESULT_CACHE_DEF = new CacheDefinition<>("exprCallResultCache",
             ExprCallResultCacheKey.class, List.class, CacheType.LRU, 20);
 
+    //Suppress warning for List generic type to have inference
+    //working with 'List.class'
+    @SuppressWarnings("rawtypes")
+    private final static CacheDefinition<MultispecExprCallResultCacheKey, List>
+    MULTISPEC_EXPR_CALL_RESULT_CACHE_DEF = new CacheDefinition<>("multispecExprCallResultCache",
+            MultispecExprCallResultCacheKey.class, List.class, CacheType.LRU, 20);
+
     /**
      * A {@code long} that is the execution time in milliseconds of the generation of post-filters
      * that triggers storing the result in cache. Defined as {@code long}
@@ -755,6 +846,10 @@ public class CommandData extends CommandParent {
             throw log.throwing(new IllegalStateException("The maximum limit allowed by this controller "
                     + "is greater than the maximum limit allowed by the ExpressionCallLoader."));
         }
+        if (LIMIT_MAX > SimilarityExpressionCallLoader.LIMIT_MAX) {
+            throw log.throwing(new IllegalStateException("The maximum limit allowed by this controller "
+                    + "is greater than the maximum limit allowed by the SimilarityExpressionCallLoader."));
+        }
         assert DEFAULT_LIMIT <= LIMIT_MAX;
     }
 
@@ -796,6 +891,10 @@ public class CommandData extends CommandParent {
         } else if (RequestParameters.ACTION_EXPR_CALLS.equals(this.requestParameters.getAction())) {
 
             this.processExprCallPage(speciesList, formDetails);
+
+        } else if (RequestParameters.ACTION_MULTISPEC_EXPR_CALLS.equals(this.requestParameters.getAction())) {
+
+            this.processMultispecExprCallPage(formDetails);
 
         } else if (this.requestParameters.getExperimentId() != null) {
 
@@ -1007,6 +1106,393 @@ public class CommandData extends CommandParent {
                 new ExpressionCallResponse(calls, condParams, dataTypes), count, postFilter);
 
         log.traceExit();
+    }
+
+    private void processMultispecExprCallPage(DataFormDetails formDetails)
+            throws InvalidRequestException, ThreadAlreadyWorkingException,
+            TooManyJobsException, IOException {
+        log.traceEntry("{}", formDetails);
+
+        log.debug("Action identified: {}", this.requestParameters.getAction());
+        List<ColumnDescription> colDescriptions = null;
+        List<SimilarityExpressionCall2> calls = null;
+        Long count = null;
+
+        List<String> userGeneList = Optional.ofNullable(this.requestParameters.getGeneList())
+                .orElse(Collections.emptyList());
+        if (userGeneList.size() < 2) {
+            throw log.throwing(new InvalidRequestException(
+                    "At least two gene IDs must be provided in gene_list."));
+        }
+
+        SearchResult<String, Gene> searchResult = this.serviceFactory.getGeneService()
+                .searchGenesByIds(userGeneList);
+        List<Gene> genes = new ArrayList<>(searchResult.getResults());
+        Set<Species> species = genes.stream().map(Gene::getSpecies).collect(Collectors.toSet());
+        if (species.isEmpty()) {
+            throw log.throwing(new InvalidRequestException(
+                    "No gene from species present in Bgee was found."));
+        }
+        /* TODO: Allow single-species multi-species calls. For now, we throw an error. */
+        if (species.size() == 1) {
+            throw log.throwing(new InvalidRequestException(
+                    "Genes must be from at least two species for multi-species expression calls."));
+        }
+
+        URLParameters urlParams = this.requestParameters.getUrlParametersInstance();
+        Set<String> selectedCondParams = new HashSet<>(
+                Optional.ofNullable(this.requestParameters.getValues(urlParams.getCondParam2()))
+                        .orElse(Collections.emptyList()));
+        LinkedHashSet<ConditionParameter<?, ?>> condParams = selectedCondParams.isEmpty()
+                ? new LinkedHashSet<>(ConditionParameter.allOf())
+                : ConditionParameter.allOf().stream()
+                        .filter(p -> selectedCondParams.contains(p.getParameterName()))
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
+        Set<Integer> filterSpeciesIds = species.stream().map(Species::getId).collect(Collectors.toSet());
+        Collection<ConditionFilter2> condFilters = this.loadMultispecConditionFilter(
+                true, condParams, filterSpeciesIds);
+
+        SummaryQuality qual = SummaryQuality.values()[0];
+        if (this.requestParameters.getDataQuality() != null &&
+                !this.requestParameters.getDataQuality().isBlank()) {
+            try {
+                qual = BgeeEnum.convert(SummaryQuality.class,
+                        this.requestParameters.getDataQuality());
+            } catch (IllegalArgumentException e) {
+                log.catching(Level.DEBUG, e);
+                throw log.throwing(new InvalidRequestException(
+                        "Unrecognized data quality: "
+                        + this.requestParameters.getDataQuality()));
+            }
+        }
+
+        if (this.requestParameters.isGetFilters()) {
+            throw log.throwing(new InvalidRequestException(
+                    "Post-filters are not supported for multi-species expression calls."));
+        }
+
+        if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount()) {
+            Job job = null;
+            try {
+                job = this.jobService.registerNewJob(this.user.getUUID().toString());
+                job.startJob();
+
+                Set<GeneFilter> geneFilters = genes.stream()
+                        .collect(Collectors.groupingBy(g -> g.getSpecies().getId(),
+                                Collectors.mapping(Gene::getGeneId, Collectors.toSet())))
+                        .entrySet().stream()
+                        .map(e -> new GeneFilter(e.getKey(), e.getValue()))
+                        .collect(Collectors.toSet());
+                int lcaId = this.serviceFactory.getTaxonService().loadLeastCommonAncestor(
+                        species.stream().map(Species::getId).collect(Collectors.toSet())).getId();
+                SimilarityExpressionCallFilter filter = new SimilarityExpressionCallFilter(
+                        lcaId, geneFilters, condFilters, false, qual);
+                //Loader construction is expensive (it prepares anat. entity similarities
+                //from the database), so it is deferred until a cache miss actually requires
+                //loading data. The supplier memoizes the loader so that count and results
+                //share a single instance (and thus a single data pass) within a request.
+                Supplier<SimilarityExpressionCallLoader> loaderSupplier =
+                        this.lazyMultispecExprCallLoader(filter);
+
+                if (this.requestParameters.isGetResultCount()) {
+                    count = this.loadMultispecExprCallCount(filter, loaderSupplier);
+                }
+                if (this.requestParameters.isGetResults()) {
+                    calls = this.loadMultispecExprCallResults(filter, loaderSupplier);
+                }
+
+                job.completeWithSuccess();
+            } finally {
+                if (job != null) {
+                    job.release();
+                }
+            }
+        }
+        if (this.requestParameters.isGetColumnDefinition()) {
+            colDescriptions = this.getMultispecExprCallColumnDescriptions();
+        }
+
+        Set<Integer> speciesIds = species.stream()
+                .map(Species::getId).collect(Collectors.toSet());
+        Map<Integer, Species> speciesById = species.stream()
+                .collect(Collectors.toMap(Species::getId, s -> s));
+        TaxonWithSpecies speciesByTaxon = this.serviceFactory.getTaxonTreeService()
+                .buildTaxonTreeWithSpecies(speciesIds, speciesById);
+
+        DataDisplay display = this.viewFactory.getDataDisplay();
+        MultispecExprCallResponse response = new MultispecExprCallResponse(
+                calls != null ? calls : Collections.emptyList(), condParams, dataTypes);
+        display.displayMultispecExprCallPage(speciesByTaxon, formDetails, colDescriptions,
+                response, count, null);
+
+        log.traceExit();
+    }
+
+    /**
+     * Returns a memoizing {@code Supplier} building the {@link SimilarityExpressionCallLoader}
+     * for {@code filter} on first use. Loader construction is expensive (it prepares
+     * anat. entity similarities from the database), so callers should only invoke the supplier
+     * when data actually needs to be loaded (i.e. on a cache miss). The memoization ensures
+     * that count and result retrieval within the same request share one loader, and thus
+     * benefit from its in-loader memoization of the full result list.
+     */
+    private Supplier<SimilarityExpressionCallLoader> lazyMultispecExprCallLoader(
+            SimilarityExpressionCallFilter filter) {
+        log.traceEntry("{}", filter);
+        return log.traceExit(new Supplier<SimilarityExpressionCallLoader>() {
+            private SimilarityExpressionCallLoader loader;
+            @Override
+            public SimilarityExpressionCallLoader get() {
+                if (loader == null) {
+                    loader = CommandData.this.serviceFactory.getMultiSpeciesCallService()
+                            .loadSimilarityCallLoader(filter);
+                }
+                return loader;
+            }
+        });
+    }
+
+    private List<SimilarityExpressionCall2> loadMultispecExprCallResults(
+            SimilarityExpressionCallFilter filter,
+            Supplier<SimilarityExpressionCallLoader> loaderSupplier)
+                    throws InvalidRequestException {
+        log.traceEntry("{}, {}", filter, loaderSupplier);
+
+        Integer limit = this.requestParameters.getLimit() == null ? DEFAULT_LIMIT
+                : this.requestParameters.getLimit();
+        if (limit > LIMIT_MAX) {
+            throw log.throwing(new InvalidRequestException(
+                    "It is not possible to request more than " + LIMIT_MAX + " results."));
+        }
+        Long offset = this.requestParameters.getOffset() == null ? 0L
+                : this.requestParameters.getOffset();
+        if (offset < 0) {
+            throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
+        }
+
+        MultispecExprCallResultCacheKey cacheKey = new MultispecExprCallResultCacheKey(
+                filter, offset, limit);
+        //Suppress warnings because we are responsible for the insertion and know the generic type
+        //Compute-time threshold is null (always cache): when count and results are requested
+        //together, the page is served from the loader's memoized list in ~0 ms and would fall
+        //below any threshold, while recomputing it on a later request always requires
+        //the expensive loader preparation.
+        long startMs = System.currentTimeMillis();
+        @SuppressWarnings("unchecked")
+        List<SimilarityExpressionCall2> results = this.cacheService.useCacheNonAtomic(
+                MULTISPEC_EXPR_CALL_RESULT_CACHE_DEF,
+                cacheKey,
+                () -> loaderSupplier.get().loadData(offset, limit),
+                null);
+        log.info("loadMultispecExprCallResults: offset={} limit={} pageSize={} {} ms",
+                offset, limit, results == null ? 0 : results.size(),
+                System.currentTimeMillis() - startMs);
+        return log.traceExit(results);
+    }
+
+    private long loadMultispecExprCallCount(SimilarityExpressionCallFilter filter,
+            Supplier<SimilarityExpressionCallLoader> loaderSupplier) {
+        log.traceEntry("{}, {}", filter, loaderSupplier);
+        long startMs = System.currentTimeMillis();
+        //Compute-time threshold is null (always cache), see loadMultispecExprCallResults.
+        long count = this.cacheService.useCacheNonAtomic(
+                MULTISPEC_EXPR_CALL_COUNT_CACHE_DEF,
+                filter,
+                () -> loaderSupplier.get().loadDataCount(),
+                null);
+        log.info("loadMultispecExprCallCount: count={} {} ms",
+                count, System.currentTimeMillis() - startMs);
+        return log.traceExit(count);
+    }
+
+    private List<ColumnDescription> getMultispecExprCallColumnDescriptions() {
+        // Use only base columns (gene, call info, score, data types). Condition columns
+        // are omitted because multiSpeciesCondition has a different structure (anatEntities,
+        // cellTypes arrays) than single-species condition.
+        return getExprCallColumnDescriptions(Collections.emptySet());
+    }
+
+    /**
+     * Loads condition filter for the multispec endpoint. Returns {@code ConditionFilter2}
+     * for use with {@link MultiSpeciesCallService#loadSimilarityCallLoader(SimilarityExpressionCallFilter)}.
+     * Uses the same parameter handling rules as {@link #loadExprCallFilter(boolean, Set, EnumSet)}
+     * to keep search and filter parameters behavior aligned.
+     *
+     * @param consideringFilters Whether to consider filter parameters from the request.
+     * @param condParams         The requested {@code ConditionParameter}s.
+     * @param speciesIds         A {@code Set} of species IDs present in submitted genes.
+     * @return A {@code Collection} of {@code ConditionFilter2}, one per species in
+     *         {@code speciesIds}, or {@code null} when no filter parameters are specified.
+     */
+    private Collection<ConditionFilter2> loadMultispecConditionFilter(boolean consideringFilters,
+            Set<ConditionParameter<?, ?>> condParams, Set<Integer> speciesIds)
+            throws InvalidRequestException {
+        // Currently there is only one filter parameter for both anat. entities and cell types.
+        List<String> filterAnatEntityCellTypeIds = !consideringFilters ? null
+                : this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance()
+                        .getParamFilterAnatEntity());
+        List<String> filterDevStageIds = !consideringFilters ? null
+                : this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance()
+                        .getParamFilterDevStage());
+        List<String> filterSexIds = !consideringFilters ? null
+                : this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance()
+                        .getParamFilterSex());
+        List<String> filterStrains = !consideringFilters ? null
+                : this.requestParameters.getValues(this.requestParameters.getUrlParametersInstance()
+                        .getParamFilterStrain());
+
+        List<String> sexes = this.requestParameters.getSex();
+        if (sexes != null && (sexes.contains(RequestParameters.ALL_VALUE)
+                || sexes.containsAll(EnumSet.allOf(SexEnum.class).stream()
+                        .map(e -> e.name())
+                        .collect(Collectors.toSet())))) {
+            sexes = null;
+        }
+
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds =
+                new HashMap<>();
+
+        // Keep search parameters distinct from filter parameters, similarly to loadExprCallFilter.
+        List<String> anatIds = this.requestParameters.getAnatEntity() == null ? new ArrayList<>()
+                : new ArrayList<>(this.requestParameters.getAnatEntity());
+        boolean summaryTermsRequested = false;
+        if (anatIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            summaryTermsRequested = true;
+            anatIds.addAll(SUMMARY_ANAT_ENTITY_IDS);
+            anatIds.remove(ID_PARAM_SUMMARY_VALUE);
+        }
+        List<String> cellIds = this.requestParameters.getCellType() == null ? new ArrayList<>()
+                : new ArrayList<>(this.requestParameters.getCellType());
+        if (cellIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            cellIds.addAll(SUMMARY_CELL_TYPE_IDS);
+            cellIds.remove(ID_PARAM_SUMMARY_VALUE);
+        }
+        List<String> discardAnatEntityIds = this.requestParameters.getDiscardAnatEntity() == null
+                ? new ArrayList<>()
+                : new ArrayList<>(this.requestParameters.getDiscardAnatEntity());
+        if (discardAnatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
+            discardAnatEntityIds.addAll(SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS);
+            discardAnatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);
+            if (!summaryTermsRequested) {
+                discardAnatEntityIds.removeAll(anatIds);
+            }
+        }
+        boolean requestedAnatEntityDescendant = Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                this.requestParameters.getUrlParametersInstance().getParamAnatEntityDescendant()));
+        if (!anatIds.isEmpty() && !discardAnatEntityIds.isEmpty() && !requestedAnatEntityDescendant) {
+            throw log.throwing(new InvalidRequestException("Only when anat. entity descendants are requested "
+                    + "it is possible to exclude anat. entities and their children."));
+        }
+        // And we never include child terms when the parameter comes from a filter.
+        boolean anatEntityDescendant =
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                        || anatIds.isEmpty() ? false
+                                : Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                        this.requestParameters.getUrlParametersInstance()
+                                                .getParamAnatEntityDescendant()));
+
+        try {
+            FilterIds<String> anatFilter = new FilterIds<>(
+                    // Filters override the related parameter from the form.
+                    filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                            ? filterAnatEntityCellTypeIds
+                            : anatIds,
+                    anatEntityDescendant,
+                    filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                            ? null
+                            : discardAnatEntityIds,
+                    null);
+            FilterIds<String> cellFilter = new FilterIds<>(
+                    // Filters override the related parameter from the form.
+                    filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                            ? filterAnatEntityCellTypeIds
+                            : cellIds,
+                    // And we never include child terms when the parameter comes from a filter.
+                    filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()
+                            || cellIds.isEmpty() ? false
+                                    : Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                            this.requestParameters.getUrlParametersInstance()
+                                                    .getParamCellTypeDescendant())));
+
+            List<FilterIds<String>> composedFilterIds = new ArrayList<>(List.of(anatFilter));
+            // In case we used the filters, anatFilter and cellFilter should be equal,
+            // and we thus don't use the cellFilter.
+            if (!anatFilter.equals(cellFilter)) {
+                composedFilterIds.add(cellFilter);
+            }
+            ComposedFilterIds<String> anatCellComposed = new ComposedFilterIds<>(
+                    composedFilterIds.stream()
+                            .filter(f -> !f.isEmpty())
+                            .collect(Collectors.toList()));
+            if (condParams.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
+                condParamToComposedFilterIds.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatCellComposed);
+            }
+
+            FilterIds<String> devStageFilter = new FilterIds<>(
+                    // Filters override the related parameter from the form.
+                    filterDevStageIds != null && !filterDevStageIds.isEmpty()
+                            ? filterDevStageIds
+                            : this.requestParameters.getDevStage(),
+                    // And we never include child terms when the parameter comes from a filter.
+                    filterDevStageIds != null && !filterDevStageIds.isEmpty()
+                            || this.requestParameters.getDevStage() == null
+                            || this.requestParameters.getDevStage().isEmpty() ? false
+                                    : Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                            this.requestParameters.getUrlParametersInstance()
+                                                    .getParamStageDescendant())));
+            if (condParams.contains(ConditionParameter.DEV_STAGE)) {
+                condParamToComposedFilterIds.put(ConditionParameter.DEV_STAGE,
+                        new ComposedFilterIds<>(devStageFilter));
+            }
+
+            FilterIds<String> sexFilter = new FilterIds<>(
+                    // Filters override the related parameter from the form.
+                    filterSexIds != null && !filterSexIds.isEmpty() ? filterSexIds : sexes,
+                    false);
+            if (condParams.contains(ConditionParameter.SEX)) {
+                condParamToComposedFilterIds.put(ConditionParameter.SEX,
+                        new ComposedFilterIds<>(sexFilter));
+            }
+
+            FilterIds<String> strainFilter = new FilterIds<>(
+                    // Filters override the related parameter from the form.
+                    filterStrains != null && !filterStrains.isEmpty()
+                            ? filterStrains
+                            : this.requestParameters.getStrain(),
+                    false);
+            if (condParams.contains(ConditionParameter.STRAIN)) {
+                condParamToComposedFilterIds.put(ConditionParameter.STRAIN,
+                        new ComposedFilterIds<>(strainFilter));
+            }
+
+            // As in processExprCallPage, requests without any condition filters must remain valid.
+            if (condParamToComposedFilterIds.isEmpty()
+                    || condParamToComposedFilterIds.values().stream().allMatch(f -> f.isEmpty())) {
+                return null;
+            }
+
+            if (speciesIds == null || speciesIds.isEmpty()) {
+                throw log.throwing(new InvalidRequestException(
+                        "At least one species ID must be available to build multi-species filters."));
+            }
+            Collection<ConditionFilter2> condFilters = speciesIds.stream()
+                    .map(speciesId -> new ConditionFilter2(
+                            speciesId,
+                            condParamToComposedFilterIds,
+                            condParams,
+                            null,
+                            false))
+                    .collect(Collectors.toList());
+            if (condFilters.isEmpty() || condFilters.stream()
+                    .allMatch(ConditionFilter2::areAllFiltersExceptSpeciesEmpty)) {
+                return null;
+            }
+            return condFilters;
+        } catch (IllegalArgumentException e) {
+            log.catching(e);
+            throw log.throwing(new InvalidRequestException(e.getMessage()));
+        }
     }
 
     private void processExperimentPage() throws PageNotFoundException, IOException {

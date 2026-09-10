@@ -59,7 +59,7 @@ import org.supercsv.prefs.CsvPreference;
 public class GenerateXRefsFilesWithExprInfo {
 
     private final static Logger log = LogManager.getLogger(GenerateXRefsFilesWithExprInfo.class.getName());
-    private final static String GENECARDS_URL = "https://www.genecards.org/cgi-bin/carddisp.pl?gene=";
+    private final static String GENECARDS_URL = "https://www.genecards.org/card/";
 
     private final Supplier<ServiceFactory> serviceFactorySupplier;
 

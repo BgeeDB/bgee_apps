@@ -486,14 +486,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         summaryCallTypeQualityFilter.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
 
-        // Unlike the previous implementation, which explicitly restricted results to the "root"
-        // cell type, sex and strain (Collections.singleton("GO:0005575")/"any"/"wild-type" in
-        // the old ConditionFilter), the new condition parameter model merges anat. entity and
-        // cell type into a single ConditionParameter (ANAT_ENTITY_CELL_TYPE), so it is no longer
-        // possible to request "anat. entity without cell type" as a condition parameter
-        // combination. As implemented below, calls for specific cell types are now also
-        // exported (not just whole-organ calls) -- confirmed intentional: cell types are
-        // important data and should be part of EasyBgee.
         Collection<ConditionParameter<?, ?>> condParamCombination =
                 List.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE, ConditionParameter.DEV_STAGE);
 
@@ -501,9 +493,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
 
         // Progress logging: this loop does one OTF propagation query per gene, which can be
         // slow, and idToBgeeGeneIds.keySet().parallelStream() otherwise runs silently until the
-        // whole species is done. logEveryNGenes is deliberately small (unlike the 500k used for
-        // the 37M-row geneXRef export) since a single species is typically tens of thousands of
-        // genes, not tens of millions.
+        // whole species is done.
         int totalGenes = idToBgeeGeneIds.size();
         long logEveryNGenes = 1000L;
         AtomicLong geneCount = new AtomicLong(0);
@@ -537,10 +527,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 System.currentTimeMillis() - startTimeCondPart, totalGenes);
 
         try {
-            // A stale, possibly empty, file left over from a previous run/attempt would make
-            // file.exists() true and silently skip the header write below even though no header
-            // was ever actually written to that file. Treat "exists but empty" the same as
-            // "does not exist" so we don't get a headerless file again.
             boolean writeHeader = !file.exists() || file.length() == 0;
             log.info("Species {}: output file {} ({}), writeHeader={}", speciesId, file,
                     file.exists() ? "exists, " + file.length() + " bytes" : "does not exist yet",
@@ -869,10 +855,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         // Condition filter using root of sex and strain only: those two parameters are not
         // part of the OTF condParamCombination requested in extractGlobalExpressionTable, so
         // they always stay collapsed to root there. Cell type, unlike sex/strain, now IS part
-        // of that combination (cell types are exported, not just whole-organ calls -- see
-        // extractGlobalExpressionTable), so it must NOT be restricted to root here either,
-        // otherwise cell-type-specific calls would have no matching row in this table and
-        // buildConditionKeyFromCondition2's lookup would fail for every one of them.
+        // of that combination.
         DAOConditionFilter condFilter = new DAOConditionFilter(null, null, null,
                 Collections.singleton(ConditionDAO.SEX_ROOT_ID),
                 Collections.singleton(ConditionDAO.STRAIN_ROOT_ID), null);
@@ -884,7 +867,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         List<ConditionTO> conditionTOs = daoManagerSupplier.get().getConditionDAO()
                 .getGlobalConditions(Collections.singleton(speciesId),
                         Collections.singleton(condFilter), attributes).stream()
-                .filter(c -> c.getStageId().startsWith("UBERON:"))
+//                .filter(c -> c.getStageId().startsWith("UBERON:"))
                 .toList();
 
         //transformation from a List<ConditionTO> to a List<Map<String, String>> in order to easily write conditions in a file

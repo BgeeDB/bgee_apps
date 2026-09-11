@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,13 +29,22 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
+import org.bgee.model.ComposedEntity;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
-import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.expressiondata.call.ConditionGraph;
-import org.bgee.model.expressiondata.call.ConditionGraphService;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
+import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.ConditionFilter2;
+import org.bgee.model.expressiondata.call.ExpressionCallLoader;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.SpeciesService;
@@ -185,24 +195,15 @@ public class GenerateXRefsFilesWithExprInfo {
                 .map(g -> new GeneFilter(g.getSpecies().getId(), g.getGeneId()))
                 .collect(Collectors.toSet());
 
-        // We generate the ConditionGraph needed for filtering calls as on the gene page,
-        // for each species present in the xref list. This will avoid creating a new condition 
-        // graph for each gene.
-        final ConditionGraphService condGraphService = serviceFactory.getConditionGraphService();
-        // for now we are only interested to anatomical entities and cell types.
-        // The condition graph is generated using only these condition parameters
-        final EnumSet<CallService.Attribute> condGraphParam = 
-                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID);
-        final Map<Integer, ConditionGraph> condGraphBySpeId = 
-                Collections.unmodifiableMap(speciesIds.stream()
-                .collect(Collectors.toMap(id -> id,
-                        id -> condGraphService.loadConditionGraphFromSpeciesIds(
-                                Collections.singleton(id), null, condGraphParam))));
+        // No ConditionGraph is built here anymore: with OTF propagation, the condition graph
+        // of a species is loaded and cached by ConditionGraphCacheService itself, and the
+        // filtering of redundant ancestor calls it was used for is now requested through the
+        // ExpressionCallFilter2 (see generateXrefs).
         serviceFactory.close();
 
         // We are now ready to retrieve expression and generate XRefs
-        Map<XrefsFileType, Map<String, List<String>>> geneIdToXrefLinesbyXrefsFileType = 
-                this.generateXrefs(geneFiltersToLoadCalls, condGraphBySpeId, requestedXrefFileTypes, 
+        Map<XrefsFileType, Map<String, List<String>>> geneIdToXrefLinesbyXrefsFileType =
+                this.generateXrefs(geneFiltersToLoadCalls, requestedXrefFileTypes,
                         uniprotXrefByGeneIdBySpeciesId, wikidataUberonClasses);
 
         // write XRef file
@@ -307,7 +308,6 @@ public class GenerateXRefsFilesWithExprInfo {
      *
      * @param geneFilters               A {@code Set} of {@code GeneFilter}s. Each {@code GeneFilter} corresponds to
      *                                  a filter of all genes for one species.
-     * @param condGraphBySpeId          Map<Integer, ConditionGraph> condGraphBySpeId
      * @param requestedXrefFileTypes    A {@code Set} of {@code XrefsFileType}. Each {@code} corresponds to a
      *                                  type of XRef file to generate
      * @param uniprotXrefs              A {@code Map} of {@code Integer} representing speciesIds as key and as value
@@ -318,13 +318,22 @@ public class GenerateXRefsFilesWithExprInfo {
      * @return                          The {@code Map} where keys correspond to gene IDs and each
      *                                  value corresponds to one well formatted UniProtKB Xref line.
      */
-    private Map<XrefsFileType, Map<String, List<String>>> generateXrefs(Set<GeneFilter> geneFilters, 
-            Map<Integer, ConditionGraph> condGraphBySpeId, Set<XrefsFileType> requestedXrefFileTypes, 
+    private Map<XrefsFileType, Map<String, List<String>>> generateXrefs(Set<GeneFilter> geneFilters,
+            Set<XrefsFileType> requestedXrefFileTypes,
             Map<Integer, Map<String, Set<String>>> uniprotXrefs, Set<String> wikidataUberonClasses) {
-        log.traceEntry("{}, {}, {}, {}, {}", geneFilters, condGraphBySpeId, requestedXrefFileTypes,
+        log.traceEntry("{}, {}, {}, {}", geneFilters, requestedXrefFileTypes,
                 uniprotXrefs, wikidataUberonClasses);
 
         Instant start = Instant.now();
+
+        // The condition part of a processed filter depends only on the condition filters, which
+        // are identical for all the genes of a species (the ConditionFilter2 built below carries
+        // the species ID, hence one entry per species). Processing it for each gene would reload
+        // the whole condition/anat. entity/stage information for each of the thousands of genes
+        // below, in parallel, which hammers the database. So we compute it once per species and
+        // reuse it, as CommandExpressionSupport#loadExprCallLoader does through its cache.
+        Map<Integer, ExpressionCallProcessedFilterConditionPart> condPartBySpeId =
+                new ConcurrentHashMap<>();
 
         // init a Map where the key correspond to the type of xrefs and the value is a Map with a gene ID
         // as key and the corresponding xrefs as value.
@@ -356,19 +365,27 @@ public class GenerateXRefsFilesWithExprInfo {
     
                 // Retrieve expression calls
                 ServiceFactory threadSpeServiceFactory = serviceFactorySupplier.get();
-                CallService callService = threadSpeServiceFactory.getCallService();
-    
-                // keep only the expressionCall at anat entity level. Comming from a LinkedHashMap they
-                // are already ordered by expressionlevel.
-                Set<CallService.Attribute> condParams = 
-                        new HashSet<>(EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID));
+                ExpressionCallService callService = threadSpeServiceFactory.getExpressionCallService();
+
+                // Same filter as the gene page (see CommandGene#loadExpression): SILVER EXPRESSED
+                // calls, in conditions observed for the requested condition parameters, with the
+                // redundant ancestor calls discarded. As on the gene page, the only condition
+                // parameter requested is the anat. entity/cell type.
                 //XXX If in the future we plan to add more information than just the anat. entity, it will
                 // then be mandatory to keep calls at condition level ordered by anat. entity
-                List<ExpressionCall> callsByAnatEntity = callService.loadSilverCondObservedCalls(gf, 
-                                condParams, ExpressionSummary.EXPRESSED,
-                                null,
-                                condGraphBySpeId.get(speciesId));
-    
+                ExpressionCallFilter2 callFilter = buildGenePageCallFilter(speciesId, geneId);
+                ExpressionCallProcessedFilterConditionPart condPart = condPartBySpeId
+                        .computeIfAbsent(speciesId, spId -> callService
+                                .processExpressionCallFilter(callFilter).getConditionPart());
+                ExpressionCallProcessedFilter processedFilter = callService
+                        .processExpressionCallFilter(callFilter, null, condPart, null);
+                ExpressionCallLoader callLoader = callService.getCallLoader(processedFilter);
+                // Calls are already ordered by expression score by the loader, i.e. best
+                // expression first, as on the gene page.
+                List<OTFExpressionCall> callsByAnatEntity = callLoader.loadDataOnTheFly()
+                        .values().stream().flatMap(List::stream).collect(Collectors.toList());
+
+
                 // If no expression for this gene in Bgee
                 if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
                     log.info("No expression data for gene " + geneId);
@@ -420,6 +437,99 @@ public class GenerateXRefsFilesWithExprInfo {
 
     }
     
+    /**
+     * Build the {@code ExpressionCallFilter2} used to retrieve the calls of one gene, reproducing
+     * exactly the filtering done by the gene page (see {@code CommandGene#loadExpression} and
+     * {@code CommandGene#buildConditionFilters}): SILVER EXPRESSED calls, over all data types,
+     * with the anat. entity/cell type as only condition parameter, restricted to conditions
+     * observed for that parameter, and with the redundant ancestor calls discarded.
+     *
+     * @param speciesId     An {@code Integer} that is the ID of the species of the gene.
+     * @param geneId        A {@code String} that is the ID of the gene to retrieve calls for.
+     * @return              The {@code ExpressionCallFilter2} to use to retrieve the calls.
+     */
+    private static ExpressionCallFilter2 buildGenePageCallFilter(Integer speciesId, String geneId) {
+        log.traceEntry("{}, {}", speciesId, geneId);
+
+        Set<ConditionParameter<?, ?>> condParams = Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        //As in CommandGene#buildConditionFilters: no term requested for any condition parameter,
+        //the ConditionFilter2 is only used to request the condition parameter combination
+        //for the species.
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds =
+                new HashMap<>();
+        for (ConditionParameter<?, ?> condParam: ConditionParameter.allOf()) {
+            condParamToComposedFilterIds.put(condParam, new ComposedFilterIds<>());
+        }
+        ConditionFilter2 condFilter = new ConditionFilter2(speciesId, condParamToComposedFilterIds,
+                condParams, null, false);
+
+        return log.traceExit(new ExpressionCallFilter2(
+                Map.of(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER),
+                new GeneFilter(speciesId, geneId),
+                condFilter.areAllFiltersExceptSpeciesEmpty()? null: Set.of(condFilter),
+                //no data type filter: all data types are considered, as on the gene page
+                //when no data type is requested
+                null,
+                condParams,
+                //conditions must have been observed for the requested condition parameters
+                condParams,
+                true,
+                //discard the calls in ancestor conditions that are redundant with a descendant
+                //condition. This is what the ConditionGraph was used for before OTF propagation.
+                true));
+    }
+
+    /**
+     * Retrieve the name of a condition to be used in the expression sentences, e.g.
+     * "brain", or "neuron in brain" for a condition with a specific cell type.
+     *
+     * @param cond  The {@code Condition2} to retrieve the name for.
+     * @return      A {@code String} that is the name of the condition.
+     */
+    private static String getConditionName(Condition2 cond) {
+        log.traceEntry("{}", cond);
+        ComposedEntity<AnatEntity> anatEntityCellType = cond
+                .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (anatEntityCellType == null || anatEntityCellType.isEmpty()) {
+            throw log.throwing(new IllegalStateException(
+                    "A Condition2 must always have an anat. entity: " + cond));
+        }
+        //Only one entity: the anat. entity, without specific cell type (whole-organ condition).
+        //Otherwise, the first entity is the cell type and the second one the anat. entity.
+        AnatEntity anatEntity = anatEntityCellType.size() > 1?
+                anatEntityCellType.getEntity(1): anatEntityCellType.getEntity(0);
+        AnatEntity cellType = anatEntityCellType.size() > 1?
+                anatEntityCellType.getEntity(0): null;
+        //The cell type can be present but be the root of the cell types ("cellular_component"),
+        //which means "no specific cell type": we then only write the anat. entity, as the gene
+        //page does (see GeneExpressionResponseTypeAdapter, which does not write the cell type
+        //in that case).
+        if (cellType == null || ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+            return log.traceExit(anatEntity.getName());
+        }
+        return log.traceExit(cellType.getName() + " in " + anatEntity.getName());
+    }
+
+    /**
+     * Retrieve the ID of the anat. entity of a condition, discarding the cell type
+     * it can be composed of.
+     *
+     * @param cond  The {@code Condition2} to retrieve the anat. entity ID for.
+     * @return      A {@code String} that is the ID of the anat. entity of the condition.
+     */
+    private static String getAnatEntityId(Condition2 cond) {
+        log.traceEntry("{}", cond);
+        ComposedEntity<AnatEntity> anatEntityCellType = cond
+                .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (anatEntityCellType == null || anatEntityCellType.isEmpty()) {
+            throw log.throwing(new IllegalStateException(
+                    "A Condition2 must always have an anat. entity: " + cond));
+        }
+        return log.traceExit(anatEntityCellType.size() == 1?
+                anatEntityCellType.getEntity(0).getId():
+                anatEntityCellType.getEntity(1).getId());
+    }
+
     private SortedMap<String, List<String>> createNewSynchronizedSortedMap() {
         SortedMap<String, List<String>> xrefsLinesByFileTypeByGene = new TreeMap<>();
         return Collections.synchronizedSortedMap(xrefsLinesByFileTypeByGene);
@@ -438,7 +548,7 @@ public class GenerateXRefsFilesWithExprInfo {
      *                              text as value
      */
     private Map<String, List<String>> generateXrefLineUniProt(String geneId, 
-            List<ExpressionCall> callsByCondition, Set<String> uniprotIds) {
+            List<OTFExpressionCall> callsByCondition, Set<String> uniprotIds) {
 
         List<String> XRefLines = uniprotIds.stream().map(uid -> {
             // Create String representation of the XRef with expression information
@@ -463,7 +573,7 @@ public class GenerateXRefsFilesWithExprInfo {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private Map<String, List<String>> generateGeneSummary(String geneId, Integer speciesId, List<ExpressionCall> callsByCondition) {
+    private Map<String, List<String>> generateGeneSummary(String geneId, Integer speciesId, List<OTFExpressionCall> callsByCondition) {
         StringBuilder sb = new StringBuilder();
         sb.append(geneId).append("\t").append(speciesId).append("\t");
         int numberConditionsToWrite = XrefsFileType.BGEE_GENE_SUMMARY.getNumberOfConditionsToWrite();
@@ -479,21 +589,18 @@ public class GenerateXRefsFilesWithExprInfo {
     }
 
     private String stringSentenceCurrentCondition (int numberConditionsToWrite,
-            List<ExpressionCall> callsByCondition) {
+            List<OTFExpressionCall> callsByCondition) {
         log.traceEntry("{}, {}", numberConditionsToWrite, callsByCondition);
         StringBuilder sb = new StringBuilder();
         sb.append(String.join(", ", callsByCondition.stream()
                 .limit(numberConditionsToWrite)
-                .map(c -> c.getCondition().getCellType().getId().equals(ConditionDAO.CELL_TYPE_ROOT_ID)?
-                        c.getCondition().getAnatEntity().getName():
-                        c.getCondition().getCellType().getName() + " in " +
-                            c.getCondition().getAnatEntity().getName())
+                .map(c -> getConditionName(c.getCondition()))
                 .collect(Collectors.toList())));
         return log.traceExit(sb.toString());
     }
 
     private String stringSentenceOtherConditions (int numberConditionsToWrite,
-            List<ExpressionCall> callsByCondition) {
+            List<OTFExpressionCall> callsByCondition) {
         log.traceEntry("{}, {}", numberConditionsToWrite, callsByCondition);
         StringBuilder sb = new StringBuilder();
         if (callsByCondition.size() > numberConditionsToWrite ) {
@@ -517,7 +624,7 @@ public class GenerateXRefsFilesWithExprInfo {
      *                              text as value
      */
     private Map<String, List<String>> generateXrefLineGeneCards(String geneId, 
-            List<ExpressionCall> callsByCondition, String bgeeURL) {
+            List<OTFExpressionCall> callsByCondition, String bgeeURL) {
 
 
         // Create String representation of the XRef with expression information
@@ -548,15 +655,19 @@ public class GenerateXRefsFilesWithExprInfo {
      *                              text as value
      */
     private Map<String, List<String>> generateXrefLineWikidata(String geneId, 
-            List<ExpressionCall> callsByCondition, Set<String> wikidataUberonClasses) {
+            List<OTFExpressionCall> callsByCondition, Set<String> wikidataUberonClasses) {
         int uberonClassesWritten = 0;
-        Iterator<ExpressionCall> callsIterator = callsByCondition.iterator();
+        Iterator<OTFExpressionCall> callsIterator = callsByCondition.iterator();
         List<String> wikidataLines= new ArrayList<>();
+        //Now that cell types are part of the condition parameter requested, a same anat. entity
+        //can be seen in several calls (once for the whole organ, once per cell type it contains).
+        //We must not write the same Uberon class several times for a same gene.
+        Set<String> writtenUberonIds = new HashSet<>();
         while (uberonClassesWritten < 10 && callsIterator.hasNext()) {
-            ExpressionCall call = callsIterator.next();
-            String uberonId = call.getCondition().getAnatEntityId();
+            OTFExpressionCall call = callsIterator.next();
+            String uberonId = getAnatEntityId(call.getCondition());
 
-            if(wikidataUberonClasses.contains(uberonId)) {
+            if(wikidataUberonClasses.contains(uberonId) && writtenUberonIds.add(uberonId)) {
                 String modifiedUberonId = uberonId.contains("UBERON:") ? uberonId.substring(7) : 
                     uberonId.replace(":", "_");
                 wikidataLines.add(geneId + "\t"+ modifiedUberonId);

@@ -784,7 +784,15 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         // In order to solve that issue we check xrefs coming from a datasource with [gene_id] pattern
         // If one gene already has an xrefUrl associated to it, then the corresponding xref is not inserted again.
         Map<Integer, Set<String>> manageDuplicatedXrefs = new HashMap<>();
-        List<Map<String, String>> allGeneXRefsInformation = allGeneXRefsTOs.stream().map(geneXRef -> {
+        // use TsvFile Enum to generate the CellProcessor
+        final CellProcessor[] processors = createCellProcessor(TsvFile.GENE_XREF_OUTPUT_FILE);
+        File file = new File(directory, TsvFile.GENE_XREF_OUTPUT_FILE.fileName);
+        //The XRef table has tens of millions of rows: they are written as they are produced
+        //rather than collected into a List first. The stream is sequential, so the order and
+        //the deduplication below are unchanged.
+        AtomicLong xrefCount = new AtomicLong(0);
+        long logEveryNXRefs = 1000000L;
+        Stream<Map<String, String>> allGeneXRefsInformation = allGeneXRefsTOs.stream().map(geneXRef -> {
             Map<String, String> headerToValue = new HashMap<>();
             headerToValue.put(header[0], String.valueOf(geneXRef.getBgeeGeneId()));
             String dataSourceXRefUrl = dataSourceById.get(geneXRef.getDataSourceId()).getXRefUrl();
@@ -816,11 +824,35 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             headerToValue.put(header[1], dataSourceXRefUrl);
             headerToValue.put(header[2], dataSourceById.get(geneXRef.getDataSourceId()).getName());
             return headerToValue;
-        }).filter(e -> e != null).collect(Collectors.toList());
-        // use TsvFile Enum to generate the CellProcessor
-        final CellProcessor[] processors = createCellProcessor(TsvFile.GENE_XREF_OUTPUT_FILE);
-        File file = new File(directory, TsvFile.GENE_XREF_OUTPUT_FILE.fileName);
-        writeOutputFile(file, allGeneXRefsInformation, header, processors);
+        }).filter(e -> e != null);
+
+        try {
+            //An existing but empty file (e.g. left over from a previous run) needs its header
+            //written, as a non-existing one.
+            boolean writeHeader = !file.exists() || file.length() == 0;
+            try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file, true),
+                    Utils.TSVCOMMENTED)) {
+                if (writeHeader) {
+                    file.createNewFile();
+                    mapWriter.writeHeader(header);
+                }
+                allGeneXRefsInformation.forEach(headerToValue -> {
+                    try {
+                        mapWriter.write(headerToValue, header, processors);
+                    } catch (IOException e) {
+                        throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
+                    }
+                    long count = xrefCount.incrementAndGet();
+                    if (count % logEveryNXRefs == 0) {
+                        log.info("{} gene XRefs written so far, {} MB heap used...", count,
+                                usedMemoryMb());
+                    }
+                });
+            }
+        } catch (IOException e) {
+            throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
+        }
+        log.info("Done extracting gene XRefs: {} XRefs written.", xrefCount.get());
         log.traceExit();
     }
 

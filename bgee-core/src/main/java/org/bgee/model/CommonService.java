@@ -284,7 +284,8 @@ public class CommonService extends Service {
                     "Species ID of the gene does not match provided Species."));
         }
         return log.traceExit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                synonyms, xRefs, species, geneBioType, geneTO.getGeneMappedToGeneIdCount(),
+                synonyms, xRefs, species, geneBioType, geneTO.getGeneLength(),
+                geneTO.getGeneMappedToGeneIdCount(),
                 geneTO.getExpressionSummary()));
     }
 

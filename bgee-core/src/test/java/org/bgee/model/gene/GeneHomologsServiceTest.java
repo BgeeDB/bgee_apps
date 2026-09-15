@@ -72,10 +72,10 @@ public class GeneHomologsServiceTest extends TestAncestor {
         GeneService service = new GeneService(serviceFactory);
         Map<Integer, Set<Gene>> expected = new HashMap<>();
         expected.put(1, new HashSet<>(Arrays.asList(
-            new Gene("ID1", "Name1", "Desc1", null, null, new Species(11), new GeneBioType("type1"), 1, null), 
-            new Gene("ID2", "Name2", "Desc2", null, null, new Species(22), new GeneBioType("type1"), 1, null))));
+            new Gene("ID1", "Name1", "Desc1", null, null, new Species(11), new GeneBioType("type1"), null, 1, null), 
+            new Gene("ID2", "Name2", "Desc2", null, null, new Species(22), new GeneBioType("type1"), null, 1, null))));
         expected.put(2, new HashSet<>(Arrays.asList(
-            new Gene("ID4", "Name4", "Desc4", null, null, new Species(44), new GeneBioType("type2"), 1, null))));
+            new Gene("ID4", "Name4", "Desc4", null, null, new Species(44), new GeneBioType("type2"), null, 1, null))));
 //        Map<Integer, Set<Gene>> actual = service.getOrthologs(1234, null);
 //        assertEquals(expected, actual);
     }

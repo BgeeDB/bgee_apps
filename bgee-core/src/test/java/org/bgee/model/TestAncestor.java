@@ -286,7 +286,7 @@ public abstract class TestAncestor {
                             .map(e -> GENE_X_REFS.get(e.getKey()))
                             .collect(Collectors.toSet()): null,
                         SPECIES.get(to.getSpeciesId()),
-                        GENE_BIO_TYPES.get(to.getGeneBioTypeId()),
+                        GENE_BIO_TYPES.get(to.getGeneBioTypeId()), null,
                         to.getGeneMappedToGeneIdCount(), null)))
         .collect(Collectors.toList()));
     }

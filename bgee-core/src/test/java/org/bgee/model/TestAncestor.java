@@ -198,7 +198,7 @@ public abstract class TestAncestor {
                     1,                  //speciesId
                     1,                  //geneBioTypeId
                     true,               //From Ensembl?
-                    "reg1",             //seqRegionName
+                    "reg1", null,             //seqRegionName
                     1,                  //Number of genes with same public ID
                     null
                     )),
@@ -206,14 +206,14 @@ public abstract class TestAncestor {
                     2, "geneId2", "geneName2", "geneDescription2",
                     1, //same species as geneId1
                     2, //alternative geneBioType
-                    true, "reg1", 1, "expression summary")),
+                    true, "reg1", null, 1, "expression summary")),
             Map.entry(3, new GeneTO(3,
                     "geneId3_4", //two different genes with same public ID in species 2 and species 3
                     "geneName3", "geneDescription3",
                     2,           //species 2
                     1,
                     true,        //species 2 and 3 has a genome from a different database than Ensembl
-                    "reg1", 
+                    "reg1", null, 
                     2,           //two different genes with same public ID in species 2 and species 3
                     null)),
             Map.entry(4, new GeneTO(4,
@@ -222,7 +222,7 @@ public abstract class TestAncestor {
                     2,           //species 3
                     1,
                     false,       //species 2 and 3 has a genome from a different database than Ensembl
-                    "reg1",
+                    "reg1", null,
                     2,           //two different genes with same public ID in species 2 and species 3
                     null))));
     protected static final Map<Integer, GeneXRefTO> GENE_X_REF_TOS = unmodifiableLinkedHashMap(List.of(

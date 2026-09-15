@@ -34,6 +34,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * <li>{@code GENE_BIO_TYPE_ID}: corresponds to {@link GeneTO#getGeneBioTypeId()}.
      * <li>{@code ENSEMBL_GENE}: corresponds to {@link GeneTO#isEnsemblGene()}.
      * <li>{@code SEQ_REGION_NAME}: corresponds to {@link GeneTO#getSeqRegionName()}
+     * <li>{@code GENE_LENGTH}: corresponds to {@link GeneTO#getGeneLength()}.
      * <li>{@code GENE_MAPPED_TO_SAME_GENE_ID_COUNT}: corresponds to {@link GeneTO#getGeneMappedToGeneIdCount()}.
      * <li>{@code EXPRESSION_SUMMARY}: corresponds to {@link GeneTO#getExpressionSummary()}.
      * </ul>
@@ -44,7 +45,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID("bgeeGeneId"), GENE_ID("geneId"), NAME("geneName"), DESCRIPTION("geneDescription"),
         SPECIES_ID("speciesId"), GENE_BIO_TYPE_ID("geneBioTypeId"),ENSEMBL_GENE("ensemblGene"),
-        SEQ_REGION_NAME("seqRegionName"), GENE_MAPPED_TO_SAME_GENE_ID_COUNT("geneMappedToGeneIdCount"),
+        SEQ_REGION_NAME("seqRegionName"), GENE_LENGTH("geneLength"),
+        GENE_MAPPED_TO_SAME_GENE_ID_COUNT("geneMappedToGeneIdCount"),
         EXPRESSION_SUMMARY("expressionSummary");
 
         /**
@@ -243,6 +245,13 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * A {@code String} that is the region where this gene comes from.
          */
         private final String seqRegionName;
+
+        /**
+         * An {@code Integer} that is the median of the lengths of the isoforms of this gene,
+         * an isoform length being the summed length of its exons. {@code null} for species
+         * inserted from a non-Ensembl source.
+         */
+        private final Integer geneLength;
         
         /**
          * @see #getGeneMappedToGeneIdCount() 
@@ -267,7 +276,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param speciesId An {@code Integer} of the species which this gene belongs to.
          */
         public GeneTO(Integer bgeeGeneId, String geneId, String geneName, Integer speciesId) {
-            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null, null, null);
+            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null, null, null, null);
         }
 
         /**
@@ -289,6 +298,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          *                                  Orthologous Group.
          * @param ensemblGene               A {code Boolean} defining whether this gene is present 
          *                                  in Ensembl.
+         * @param seqRegionName             A {@code String} that is the region where this gene comes from.
+         * @param geneLength                An {@code Integer} that is the median of the lengths
+         *                                  of the isoforms of this gene.
          * @param geneMappedToGeneIdCount   An {@code Integer} that is the number of genes
          *                                  in the Bgee database with the samegene ID.
          * @param expressionSummary         A {@code String} that summarize the expression of the gene
@@ -296,13 +308,14 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          */
         public GeneTO(Integer bgeeGeneId, String geneId, String geneName, String geneDescription, 
                 Integer speciesId, Integer geneBioTypeId, Boolean ensemblGene, String seqRegionName,
-                Integer geneMappedToGeneIdCount, String expressionSummary) {
+                Integer geneLength, Integer geneMappedToGeneIdCount, String expressionSummary) {
             super(bgeeGeneId, geneName, geneDescription);
             this.geneId = geneId;
             this.speciesId = speciesId;
             this.geneBioTypeId = geneBioTypeId;
             this.ensemblGene = ensemblGene;
             this.seqRegionName = seqRegionName;
+            this.geneLength = geneLength;
             this.geneMappedToGeneIdCount = geneMappedToGeneIdCount;
             this.expressionSummary = expressionSummary;
         }
@@ -331,6 +344,15 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         }
 
         /**
+         * @return  An {@code Integer} that is the median of the lengths of the isoforms
+         *          of this gene, an isoform length being the summed length of its exons.
+         *          {@code null} for species inserted from a non-Ensembl source.
+         */
+        public Integer getGeneLength() {
+            return geneLength;
+        }
+
+        /**
          * @return  The {@code Boolean} defining whether this gene is present in Ensembl.
          */
         public Boolean isEnsemblGene() {
@@ -355,7 +377,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         @Override
         public String toString() {
             return "GeneTO [geneId=" + geneId + ", speciesId=" + speciesId + ", geneBioTypeId=" + geneBioTypeId
-                    + ", ensemblGene=" + ensemblGene + ", seqRegionName=" + seqRegionName + ", geneMappedToGeneIdCount="
+                    + ", ensemblGene=" + ensemblGene + ", seqRegionName=" + seqRegionName + ", geneLength=" + geneLength
+                    + ", geneMappedToGeneIdCount="
                     + geneMappedToGeneIdCount + ", expressionSummary=" + expressionSummary + "]";
         }
 

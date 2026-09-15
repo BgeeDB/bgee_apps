@@ -338,6 +338,12 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     private final static Logger log = LogManager.getLogger(BgeeToEasyBgee.class);
 
     /**
+     * A {@code String} that is the namespace of the meta stages, the developmental stages
+     * shared among species.
+     */
+    private final static String META_STAGE_ID_PREFIX = "UBERON:";
+
+    /**
      * Several actions can be launched from this main method, depending on the
      * first element in {@code args}:
      * <ul>
@@ -352,6 +358,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
      * {@link CommandRunner#LIST_SEPARATOR}. If empty (see
      * {@link CommandRunner#EMPTY_LIST}), all species in database will be
      * exported.
+     * <li>a {@code boolean} defining whether only the conditions using a meta stage are
+     * exported. Exporting all the developmental stages is not realistic, it would result
+     * in billions of rows in the expression table.
      * </ol>
      * </li>
      * <li>If the first element in {@code args} is "tsvToEasyBgee", the action
@@ -378,13 +387,15 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         }
         BgeeToEasyBgee bgeeToEasyBgee = new BgeeToEasyBgee();
         if (args[0].equals("extractFromBgee")) {
-            int expectedArgLength = 3;
+            int expectedArgLength = 4;
             if (args.length != expectedArgLength) {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments provided, expected "
                         + expectedArgLength + " arguments, " + args.length + " provided."));
             }
+            boolean metaStagesOnly = CommandRunner.parseArgumentAsBoolean(args[3]);
             bgeeToEasyBgee.cleanOutputDir(args[1]);
-            bgeeToEasyBgee.extractBgeeDatabase(CommandRunner.parseListArgumentAsInt(args[2]), args[1]);
+            bgeeToEasyBgee.extractBgeeDatabase(CommandRunner.parseListArgumentAsInt(args[2]), args[1],
+                    metaStagesOnly);
         } else if (args[0].equals("tsvToEasyBgee")) {
             int expectedArgLength = 2;
             if (args.length != expectedArgLength) {
@@ -443,9 +454,13 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
      *            species for which to generate files.
      * @param directory
      *            A {@code String} that is the directory where to store files.
+     * @param metaStagesOnly
+     *            A {@code boolean} defining whether only the conditions using a meta stage
+     *            are exported (see {@link #extractGlobalCondTable(Integer, String, boolean)}).
      */
-    private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory) {
-        log.traceEntry("{}, {}", inputSpeciesIds, directory);
+    private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory,
+            boolean metaStagesOnly) {
+        log.traceEntry("{}, {}, {}", inputSpeciesIds, directory, metaStagesOnly);
         SpeciesTOResultSet speciesTOs = daoManagerSupplier.get().getSpeciesDAO()
                 .getSpeciesByIds(new HashSet<>(inputSpeciesIds), null);
         // XXX: add check that all provided species IDs are found
@@ -460,7 +475,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             // data for only 1 species
             Map<String, Integer> idToBgeeGeneId = extractGeneTable(speciesId, directory);
             logMemoryUsage("extracting the " + idToBgeeGeneId.size() + " genes of species " + speciesId);
-            Map<String, String> condKeyToConditionId = extractGlobalCondTable(speciesId, directory);
+            Map<String, String> condKeyToConditionId = extractGlobalCondTable(speciesId, directory,
+                    metaStagesOnly);
             logMemoryUsage("extracting the " + condKeyToConditionId.size()
                     + " global conditions of species " + speciesId);
             extractGlobalExpressionTable(idToBgeeGeneId, condKeyToConditionId, speciesId, directory);
@@ -897,9 +913,24 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         log.traceExit();
     }
 
-    private Map<String, String> extractGlobalCondTable(Integer speciesId, String directory) {
-        log.traceEntry("{}, {}", speciesId, directory);
-        log.info("Start extracting global conditions for the species {}...", speciesId);
+    /**
+     * @param speciesId         An {@code Integer} that is the ID of the species to export
+     *                          the global conditions for.
+     * @param directory         A {@code String} that is the directory where to store files.
+     * @param metaStagesOnly    A {@code boolean} defining whether only the conditions using
+     *                          a meta stage are exported. Meta stages are shared among species
+     *                          and are all the stage IDs with the "UBERON:" namespace. Exporting
+     *                          all the developmental stages is not realistic, it would result
+     *                          in billions of rows in the expression table.
+     * @return                  A {@code Map} where keys are the {@code String} keys built by
+     *                          {@link #buildConditionKey(String, String, String, String, String,
+     *                          int)}, the associated value being the ID of the global condition.
+     */
+    private Map<String, String> extractGlobalCondTable(Integer speciesId, String directory,
+            boolean metaStagesOnly) {
+        log.traceEntry("{}, {}, {}", speciesId, directory, metaStagesOnly);
+        log.info("Start extracting global conditions for the species {}, metaStagesOnly={}...",
+                speciesId, metaStagesOnly);
 
         List<ConditionDAO.Attribute> attributes = Arrays.asList(ConditionDAO.Attribute.ID,
                 ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID,
@@ -918,15 +949,12 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 Collections.singleton(ConditionDAO.SEX_ROOT_ID),
                 Collections.singleton(ConditionDAO.STRAIN_ROOT_ID), null);
 
-        //XXX: With the increasing number of data it is not realistic to generate easybgee
-        // for all developmental stages. It would result in billions of rows. We decided
-        // to only propagate among meta stages as they are shared among species. Meta stages
-        // are all stage IDs with the namespace "UBERON:"
         List<ConditionTO> conditionTOs = daoManagerSupplier.get().getConditionDAO()
                 .getGlobalConditions(Collections.singleton(speciesId),
                         Collections.singleton(condFilter), attributes).stream()
-//                .filter(c -> c.getStageId().startsWith("UBERON:"))
+                .filter(c -> !metaStagesOnly || c.getStageId().startsWith(META_STAGE_ID_PREFIX))
                 .toList();
+        log.info("Species {}: {} global conditions exported.", speciesId, conditionTOs.size());
 
         //transformation from a List<ConditionTO> to a List<Map<String, String>> in order to easily write conditions in a file
         List<Map<String, String>> allGlobalCondInformation = conditionTOs.stream().map(cond -> {

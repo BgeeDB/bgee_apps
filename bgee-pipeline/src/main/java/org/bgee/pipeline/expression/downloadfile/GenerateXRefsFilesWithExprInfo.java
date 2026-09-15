@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -21,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,6 +46,7 @@ import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
+import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.SpeciesService;
@@ -70,6 +72,19 @@ public class GenerateXRefsFilesWithExprInfo {
 
     private final static Logger log = LogManager.getLogger(GenerateXRefsFilesWithExprInfo.class.getName());
     private final static String GENECARDS_URL = "https://www.genecards.org/card/";
+
+    /**
+     * An {@code int} that is the number of genes for which expression calls are retrieved
+     * with a same {@code ExpressionCallLoader}. It bounds how many genes worth of calls
+     * are held in memory at the same time by one thread.
+     */
+    private final static int GENE_BATCH_SIZE = 100;
+
+    /**
+     * An {@code int} that is the number of genes between two progress logs. Independent from
+     * {@link #GENE_BATCH_SIZE}: logging every batch would produce thousands of lines.
+     */
+    private final static int LOG_EVERY_N_GENES = 500;
 
     private final Supplier<ServiceFactory> serviceFactorySupplier;
 
@@ -326,14 +341,6 @@ public class GenerateXRefsFilesWithExprInfo {
 
         Instant start = Instant.now();
 
-        // The condition part of a processed filter depends only on the condition filters, which
-        // are identical for all the genes of a species (the ConditionFilter2 built below carries
-        // the species ID, hence one entry per species). Processing it for each gene would reload
-        // the whole condition/anat. entity/stage information for each of the thousands of genes
-        // below, in parallel, which hammers the database. So we compute it once per species and
-        // reuse it, as CommandExpressionSupport#loadExprCallLoader does through its cache.
-        Map<Integer, ExpressionCallProcessedFilterConditionPart> condPartBySpeId =
-                new ConcurrentHashMap<>();
 
         // init a Map where the key correspond to the type of xrefs and the value is a Map with a gene ID
         // as key and the corresponding xrefs as value.
@@ -352,17 +359,56 @@ public class GenerateXRefsFilesWithExprInfo {
         String bgeeURL = new StringBuilder("https://www.bgee.org/bgee").append(majorBgeeVersion)
                 .append("_").append(minorBgeeVersion).append("/gene/").toString();
 
-        //retrieve expression information for each xref (unique geneId, speciesId, uniprotId)
-            geneFilters.parallelStream().forEach(gf -> {
-    
-                Integer speciesId = gf.getSpeciesId();
-                if(gf.getGeneIds() == null || gf.getGeneIds().size() == 0 || 
-                        gf.getGeneIds().size() > 1) {
-                    throw log.throwing(new IllegalArgumentException("the geneFilter should "
-                            + "contain exactly one geneId"));
+        //Genes are grouped by species, and the species are processed sequentially, so that the
+        //condition information of a single species is alive at a time.
+        Map<Integer, List<String>> geneIdsBySpeciesId = new TreeMap<>();
+        for (GeneFilter gf: geneFilters) {
+            if (gf.getGeneIds() == null || gf.getGeneIds().size() != 1) {
+                throw log.throwing(new IllegalArgumentException("the geneFilter should "
+                        + "contain exactly one geneId"));
+            }
+            geneIdsBySpeciesId.computeIfAbsent(gf.getSpeciesId(), k -> new ArrayList<>())
+                    .add(gf.getGeneIds().iterator().next());
+        }
+        logMemoryUsage("before retrieving any expression call");
+
+        for (Map.Entry<Integer, List<String>> speciesEntry: geneIdsBySpeciesId.entrySet()) {
+            Integer speciesId = speciesEntry.getKey();
+            List<String> speciesGeneIds = speciesEntry.getValue();
+            Instant speciesStart = Instant.now();
+
+            //The condition part of a processed filter depends only on the condition filters,
+            //identical for all the genes of a species, so it is computed once here and reused.
+            ServiceFactory speciesServiceFactory = serviceFactorySupplier.get();
+            ExpressionCallService speciesCallService = speciesServiceFactory.getExpressionCallService();
+            ExpressionCallProcessedFilterConditionPart condPart = speciesCallService
+                    .processExpressionCallFilter(
+                            buildGenePageCallFilter(speciesId, speciesGeneIds.get(0)))
+                    .getConditionPart();
+            logMemoryUsage("loading the condition part of species " + speciesId);
+
+            //Genes are processed by batches: the information that does not depend on the genes
+            //is retrieved once per ExpressionCallLoader, whatever the number of genes requested.
+            List<List<String>> geneBatches = new ArrayList<>();
+            List<String> currentBatch = new ArrayList<>();
+            for (String geneId: speciesGeneIds) {
+                currentBatch.add(geneId);
+                if (currentBatch.size() == GENE_BATCH_SIZE) {
+                    geneBatches.add(currentBatch);
+                    currentBatch = new ArrayList<>();
                 }
-                String geneId = gf.getGeneIds().iterator().next();
-    
+            }
+            if (!currentBatch.isEmpty()) {
+                geneBatches.add(currentBatch);
+            }
+            log.info("Species {}: {} genes to process, in {} batches of at most {} genes.",
+                    speciesId, speciesGeneIds.size(), geneBatches.size(), GENE_BATCH_SIZE);
+
+            AtomicLong processedGenes = new AtomicLong(0);
+            AtomicLong genesWithoutData = new AtomicLong(0);
+            AtomicLong retrievedCalls = new AtomicLong(0);
+            geneBatches.parallelStream().forEach(geneBatch -> {
+
                 // Retrieve expression calls
                 ServiceFactory threadSpeServiceFactory = serviceFactorySupplier.get();
                 ExpressionCallService callService = threadSpeServiceFactory.getExpressionCallService();
@@ -373,60 +419,44 @@ public class GenerateXRefsFilesWithExprInfo {
                 // parameter requested is the anat. entity/cell type.
                 //XXX If in the future we plan to add more information than just the anat. entity, it will
                 // then be mandatory to keep calls at condition level ordered by anat. entity
-                ExpressionCallFilter2 callFilter = buildGenePageCallFilter(speciesId, geneId);
-                ExpressionCallProcessedFilterConditionPart condPart = condPartBySpeId
-                        .computeIfAbsent(speciesId, spId -> callService
-                                .processExpressionCallFilter(callFilter).getConditionPart());
+                ExpressionCallFilter2 callFilter = buildGenePageCallFilter(speciesId, geneBatch);
                 ExpressionCallProcessedFilter processedFilter = callService
                         .processExpressionCallFilter(callFilter, null, condPart, null);
                 ExpressionCallLoader callLoader = callService.getCallLoader(processedFilter);
                 // Calls are already ordered by expression score by the loader, i.e. best
-                // expression first, as on the gene page.
-                List<OTFExpressionCall> callsByAnatEntity = callLoader.loadDataOnTheFly()
-                        .values().stream().flatMap(List::stream).collect(Collectors.toList());
+                // expression first, as on the gene page, and returned per gene.
+                Map<Gene, List<OTFExpressionCall>> callsByGene = callLoader.loadDataOnTheFly();
 
-
-                // If no expression for this gene in Bgee
-                if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
-                    log.info("No expression data for gene " + geneId);
-                } else {
-                    
-                    if(requestedXrefFileTypes.contains(XrefsFileType.UNIPROT)
-                            && (XrefsFileType.UNIPROT.getSpeciesIds().contains(speciesId) ||
-                                    XrefsFileType.UNIPROT.getSpeciesIds() == null || 
-                                    XrefsFileType.UNIPROT.getSpeciesIds().isEmpty())) {
-                        Set<String> filteredUniProtIds = uniprotXrefs.containsKey(speciesId) && 
-                                uniprotXrefs.get(speciesId).containsKey(geneId) ?
-                                uniprotXrefs.get(speciesId).get(geneId) : null;
-                        if(filteredUniProtIds != null) {
-                            syncMap.computeIfAbsent(XrefsFileType.UNIPROT, k -> createNewSynchronizedSortedMap())
-                            .putAll(generateXrefLineUniProt(geneId, callsByAnatEntity, filteredUniProtIds));
-                        }
+                long batchCalls = 0;
+                for (Map.Entry<Gene, List<OTFExpressionCall>> geneEntry: callsByGene.entrySet()) {
+                    List<OTFExpressionCall> calls = geneEntry.getValue();
+                    if (calls == null || calls.isEmpty()) {
+                        continue;
                     }
-                    
-                    if(requestedXrefFileTypes.contains(XrefsFileType.GENE_CARDS)
-                            && (XrefsFileType.GENE_CARDS.getSpeciesIds().contains(speciesId) ||
-                                    XrefsFileType.GENE_CARDS.getSpeciesIds() == null || 
-                                    XrefsFileType.GENE_CARDS.getSpeciesIds().isEmpty())) {
-                        syncMap.computeIfAbsent(XrefsFileType.GENE_CARDS, k -> createNewSynchronizedSortedMap())
-                        .putAll(generateXrefLineGeneCards(geneId, callsByAnatEntity, bgeeURL));
-                    }
-                    if(requestedXrefFileTypes.contains(XrefsFileType.WIKIDATA)
-                            && (XrefsFileType.WIKIDATA.getSpeciesIds().contains(speciesId) ||
-                            XrefsFileType.WIKIDATA.getSpeciesIds() == null || 
-                            XrefsFileType.WIKIDATA.getSpeciesIds().isEmpty())) {
-                        syncMap.computeIfAbsent(XrefsFileType.WIKIDATA, k -> createNewSynchronizedSortedMap())
-                        .putAll(generateXrefLineWikidata(geneId, callsByAnatEntity, wikidataUberonClasses));
-                    }
-                    if (requestedXrefFileTypes.contains(XrefsFileType.BGEE_GENE_SUMMARY) 
-                            && (XrefsFileType.BGEE_GENE_SUMMARY.getSpeciesIds().contains(speciesId) ||
-                                    XrefsFileType.BGEE_GENE_SUMMARY.getSpeciesIds() == null || 
-                                    XrefsFileType.BGEE_GENE_SUMMARY.getSpeciesIds().isEmpty())) {
-                        syncMap.computeIfAbsent(XrefsFileType.BGEE_GENE_SUMMARY, k -> createNewSynchronizedSortedMap())
-                        .putAll(generateGeneSummary(geneId, speciesId, callsByAnatEntity));
-                    }
+                    batchCalls += calls.size();
+                    generateXrefsForGene(geneEntry.getKey().getGeneId(), speciesId, calls,
+                            requestedXrefFileTypes, uniprotXrefs, wikidataUberonClasses, bgeeURL,
+                            syncMap);
+                }
+                retrievedCalls.addAndGet(batchCalls);
+                //Genes absent from the result simply have no expression data in Bgee
+                genesWithoutData.addAndGet(geneBatch.size() - callsByGene.size());
+                long done = processedGenes.addAndGet(geneBatch.size());
+                //true when this batch made the gene count cross a multiple of LOG_EVERY_N_GENES.
+                //Not a modulo, so that it still works if GENE_BATCH_SIZE does not divide it.
+                if (done / LOG_EVERY_N_GENES != (done - geneBatch.size()) / LOG_EVERY_N_GENES) {
+                    log.info("Species {}: {}/{} genes processed, {} calls retrieved so far, "
+                            + "{} genes without expression data.", speciesId, done,
+                            speciesGeneIds.size(), retrievedCalls.get(), genesWithoutData.get());
                 }
             });
+
+            logMemoryUsage("processing species " + speciesId);
+            log.info("Species {} done in {} seconds: {} genes, {} calls retrieved, {} genes "
+                    + "without expression data.", speciesId,
+                    Duration.between(speciesStart, Instant.now()).toSeconds(),
+                    processedGenes.get(), retrievedCalls.get(), genesWithoutData.get());
+        }
 
 
         Instant end = Instant.now();
@@ -450,6 +480,22 @@ public class GenerateXRefsFilesWithExprInfo {
      */
     private static ExpressionCallFilter2 buildGenePageCallFilter(Integer speciesId, String geneId) {
         log.traceEntry("{}, {}", speciesId, geneId);
+        return log.traceExit(buildGenePageCallFilter(speciesId, Collections.singleton(geneId)));
+    }
+
+    /**
+     * Same as {@link #buildGenePageCallFilter(Integer, String)}, but for several genes retrieved
+     * with a same {@code ExpressionCallLoader}. The calls are propagated independently for each
+     * gene and returned per gene, so requesting several genes at once only avoids recomputing
+     * the information that does not depend on the genes.
+     *
+     * @param speciesId     An {@code Integer} that is the ID of the species of the genes.
+     * @param geneIds       A {@code Collection} of {@code String}s that are the IDs of the genes.
+     * @return              The {@code ExpressionCallFilter2} to use to retrieve the calls.
+     */
+    private static ExpressionCallFilter2 buildGenePageCallFilter(Integer speciesId,
+            Collection<String> geneIds) {
+        log.traceEntry("{}, {}", speciesId, geneIds);
 
         Set<ConditionParameter<?, ?>> condParams = Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
         //As in CommandGene#buildConditionFilters: no term requested for any condition parameter,
@@ -465,7 +511,7 @@ public class GenerateXRefsFilesWithExprInfo {
 
         return log.traceExit(new ExpressionCallFilter2(
                 Map.of(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER),
-                new GeneFilter(speciesId, geneId),
+                new GeneFilter(speciesId, geneIds),
                 condFilter.areAllFiltersExceptSpeciesEmpty()? null: Set.of(condFilter),
                 //no data type filter: all data types are considered, as on the gene page
                 //when no data type is requested
@@ -500,10 +546,8 @@ public class GenerateXRefsFilesWithExprInfo {
                 anatEntityCellType.getEntity(1): anatEntityCellType.getEntity(0);
         AnatEntity cellType = anatEntityCellType.size() > 1?
                 anatEntityCellType.getEntity(0): null;
-        //The cell type can be present but be the root of the cell types ("cellular_component"),
-        //which means "no specific cell type": we then only write the anat. entity, as the gene
-        //page does (see GeneExpressionResponseTypeAdapter, which does not write the cell type
-        //in that case).
+        //A cell type equal to the root of the cell types ("cellular_component") means
+        //"no specific cell type": only the anat. entity is written, as on the gene page.
         if (cellType == null || ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
             return log.traceExit(anatEntity.getName());
         }
@@ -528,6 +572,77 @@ public class GenerateXRefsFilesWithExprInfo {
         return log.traceExit(anatEntityCellType.size() == 1?
                 anatEntityCellType.getEntity(0).getId():
                 anatEntityCellType.getEntity(1).getId());
+    }
+
+    /**
+     * Log the heap usage after a step of the generation. The used memory includes the objects
+     * not garbage collected yet, so a single value means little: what matters is whether it
+     * keeps growing from one species to the next.
+     *
+     * @param afterWhat A {@code String} describing the step that was just completed.
+     */
+    private static void logMemoryUsage(String afterWhat) {
+        Runtime runtime = Runtime.getRuntime();
+        long mb = 1024L * 1024L;
+        long used = runtime.totalMemory() - runtime.freeMemory();
+        log.info("Memory after {}: {} MB allocated since the last garbage collection, "
+                + "{} MB heap allocated, {} MB max.", afterWhat,
+                used / mb, runtime.totalMemory() / mb, runtime.maxMemory() / mb);
+    }
+
+    /**
+     * Generate the XRef lines of one gene, for each requested {@code XrefsFileType}.
+     *
+     * @param geneId                    A {@code String} that is the ID of the gene.
+     * @param speciesId                 An {@code Integer} that is the ID of the species of the gene.
+     * @param calls                     A {@code List} of {@code OTFExpressionCall}s of the gene,
+     *                                  ordered by expression score, as on the gene page.
+     * @param requestedXrefFileTypes    A {@code Set} of the {@code XrefsFileType}s to generate.
+     * @param uniprotXrefs              The UniProt IDs per gene ID per species ID.
+     * @param wikidataUberonClasses     A {@code Set} of {@code String} containing all Uberon IDs
+     *                                  already inserted in wikidata.
+     * @param bgeeURL                   A {@code String} that is the URL of the gene pages.
+     * @param syncMap                   The thread-safe {@code Map} to store the generated lines into.
+     */
+    private void generateXrefsForGene(String geneId, Integer speciesId,
+            List<OTFExpressionCall> calls, Set<XrefsFileType> requestedXrefFileTypes,
+            Map<Integer, Map<String, Set<String>>> uniprotXrefs, Set<String> wikidataUberonClasses,
+            String bgeeURL, Map<XrefsFileType, Map<String, List<String>>> syncMap) {
+
+        if(requestedXrefFileTypes.contains(XrefsFileType.UNIPROT)
+                && (XrefsFileType.UNIPROT.getSpeciesIds().contains(speciesId) ||
+                        XrefsFileType.UNIPROT.getSpeciesIds() == null ||
+                        XrefsFileType.UNIPROT.getSpeciesIds().isEmpty())) {
+            Set<String> filteredUniProtIds = uniprotXrefs.containsKey(speciesId) &&
+                    uniprotXrefs.get(speciesId).containsKey(geneId) ?
+                    uniprotXrefs.get(speciesId).get(geneId) : null;
+            if(filteredUniProtIds != null) {
+                syncMap.computeIfAbsent(XrefsFileType.UNIPROT, k -> createNewSynchronizedSortedMap())
+                .putAll(generateXrefLineUniProt(geneId, calls, filteredUniProtIds));
+            }
+        }
+
+        if(requestedXrefFileTypes.contains(XrefsFileType.GENE_CARDS)
+                && (XrefsFileType.GENE_CARDS.getSpeciesIds().contains(speciesId) ||
+                        XrefsFileType.GENE_CARDS.getSpeciesIds() == null ||
+                        XrefsFileType.GENE_CARDS.getSpeciesIds().isEmpty())) {
+            syncMap.computeIfAbsent(XrefsFileType.GENE_CARDS, k -> createNewSynchronizedSortedMap())
+            .putAll(generateXrefLineGeneCards(geneId, calls, bgeeURL));
+        }
+        if(requestedXrefFileTypes.contains(XrefsFileType.WIKIDATA)
+                && (XrefsFileType.WIKIDATA.getSpeciesIds().contains(speciesId) ||
+                XrefsFileType.WIKIDATA.getSpeciesIds() == null ||
+                XrefsFileType.WIKIDATA.getSpeciesIds().isEmpty())) {
+            syncMap.computeIfAbsent(XrefsFileType.WIKIDATA, k -> createNewSynchronizedSortedMap())
+            .putAll(generateXrefLineWikidata(geneId, calls, wikidataUberonClasses));
+        }
+        if (requestedXrefFileTypes.contains(XrefsFileType.BGEE_GENE_SUMMARY)
+                && (XrefsFileType.BGEE_GENE_SUMMARY.getSpeciesIds().contains(speciesId) ||
+                        XrefsFileType.BGEE_GENE_SUMMARY.getSpeciesIds() == null ||
+                        XrefsFileType.BGEE_GENE_SUMMARY.getSpeciesIds().isEmpty())) {
+            syncMap.computeIfAbsent(XrefsFileType.BGEE_GENE_SUMMARY, k -> createNewSynchronizedSortedMap())
+            .putAll(generateGeneSummary(geneId, speciesId, calls));
+        }
     }
 
     private SortedMap<String, List<String>> createNewSynchronizedSortedMap() {
@@ -659,9 +774,8 @@ public class GenerateXRefsFilesWithExprInfo {
         int uberonClassesWritten = 0;
         Iterator<OTFExpressionCall> callsIterator = callsByCondition.iterator();
         List<String> wikidataLines= new ArrayList<>();
-        //Now that cell types are part of the condition parameter requested, a same anat. entity
-        //can be seen in several calls (once for the whole organ, once per cell type it contains).
-        //We must not write the same Uberon class several times for a same gene.
+        //A same anat. entity can be seen in several calls (once for the whole organ, once per
+        //cell type it contains): a same Uberon class must not be written twice for a gene.
         Set<String> writtenUberonIds = new HashSet<>();
         while (uberonClassesWritten < 10 && callsIterator.hasNext()) {
             OTFExpressionCall call = callsIterator.next();

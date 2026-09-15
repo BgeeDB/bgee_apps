@@ -453,13 +453,18 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         extractAnatEntityTable(directory);
         extractStageTable(directory);
         extractGeneXRefTable(directory);
+        logMemoryUsage("extracting the species, anat. entities, stages and gene XRefs");
         for (Integer speciesId : speciesIds) {
             log.info("start to extract genes, conditions and expressions data for species {}", speciesId);
             // Note: we can map ID to one Bgee gene ID because we use
             // data for only 1 species
             Map<String, Integer> idToBgeeGeneId = extractGeneTable(speciesId, directory);
+            logMemoryUsage("extracting the " + idToBgeeGeneId.size() + " genes of species " + speciesId);
             Map<String, String> condKeyToConditionId = extractGlobalCondTable(speciesId, directory);
+            logMemoryUsage("extracting the " + condKeyToConditionId.size()
+                    + " global conditions of species " + speciesId);
             extractGlobalExpressionTable(idToBgeeGeneId, condKeyToConditionId, speciesId, directory);
+            logMemoryUsage("extracting the expression calls of species " + speciesId);
         }
         log.traceExit();
     }
@@ -710,6 +715,27 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         if (flushAfterWrite) {
             mapWriter.flush();
         }
+    }
+
+    /**
+     * Log the heap usage after a step of the extraction. The used memory includes the objects
+     * not garbage collected yet, so a single value means little: what matters is whether it
+     * keeps growing from one species to the next.
+     *
+     * @param afterWhat A {@code String} describing the step that was just completed.
+     */
+    private static void logMemoryUsage(String afterWhat) {
+        log.info("Memory after {}: {} MB allocated since the last garbage collection, "
+                + "{} MB heap allocated, {} MB max.", afterWhat, usedMemoryMb(),
+                Runtime.getRuntime().totalMemory() / (1024L * 1024L),
+                Runtime.getRuntime().maxMemory() / (1024L * 1024L));
+    }
+    /**
+     * @return  A {@code long} that is the currently used heap, in MB.
+     */
+    private static long usedMemoryMb() {
+        Runtime runtime = Runtime.getRuntime();
+        return (runtime.totalMemory() - runtime.freeMemory()) / (1024L * 1024L);
     }
 
     private Map<String, Integer> extractGeneTable(Integer speciesId, String directory) {

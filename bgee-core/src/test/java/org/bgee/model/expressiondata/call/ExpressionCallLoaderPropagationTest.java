@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpressionTO;
 import org.bgee.model.expressiondata.call.ConditionGraphCacheService.ConditionGraphCache;
@@ -37,7 +38,7 @@ import org.junit.Test;
  * @author  Julien Wollbrett
  * @version Bgee 16
  */
-public class ExpressionCallLoaderPropagationTest {
+public class ExpressionCallLoaderPropagationTest extends TestAncestor {
 
     private static final int GENE_ID = 100;
 

@@ -337,7 +337,8 @@ public class ExpressionCallLoader extends CommonService {
         //   for ancestor conditions (e.g. "nervous system" when only "brain" was requested).
         long startTimePropagation = System.currentTimeMillis();
         Map<Gene, Set<OTFExpressionCall>> propagatedExpressionCalls = propagateCalls(
-                geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds);
+                geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds,
+                this.processedFilter.getSourceFilter().isRedundantAncestorCallsFilter());
         log.debug("Calls propagated ({} genes) in {} ms",
                 propagatedExpressionCalls.size(), System.currentTimeMillis() - startTimePropagation);
         // filter condition needed for on-the-fly propagation but not requested by the condition filters
@@ -447,10 +448,23 @@ public class ExpressionCallLoader extends CommonService {
         return log.traceExit(match);
     }
 
-    private Map<Gene, Set<OTFExpressionCall>> propagateCalls(
+    /**
+     * @param filterRedundantAncestorCalls  A {@code boolean} defining whether ancestor conditions
+     *                                      carrying exactly the score and p-value of one of their
+     *                                      descendants should be discarded from the result
+     *                                      (see {@code ExpressionCallFilter2
+     *                                      #isRedundantAncestorCallsFilter()}). Redundant
+     *                                      conditions are always identified, only their removal
+     *                                      is conditioned by this argument.
+     */
+    //Package-private rather than private to allow unit testing of the propagation
+    //over synthetic condition graphs (see ExpressionCallLoaderPropagationTest).
+    Map<Gene, Set<OTFExpressionCall>> propagateCalls(
             Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneToGlobalCondIdToRawExpressionCall,
-            ConditionGraphCache condGraphCache, Set<Integer> filterConditionIds) {
-        log.traceEntry("{}, {}, {}", geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds);
+            ConditionGraphCache condGraphCache, Set<Integer> filterConditionIds,
+            boolean filterRedundantAncestorCalls) {
+        log.traceEntry("{}, {}, {}, {}", geneToGlobalCondIdToRawExpressionCall, condGraphCache,
+                filterConditionIds, filterRedundantAncestorCalls);
 
         Map<Integer, int[]> parentCondIds = condGraphCache.getGlobalCondToDirectAncestors();
         Map<Integer, int[]> descendantCondIds = condGraphCache.getGlobalCondToDirectDescendants();
@@ -546,9 +560,15 @@ public class ExpressionCallLoader extends CommonService {
             }
 
             if (!redundantCondIds.isEmpty()) {
-                log.debug("Pruning {} redundant ancestor condition(s) for gene {} "
-                        + "(same score and p-value as a descendant)", redundantCondIds.size(), geneId);
-                globalCondIdToExpressionCall.keySet().removeAll(redundantCondIds);
+                if (filterRedundantAncestorCalls) {
+                    log.debug("Pruning {} redundant ancestor condition(s) for gene {} "
+                            + "(same score and p-value as a descendant)", redundantCondIds.size(), geneId);
+                    globalCondIdToExpressionCall.keySet().removeAll(redundantCondIds);
+                } else {
+                    log.debug("Keeping {} redundant ancestor condition(s) for gene {}, "
+                            + "the filtering of redundant ancestor calls was not requested",
+                            redundantCondIds.size(), geneId);
+                }
             }
 
             geneToExpressionCall.put(geneMap.get(geneId),

@@ -562,7 +562,11 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         ExpressionCallProcessedFilter seedProcessedFilter = seedCallService
                 .processExpressionCallFilter(new ExpressionCallFilter2(summaryCallTypeQualityFilter,
                         new GeneFilter(speciesId, seedGeneId), null, null,
-                        condParamCombination, null, null, false));
+                        condParamCombination, null, null,
+                        //keep the calls in ancestor conditions that are redundant with
+                        //a descendant condition: easy Bgee is an exhaustive export, the calls
+                        //to display are selected by its consumers, not here.
+                        false));
         ExpressionCallProcessedFilterConditionPart condPart = seedProcessedFilter.getConditionPart();
         ExpressionCallProcessedFilterInvariablePart invariablePart =
                 seedProcessedFilter.getInvariablePart();
@@ -590,7 +594,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                             .getExpressionCallService();
                     ExpressionCallFilter2 filter = new ExpressionCallFilter2(summaryCallTypeQualityFilter,
                             new GeneFilter(speciesId, geneBatch), null, null,
-                            condParamCombination, null, null, false);
+                            condParamCombination, null, null,
+                            //redundant ancestor calls are kept, see the seed filter above
+                            false);
                     //Reuse the condition and invariable parts computed once for this species,
                     //only the gene part is specific to this batch of genes.
                     ExpressionCallProcessedFilter processedFilter =

@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -38,7 +39,11 @@ import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.OTFExpressionCallFilterEngine;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.rawdata.RawDataConditionFilter;
@@ -84,13 +89,27 @@ public class CommandData extends CommandExpressionSupport {
         private final List<OTFExpressionCall> calls;
         private final LinkedHashSet<ConditionParameter<?, ?>> condParams;
         private final EnumSet<DataType> requestedDataTypes;
+        private final Map<OTFExpressionCall, Entry<ExpressionSummary, SummaryQuality>>
+                callTypeQualities;
 
         public ExpressionCallResponse(List<OTFExpressionCall> calls,
                 LinkedHashSet<ConditionParameter<?, ?>> condParams,
-                EnumSet<DataType> requestedDataTypes) {
+                EnumSet<DataType> requestedDataTypes,
+                Map<OTFExpressionCall, Entry<ExpressionSummary, SummaryQuality>> callTypeQualities) {
             this.calls = calls;
             this.condParams = condParams;
             this.requestedDataTypes = requestedDataTypes;
+            this.callTypeQualities = callTypeQualities == null? Map.of(): callTypeQualities;
+        }
+
+        /**
+         * @param call  An {@code OTFExpressionCall} of {@link #getCalls()}.
+         * @return      An {@code Entry} where the key is the {@code ExpressionSummary} and
+         *              the value the {@code SummaryQuality} of {@code call}, or {@code null}
+         *              if unknown for {@code call}.
+         */
+        public Entry<ExpressionSummary, SummaryQuality> getCallTypeQuality(OTFExpressionCall call) {
+            return this.callTypeQualities.get(call);
         }
 
         public List<OTFExpressionCall> getCalls() {
@@ -777,6 +796,10 @@ public class CommandData extends CommandExpressionSupport {
         log.debug("Action identified: {}", this.requestParameters.getAction());
         List<ColumnDescription> colDescriptions = null;
         List<OTFExpressionCall> calls = null;
+        //The summary call type and quality of each returned call, inferred with the thresholds
+        //the calls were filtered with.
+        Map<OTFExpressionCall, Entry<ExpressionSummary, SummaryQuality>> callTypeQualities =
+                new HashMap<>();
         Long count = null;
         ExpressionCallPostFilter postFilter = null;
 
@@ -880,6 +903,15 @@ public class CommandData extends CommandExpressionSupport {
                     calls = allOtfCalls.stream().skip(offset).limit(limit).collect(Collectors.toList());
                     log.debug("Pagination (offset={}, limit={}) completed in {} ms",
                             offset, limit, System.currentTimeMillis() - startTimePagination);
+                    ExpressionCallProcessedFilter procFilter = callLoader.getProcessedFilter();
+                    for (OTFExpressionCall call: calls) {
+                        callTypeQualities.put(call, OTFExpressionCallFilterEngine
+                                .inferSummaryCallTypeAndQuality(call,
+                                        procFilter.getPresentHighThreshold(),
+                                        procFilter.getPresentLowThreshold(),
+                                        procFilter.getAbsentLowThreshold(),
+                                        procFilter.getAbsentHighThreshold()));
+                    }
                 }
 
                 job.completeWithSuccess();
@@ -896,7 +928,8 @@ public class CommandData extends CommandExpressionSupport {
         log.debug("Count: {}", count);
         log.trace("Calls: {}", calls);
         display.displayExprCallPage(speciesList, formDetails, colDescriptions,
-                new ExpressionCallResponse(calls, condParams, dataTypes), count, postFilter);
+                new ExpressionCallResponse(calls, condParams, dataTypes, callTypeQualities),
+                count, postFilter);
 
         log.traceExit();
     }

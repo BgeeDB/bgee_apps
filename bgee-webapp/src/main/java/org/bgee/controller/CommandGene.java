@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -30,7 +31,9 @@ import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
+import org.bgee.model.expressiondata.call.OTFExpressionCallFilterEngine;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -79,22 +82,38 @@ public class CommandGene extends CommandExpressionSupport {
         private final EnumSet<DataType> dataTypes;
         private final boolean includingAllRedundantCalls;
         private final Map<ExpressionCall, Integer> clustering;
-        
+        private final Map<OTFExpressionCall, Entry<ExpressionSummary, SummaryQuality>>
+                callTypeQualities;
+
         /**
          * @param calls                         See {@link #getCalls()}
          * @param condParams                    See {@link #getCondParams()}
          * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
          * @param clustering                    See {@link #getClustering()}.
+         * @param callTypeQualities             See {@link #getCallTypeQuality(OTFExpressionCall)}.
          */
         public GeneExpressionResponse(List<OTFExpressionCall> calls, ExpressionSummary callType,
                 EnumSet<CallService.Attribute> condParams, EnumSet<DataType> dataTypes,
-                boolean includingAllRedundantCalls, Map<ExpressionCall, Integer> clustering) {
+                boolean includingAllRedundantCalls, Map<ExpressionCall, Integer> clustering,
+                Map<OTFExpressionCall, Entry<ExpressionSummary, SummaryQuality>> callTypeQualities) {
             this.includingAllRedundantCalls = includingAllRedundantCalls;
             this.calls = calls;
             this.callType = callType == null? ExpressionSummary.EXPRESSED: callType;
             this.condParams = condParams;
             this.dataTypes = dataTypes;
             this.clustering = clustering;
+            this.callTypeQualities = callTypeQualities == null? Map.of(): callTypeQualities;
+        }
+
+        /**
+         * @param call  An {@code OTFExpressionCall} of {@link #getCalls()}.
+         * @return      An {@code Entry} where the key is the {@code ExpressionSummary} and
+         *              the value the {@code SummaryQuality} of {@code call}, inferred with
+         *              the same thresholds as the ones the calls were filtered with.
+         *              {@code null} if unknown for {@code call}.
+         */
+        public Entry<ExpressionSummary, SummaryQuality> getCallTypeQuality(OTFExpressionCall call) {
+            return this.callTypeQualities.get(call);
         }
 
         /**
@@ -613,7 +632,7 @@ public class CommandGene extends CommandExpressionSupport {
                 //even in the absence of expression?
                 //In the meantime, I removed the gene attribute from GeneExpressionResponse
                 return log.traceExit(new GeneExpressionResponse(calls, callType, condParamAttrs, dataTypes,
-                        true, new HashMap<>()));
+                        true, new HashMap<>(), Map.of()));
             }
 
             //Store a clustering of ExpressionCalls
@@ -621,8 +640,22 @@ public class CommandGene extends CommandExpressionSupport {
 
 //            return log.traceExit(new GeneExpressionResponse(calls, callType, condParamAttrs, dataTypes,
 //                    true, clustering));
+            //The summary call type and quality of each call, inferred with the very thresholds
+            //the calls were filtered with, rather than with the default constants.
+            ExpressionCallProcessedFilter processedFilter = callLoader.getProcessedFilter();
+            Map<OTFExpressionCall, Entry<ExpressionSummary, SummaryQuality>> callTypeQualities =
+                    new HashMap<>();
+            for (OTFExpressionCall call: calls) {
+                callTypeQualities.put(call, OTFExpressionCallFilterEngine
+                        .inferSummaryCallTypeAndQuality(call,
+                                processedFilter.getPresentHighThreshold(),
+                                processedFilter.getPresentLowThreshold(),
+                                processedFilter.getAbsentLowThreshold(),
+                                processedFilter.getAbsentHighThreshold()));
+            }
+
             return log.traceExit(new GeneExpressionResponse(calls, callType, condParamAttrs, dataTypes,
-                    true, null));
+                    true, null, callTypeQualities));
         //FIXME: actually catching IllegalArgumentException leads to masking real errors.
         //I think it was done because a missing gene can lead to an IllegalArgumentException.
         //To deactivate catching of IllegalArgumentException and to check!

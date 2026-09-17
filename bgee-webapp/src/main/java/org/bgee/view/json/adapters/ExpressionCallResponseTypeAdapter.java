@@ -1,8 +1,8 @@
 package org.bgee.view.json.adapters;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.EnumSet;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +12,7 @@ import org.bgee.model.expressiondata.call.CallData.ExpressionCallData2;
 import org.bgee.controller.CommandData.ExpressionCallResponse;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.Condition2;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
@@ -61,13 +62,14 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
             out.beginArray();
             for (OTFExpressionCall call: value.getCalls()) {
                 EnumSet<DataType> dataTypes = call.getSupportingDataTypes();
-                boolean highQualScore = false;
-                //FXIME: Need to consider the SummaryQuality once it is implemented. TO be done before Bgee 16.0 release
-                if (/*!SummaryQuality.BRONZE.equals(call.()) &&*/
+                //The summary call type and quality inferred for that call, with the thresholds
+                //the calls were filtered with (see CommandData#processExprCallPage).
+                Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
+                        value.getCallTypeQuality(call);
+                boolean highQualScore = callTypeQuality != null &&
+                        !SummaryQuality.BRONZE.equals(callTypeQuality.getValue()) &&
                         (dataTypes.contains(DataType.RNA_SEQ) ||
-                                dataTypes.contains(DataType.SC_RNA_SEQ))) {
-                    highQualScore = true;
-                }
+                                dataTypes.contains(DataType.SC_RNA_SEQ));
                 out.beginObject();
 
                 out.name("gene");
@@ -101,11 +103,12 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
                     out.name(d.name()).value(dataTypes.contains(d));
                 }
                 out.endObject();
-                //FIXME: Need to be reactivated before Bgee 16.0 release. 
-//                out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
-//                out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());
-                out.name("expressionState").value(call.getAllDataTypePValue().compareTo(new BigDecimal(0.05)) <= 0 ? "expressed" : "not_expressed");
-                out.name("expressionQuality").value("gold");
+                if (callTypeQuality != null) {
+                    out.name("expressionState")
+                            .value(callTypeQuality.getKey().toString().toLowerCase());
+                    out.name("expressionQuality")
+                            .value(callTypeQuality.getValue().toString().toLowerCase());
+                }
 
                 out.endObject();
             }

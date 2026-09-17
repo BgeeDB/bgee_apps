@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +15,8 @@ import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.Condition2;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
@@ -69,15 +72,18 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
         for (OTFExpressionCall call: value.getCalls()) {
             Set<DataType> dataTypes = call.getSupportingDataTypes();
             dataTypesWithData.addAll(dataTypes);
-            boolean highQualScore = false;
-            //FIXME: commented for testing OTF propagation. Summary quality should be calculated
-            // as part of OTF propagation before Bgee 16 release.
-//            if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
-//                    (dataTypes.contains(DataType.RNA_SEQ) ||
-//                    dataTypes.contains(DataType.SC_RNA_SEQ) ||
-//                    call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
-//                highQualScore = true;
-//            }
+            //The summary call type and quality inferred for that call, with the thresholds
+            //the calls were filtered with (see CommandGene#loadExpression).
+            Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
+                    value.getCallTypeQuality(call);
+            //XXX: this condition used to also accept a call whose mean rank was better than
+            //20000, whatever its data types. The OTF propagation does not compute a rank, so
+            //a call supported neither by bulk nor by single-cell RNA-Seq is now always
+            //reported with a low confidence.
+            boolean highQualScore = callTypeQuality != null &&
+                    !SummaryQuality.BRONZE.equals(callTypeQuality.getValue()) &&
+                    (dataTypes.contains(DataType.RNA_SEQ) ||
+                            dataTypes.contains(DataType.SC_RNA_SEQ));
 
             out.beginObject();
             out.name("condition");
@@ -110,10 +116,16 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             }
             out.endArray();
             
-            //FIXME: these 3 values are hardcoded for the sake of testing OTF propagation. Should be computed from the data.
+            if (callTypeQuality != null) {
+                //Lower case, as the values these two properties had before the OTF propagation
+                out.name("expressionState")
+                        .value(callTypeQuality.getKey().toString().toLowerCase());
+                out.name("expressionQuality")
+                        .value(callTypeQuality.getValue().toString().toLowerCase());
+            }
+            //FIXME: the clustering of the calls was based on their mean rank, which the OTF
+            //propagation does not compute. Hardcoded until it is decided what replaces it.
             //FIXME: TODO BEFORE BGEE 16 RELEASE
-            out.name("expressionState").value(call.getExpressionScore().compareTo(new BigDecimal(0.05)) < 0 ? "not expressed" : "expressed");
-            out.name("expressionQuality").value("gold");
             out.name("clusterIndex").value(0);
 
             out.endObject();

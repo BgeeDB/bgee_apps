@@ -40,9 +40,11 @@ public class OTFSummaryCallTypeAndQualityTest extends TestAncestor {
      */
     private static OTFExpressionCall call(String allPValue, String trustedPValue,
             String bestDescAllPValue, String bestDescTrustedPValue, boolean observedData) {
+        //observationCount of 1: the p-values are asserted as provided, the calibration
+        //of a mean of several observations is tested by shouldCalibrateAMeanOfSeveralPValues()
         return new OTFExpressionCall(null, null, null,
-                allPValue == null? null: new BigDecimal(allPValue),
-                trustedPValue == null? null: new BigDecimal(trustedPValue),
+                allPValue == null? null: new BigDecimal(allPValue), BigDecimal.ONE,
+                trustedPValue == null? null: new BigDecimal(trustedPValue), BigDecimal.ONE, 1,
                 bestDescAllPValue == null? null: new BigDecimal(bestDescAllPValue),
                 bestDescTrustedPValue == null? null: new BigDecimal(bestDescTrustedPValue),
                 null, null, null, null,
@@ -57,6 +59,31 @@ public class OTFSummaryCallTypeAndQualityTest extends TestAncestor {
         Entry<ExpressionSummary, SummaryQuality> tier = infer(call);
         assertEquals("Incorrect summary call type", expectedSummary, tier == null? null: tier.getKey());
         assertEquals("Incorrect summary quality", expectedQuality, tier == null? null: tier.getValue());
+    }
+
+    @Test
+    public void shouldCalibrateAMeanOfSeveralPValues() {
+        //The mean of several p-values is not a p-value, twice that mean is one: a call
+        //aggregating several observations exposes twice its raw weighted mean, capped at 1.
+        OTFExpressionCall severalObs = new OTFExpressionCall(null, null, null,
+                new BigDecimal("0.02"), BigDecimal.ONE, new BigDecimal("0.02"), BigDecimal.ONE, 5,
+                null, null, null, null, null, null, PropagationState.SELF);
+        assertEquals("The mean of several p-values must be doubled", 0,
+                new BigDecimal("0.04").compareTo(severalObs.getAllDataTypePValue()));
+
+        //A single observation is already a p-value, it must not be doubled
+        OTFExpressionCall oneObs = new OTFExpressionCall(null, null, null,
+                new BigDecimal("0.02"), BigDecimal.ONE, new BigDecimal("0.02"), BigDecimal.ONE, 1,
+                null, null, null, null, null, null, PropagationState.SELF);
+        assertEquals("A single p-value must not be doubled", 0,
+                new BigDecimal("0.02").compareTo(oneObs.getAllDataTypePValue()));
+
+        //And the calibrated value never exceeds 1
+        OTFExpressionCall highPValue = new OTFExpressionCall(null, null, null,
+                new BigDecimal("0.8"), BigDecimal.ONE, new BigDecimal("0.8"), BigDecimal.ONE, 5,
+                null, null, null, null, null, null, PropagationState.SELF);
+        assertEquals("The calibrated p-value must be capped at 1", 0,
+                BigDecimal.ONE.compareTo(highPValue.getAllDataTypePValue()));
     }
 
     @Test

@@ -452,14 +452,24 @@ public class ExpressionCallLoader extends CommonService {
         }
 
         //rawData can be empty if no raw data in the condition itself.
-        //first, compute information from data in the condition itself.
-        //We use Lists not to loose equals PValues
-        List<BigDecimal> allDataTypePValues = new ArrayList<>();
-        //Only the data types trusted for absent calls feed this list: an absent call cannot be
-        //better than BRONZE when it is not supported by any of them (see
-        //OTFExpressionCallFilterEngine#inferSummaryCallTypeAndQuality). The list is left empty
-        //in that case, so that the resulting p-value is null.
-        List<BigDecimal> trustedDataTypePValues = new ArrayList<>();
+        //The p-value of a call is the weighted mean of the p-values of the observations of the
+        //condition itself and of all its sub-conditions, each weighted by the weight of the
+        //evidence backing it. It is accumulated the same way as the score below: a sum of the
+        //values multiplied by their weight, and the sum of those weights. Weighted means compose:
+        //a descendant call exposes the weighted mean of its own sub-tree and the total weight of
+        //that sub-tree, so multiplying one by the other gives back its weighted sum, and the
+        //observations of a sub-tree weigh exactly what they represent.
+        //The mean is turned into a valid p-value when it is read, by OTFExpressionCall, not here:
+        //see OTFExpressionCall#calibrate(BigDecimal).
+        BigDecimal pValueByWeightSum = BigDecimal.ZERO;
+        BigDecimal pValueWeightSum = BigDecimal.ZERO;
+        //Only the data types trusted for absent calls feed these sums (see
+        //OTFExpressionCallFilterEngine#inferSummaryCallTypeAndQuality).
+        BigDecimal trustedPValueByWeightSum = BigDecimal.ZERO;
+        BigDecimal trustedPValueWeightSum = BigDecimal.ZERO;
+        //The number of observations aggregated, needed to know whether the mean must be
+        //calibrated: a single observation is already a p-value.
+        int observationCount = 0;
         //The weight of each data type is the total weight of the score it carries (for instance,
         //for RNA-Seq, the sum of the distinct rank counts of all the samples of that gene in that
         //condition), not a per-observation weight: it must therefore not be multiplied by the
@@ -476,9 +486,14 @@ public class ExpressionCallLoader extends CommonService {
         // retrieve self info of the expression call
         for (ObservedExpressionTO obsExpression : usedSelfObservations) {
             if (obsExpression.getBulkNumberObs() != null && obsExpression.getBulkNumberObs() != 0) {
-                allDataTypePValues.addAll(Collections.nCopies(obsExpression.getBulkNumberObs(), obsExpression.getBulkPValue()));
+                pValueByWeightSum = pValueByWeightSum.add(
+                        obsExpression.getBulkPValue().multiply(obsExpression.getBulkWeight()));
+                pValueWeightSum = pValueWeightSum.add(obsExpression.getBulkWeight());
+                observationCount += obsExpression.getBulkNumberObs();
                 if (DataType.RNA_SEQ.isTrustedForAbsentCalls()) {
-                    trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getBulkNumberObs(), obsExpression.getBulkPValue()));
+                    trustedPValueByWeightSum = trustedPValueByWeightSum.add(
+                            obsExpression.getBulkPValue().multiply(obsExpression.getBulkWeight()));
+                    trustedPValueWeightSum = trustedPValueWeightSum.add(obsExpression.getBulkWeight());
                 }
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getBulkScore()
@@ -488,9 +503,14 @@ public class ExpressionCallLoader extends CommonService {
                 supportingDataTypes.add(DataType.RNA_SEQ);
             }
             if (obsExpression.getInSituNumberObs() != null && obsExpression.getInSituNumberObs() != 0) {
-                allDataTypePValues.addAll(Collections.nCopies(obsExpression.getInSituNumberObs(), obsExpression.getInSituPValue()));
+                pValueByWeightSum = pValueByWeightSum.add(
+                        obsExpression.getInSituPValue().multiply(obsExpression.getInSituWeight()));
+                pValueWeightSum = pValueWeightSum.add(obsExpression.getInSituWeight());
+                observationCount += obsExpression.getInSituNumberObs();
                 if (DataType.IN_SITU.isTrustedForAbsentCalls()) {
-                    trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getInSituNumberObs(), obsExpression.getInSituPValue()));
+                    trustedPValueByWeightSum = trustedPValueByWeightSum.add(
+                            obsExpression.getInSituPValue().multiply(obsExpression.getInSituWeight()));
+                    trustedPValueWeightSum = trustedPValueWeightSum.add(obsExpression.getInSituWeight());
                 }
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getInSituScore()
@@ -500,9 +520,14 @@ public class ExpressionCallLoader extends CommonService {
                 supportingDataTypes.add(DataType.IN_SITU);
             }
             if (obsExpression.getFullLengthNumberObs() != null && obsExpression.getFullLengthNumberObs() != 0) {
-                allDataTypePValues.addAll(Collections.nCopies(obsExpression.getFullLengthNumberObs(), obsExpression.getFullLengthPValue()));
+                pValueByWeightSum = pValueByWeightSum.add(
+                        obsExpression.getFullLengthPValue().multiply(obsExpression.getFullLengthWeight()));
+                pValueWeightSum = pValueWeightSum.add(obsExpression.getFullLengthWeight());
+                observationCount += obsExpression.getFullLengthNumberObs();
                 if (DataType.SC_RNA_SEQ.isTrustedForAbsentCalls()) {
-                    trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getFullLengthNumberObs(), obsExpression.getFullLengthPValue()));
+                    trustedPValueByWeightSum = trustedPValueByWeightSum.add(
+                            obsExpression.getFullLengthPValue().multiply(obsExpression.getFullLengthWeight()));
+                    trustedPValueWeightSum = trustedPValueWeightSum.add(obsExpression.getFullLengthWeight());
                 }
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getFullLengthScore()
@@ -512,9 +537,14 @@ public class ExpressionCallLoader extends CommonService {
                 supportingDataTypes.add(DataType.SC_RNA_SEQ);
             }
             if (obsExpression.getDropletNumberObs() != null && obsExpression.getDropletNumberObs() != 0) {
-                allDataTypePValues.addAll(Collections.nCopies(obsExpression.getDropletNumberObs(), obsExpression.getDropletPValue()));
+                pValueByWeightSum = pValueByWeightSum.add(
+                        obsExpression.getDropletPValue().multiply(obsExpression.getDropletWeight()));
+                pValueWeightSum = pValueWeightSum.add(obsExpression.getDropletWeight());
+                observationCount += obsExpression.getDropletNumberObs();
                 if (DataType.SC_RNA_SEQ.isTrustedForAbsentCalls()) {
-                    trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getDropletNumberObs(), obsExpression.getDropletPValue()));
+                    trustedPValueByWeightSum = trustedPValueByWeightSum.add(
+                            obsExpression.getDropletPValue().multiply(obsExpression.getDropletWeight()));
+                    trustedPValueWeightSum = trustedPValueWeightSum.add(obsExpression.getDropletWeight());
                 }
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getDropletScore()
@@ -532,14 +562,24 @@ public class ExpressionCallLoader extends CommonService {
         if (!usedDescExprCalls.isEmpty()) {
 
             dataPropagation = dataPropagation == null? PropagationState.DESCENDANT: PropagationState.SELF_AND_DESCENDANT;
-            List<BigDecimal> descAllDataTypePValues = new ArrayList<>(usedDescExprCalls.size());
-            List<BigDecimal> descTrustedDataTypePValues = new ArrayList<>(usedDescExprCalls.size());
             for (OTFExpressionCall childCall: usedDescExprCalls) {
                 supportingDataTypes.addAll(childCall.getSupportingDataTypes());
-                descAllDataTypePValues.add(childCall.getAllDataTypePValue());
-                if (childCall.getTrustedDataTypePValue() != null) {
-                    descTrustedDataTypePValues.add(childCall.getTrustedDataTypePValue());
+                //The raw mean and the weight of the child, not its calibrated p-value: the
+                //calibration applies once, to the value finally read, and doubling at every
+                //condition would compound the factor at each level of the graph.
+                if (childCall.getAllDataTypePValueRawMean() != null) {
+                    pValueByWeightSum = pValueByWeightSum.add(childCall.getAllDataTypePValueRawMean()
+                            .multiply(childCall.getAllDataTypePValueWeight()));
+                    pValueWeightSum = pValueWeightSum.add(childCall.getAllDataTypePValueWeight());
                 }
+                if (childCall.getTrustedDataTypePValueRawMean() != null) {
+                    trustedPValueByWeightSum = trustedPValueByWeightSum.add(
+                            childCall.getTrustedDataTypePValueRawMean()
+                            .multiply(childCall.getTrustedDataTypePValueWeight()));
+                    trustedPValueWeightSum = trustedPValueWeightSum.add(
+                            childCall.getTrustedDataTypePValueWeight());
+                }
+                observationCount += childCall.getObservationCount();
                 BigDecimal scoreByWeight = childCall.getExpressionScoreWeight().multiply(childCall.getExpressionScore());
                 scoreByWeightSum = scoreByWeightSum.add(scoreByWeight);
                 weightSum = weightSum.add(childCall.getExpressionScoreWeight());
@@ -559,13 +599,10 @@ public class ExpressionCallLoader extends CommonService {
                     bestDescendantExpressionScoreWeight = childCall.getBestDirectDescendantExpressionScoreWeight();
                 }
             }
-            allDataTypePValues.add(computeFDRCorrectedPValue(descAllDataTypePValues));
-            if (!descTrustedDataTypePValues.isEmpty()) {
-                trustedDataTypePValues.add(computeFDRCorrectedPValue(descTrustedDataTypePValues));
-            }
         }
-        BigDecimal ultimateAllDataTypePValue = computeMean(allDataTypePValues);
-        BigDecimal ultimateTrustedDataTypePValue = computeMean(trustedDataTypePValues);
+        BigDecimal ultimateAllDataTypePValue = weightedMean(pValueByWeightSum, pValueWeightSum);
+        BigDecimal ultimateTrustedDataTypePValue = weightedMean(trustedPValueByWeightSum,
+                trustedPValueWeightSum);
 //        log.debug("weightSum: {}, scoreByWeightSum: {}", weightSum, scoreByWeightSum);
         if (BigDecimal.ZERO.compareTo(weightSum) == 0) {
             log.warn("weightSum is zero for gene {} in condition {} - all observation counts are null/0. Defaulting score to 0.", gene, cond);
@@ -575,7 +612,8 @@ public class ExpressionCallLoader extends CommonService {
                 scoreByWeightSum.divide(weightSum, 2, RoundingMode.HALF_UP);
 
         OTFExpressionCall resultingCall = new OTFExpressionCall(gene, cond, supportingDataTypes,
-              ultimateAllDataTypePValue, ultimateTrustedDataTypePValue,
+              ultimateAllDataTypePValue, pValueWeightSum,
+              ultimateTrustedDataTypePValue, trustedPValueWeightSum, observationCount,
               bestDescendantAllDataTypePValue, bestDescendantTrustedDataTypePValue,
               weightSum, weightedAverageExpressionScore,
               bestDescendantExpressionScoreWeight, bestDescendantExpressionScore,
@@ -631,6 +669,21 @@ public class ExpressionCallLoader extends CommonService {
             fdr = MIN_FDR_BIGDECIMAL;
         }
         return log.traceExit(fdr);
+    }
+
+    /**
+     * @param valueByWeightSum  A {@code BigDecimal} that is the sum of the values multiplied
+     *                          by their weight.
+     * @param weightSum         A {@code BigDecimal} that is the sum of the weights.
+     * @return                  A {@code BigDecimal} that is the weighted mean, or {@code null}
+     *                          if {@code weightSum} is zero, meaning that nothing contributed.
+     */
+    protected BigDecimal weightedMean(BigDecimal valueByWeightSum, BigDecimal weightSum) {
+        log.traceEntry("{}, {}", valueByWeightSum, weightSum);
+        if (weightSum == null || BigDecimal.ZERO.compareTo(weightSum) == 0) {
+            return log.traceExit((BigDecimal) null);
+        }
+        return log.traceExit(valueByWeightSum.divide(weightSum, MathContext.DECIMAL128));
     }
 
     protected BigDecimal computeMean(List<BigDecimal> pValues) {

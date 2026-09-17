@@ -44,8 +44,32 @@ public class OTFExpressionCall {
     private final Gene gene;
     private final Condition2 condition;
     private final EnumSet<DataType> supportingDataTypes;
-    private final BigDecimal allDataTypePValue;
-    private final BigDecimal trustedDataTypePValue;
+    /**
+     * The weighted mean of the p-values of the observations of this condition and of all its
+     * sub-conditions, <strong>not calibrated</strong>: the mean of p-values is not itself
+     * a p-value. {@link #getAllDataTypePValue()} returns the calibrated value, this one is
+     * the value to use to keep aggregating over the condition graph, together with
+     * {@link #getAllDataTypePValueWeight()}.
+     */
+    private final BigDecimal allDataTypePValueRawMean;
+    /**
+     * The total weight over which {@link #allDataTypePValueRawMean} is the weighted mean.
+     */
+    private final BigDecimal allDataTypePValueWeight;
+    /**
+     * Same as {@link #allDataTypePValueRawMean}, over the data types trusted for absent calls only.
+     */
+    private final BigDecimal trustedDataTypePValueRawMean;
+    /**
+     * The total weight over which {@link #trustedDataTypePValueRawMean} is the weighted mean.
+     */
+    private final BigDecimal trustedDataTypePValueWeight;
+    /**
+     * The number of observations aggregated in this call, over this condition and all its
+     * sub-conditions. A mean of several p-values must be doubled to be a valid p-value,
+     * a single p-value must not: this count is what tells the two apart.
+     */
+    private final int observationCount;
     private final BigDecimal bestDirectDescendantAllDataTypePValue;
     private final BigDecimal bestDirectDescendantTrustedDataTypePValue;
     private final BigDecimal expressionScoreWeight;
@@ -55,7 +79,9 @@ public class OTFExpressionCall {
     private final PropagationState dataPropagation;
 
     public OTFExpressionCall(Gene gene, Condition2 condition, EnumSet<DataType> supportingDataTypes,
-            BigDecimal allDataTypePValue, BigDecimal trustedDataTypePValue,
+            BigDecimal allDataTypePValueRawMean, BigDecimal allDataTypePValueWeight,
+            BigDecimal trustedDataTypePValueRawMean, BigDecimal trustedDataTypePValueWeight,
+            int observationCount,
             BigDecimal bestDirectDescendantAllDataTypePValue, BigDecimal bestDirectDescendantTrustedDataTypePValue,
             BigDecimal expressionScoreWeight, BigDecimal expressionScore,
             BigDecimal bestDirectDescendantExpressionScoreWeight, BigDecimal bestDirectDescendantExpressionScore,
@@ -63,8 +89,11 @@ public class OTFExpressionCall {
         this.gene = gene;
         this.condition = condition;
         this.supportingDataTypes = supportingDataTypes;
-        this.allDataTypePValue = allDataTypePValue;
-        this.trustedDataTypePValue = trustedDataTypePValue;
+        this.allDataTypePValueRawMean = allDataTypePValueRawMean;
+        this.allDataTypePValueWeight = allDataTypePValueWeight;
+        this.trustedDataTypePValueRawMean = trustedDataTypePValueRawMean;
+        this.trustedDataTypePValueWeight = trustedDataTypePValueWeight;
+        this.observationCount = observationCount;
         this.bestDirectDescendantAllDataTypePValue = bestDirectDescendantAllDataTypePValue;
         this.bestDirectDescendantTrustedDataTypePValue = bestDirectDescendantTrustedDataTypePValue;
         this.expressionScoreWeight = expressionScoreWeight;
@@ -83,11 +112,58 @@ public class OTFExpressionCall {
     public EnumSet<DataType> getSupportingDataTypes() {
         return supportingDataTypes;
     }
+    /**
+     * @return  The p-value of this call over all the requested data types, calibrated:
+     *          see {@link #calibrate(BigDecimal)}. This is the value to compare to the p-value
+     *          thresholds; use {@link #getAllDataTypePValueRawMean()} to keep aggregating.
+     */
     public BigDecimal getAllDataTypePValue() {
-        return allDataTypePValue;
+        return calibrate(allDataTypePValueRawMean);
     }
+    /**
+     * @return  The p-value of this call over the data types trusted for absent calls, calibrated.
+     */
     public BigDecimal getTrustedDataTypePValue() {
-        return trustedDataTypePValue;
+        return calibrate(trustedDataTypePValueRawMean);
+    }
+    public BigDecimal getAllDataTypePValueRawMean() {
+        return allDataTypePValueRawMean;
+    }
+    public BigDecimal getAllDataTypePValueWeight() {
+        return allDataTypePValueWeight;
+    }
+    public BigDecimal getTrustedDataTypePValueRawMean() {
+        return trustedDataTypePValueRawMean;
+    }
+    public BigDecimal getTrustedDataTypePValueWeight() {
+        return trustedDataTypePValueWeight;
+    }
+    public int getObservationCount() {
+        return observationCount;
+    }
+    /**
+     * The mean of several p-values is not a p-value, but twice that mean is one, whatever
+     * the dependence between the observations. A call aggregating several observations therefore
+     * exposes twice its weighted mean, capped at 1, while a call backed by a single observation
+     * exposes its p-value unchanged.
+     * <p>
+     * Of note, the calibration is applied here, when the p-value is read, and not when it is
+     * computed: the aggregation over the condition graph uses the raw weighted mean, and
+     * doubling it at every condition would compound the factor at each level.
+     *
+     * @param rawMean   A {@code BigDecimal} that is the raw weighted mean of the p-values.
+     * @return          A {@code BigDecimal} that is the corresponding p-value, or {@code null}
+     *                  if {@code rawMean} is {@code null}.
+     */
+    private BigDecimal calibrate(BigDecimal rawMean) {
+        if (rawMean == null) {
+            return null;
+        }
+        if (this.observationCount <= 1) {
+            return rawMean;
+        }
+        BigDecimal doubled = rawMean.multiply(new BigDecimal("2"));
+        return doubled.compareTo(BigDecimal.ONE) > 0? BigDecimal.ONE: doubled;
     }
     public BigDecimal getBestDirectDescendantAllDataTypePValue() {
         return bestDirectDescendantAllDataTypePValue;
@@ -113,32 +189,34 @@ public class OTFExpressionCall {
 
     public String getFormattedAllDatatypePValue() {
         log.traceEntry();
+        //the displayed p-value is the calibrated one, as everywhere else
+        BigDecimal pValue = this.getAllDataTypePValue();
         NumberFormat formatter = NumberFormat.getInstance(Locale.US);
         formatter.setRoundingMode(RoundingMode.HALF_UP);
         // do not use scientific notation when FDR pValue is bigger than 0.001 or equal
         // to 0
-        if(allDataTypePValue.compareTo(new BigDecimal(0.001)) >= 0 || 
-                allDataTypePValue.compareTo(new BigDecimal(0)) == 0) {
+        if(pValue.compareTo(new BigDecimal(0.001)) >= 0 || 
+                pValue.compareTo(new BigDecimal(0)) == 0) {
             formatter.setMaximumFractionDigits(3);
             formatter.setMinimumFractionDigits(0);
         } else if (formatter instanceof DecimalFormat) {
             ((DecimalFormat) formatter).applyPattern("0.00E0");
         } else {
             throw log.throwing(new IllegalStateException("No formatter could be defined "
-                    + "for " + allDataTypePValue));
+                    + "for " + pValue));
         }
         //In Bgee 16 we limited the precision to 30 digits
-        return log.traceExit((allDataTypePValue.compareTo(new BigDecimal("0")) != 0 &&
-                allDataTypePValue.compareTo(new BigDecimal("1E-30")) <= 0 ? "<= ": "")
-                + formatter.format(allDataTypePValue).toLowerCase(Locale.US));
+        return log.traceExit((pValue.compareTo(new BigDecimal("0")) != 0 &&
+                pValue.compareTo(new BigDecimal("1E-30")) <= 0 ? "<= ": "")
+                + formatter.format(pValue).toLowerCase(Locale.US));
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(allDataTypePValue, bestDirectDescendantAllDataTypePValue,
+        return Objects.hash(allDataTypePValueRawMean, allDataTypePValueWeight, observationCount, bestDirectDescendantAllDataTypePValue,
                 bestDirectDescendantExpressionScore, bestDirectDescendantExpressionScoreWeight,
                 bestDirectDescendantTrustedDataTypePValue, condition, dataPropagation, expressionScore,
-                expressionScoreWeight, gene, supportingDataTypes, trustedDataTypePValue);
+                expressionScoreWeight, gene, supportingDataTypes, trustedDataTypePValueRawMean, trustedDataTypePValueWeight);
     }
     @Override
     public boolean equals(Object obj) {
@@ -149,7 +227,9 @@ public class OTFExpressionCall {
         if (getClass() != obj.getClass())
             return false;
         OTFExpressionCall other = (OTFExpressionCall) obj;
-        return Objects.equals(allDataTypePValue, other.allDataTypePValue)
+        return Objects.equals(allDataTypePValueRawMean, other.allDataTypePValueRawMean)
+                && Objects.equals(allDataTypePValueWeight, other.allDataTypePValueWeight)
+                && observationCount == other.observationCount
                 && Objects.equals(bestDirectDescendantAllDataTypePValue, other.bestDirectDescendantAllDataTypePValue)
                 && Objects.equals(bestDirectDescendantExpressionScore, other.bestDirectDescendantExpressionScore)
                 && Objects.equals(bestDirectDescendantExpressionScoreWeight, other.bestDirectDescendantExpressionScoreWeight)
@@ -158,7 +238,8 @@ public class OTFExpressionCall {
                 && Objects.equals(expressionScore, other.expressionScore)
                 && Objects.equals(expressionScoreWeight, other.expressionScoreWeight)
                 && Objects.equals(gene, other.gene) && Objects.equals(supportingDataTypes, other.supportingDataTypes)
-                && Objects.equals(trustedDataTypePValue, other.trustedDataTypePValue);
+                && Objects.equals(trustedDataTypePValueRawMean, other.trustedDataTypePValueRawMean)
+                && Objects.equals(trustedDataTypePValueWeight, other.trustedDataTypePValueWeight);
     }
 
     @Override
@@ -168,8 +249,11 @@ public class OTFExpressionCall {
                .append("gene=").append(gene)
                .append(", condition=").append(condition)
                .append(", supportingDataTypes=").append(supportingDataTypes)
-               .append(", allDataTypePValue=").append(allDataTypePValue)
-               .append(", trustedDataTypePValue=").append(trustedDataTypePValue)
+               .append(", allDataTypePValueRawMean=").append(allDataTypePValueRawMean)
+               .append(", allDataTypePValueWeight=").append(allDataTypePValueWeight)
+               .append(", observationCount=").append(observationCount)
+               .append(", trustedDataTypePValueRawMean=").append(trustedDataTypePValueRawMean)
+               .append(", trustedDataTypePValueWeight=").append(trustedDataTypePValueWeight)
                .append(", bestDirectDescendantAllDataTypePValue=").append(bestDirectDescendantAllDataTypePValue)
                .append(", bestDirectDescendantTrustedDataTypePValue=").append(bestDirectDescendantTrustedDataTypePValue)
                .append(", expressionScoreWeight=").append(expressionScoreWeight)

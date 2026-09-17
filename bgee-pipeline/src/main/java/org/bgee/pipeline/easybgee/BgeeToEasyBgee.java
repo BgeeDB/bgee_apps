@@ -57,7 +57,6 @@ import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
-import org.bgee.model.expressiondata.call.CallServiceParent;
 import org.bgee.model.expressiondata.call.Condition2;
 import org.bgee.model.expressiondata.call.ExpressionCallLoader;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
@@ -65,6 +64,7 @@ import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.Expressi
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterInvariablePart;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
+import org.bgee.model.expressiondata.call.OTFExpressionCallFilterEngine;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.pipeline.CommandRunner;
@@ -617,7 +617,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                     for (List<OTFExpressionCall> geneCalls: callsByGene.values()) {
                         int writtenRows = generateGlobalExpressionLines(geneCalls.stream(),
                                 idToBgeeGeneIds, condKeyToConditionId, header, processors,
-                                mapWriter, file);
+                                mapWriter, file, processedFilter);
                         rowCount.addAndGet(writtenRows);
                         discardedCallCount.addAndGet(geneCalls.size() - writtenRows);
                     }
@@ -646,9 +646,10 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
      */
     private int generateGlobalExpressionLines(Stream<OTFExpressionCall> expressionCalls,
             Map<String, Integer> geneToBgeeGeneId, Map<String, String> condKeyToConditionId,
-            String[] header, CellProcessor[] processors, ICsvMapWriter mapWriter, File file) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", expressionCalls, geneToBgeeGeneId,
-                condKeyToConditionId, header, processors, mapWriter, file);
+            String[] header, CellProcessor[] processors, ICsvMapWriter mapWriter, File file,
+            ExpressionCallProcessedFilter processedFilter) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", expressionCalls, geneToBgeeGeneId,
+                condKeyToConditionId, header, processors, mapWriter, file, processedFilter);
 
         List<Map<String, String>> headerToValuePerGene = expressionCalls.map(call -> {
             Map<String, String> headerToValuePerCall = new HashMap<>();
@@ -665,7 +666,18 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             }
             headerToValuePerCall.put("GLOBAL_CONDITION_ID", conditionId);
 
-            Map.Entry<ExpressionSummary, SummaryQuality> callQual = inferOTFSummaryCallTypeAndQuality(call);
+            //Same inference, and same thresholds, as the ones used to filter the calls
+            //returned by the propagation (see ExpressionCallLoader#matchesRequestedSummaryCallType)
+            Map.Entry<ExpressionSummary, SummaryQuality> callQual = OTFExpressionCallFilterEngine
+                    .inferSummaryCallTypeAndQuality(call,
+                            processedFilter.getPresentHighThreshold(),
+                            processedFilter.getPresentLowThreshold(),
+                            processedFilter.getAbsentLowThreshold(),
+                            processedFilter.getAbsentHighThreshold());
+            if (callQual == null) {
+                throw log.throwing(new IllegalStateException("No summary call type for a call "
+                        + "returned by the propagation, it should have been filtered out: " + call));
+            }
             headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY,
                     callQual.getValue().getStringRepresentation());
             headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE,
@@ -685,63 +697,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
         }
         return log.traceExit(headerToValuePerGene.size());
-    }
-
-    /**
-     * Port to {@code OTFExpressionCall} of the inference logic of
-     * {@code CallService.inferSummaryCallTypeAndQuality(Set, Set, Set)}: same thresholds and same
-     * GOLD/SILVER/BRONZE cascade, but operating on the p-values carried by the call.
-     * TODO: exists here only because {@code ExpressionCallLoader} exposes a "does this call match
-     * a REQUESTED tier" predicate, not a "what is the tier of this call" method. Could be promoted
-     * to bgee-core so that other callers do not have to duplicate it.
-     */
-    private static Map.Entry<ExpressionSummary, SummaryQuality> inferOTFSummaryCallTypeAndQuality(
-            OTFExpressionCall call) {
-        log.traceEntry("{}", call);
-
-        BigDecimal allPValue = call.getAllDataTypePValue();
-        BigDecimal trustedPValue = call.getTrustedDataTypePValue();
-        BigDecimal bestDescAllPValue = call.getBestDirectDescendantAllDataTypePValue();
-        BigDecimal bestDescTrustedPValue = call.getBestDirectDescendantTrustedDataTypePValue();
-
-        if (allPValue == null) {
-            throw log.throwing(new IllegalStateException(
-                    "Could not infer ExpressionSummary/SummaryQuality, no p-value available for "
-                    + call));
-        }
-
-        //The order of the comparisons is important, mirrors the old CallService logic.
-        if (allPValue.compareTo(CallServiceParent.PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO) <= 0) {
-            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD));
-        }
-        if (allPValue.compareTo(CallServiceParent.PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0) {
-            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER));
-        }
-        if (bestDescAllPValue != null &&
-                bestDescAllPValue.compareTo(CallServiceParent.PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0) {
-            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE));
-        }
-        //From here, allPValue is necessarily > PRESENT_LOW_LESS_THAN_OR_EQUALS_TO
-        //(= ABSENT_LOW_GREATER_THAN), so we are considering a NOT_EXPRESSED call.
-        boolean absCallCannotBeBetterThanBronze = trustedPValue == null ||
-                (bestDescTrustedPValue != null && bestDescTrustedPValue
-                        .compareTo(CallServiceParent.PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0);
-        if (trustedPValue != null &&
-                allPValue.compareTo(CallServiceParent.ABSENT_HIGH_GREATER_THAN) > 0 &&
-                trustedPValue.compareTo(CallServiceParent.ABSENT_HIGH_GREATER_THAN) > 0) {
-            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED,
-                    absCallCannotBeBetterThanBronze? SummaryQuality.BRONZE: SummaryQuality.GOLD));
-        }
-        if (allPValue.compareTo(CallServiceParent.ABSENT_LOW_GREATER_THAN) > 0) {
-            if (trustedPValue != null &&
-                    trustedPValue.compareTo(CallServiceParent.ABSENT_LOW_GREATER_THAN) > 0) {
-                return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED,
-                        absCallCannotBeBetterThanBronze? SummaryQuality.BRONZE: SummaryQuality.SILVER));
-            }
-            return log.traceExit(new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE));
-        }
-        throw log.throwing(new IllegalStateException(
-                "Could not infer ExpressionSummary/SummaryQuality for " + call));
     }
 
     /**

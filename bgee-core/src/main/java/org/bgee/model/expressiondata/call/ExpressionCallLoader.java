@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -48,9 +47,6 @@ public class ExpressionCallLoader extends CommonService {
      */
     public static int LIMIT_MAX = 10000;
     public final static BigDecimal EXPRESSION_SCORE_MAX_VALUE = new BigDecimal("100");
-    private final static BigDecimal ZERO_BIGDECIMAL = new BigDecimal("0");
-    private final static BigDecimal ABOVE_ZERO_BIGDECIMAL = new BigDecimal("0.000000000000000000000000000001");
-    private final static BigDecimal MIN_FDR_BIGDECIMAL = new BigDecimal("0.00000000000001");
 
 
 
@@ -637,39 +633,6 @@ public class ExpressionCallLoader extends CommonService {
         return log.traceExit(currentBestDescendantValue);
     }
 
-    protected BigDecimal computeFDRCorrectedPValue(List<BigDecimal> pValues) {
-        log.traceEntry("{}", pValues);
-
-        int m = pValues.size();
-        Double[] pValuesDouble = 
-                pValues.stream()
-                .map(p -> p.compareTo(ZERO_BIGDECIMAL) == 0 ? ABOVE_ZERO_BIGDECIMAL : p)
-                .map(p -> p.doubleValue())
-                .toArray(length -> new Double[length]);
-        double[] adjustedPValues = new double[m];
-
-        Arrays.sort(pValuesDouble);
-        // iterate through all p-values:  largest to smallest
-        for (int i = m - 1; i >= 0; i--) {
-            if (i == m - 1) {
-                adjustedPValues[i] = pValuesDouble[i];
-            } else {
-                double unadjustedPvalue = pValuesDouble[i];
-                int divideByM = i + 1;
-                double left = adjustedPValues[i + 1];
-                double right = (m / (double) divideByM) * unadjustedPvalue;
-                adjustedPValues[i] = Math.min(left, right);
-            }
-        }
-        //Find the smallest corrected p-value
-        BigDecimal fdr = BigDecimal.valueOf(Arrays.stream(adjustedPValues).min().getAsDouble());
-        //If the FDR is less than MIN_FDR_BIGDECIMAL, change it to MIN_FDR_BIGDECIMAL
-        //(in order to avoid having fields in the globalExpression table with too  much precision)
-        if (fdr.compareTo(MIN_FDR_BIGDECIMAL) < 0) {
-            fdr = MIN_FDR_BIGDECIMAL;
-        }
-        return log.traceExit(fdr);
-    }
 
     /**
      * @param valueByWeightSum  A {@code BigDecimal} that is the sum of the values multiplied
@@ -686,21 +649,6 @@ public class ExpressionCallLoader extends CommonService {
         return log.traceExit(valueByWeightSum.divide(weightSum, MathContext.DECIMAL128));
     }
 
-    protected BigDecimal computeMean(List<BigDecimal> pValues) {
-        log.traceEntry("{}", pValues);
-        if (pValues == null || pValues.isEmpty()) {
-            return null;
-        }
-
-        BigDecimal sum = pValues.stream()
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return sum.divide(
-                BigDecimal.valueOf(pValues.size()),
-                //34 significant digits and RoundingMode.HALF_EVEN
-                MathContext.DECIMAL128
-        );
-    }
 
 
     public ExpressionCallProcessedFilter getProcessedFilter() {

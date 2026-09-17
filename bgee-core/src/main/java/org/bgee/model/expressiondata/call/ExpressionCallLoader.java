@@ -38,7 +38,6 @@ import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpre
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.RawConditionToSelfGlobalConditionTO;
-import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -65,7 +64,6 @@ public class ExpressionCallLoader extends CommonService {
 
 
 
-    private final GlobalExpressionCallDAO globalExprCallDAO;
     private final GeneDAO geneDAO;
     private final ConditionDAO condDAO;
     private final AnatEntityService anatEntityService;
@@ -120,7 +118,6 @@ public class ExpressionCallLoader extends CommonService {
                     "A CallServiceUtils must be provided"));
         }
         this.utils = utils;
-        this.globalExprCallDAO = this.getDaoManager().getGlobalExpressionCallDAO();
         this.geneDAO = this.getDaoManager().getGeneDAO();
         this.condDAO = this.getDaoManager().getConditionDAO();
         this.anatEntityService = this.getServiceFactory().getAnatEntityService();
@@ -668,24 +665,6 @@ public class ExpressionCallLoader extends CommonService {
                 //34 significant digits and RoundingMode.HALF_EVEN
                 MathContext.DECIMAL128
         );
-    }
-
-
-    public long loadDataCount() {
-        log.traceEntry();
-
-        //If the DAOCallFilters are null (different from: not-null and empty)
-        //it means there was no matching conds and thus no result for sure
-        if (this.processedFilter.getDaoFilters() == null) {
-            return log.traceExit(0L);
-        }
-        //FIXME: this value, and maybe also per species, must be inserted in a new table of the database,
-        //and getGlobalExpressionCallsCount to detect when the filter is empty and use that table
-        if (this.processedFilter.getSourceFilter().isEmptyFilter()) {
-            return log.traceExit(7111443197L);
-        }
-        return log.traceExit(this.globalExprCallDAO.getGlobalExpressionCallsCount(
-                this.processedFilter.getDaoFilters()));
     }
 
     public ExpressionCallPostFilter loadPostFilter() {

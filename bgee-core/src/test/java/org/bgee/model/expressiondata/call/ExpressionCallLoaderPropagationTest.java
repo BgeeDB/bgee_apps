@@ -249,7 +249,7 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
 
         return new ExpressionCallLoader(processedFilter, serviceFactory,
-                mock(CallServiceUtils.class), mock(CallMapping.class));
+                mock(CallServiceUtils.class));
     }
 
     private static Map<Integer, Condition2> mockConditionMap(int... condIds) {

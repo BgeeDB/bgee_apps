@@ -11,16 +11,13 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +31,6 @@ import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.SexService;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.anatdev.StrainService;
-import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOObservedExpressionFilter;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO;
@@ -43,20 +39,15 @@ import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.RawConditionToSelfGlobalConditionTO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.ConditionGraphCacheService.ConditionGraphCache;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneBioType;
-import org.bgee.model.species.Species;
 
 public class ExpressionCallLoader extends CommonService {
     private final static Logger log = LogManager.getLogger(ExpressionCallLoader.class.getName());
@@ -71,17 +62,6 @@ public class ExpressionCallLoader extends CommonService {
     private final static BigDecimal ZERO_BIGDECIMAL = new BigDecimal("0");
     private final static BigDecimal ABOVE_ZERO_BIGDECIMAL = new BigDecimal("0.000000000000000000000000000001");
     private final static BigDecimal MIN_FDR_BIGDECIMAL = new BigDecimal("0.00000000000001");
-    /**
-     * An {@code int} that is the maximum number of elements
-     * in {@link #conditionMap} and {@link #geneMap} before starting
-     * to flushing some existing entries. It is not a <strong>guarantee</strong>
-     * that those {@code Map}s will never exceed that size, just a trigger
-     * to flushing entries as much as possible.
-     *
-     * @see #updateConditionMap(Set)
-     * @see #updateGeneMap(Set)
-     */
-    private static final int MAX_ELEMENTS_IN_MAP = 10000;
 
 
 
@@ -93,7 +73,6 @@ public class ExpressionCallLoader extends CommonService {
     private final SexService sexService;
     private final StrainService strainService;
     private final CallServiceUtils utils;
-    private final CallMapping callMapping;
     /**
      * @see #getProcessedFilter()
      */
@@ -103,14 +82,13 @@ public class ExpressionCallLoader extends CommonService {
     //We keep the speciesMap and geneBiotypeMap inside the rawDataProcessedFilter,
     //as there will be no update to them by this RawDataLoader.
     /**
-     * A {@code Map} where keys are {@code Integer}s that are internal IDs of raw data conditions,
-     * the value being the associated {@code Condition2}. this {@code Map} is used
-     * to store the retrieved {@code Condition2}s over several independent calls
-     * to this {@code ExpressionCallLoader}, in order to avoid querying multiple times for the same
-     * conditions.
-     *
-     * @see #MAX_ELEMENTS_IN_MAP
-     * @see #updateRawDataConditionMap(Set)
+     * An unmodifiable view of the {@code Condition2}s identified by the processed filter, where
+     * keys are {@code Integer}s that are their internal IDs. Every condition reached by the
+     * propagation is in this {@code Map}: the conditions queried, and the ancestors the
+     * propagation is allowed to reach, are both bounded by its key set (see
+     * {@link #loadDataOnTheFly()}). It is a view, and not a copy, so that several
+     * {@code ExpressionCallLoader}s sharing a same processed filter do not each hold
+     * a copy of the conditions of a whole species.
      */
     private final Map<Integer, Condition2> conditionMap;
     /**
@@ -120,18 +98,16 @@ public class ExpressionCallLoader extends CommonService {
      * to this {@code ExpressionCallLoader}, in order to avoid querying multiple times for the same
      * genes.
      *
-     * @see #MAX_ELEMENTS_IN_MAP
-     * @see #updateGeneMap(Set)
+     * Unmodifiable, as {@link #conditionMap}.
      */
     private final Map<Integer, Gene> geneMap;
 
     ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter, ServiceFactory serviceFactory) {
-        this(processedFilter, serviceFactory, new CallServiceUtils(),
-                new CallMapping(processedFilter));
+        this(processedFilter, serviceFactory, new CallServiceUtils());
     }
     //Constructor package protected so that only the RawDataService can instantiate this class
     ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter,
-            ServiceFactory serviceFactory, CallServiceUtils utils, CallMapping callMapping) {
+            ServiceFactory serviceFactory, CallServiceUtils utils) {
         super(serviceFactory);
 
         if (processedFilter == null) {
@@ -143,12 +119,7 @@ public class ExpressionCallLoader extends CommonService {
             throw log.throwing(new IllegalArgumentException(
                     "A CallServiceUtils must be provided"));
         }
-        if (callMapping == null) {
-            throw log.throwing(new IllegalArgumentException(
-                    "A CallMapping must be provided"));
-        }
         this.utils = utils;
-        this.callMapping = callMapping;
         this.globalExprCallDAO = this.getDaoManager().getGlobalExpressionCallDAO();
         this.geneDAO = this.getDaoManager().getGeneDAO();
         this.condDAO = this.getDaoManager().getConditionDAO();
@@ -157,93 +128,16 @@ public class ExpressionCallLoader extends CommonService {
         this.sexService = this.getServiceFactory().getSexService();
         this.strainService = this.getServiceFactory().getStrainService();
         this.processedFilter = processedFilter;
-        this.conditionMap = new HashMap<>();
-        this.geneMap = new HashMap<>();
-        //Seed the Maps with any condition or gene already identified
-        //from the processed filter.
-        //We keep the speciesMap and geneBiotypeMap inside the processedFilter,
-        //as there will be no update to them by this Loader.
-        this.conditionMap.putAll(this.processedFilter.getRequestedConditionMap());
-        this.geneMap.putAll(this.processedFilter.getRequestedGeneMap());
+        //The conditions and genes identified by the processed filter are never updated by this
+        //Loader, so they are exposed as unmodifiable views rather than copied.
+        Map<Integer, Condition2> requestedCondMap = this.processedFilter.getRequestedConditionMap();
+        Map<Integer, Gene> requestedGeneMap = this.processedFilter.getRequestedGeneMap();
+        this.conditionMap = requestedCondMap == null? Map.of():
+            Collections.unmodifiableMap(requestedCondMap);
+        this.geneMap = requestedGeneMap == null? Map.of():
+            Collections.unmodifiableMap(requestedGeneMap);
     }
 
-    //If we want to let users decide which of the anat. entity, dev. stage, etc, to retrieve
-    //in the Conditions of the ExpressionCall, we should let them set Attributes.
-    //Currently, the condition parameters to return are determined by the combination
-    //selected in the source ExpressionCallFilter. It's a bit weird that is the a filter
-    //that determine the attributes visualized in return.
-    //But if there were attributes, we would still need to provide the condition parameters
-    //to the filter, because it is important to configure the query.
-    //So, maybe that should be its own argument of the method, rather than being in both the filter
-    //and the attributes?
-    //TODO But then it should be provided at the level of ExpressionCallService.loadCallLoader!
-    //(because this is where the ExpressionCallFilter is provided, some of the Conditions retrieved, etc)
-    //One of the Attribute could be "CONDITION", rather than the detail of the condition parameters.
-    //And then there would be another argument, the condition parameters, that would affect both
-    //the filtering in the query and the fields retrieved in the returned Conditions.
-    //
-    //offset is a Long because sometimes the number of potential results can be very large.
-    public List<ExpressionCall2> loadData(Long offset, Integer limit) {
-        log.traceEntry("{}, {}", offset, limit);
-
-        //If the DAOCallFilters are null (different from: not-null and empty)
-        //it means there was no matching conds and thus no result for sure
-        if (this.processedFilter.getDaoFilters() == null) {
-            return log.traceExit(new ArrayList<>());
-        }
-
-        if (offset != null && offset < 0) {
-            throw log.throwing(new IllegalArgumentException("offset cannot be less than 0"));
-        }
-        if (limit != null && limit <= 0) {
-            throw log.throwing(new IllegalArgumentException(
-                    "limit cannot be less than or equal to 0"));
-        }
-        if (limit != null && limit > LIMIT_MAX) {
-            throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
-                    + LIMIT_MAX));
-        }
-        long newOffset = offset == null? 0L: offset;
-        int newLimit = limit == null? LIMIT_MAX: limit;
-
-        //We obtain the results from the data source
-        ExpressionCallFilter2 callFilter = this.processedFilter.getSourceFilter();
-        EnumSet<CallService.Attribute> attrs = this.getAttributes(callFilter);
-        GlobalExpressionCallTOResultSet rs = this.globalExprCallDAO
-                .getGlobalExpressionCalls2(
-                        this.processedFilter.getDaoFilters(),
-                        convertServiceAttrToGlobalExprDAOAttr(attrs, callFilter),
-                        //for now we always order by bgeeGeneId, conditionId
-                        convertServiceOrderingAttrToGlobalExprDAOOrderingAttr(callFilter),
-                        newOffset,
-                        newLimit);
-
-        //We iterate a first time the calls to retrieve the bgeeGeneIds and the condIds,
-        //and we store them along the way
-        Set<Integer> bgeeGeneIds = new HashSet<>();
-        Set<Integer> condIds = new HashSet<>();
-        List<GlobalExpressionCallTO> callTOs = new ArrayList<>();
-        while (rs.next()) {
-            GlobalExpressionCallTO callTO = rs.getTO();
-            if (callTO.getBgeeGeneId() != null) {
-                bgeeGeneIds.add(callTO.getBgeeGeneId());
-            }
-            if (callTO.getConditionId() != null) {
-                condIds.add(callTO.getConditionId());
-            }
-            callTOs.add(callTO);
-        }
-        //Now we update the geneMap and condMap
-        this.updateConditionMap(condIds);
-        this.updateGeneMap(bgeeGeneIds);
-
-        //Now we generate the final result
-        return log.traceExit(callTOs.stream()
-                .map(cTO -> this.callMapping.mapGlobalCallTOToExpressionCall(cTO,
-                        this.geneMap, this.conditionMap, callFilter,
-                        this.processedFilter.getMaxRankPerSpecies(), attrs))
-                .collect(Collectors.toList()));
-    }
 
     //right now 
     public Map<Gene, List<OTFExpressionCall>> loadDataOnTheFly() {
@@ -390,10 +284,6 @@ public class ExpressionCallLoader extends CommonService {
         //thresholds, is the requested one with a quality at least as good as the requested one
         //(the SummaryQuality enum is declared from the lowest to the highest quality, so that
         //its compareTo can be used).
-        //XXX: an absent call cannot be better than BRONZE when no p-value over the data types
-        //trusted for absent calls is available. Of note, generateOTFExpressionCall currently
-        //feeds that p-value with the single-cell data as well, although SC_RNA_SEQ is declared
-        //as not trusted for absent calls: to be decided.
         Entry<ExpressionSummary, SummaryQuality> callTypeQuality = OTFExpressionCallFilterEngine
                 .inferSummaryCallTypeAndQuality(call,
                         this.processedFilter.getPresentHighThreshold(),
@@ -449,10 +339,6 @@ public class ExpressionCallLoader extends CommonService {
 
             //Init the Set of conditions to parse. Once empty, propagation is over.
             Set<Integer> conditionToParse = new HashSet<>(globalCondIdToObservedExpressionTOs.keySet());
-//            // Pre-load the initial leaf conditions into conditionMap so that
-//            // generateOTFExpressionCall can look them up even when conditionMap was
-//            // seeded from an empty condition filter.
-//            updateConditionMap(conditionToParse);
 
             Set<Integer> parsedConditions = new HashSet<>();
             // Collected during propagation; removed after the loop so that every ancestor
@@ -468,9 +354,7 @@ public class ExpressionCallLoader extends CommonService {
                 }
                 if (conditionToParse.contains(condId)) {
                     conditionToParse.remove(condId);
-                    // Guard against re-processing (indicates a cycle) and lazily load
-                    // Condition2 objects for parent conditions not yet in conditionMap.
-                    // Both are done per-parent to avoid a separate full-set scan.
+                    // Guard against re-processing, which would indicate a cycle.
                     // Only propagate to parents that are within the filter. When a filter
                     // is active, parents outside it (e.g. "nervous system" when brain was
                     // queried) are skipped: their scores are never computed and they are
@@ -486,7 +370,6 @@ public class ExpressionCallLoader extends CommonService {
                             conditionToParse.add(parentId);
                         }
                     }
-//                    updateConditionMap(parentIdSet);
 
                     // retrieve self expression
                     Set<ObservedExpressionTO> selfExpressionTOs = globalCondIdToObservedExpressionTOs.get(condId);
@@ -503,8 +386,23 @@ public class ExpressionCallLoader extends CommonService {
                             }
                         }
                     }
+                    //Every condition and gene reached by the propagation must have been
+                    //identified by the processed filter: the conditions queried and the ancestors
+                    //the propagation may reach are both bounded by conditionMap. A missing one
+                    //would silently produce a call without condition or without gene, so we fail
+                    //instead.
+                    Condition2 propagatedCond = conditionMap.get(condId);
+                    if (propagatedCond == null) {
+                        throw log.throwing(new IllegalStateException("No Condition2 for the global "
+                                + "condition ID " + condId + " reached by the propagation"));
+                    }
+                    Gene propagatedGene = geneMap.get(geneId);
+                    if (propagatedGene == null) {
+                        throw log.throwing(new IllegalStateException("No Gene for the Bgee gene ID "
+                                + geneId + " reached by the propagation"));
+                    }
                     OTFExpressionCall expressionCall = generateOTFExpressionCall(
-                            geneMap.get(geneId), conditionMap.get(condId),
+                            propagatedGene, propagatedCond,
                             selfExpressionTOs, descendantCalls);
                     globalCondIdToExpressionCall.put(condId, expressionCall);
 
@@ -864,213 +762,8 @@ public class ExpressionCallLoader extends CommonService {
         return processedFilter;
     }
 
-    private void updateConditionMap(Set<Integer> condIds) {
-        log.traceEntry("{}", condIds);
 
-        Set<Integer> missingCondIds = new HashSet<>(condIds);
-        missingCondIds.removeAll(this.conditionMap.keySet());
-        if (missingCondIds.isEmpty()) {
-            log.traceExit();
-            return;
-        }
-        Map<Integer, Species> speciesMap = this.processedFilter.getSpeciesMap();
-        Map<Integer, Condition2> missingCondMap = this.utils.loadConditionMapFromResultSet(
-                        (attrs) -> this.condDAO.getGlobalConditionsFromIds(missingCondIds, attrs),
-                        this.utils.convertCondParamsToDAOCondAttributes(
-                                this.processedFilter.getSourceFilter().getCondParamCombination()),
-                        speciesMap.values(), this.anatEntityService, this.devStageService,
-                        this.sexService, this.strainService);
-        //If the Map is going to grow too big, we keep only the entries needed
-        //for this method call
-        if (this.conditionMap.size() + missingCondMap.size() > MAX_ELEMENTS_IN_MAP) {
-            this.conditionMap.keySet().retainAll(condIds);
-        }
-        this.conditionMap.putAll(missingCondMap);
 
-        log.traceExit();
-        return;
-    }
-    private void updateGeneMap(Set<Integer> bgeeGeneIds) {
-        log.traceEntry("{}", bgeeGeneIds);
-
-        Set<Integer> missingGeneIds = new HashSet<>(bgeeGeneIds);
-        missingGeneIds.removeAll(this.geneMap.keySet());
-        if (missingGeneIds.isEmpty()) {
-            log.traceExit(); return;
-        }
-        Map<Integer, Species> speciesMap = this.processedFilter.getSpeciesMap();
-        Map<Integer, GeneBioType> geneBioTypeMap = this.processedFilter.getGeneBioTypeMap();
-        Map<Integer, Gene> missingGeneMap = this.geneDAO.getGenesByBgeeIds(missingGeneIds).stream()
-                .collect(Collectors.toMap(gTO -> gTO.getId(), gTO -> mapGeneTOToGene(gTO,
-                        Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
-                        .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
-                        null, null,
-                        Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
-                        .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")))));
-        //If the Map is going to grow too big, we keep only the entries needed
-        //for this method call
-        if (this.geneMap.size() + missingGeneMap.size() > MAX_ELEMENTS_IN_MAP) {
-            this.geneMap.keySet().retainAll(bgeeGeneIds);
-        }
-        this.geneMap.putAll(missingGeneMap);
-
-        log.traceExit(); return;
-    }
-
-    private EnumSet<CallService.Attribute> getAttributes(ExpressionCallFilter2 callFilter) {
-        log.traceEntry("{}", callFilter);
-      //For now we define the attributes ourselves, and we still use the Attributes
-        //from the CallService
-        //TODO: implement Attributes in ExpressionCallLoader
-        EnumSet<CallService.Attribute> attributes = EnumSet.of(
-                CallService.Attribute.GENE,
-                CallService.Attribute.CALL_TYPE,
-                CallService.Attribute.DATA_QUALITY,
-                CallService.Attribute.EXPRESSION_SCORE,
-                //to know how the propagation status of the call
-                CallService.Attribute.OBSERVED_DATA,
-                //We need the p-value info per data type to know which data types
-                //produced the calls
-                CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE,
-                //We also want to know the global FDR-corrected p-value
-                CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
-        attributes.addAll(callFilter.getCondParamCombination().stream()
-                .flatMap(param -> {
-                    //Any condition parameter attribute would do to retrieve the condition IDs,
-                    //but we map properly anyway.
-                    if (ConditionParameter.ANAT_ENTITY_CELL_TYPE.equals(param)) {
-                        return Stream.of(CallService.Attribute.ANAT_ENTITY_ID,
-                                CallService.Attribute.CELL_TYPE_ID);
-                    } else if (ConditionParameter.DEV_STAGE.equals(param)) {
-                        return Stream.of(CallService.Attribute.DEV_STAGE_ID);
-                    } else if (ConditionParameter.SEX.equals(param)) {
-                        return Stream.of(CallService.Attribute.SEX_ID);
-                    } else if (ConditionParameter.STRAIN.equals(param)) {
-                        return Stream.of(CallService.Attribute.STRAIN_ID);
-                    }
-                    throw log.throwing(new UnsupportedOperationException(
-                            "Unsupported ConditionParameter: " + param));
-                })
-                .collect(Collectors.toSet()));
-        return log.traceExit(attributes);
-    }
-    private Set<GlobalExpressionCallDAO.AttributeInfo> convertServiceAttrToGlobalExprDAOAttr(
-            EnumSet<CallService.Attribute> attributes, ExpressionCallFilter2 callFilter) {
-        log.traceEntry("{}, {}", attributes, callFilter);
-
-        EnumSet<DAODataType> daoDataTypes = this.utils.convertDataTypeToDAODataType(callFilter == null? null:
-            callFilter.getDataTypeFilters());
-        EnumSet<DAODataType> daoDataTypesTrustedForAbsentCalls =
-                this.utils.convertTrustedAbsentDataTypesToDAODataTypes(callFilter == null? null:
-                    callFilter.getDataTypeFilters());
-        //TODO to upate to use ConditionDAO.ConditionParameter
-        EnumSet<ConditionDAO.Attribute> daoCondParamComb = this.utils
-                .convertCondParamsToDAOCondAttributes(callFilter.getCondParamCombination());
-
-        return log.traceExit(attributes.stream().flatMap(attr -> {
-            if (attr.isConditionParameter()) {
-
-                return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID));
-
-            } else if (attr.equals(CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
-                    attr.equals(CallService.Attribute.CALL_TYPE) ||
-                    attr.equals(CallService.Attribute.DATA_QUALITY)) {
-
-                Set<GlobalExpressionCallDAO.AttributeInfo> pValAttributes = new HashSet<>();
-                pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO,
-                        daoDataTypes, null));
-                pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
-                        daoDataTypes, null));
-                if (!daoDataTypesTrustedForAbsentCalls.isEmpty()) {
-                    pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                            GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO,
-                            daoDataTypesTrustedForAbsentCalls, null));
-                    pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                            GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
-                            daoDataTypesTrustedForAbsentCalls, null));
-                }
-                return pValAttributes.stream();
-
-            } else if (attr.equals(CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE)) {
-
-                return daoDataTypes.stream()
-                        .flatMap(dt -> Stream.of(
-                                new GlobalExpressionCallDAO.AttributeInfo(
-                                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO,
-                                        EnumSet.of(dt), null),
-                                new GlobalExpressionCallDAO.AttributeInfo(
-                                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
-                                        EnumSet.of(dt), null)));
-
-            } else if (attr.equals(CallService.Attribute.GENE)) {
-
-                return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID));
-
-            } else if (attr.equals(CallService.Attribute.OBSERVED_DATA)) {
-
-                //TODO: actually why do we use getAllPossibleCondParamCombinations in DAO?
-                //We could generate the combination in bgee-core and just convert them
-                return ConditionDAO.Attribute.getAllPossibleCondParamCombinations(daoCondParamComb)
-                        .stream().map(comb -> new GlobalExpressionCallDAO.AttributeInfo(
-                                GlobalExpressionCallDAO.Attribute.DATA_TYPE_OBSERVATION_COUNT_INFO,
-                                daoDataTypes, comb));
-
-            } else if (attr.equals(CallService.Attribute.MEAN_RANK) ||
-                    attr.equals(CallService.Attribute.EXPRESSION_SCORE) ||
-                    attr.equals(CallService.Attribute.GENE_QUAL_EXPR_LEVEL) ||
-                    attr.equals(CallService.Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL)) {
-
-                Set<GlobalExpressionCallDAO.AttributeInfo> rankAttributes = new HashSet<>();
-                rankAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.MEAN_RANK,
-                        daoDataTypes, null));
-                //We need to know the species to compute expression scores,
-                //in order to retrieve the max rank in that species.
-                if (attr.equals(CallService.Attribute.EXPRESSION_SCORE)) {
-                    //The species info can be retrieved either from the gene or from the condition
-                    if (!attributes.contains(CallService.Attribute.GENE) &&
-                            Collections.disjoint(attributes,
-                                    CallService.Attribute.getAllConditionParameters())) {
-                        rankAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                                GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID));
-                    }
-                }
-                return rankAttributes.stream();
-
-            } else if (attr.equals(CallService.Attribute.DATA_TYPE_RANK_INFO)) {
-
-                return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.DATA_TYPE_RANK_INFO,
-                        daoDataTypes, null));
-
-            } else {
-                throw log.throwing(new IllegalStateException(
-                        "Unsupported Attributes from CallService: " + attr));
-            }
-        }).collect(Collectors.toSet()));
-    }
-
-    private LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction>
-    convertServiceOrderingAttrToGlobalExprDAOOrderingAttr(ExpressionCallFilter2 callFilter) {
-        log.traceEntry("{}", callFilter);
-        //for now we always order by bgeeGeneId, conditionId
-        LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> orderAttrs =
-                new LinkedHashMap<>();
-        orderAttrs.put(
-                new GlobalExpressionCallDAO.OrderingAttributeInfo(
-                        GlobalExpressionCallDAO.OrderingAttribute.BGEE_GENE_ID),
-                DAO.Direction.ASC);
-        orderAttrs.put(
-                new GlobalExpressionCallDAO.OrderingAttributeInfo(
-                        GlobalExpressionCallDAO.OrderingAttribute.GLOBAL_CONDITION_ID),
-                DAO.Direction.ASC);
-
-        return log.traceExit(orderAttrs);
-    }
 
 
 }

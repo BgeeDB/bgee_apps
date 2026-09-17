@@ -129,16 +129,13 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
          * <li>{@code GENOMICS}: the category is a genomics database.
          * <li>{@code PROTEOMICS}: the category is a proteomics database.
          * <li>{@code IN_SITU}: the category is a <em>in situ</em> data source.
-         * <li>{@code AFFYMETRIX}: the category is an Affymetrix data source.
-         * <li>{@code EST}: the category is an EST data source.
          * <li>{@code RNA_SEQ}: the category is a RNA-Seq data source.
          * <li>{@code ONTOLOGY}: the category is an ontology.
          * </ul>
          */
         public enum SourceCategory implements EnumDAOField {
             NONE(""), GENOMICS("Genomics database"), PROTEOMICS("Proteomics database"),
-            IN_SITU("In situ data source"), AFFYMETRIX("Affymetrix data source"), 
-            EST("EST data source"), RNA_SEQ("RNA-Seq data source"),
+            IN_SITU("In situ data source"), RNA_SEQ("RNA-Seq data source"),
             SC_RNA_SEQ("Single-cell RNA-Seq data source"), ONTOLOGY("Ontology");
 
             /**
@@ -194,7 +191,7 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
 
         /**
          * A {@code String} that is the URL to evidence if it is expression data source (<em>in situ</em> 
-         * evidence for <em>in situ</em> databases or Affymetrix chips for affymetrix data).
+         * evidence for <em>in situ</em> databases).
          * <p>
          * The parameter evidence ID is defined by the syntax [evidence_id].
          */

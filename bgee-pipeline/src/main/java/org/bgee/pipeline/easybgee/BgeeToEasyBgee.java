@@ -6,8 +6,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,7 +20,9 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -27,7 +32,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Service;
+import org.bgee.model.ComposedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
@@ -39,7 +44,6 @@ import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
-import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTOResultSet;
@@ -48,18 +52,21 @@ import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
-import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.expressiondata.call.CallService.Attribute;
-import org.bgee.model.expressiondata.call.Condition;
-import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.ExpressionCallLoader;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterInvariablePart;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
+import org.bgee.model.expressiondata.call.OTFExpressionCallFilterEngine;
+import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.species.Species;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.Utils;
@@ -254,7 +261,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("BGEE_GENE_ID", "bgeeGeneId");
                         put("GLOBAL_CONDITION_ID", "globalConditionId");
                         put("SUMMARY_QUALITY", "summaryQuality");
-                        put("MEAN_RANK", "globalRank");
                         put("MEAN_SCORE", "score");
                         put("FDR_PVALUE", "pValue");
                         put("ORIGIN", "propagationOrigin");
@@ -265,7 +271,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("BGEE_GENE_ID", Types.INTEGER);
                         put("GLOBAL_CONDITION_ID", Types.INTEGER);
                         put("SUMMARY_QUALITY", Types.VARCHAR);
-                        put("MEAN_RANK", Types.DECIMAL);
                         put("MEAN_SCORE", Types.DECIMAL);
                         put("FDR_PVALUE", Types.DECIMAL);
                         put("ORIGIN", Types.VARCHAR);
@@ -276,7 +281,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("BGEE_GENE_ID", false);
                         put("GLOBAL_CONDITION_ID", false);
                         put("SUMMARY_QUALITY", false);
-                        put("MEAN_RANK", false);
                         put("MEAN_SCORE", false);
                         put("FDR_PVALUE", true);
                         put("ORIGIN", false);
@@ -335,6 +339,27 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     private final static Logger log = LogManager.getLogger(BgeeToEasyBgee.class);
 
     /**
+     * An {@code int} that is the number of genes for which expression calls are retrieved
+     * with a same {@code ExpressionCallLoader} (see
+     * {@link #extractGlobalExpressionTable(Map, Map, Integer, String)}).
+     */
+    private final static int GENE_BATCH_SIZE = 20;
+
+    /**
+     * An {@code int} that is the number of genes between two progress logs of
+     * {@link #extractGlobalExpressionTable(Map, Map, Integer, String)}. Independent from
+     * {@link #GENE_BATCH_SIZE}: logging every batch would produce thousands of lines for a
+     * well studied species.
+     */
+    private final static int LOG_EVERY_N_GENES = 500;
+
+    /**
+     * A {@code String} that is the namespace of the meta stages, the developmental stages
+     * shared among species.
+     */
+    private final static String META_STAGE_ID_PREFIX = "UBERON:";
+
+    /**
      * Several actions can be launched from this main method, depending on the
      * first element in {@code args}:
      * <ul>
@@ -349,6 +374,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
      * {@link CommandRunner#LIST_SEPARATOR}. If empty (see
      * {@link CommandRunner#EMPTY_LIST}), all species in database will be
      * exported.
+     * <li>a {@code boolean} defining whether only the conditions using a meta stage are
+     * exported. Exporting all the developmental stages is not realistic, it would result
+     * in billions of rows in the expression table.
      * </ol>
      * </li>
      * <li>If the first element in {@code args} is "tsvToEasyBgee", the action
@@ -375,13 +403,15 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         }
         BgeeToEasyBgee bgeeToEasyBgee = new BgeeToEasyBgee();
         if (args[0].equals("extractFromBgee")) {
-            int expectedArgLength = 3;
+            int expectedArgLength = 4;
             if (args.length != expectedArgLength) {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments provided, expected "
                         + expectedArgLength + " arguments, " + args.length + " provided."));
             }
+            boolean metaStagesOnly = CommandRunner.parseArgumentAsBoolean(args[3]);
             bgeeToEasyBgee.cleanOutputDir(args[1]);
-            bgeeToEasyBgee.extractBgeeDatabase(CommandRunner.parseListArgumentAsInt(args[2]), args[1]);
+            bgeeToEasyBgee.extractBgeeDatabase(CommandRunner.parseListArgumentAsInt(args[2]), args[1],
+                    metaStagesOnly);
         } else if (args[0].equals("tsvToEasyBgee")) {
             int expectedArgLength = 2;
             if (args.length != expectedArgLength) {
@@ -440,9 +470,13 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
      *            species for which to generate files.
      * @param directory
      *            A {@code String} that is the directory where to store files.
+     * @param metaStagesOnly
+     *            A {@code boolean} defining whether only the conditions using a meta stage
+     *            are exported (see {@link #extractGlobalCondTable(Integer, String, boolean)}).
      */
-    private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory) {
-        log.traceEntry("{}, {}", inputSpeciesIds, directory);
+    private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory,
+            boolean metaStagesOnly) {
+        log.traceEntry("{}, {}, {}", inputSpeciesIds, directory, metaStagesOnly);
         SpeciesTOResultSet speciesTOs = daoManagerSupplier.get().getSpeciesDAO()
                 .getSpeciesByIds(new HashSet<>(inputSpeciesIds), null);
         // XXX: add check that all provided species IDs are found
@@ -450,152 +484,252 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         extractAnatEntityTable(directory);
         extractStageTable(directory);
         extractGeneXRefTable(directory);
+        logMemoryUsage("extracting the species, anat. entities, stages and gene XRefs");
         for (Integer speciesId : speciesIds) {
             log.info("start to extract genes, conditions and expressions data for species {}", speciesId);
             // Note: we can map ID to one Bgee gene ID because we use
             // data for only 1 species
             Map<String, Integer> idToBgeeGeneId = extractGeneTable(speciesId, directory);
-            Map<Condition, String> condToConditionId = extractGlobalCondTable(speciesId, directory);
-            extractGlobalExpressionTable(idToBgeeGeneId, condToConditionId, speciesId, directory);
+            logMemoryUsage("extracting the " + idToBgeeGeneId.size() + " genes of species " + speciesId);
+            Map<String, String> condKeyToConditionId = extractGlobalCondTable(speciesId, directory,
+                    metaStagesOnly);
+            logMemoryUsage("extracting the " + condKeyToConditionId.size()
+                    + " global conditions of species " + speciesId);
+            extractGlobalExpressionTable(idToBgeeGeneId, condKeyToConditionId, speciesId, directory);
+            logMemoryUsage("extracting the expression calls of species " + speciesId);
         }
         log.traceExit();
     }
 
     private void extractGlobalExpressionTable(Map<String, Integer> idToBgeeGeneIds,
-            Map<Condition, String> condToConditionId, Integer speciesId, String directory) {
-        log.traceEntry("{}, {}, {}, {}",idToBgeeGeneIds, condToConditionId, speciesId, directory);
+            Map<String, String> condKeyToConditionId, Integer speciesId, String directory) {
+        log.traceEntry("{}, {}, {}, {}",idToBgeeGeneIds, condKeyToConditionId, speciesId, directory);
 
-        log.info("Start extracting global expressions for the species {}...", speciesId);
+        log.info("Start extracting global expressions for the species {}: {} genes to process...",
+                speciesId, idToBgeeGeneIds.size());
 
         // use TsvFile enum to generate the CellProcessor
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
 
-        String[] header = new String[] { GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
-                GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY,
-                GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(), GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_FDR_PVALUE,
+        String[] header = new String[] { "BGEE_GENE_ID", "GLOBAL_CONDITION_ID", GLOBAL_EXPRESSION_SUMMARY_QUALITY,
+                GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_FDR_PVALUE,
                 GLOBAL_EXPRESSION_ORIGIN, GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE };
 
-        // init summaryCallTypeQualityFilter
-        Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter =
-                new HashMap<>();
-        summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
-        summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
+        // init summaryCallTypeQualityFilter: only export calls of at least SILVER quality.
+        // With OTF propagation this is applied by ExpressionCallLoader itself as a
+        // post-propagation filter (see ExpressionCallLoader#matchesRequestedSummaryCallType),
+        // so we don't need to separately filter the results below.
+        Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        summaryCallTypeQualityFilter.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
 
-        // init ordering attributes
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
-        orderingAttributes.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-
-        // We retrieve calls with all attributes that are not condition parameters.
-        EnumSet<CallService.Attribute> attributes = EnumSet.of(CallService.Attribute.GENE,
-                CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
-                CallService.Attribute.MEAN_RANK, CallService.Attribute.EXPRESSION_SCORE,
-                CallService.Attribute.OBSERVED_DATA,
-                //We also want to know the global FDR-corrected p-value
-                CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
-
-        // add condition parameters in attributs, ordering attributes and observed condition filter
-        Set<Attribute> condFilter = EnumSet.of(Attribute.ANAT_ENTITY_ID,Attribute.DEV_STAGE_ID);
-        attributes.addAll(condFilter);
-        orderingAttributes.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
-        orderingAttributes.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+        Collection<ConditionParameter<?, ?>> condParamCombination =
+                List.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE, ConditionParameter.DEV_STAGE);
 
         File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
 
-        try {
-            boolean writeHeader = false;
-            if (!file.exists()) {
-                writeHeader = true;
+        int totalGenes = idToBgeeGeneIds.size();
+        AtomicLong geneCount = new AtomicLong(0);
+        AtomicLong rowCount = new AtomicLong(0);
+        //Calls discarded because their condition is not part of the exported global condition
+        //table (see generateGlobalExpressionLines). Expected, but a sudden jump would mean that
+        //the condition table and the propagated calls have drifted apart.
+        AtomicLong discardedCallCount = new AtomicLong(0);
+
+        //Genes are processed by batches: the information that does not depend on the genes is
+        //retrieved once per ExpressionCallLoader, whatever the number of genes requested.
+        List<List<String>> geneBatches = new ArrayList<>();
+        List<String> currentBatch = new ArrayList<>();
+        for (String geneId: idToBgeeGeneIds.keySet()) {
+            currentBatch.add(geneId);
+            if (currentBatch.size() == GENE_BATCH_SIZE) {
+                geneBatches.add(currentBatch);
+                currentBatch = new ArrayList<>();
             }
+        }
+        if (!currentBatch.isEmpty()) {
+            geneBatches.add(currentBatch);
+        }
+        log.info("Species {}: {} genes split into {} batches of at most {} genes.", speciesId,
+                totalGenes, geneBatches.size(), GENE_BATCH_SIZE);
+
+        //The condition part of the processed filter depends only on the condition filters,
+        //identical for all the genes of a species: it is computed once here and reused.
+        ExpressionCallService seedCallService = serviceFactoryProvider
+                .apply(this.daoManagerSupplier.get()).getExpressionCallService();
+        String seedGeneId = idToBgeeGeneIds.keySet().iterator().next();
+        long startTimeCondPart = System.currentTimeMillis();
+        ExpressionCallProcessedFilter seedProcessedFilter = seedCallService
+                .processExpressionCallFilter(new ExpressionCallFilter2(summaryCallTypeQualityFilter,
+                        new GeneFilter(speciesId, seedGeneId), null, null,
+                        condParamCombination, null, null,
+                        //keep the calls in ancestor conditions that are redundant with
+                        //a descendant condition: easy Bgee is an exhaustive export, the calls
+                        //to display are selected by its consumers, not here.
+                        false));
+        ExpressionCallProcessedFilterConditionPart condPart = seedProcessedFilter.getConditionPart();
+        ExpressionCallProcessedFilterInvariablePart invariablePart =
+                seedProcessedFilter.getInvariablePart();
+        log.info("Species {}: condition part of the processed filter computed in {} ms, "
+                + "reused for all {} genes.", speciesId,
+                System.currentTimeMillis() - startTimeCondPart, totalGenes);
+        logMemoryUsage("loading the condition part of species " + speciesId);
+
+        try {
+            //An existing but empty file (e.g. left over from a previous run) needs its header
+            //written, as a non-existing one.
+            boolean writeHeader = !file.exists() || file.length() == 0;
+            log.info("Species {}: output file {} ({}), writeHeader={}", speciesId, file,
+                    file.exists() ? "exists, " + file.length() + " bytes" : "does not exist yet",
+                    writeHeader);
             try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file, true), Utils.TSVCOMMENTED)) {
                 if(writeHeader) {
                     file.createNewFile();
                     mapWriter.writeHeader(header);
                 }
 
-                idToBgeeGeneIds.keySet()
-                .parallelStream().forEach(geneId -> {
-                    final Stream<ExpressionCall> expressedCalls = serviceFactoryProvider
+                geneBatches.parallelStream().forEach(geneBatch -> {
+                    ExpressionCallService callService = serviceFactoryProvider
                             .apply(this.daoManagerSupplier.get())
-                            .getCallService()
-                            .loadExpressionCalls(new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                                    Collections.singleton(new GeneFilter(speciesId, geneId)),
-                                    //TODO could use Set.of instead of Collections.singleton once Java 9 is installed
-                                    //on all our servers
-                                    Collections.singleton(new ConditionFilter(null, 
-                                            null, 
-                                            Collections.singleton("GO:0005575"), 
-                                            Collections.singleton("any"),  
-                                            Collections.singleton("wild-type"), condFilter)),
-                                    null, null),
-                                    attributes, orderingAttributes);
-                    generateGlobalExpressionLines(expressedCalls,
-                            attributes.stream().filter(a -> a.isConditionParameter())
-                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
-                            idToBgeeGeneIds, condToConditionId, header, processors, mapWriter, file);
+                            .getExpressionCallService();
+                    ExpressionCallFilter2 filter = new ExpressionCallFilter2(summaryCallTypeQualityFilter,
+                            new GeneFilter(speciesId, geneBatch), null, null,
+                            condParamCombination, null, null,
+                            //redundant ancestor calls are kept, see the seed filter above
+                            false);
+                    //Reuse the condition and invariable parts computed once for this species,
+                    //only the gene part is specific to this batch of genes.
+                    ExpressionCallProcessedFilter processedFilter =
+                            callService.processExpressionCallFilter(filter, null, condPart,
+                                    invariablePart);
+                    ExpressionCallLoader loader = callService.getCallLoader(processedFilter);
+                    //Calls are propagated independently for each gene and returned per gene.
+                    Map<Gene, List<OTFExpressionCall>> callsByGene = loader.loadDataOnTheFly();
+                    long count = geneCount.addAndGet(geneBatch.size());
+                    //true when this batch made the gene count cross a multiple of
+                    //LOG_EVERY_N_GENES. Not a modulo, so that it still works if GENE_BATCH_SIZE
+                    //does not divide LOG_EVERY_N_GENES.
+                    boolean checkpoint = count / LOG_EVERY_N_GENES !=
+                            (count - geneBatch.size()) / LOG_EVERY_N_GENES;
+                    //Rows are generated one gene at a time rather than for the whole batch:
+                    //generateGlobalExpressionLines builds one Map per row, and a well studied
+                    //species produces thousands of calls per gene.
+                    for (List<OTFExpressionCall> geneCalls: callsByGene.values()) {
+                        int writtenRows = generateGlobalExpressionLines(geneCalls.stream(),
+                                idToBgeeGeneIds, condKeyToConditionId, header, processors,
+                                mapWriter, file, processedFilter);
+                        rowCount.addAndGet(writtenRows);
+                        discardedCallCount.addAndGet(geneCalls.size() - writtenRows);
+                    }
+                    if (checkpoint) {
+                        log.info("Species {}: {}/{} genes processed so far, {} data rows written, "
+                                + "{} calls discarded (condition not exported), {} MB heap used...",
+                                speciesId, count, totalGenes, rowCount.get(),
+                                discardedCallCount.get(), usedMemoryMb());
+                    }
                 });
-                
+
             }
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
         }
+        log.info("Species {}: done, {}/{} genes processed, {} data rows written, {} calls "
+                + "discarded (condition not exported).", speciesId, geneCount.get(), totalGenes,
+                rowCount.get(), discardedCallCount.get());
         log.traceExit();
     }
 
-    private void generateGlobalExpressionLines(Stream<ExpressionCall> expressionCalls,
-            EnumSet<CallService.Attribute> condParamComb, Map<String, Integer> geneToBgeeGeneId,
-            Map<Condition, String> condToConditionId, String[] header, CellProcessor[] processors,
-            ICsvMapWriter mapWriter, File file) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", expressionCalls, condParamComb, geneToBgeeGeneId,
-                condToConditionId, header, processors, mapWriter, file);
+    /**
+     * @return  An {@code int} that is the number of rows actually written to {@code mapWriter}.
+     *          It can be lower than the number of {@code expressionCalls} provided, since calls
+     *          in a condition that is not part of the exported global condition table are skipped.
+     */
+    private int generateGlobalExpressionLines(Stream<OTFExpressionCall> expressionCalls,
+            Map<String, Integer> geneToBgeeGeneId, Map<String, String> condKeyToConditionId,
+            String[] header, CellProcessor[] processors, ICsvMapWriter mapWriter, File file,
+            ExpressionCallProcessedFilter processedFilter) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", expressionCalls, geneToBgeeGeneId,
+                condKeyToConditionId, header, processors, mapWriter, file, processedFilter);
 
         List<Map<String, String>> headerToValuePerGene = expressionCalls.map(call -> {
             Map<String, String> headerToValuePerCall = new HashMap<>();
-            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
+            headerToValuePerCall.put("BGEE_GENE_ID",
                     String.valueOf(geneToBgeeGeneId.get(call.getGene().getGeneId())));
-            Condition updatedCond = new Condition(new AnatEntity(call.getCondition().getAnatEntityId()),
-                call.getCondition().getDevStageId() == null ?
-                        new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID) :
-                        new DevStage(call.getCondition().getDevStageId()),
-                call.getCondition().getCellTypeId() == null ?
-                        new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID) :
-                        new AnatEntity(call.getCondition().getCellTypeId()),
-                call.getCondition().getSex() == null ?
-                        new Sex(ConditionDAO.SEX_ROOT_ID) :
-                        new Sex(call.getCondition().getSexId()),
-                call.getCondition().getStrain() == null ?
-                        new Strain(ConditionDAO.STRAIN_ROOT_ID) :
-                        new Strain(call.getCondition().getStrainId()),
-                        new Species(call.getCondition().getSpeciesId()));
 
-            String conditionId = condToConditionId.get(updatedCond);
-            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), conditionId);
+            String condKey = buildConditionKeyFromCondition2(call.getCondition());
+            String conditionId = condKeyToConditionId.get(condKey);
+            if (conditionId == null) {
+                //Expected: propagation runs over the whole condition graph, while
+                //extractGlobalCondTable only exports a subset of it. Such calls have no global
+                //condition to point to and are skipped, the caller counts them.
+                return null;
+            }
+            headerToValuePerCall.put("GLOBAL_CONDITION_ID", conditionId);
+
+            //Same inference, and same thresholds, as the ones used to filter the calls
+            //returned by the propagation (see ExpressionCallLoader#matchesRequestedSummaryCallType)
+            Map.Entry<ExpressionSummary, SummaryQuality> callQual = OTFExpressionCallFilterEngine
+                    .inferSummaryCallTypeAndQuality(call,
+                            processedFilter.getPresentHighThreshold(),
+                            processedFilter.getPresentLowThreshold(),
+                            processedFilter.getAbsentLowThreshold(),
+                            processedFilter.getAbsentHighThreshold());
+            if (callQual == null) {
+                throw log.throwing(new IllegalStateException("No summary call type for a call "
+                        + "returned by the propagation, it should have been filtered out: " + call));
+            }
             headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY,
-                    call.getSummaryQuality().getStringRepresentation());
-            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(),
-                    call.getMeanRank().toString());
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_MEAN_SCORE, call.getExpressionScore().toString());
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_ORIGIN, dataPropagationToString(
-                    call.getDataPropagation(), condParamComb));
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getPValue().toString());
+                    callQual.getValue().getStringRepresentation());
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE,
+                    callQual.getKey().getStringRepresentation());
+
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_MEAN_SCORE,
+                    call.getExpressionScore() == null? null: call.getExpressionScore().toString());
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_ORIGIN,
+                    dataPropagationToString(call.getDataPropagation()));
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE,
+                    call.getAllDataTypePValue() == null? null: call.getAllDataTypePValue().toString());
             return headerToValuePerCall;
-        }).collect(Collectors.toList());
+        }).filter(Objects::nonNull).collect(Collectors.toList());
         try {
             writeExpressionPerGeneToFile(headerToValuePerGene, header, processors, mapWriter);
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
         }
+        return log.traceExit(headerToValuePerGene.size());
     }
 
-    /** 
+    /**
      * Synchronized method taking care of writing in a thread-safe approach the expression information
      * retrieved from the database into a unique file.
      */
     private synchronized void writeExpressionPerGeneToFile(List<Map<String,String>> headerToValuePerGene,
-            String [] header, CellProcessor[] processors, ICsvMapWriter mapWriter) throws IOException {
+            String [] header, CellProcessor[] processors, ICsvMapWriter mapWriter)
+                    throws IOException {
         for(Map<String,String> headerToValuePerCall : headerToValuePerGene) {
             mapWriter.write(headerToValuePerCall, header, processors);
         }
+    }
+
+    /**
+     * Log the heap usage after a step of the extraction. The used memory includes the objects
+     * not garbage collected yet, so a single value means little: what matters is whether it
+     * keeps growing from one species to the next.
+     *
+     * @param afterWhat A {@code String} describing the step that was just completed.
+     */
+    private static void logMemoryUsage(String afterWhat) {
+        log.info("Memory after {}: {} MB allocated since the last garbage collection, "
+                + "{} MB heap allocated, {} MB max.", afterWhat, usedMemoryMb(),
+                Runtime.getRuntime().totalMemory() / (1024L * 1024L),
+                Runtime.getRuntime().maxMemory() / (1024L * 1024L));
+    }
+    /**
+     * @return  A {@code long} that is the currently used heap, in MB.
+     */
+    private static long usedMemoryMb() {
+        Runtime runtime = Runtime.getRuntime();
+        return (runtime.totalMemory() - runtime.freeMemory()) / (1024L * 1024L);
     }
 
     private Map<String, Integer> extractGeneTable(Integer speciesId, String directory) {
@@ -644,7 +778,15 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         // In order to solve that issue we check xrefs coming from a datasource with [gene_id] pattern
         // If one gene already has an xrefUrl associated to it, then the corresponding xref is not inserted again.
         Map<Integer, Set<String>> manageDuplicatedXrefs = new HashMap<>();
-        List<Map<String, String>> allGeneXRefsInformation = allGeneXRefsTOs.stream().map(geneXRef -> {
+        // use TsvFile Enum to generate the CellProcessor
+        final CellProcessor[] processors = createCellProcessor(TsvFile.GENE_XREF_OUTPUT_FILE);
+        File file = new File(directory, TsvFile.GENE_XREF_OUTPUT_FILE.fileName);
+        //The XRef table has tens of millions of rows: they are written as they are produced
+        //rather than collected into a List first. The stream is sequential, so the order and
+        //the deduplication below are unchanged.
+        AtomicLong xrefCount = new AtomicLong(0);
+        long logEveryNXRefs = 1000000L;
+        Stream<Map<String, String>> allGeneXRefsInformation = allGeneXRefsTOs.stream().map(geneXRef -> {
             Map<String, String> headerToValue = new HashMap<>();
             headerToValue.put(header[0], String.valueOf(geneXRef.getBgeeGeneId()));
             String dataSourceXRefUrl = dataSourceById.get(geneXRef.getDataSourceId()).getXRefUrl();
@@ -666,7 +808,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 }
                 Set<String> xrefs = manageDuplicatedXrefs.containsKey(geneXRef.getBgeeGeneId()) ?
                         manageDuplicatedXrefs.get(geneXRef.getBgeeGeneId()) :
-                        new HashSet<>();
+                            new HashSet<>();
                 xrefs.add(dataSourceXRefUrl);
                 manageDuplicatedXrefs.put(geneXRef.getBgeeGeneId(), xrefs);
             }
@@ -676,11 +818,35 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             headerToValue.put(header[1], dataSourceXRefUrl);
             headerToValue.put(header[2], dataSourceById.get(geneXRef.getDataSourceId()).getName());
             return headerToValue;
-        }).filter(e -> e != null).collect(Collectors.toList());
-        // use TsvFile Enum to generate the CellProcessor
-        final CellProcessor[] processors = createCellProcessor(TsvFile.GENE_XREF_OUTPUT_FILE);
-        File file = new File(directory, TsvFile.GENE_XREF_OUTPUT_FILE.fileName);
-        writeOutputFile(file, allGeneXRefsInformation, header, processors);
+        }).filter(e -> e != null);
+
+        try {
+            // See extractGlobalExpressionTable for why an existing-but-empty file is treated
+            // the same as a non-existing one.
+            boolean writeHeader = !file.exists() || file.length() == 0;
+            try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file, true),
+                    Utils.TSVCOMMENTED)) {
+                if (writeHeader) {
+                    file.createNewFile();
+                    mapWriter.writeHeader(header);
+                }
+                allGeneXRefsInformation.forEach(headerToValue -> {
+                    try {
+                        mapWriter.write(headerToValue, header, processors);
+                    } catch (IOException e) {
+                        throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
+                    }
+                    long count = xrefCount.incrementAndGet();
+                    if (count % logEveryNXRefs == 0) {
+                        log.info("{} gene XRefs written so far, {} MB heap used...", count,
+                                usedMemoryMb());
+                    }
+                });
+            }
+        } catch (IOException e) {
+            throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
+        }
+        log.info("Done extracting gene XRefs: {} XRefs written.", xrefCount.get());
         log.traceExit();
     }
 
@@ -725,9 +891,22 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         log.traceExit();
     }
 
-    private Map<Condition, String> extractGlobalCondTable(Integer speciesId, String directory) {
-        log.traceEntry("{}, {}", speciesId, directory);
-        log.info("Start extracting global conditions for the species {}...", speciesId);
+    /**
+     * @param speciesId         An {@code Integer} that is the ID of the species to export
+     *                          the global conditions for.
+     * @param directory         A {@code String} that is the directory where to store files.
+     * @param metaStagesOnly    A {@code boolean} defining whether only the conditions using
+     *                          a meta stage are exported. Meta stages are shared among species
+     *                          and are all the stage IDs with the "UBERON:" namespace.
+     * @return                  A {@code Map} where keys are the {@code String} keys built by
+     *                          {@link #buildConditionKey(String, String, String, String, String,
+     *                          int)}, the associated value being the ID of the global condition.
+     */
+    private Map<String, String> extractGlobalCondTable(Integer speciesId, String directory,
+            boolean metaStagesOnly) {
+        log.traceEntry("{}, {}, {}", speciesId, directory, metaStagesOnly);
+        log.info("Start extracting global conditions for the species {}, metaStagesOnly={}...",
+                speciesId, metaStagesOnly);
 
         List<ConditionDAO.Attribute> attributes = Arrays.asList(ConditionDAO.Attribute.ID,
                 ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID,
@@ -738,16 +917,19 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 ConditionDAO.Attribute.CELL_TYPE_ID.name(), ConditionDAO.Attribute.SEX_ID.name(),
                 ConditionDAO.Attribute.STRAIN_ID.name(), ConditionDAO.Attribute.SPECIES_ID.name() };
 
-        // create condition filter using root of sex and strain
-        DAOConditionFilter condFilter = new DAOConditionFilter(null, null,
-                Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID),
+        // Condition filter using root of sex and strain only: unlike cell type, they are not
+        // part of the condParamCombination requested in extractGlobalExpressionTable, so they
+        // always stay collapsed to root there.
+        DAOConditionFilter condFilter = new DAOConditionFilter(null, null, null,
                 Collections.singleton(ConditionDAO.SEX_ROOT_ID),
                 Collections.singleton(ConditionDAO.STRAIN_ROOT_ID), null);
 
-        // Retrieve all conditions
         List<ConditionTO> conditionTOs = daoManagerSupplier.get().getConditionDAO()
                 .getGlobalConditions(Collections.singleton(speciesId),
-                        Collections.singleton(condFilter), attributes).getAllTOs();
+                        Collections.singleton(condFilter), attributes).stream()
+                .filter(c -> !metaStagesOnly || c.getStageId().startsWith(META_STAGE_ID_PREFIX))
+                .toList();
+        log.info("Species {}: {} global conditions exported.", speciesId, conditionTOs.size());
 
         //transformation from a List<ConditionTO> to a List<Map<String, String>> in order to easily write conditions in a file
         List<Map<String, String>> allGlobalCondInformation = conditionTOs.stream().map(cond -> {
@@ -862,10 +1044,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             CellProcessor[] processors) {
         log.traceEntry("{}, {}, {}, {}", file, fileLines, header, processors);
         try {
-            boolean writeHeader = false;
-            if (!file.exists()) {
-                writeHeader = true;
-            }
+            // See extractGlobalExpressionTable for why we also treat an existing-but-empty file
+            // (e.g., left over from a previous run) the same as a non-existing one.
+            boolean writeHeader = !file.exists() || file.length() == 0;
             try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file, true), Utils.TSVCOMMENTED)) {
                 if(writeHeader) {
                     file.createNewFile();
@@ -905,29 +1086,111 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     }
 
     /**
-     * This method is needed because we can not access to the conditionId when
-     * using {@code Condition}. The resulting {@code Map} is then useful to
-     * retrieve the conditionId from one {@code Condition}.
+     * This method is needed because we cannot access the conditionId from a {@code Condition2}
+     * (calls returned by OTF propagation only carry the condition's parameter values, not the
+     * internal ID it was exported with in {@link #extractGlobalCondTable(Integer, String)}).
+     * The resulting {@code Map} is then useful to retrieve the conditionId from a condition,
+     * identified by the {@code String} key built by {@link #buildConditionKey(String, String,
+     * String, String, String, int)}.
      *
      * @param conditionTOs
      *            A {@code List} of {@code ConditionTO}s for which we want to be
      *            able to retrieve the conditionId.
-     * @return A {@code Map} where keys are {@code Condition}s representing
-     *         condition, the associated value being an {@code Integer} that is
-     *         the ID of the associated condition.
+     * @return A {@code Map} where keys are the {@code String} keys built by
+     *         {@link #buildConditionKeyFromConditionTO(ConditionTO)}, the associated value
+     *         being a {@code String} that is the ID of the associated condition.
      */
-    private Map<Condition, String> createCondToConditionIdMap(List<ConditionTO> conditionTOs) {
+    private static Map<String, String> createCondToConditionIdMap(List<ConditionTO> conditionTOs) {
         log.traceEntry("{}", conditionTOs);
         return log
             .traceExit(conditionTOs.stream()
                 .collect(Collectors.toMap(
-                    p -> new Condition(new AnatEntity(p.getAnatEntityId()),
-                    p.getStageId() == null ? null : new DevStage(p.getStageId()),
-                    p.getCellTypeId() == null ? null : new AnatEntity(p.getCellTypeId()),
-                    p.getSex() == null ? null : new Sex(p.getSex().getStringRepresentation()),
-                    p.getStrainId() == null ? null : new Strain(p.getStrainId()),
-                        new Species(p.getSpeciesId())),
+                    BgeeToEasyBgee::buildConditionKeyFromConditionTO,
                     p -> String.valueOf(p.getId()))));
+    }
+
+    /**
+     * Builds the same kind of {@code String} key as {@link #buildConditionKeyFromCondition2(
+     * Condition2)}, but from a {@code ConditionTO} as retrieved by
+     * {@link #extractGlobalCondTable(Integer, String)}. Both methods must build the key the
+     * exact same way, substituting the same "root" sentinel for {@code null}/empty values on
+     * both sides, so that a condition returned by OTF propagation can be matched back to the
+     * exported {@code globalCond} row it corresponds to.
+     */
+    private static String buildConditionKeyFromConditionTO(ConditionTO conditionTO) {
+        log.traceEntry("{}", conditionTO);
+        return log.traceExit(buildConditionKey(conditionTO.getAnatEntityId(), conditionTO.getCellTypeId(),
+                conditionTO.getStageId(),
+                conditionTO.getSex() == null? null: conditionTO.getSex().getStringRepresentation(),
+                conditionTO.getStrainId(), conditionTO.getSpeciesId()));
+    }
+
+    /**
+     * See {@link #buildConditionKeyFromConditionTO(ConditionTO)}.
+     * <p>
+     * The extraction of the anat. entity and cell type IDs from the composed
+     * {@code ANAT_ENTITY_CELL_TYPE} condition parameter relies on the ordering convention
+     * established in {@code OTFExpressionCallFilterEngine} (index 1 = anat. entity, index 0 =
+     * cell type when both are present). This is confirmed by
+     * {@code CallServiceUtils.loadConditionMapFromResultSet}, which is what builds the
+     * {@code Condition2}s returned by OTF propagation: it always inserts the cell type before
+     * the anat. entity into the underlying {@code LinkedHashSet} (in that order, only when
+     * non-null), so a single-entity composed value only ever contains the anat. entity (a
+     * whole-organ condition, no specific cell type), never a cell type alone.
+     */
+    private static String buildConditionKeyFromCondition2(Condition2 cond) {
+        log.traceEntry("{}", cond);
+
+        ComposedEntity<AnatEntity> anatEntityCellType =
+                cond.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        String anatEntityId;
+        String cellTypeId;
+        if (anatEntityCellType == null || anatEntityCellType.isEmpty()) {
+            throw log.throwing(new IllegalStateException(
+                    "A Condition2 must always have an anat. entity: " + cond));
+        } else if (anatEntityCellType.size() == 1) {
+            //Only one entity present: the anat. entity, no specific cell type
+            //(whole-organ condition) -- see the confirmed convention documented above.
+            anatEntityId = anatEntityCellType.getEntity(0).getId();
+            cellTypeId = null;
+        } else if (anatEntityCellType.size() == 2) {
+            AnatEntity anatEntity = anatEntityCellType.getEntity(1);
+            AnatEntity cellType = anatEntityCellType.getEntity(0);
+            if (anatEntity == null) {
+                throw log.throwing(new IllegalStateException(
+                        "Unexpected composed anat. entity/cell type entity: " + anatEntityCellType));
+            }
+            anatEntityId = anatEntity.getId();
+            cellTypeId = cellType == null? null: cellType.getId();
+        } else {
+            throw log.throwing(new IllegalStateException(
+                    "Unexpected number of entities composing anat. entity/cell type: "
+                    + anatEntityCellType));
+        }
+        String stageId = cond.getConditionParameterId(ConditionParameter.DEV_STAGE);
+        String sexId = cond.getConditionParameterId(ConditionParameter.SEX);
+        String strainId = cond.getConditionParameterId(ConditionParameter.STRAIN);
+        return log.traceExit(buildConditionKey(anatEntityId, cellTypeId, stageId, sexId, strainId,
+                cond.getSpeciesId()));
+    }
+
+    /**
+     * Builds a stable {@code String} key identifying a global condition from its component IDs.
+     * Used on both sides of the lookup: from the {@code ConditionTO}s exported by
+     * {@link #extractGlobalCondTable(Integer, String)}, and from the {@code Condition2}s of the
+     * calls returned by OTF propagation. {@code null} or empty values are substituted with the
+     * corresponding "root" sentinel ID, matching how {@code extractGlobalCondTable} restricts
+     * its own query to root sex and strain.
+     */
+    private static String buildConditionKey(String anatEntityId, String cellTypeId, String stageId,
+            String sexId, String strainId, int speciesId) {
+        return String.join("|",
+                anatEntityId,
+                cellTypeId == null || cellTypeId.isEmpty()? ConditionDAO.CELL_TYPE_ROOT_ID: cellTypeId,
+                stageId == null || stageId.isEmpty()? ConditionDAO.DEV_STAGE_ROOT_ID: stageId,
+                sexId == null || sexId.isEmpty()? ConditionDAO.SEX_ROOT_ID: sexId,
+                strainId == null || strainId.isEmpty()? ConditionDAO.STRAIN_ROOT_ID: strainId,
+                String.valueOf(speciesId));
     }
 
     /**
@@ -1019,26 +1282,28 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         log.traceExit();
     }
 
-    private String dataPropagationToString(DataPropagation dataPropagation,
-            EnumSet<CallService.Attribute> condParamComb) {
-        log.traceEntry("{}, {}", dataPropagation, condParamComb);
-        //TODO: to remove when the API can return all types of propagation
-        if(dataPropagation == null) {
+    /**
+     * Unlike the old {@code DataPropagation}, {@code OTFExpressionCall#getDataPropagation()}
+     * already returns a {@code PropagationState} directly, so no condition parameter
+     * combination is needed here anymore to derive it.
+     */
+    private static String dataPropagationToString(PropagationState propState) {
+        log.traceEntry("{}", propState);
+        if (propState == null) {
             throw log.throwing(
                     new IllegalStateException("no data propagation retrieved"));
         }
-        PropagationState propState = dataPropagation.getPropagationState(condParamComb);
-            if (PropagationState.SELF_AND_DESCENDANT.equals(propState)) {
-                return log.traceExit("self and descendant");
-            }
-            if (PropagationState.SELF.equals(propState)) {
-                return log.traceExit("self");
-            }
-            if (PropagationState.DESCENDANT.equals(propState)) {
-                return log.traceExit("descendant");
-            }
+        if (PropagationState.SELF_AND_DESCENDANT.equals(propState)) {
+            return log.traceExit("self and descendant");
+        }
+        if (PropagationState.SELF.equals(propState)) {
+            return log.traceExit("self");
+        }
+        if (PropagationState.DESCENDANT.equals(propState)) {
+            return log.traceExit("descendant");
+        }
 
         throw log.throwing(new IllegalArgumentException("Unknown data propagation status  "
-                + dataPropagation));
+                + propState));
     }
 }

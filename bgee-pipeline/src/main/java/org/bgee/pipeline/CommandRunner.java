@@ -13,14 +13,14 @@ import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.easybgee.BgeeToEasyBgee;
 import org.bgee.pipeline.expression.GenoFishProject;
-import org.bgee.pipeline.expression.InsertPropagatedCalls;
+import org.bgee.pipeline.expression.InsertPropagatedConditions;
+//import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateXRefsFilesWithExprInfo;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateBioSODAFile;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateOncoMXFile;
-import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
+//import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
-import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
 import org.bgee.pipeline.ontologycommon.InsertECO;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
@@ -249,10 +249,14 @@ public class CommandRunner {
             break;
             
         //---------- Hierarchical groups -----------
-        case "ParseOrthoXML":
-            ParseOrthoXML.main(newArgs);
-            break;
+//        case "ParseOrthoXML":
+//            ParseOrthoXML.main(newArgs);
+//            break;
 
+        //---------- Condition propagation -----------
+        case "InsertPropagatedConditions":
+            InsertPropagatedConditions.main(newArgs);
+            break;
         //---------- Call propagation -----------
         case "InsertGlobalCalls":
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
@@ -262,17 +266,17 @@ public class CommandRunner {
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            FilterNoExprCalls.main(newArgs);
 //            break;
-        case "InsertPropagatedCalls": 
-            InsertPropagatedCalls.main(newArgs);
-            break;
+//        case "InsertPropagatedCalls":
+//            InsertPropagatedCalls.main(newArgs);
+//            break;
         case "CorrectTaxonConstraints":
             CorrectTaxonConstraints.main(newArgs);
             break;
  
         //---------- Download file generation -----------
-        case "GenerateDiffExprFile":
-            GenerateDiffExprFile.main(newArgs);
-            break;
+//        case "GenerateDiffExprFile":
+//            GenerateDiffExprFile.main(newArgs);
+//            break;
         case "GenerateBasicExprFile":
             GenerateExprFile2.main(newArgs);
             break;

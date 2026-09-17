@@ -42,19 +42,15 @@ public class DiffExpressionCallDAOTest extends TestAncestor {
     @Test
     public void shouldExtractDataTypesToDataStates() {
         DiffExpressionCallTO callTO = new DiffExpressionCallTO(null, null, null, null, 
-                null, DataState.HIGHQUALITY, null, null, null, 
                 null, null, null, null, null);
         Map<DiffExpressionCallDAO.Attribute, DataState> expectedMap = new HashMap<>();
-        expectedMap.put(DiffExpressionCallDAO.Attribute.DIFF_EXPR_AFFYMETRIX_DATA, DataState.HIGHQUALITY);
         expectedMap.put(DiffExpressionCallDAO.Attribute.DIFF_EXPR_RNA_SEQ_DATA, null);
         assertEquals("Incorrect data types to data states extracted", expectedMap, 
                 callTO.extractDataTypesToDataStates());
         
         callTO = new DiffExpressionCallTO(null, null, null, null, 
-                null, DataState.LOWQUALITY, null, null, null, 
                 null, DataState.NODATA, null, null, null);
         expectedMap = new HashMap<>();
-        expectedMap.put(DiffExpressionCallDAO.Attribute.DIFF_EXPR_AFFYMETRIX_DATA, DataState.LOWQUALITY);
         expectedMap.put(DiffExpressionCallDAO.Attribute.DIFF_EXPR_RNA_SEQ_DATA, DataState.NODATA);
         assertEquals("Incorrect data types to data states extracted", expectedMap, 
                 callTO.extractDataTypesToDataStates());
@@ -75,27 +71,22 @@ public class DiffExpressionCallDAOTest extends TestAncestor {
     @Test
     public void shouldRetrieveDiffExpressionFilteringDataTypes() {
         DiffExpressionCallTO callTO = new DiffExpressionCallTO(null, null, null, null, 
-                null, DataState.LOWQUALITY, null, null, null, 
                 null, null, null, null, null);
         Map<DiffExpressionCallDAO.Attribute, DataState> expectedMap = 
                 new EnumMap<>(DiffExpressionCallDAO.Attribute.class);
-        expectedMap.put(DiffExpressionCallDAO.Attribute.DIFF_EXPR_AFFYMETRIX_DATA, DataState.LOWQUALITY);
         
         assertEquals("Incorrect filtering data types retrieved", expectedMap, 
                 callTO.extractFilteringDataTypes());
         
         callTO = new DiffExpressionCallTO(null, null, null, null, 
-                null, DataState.LOWQUALITY, null, null, null, 
                 null, DataState.LOWQUALITY, null, null, null);
         expectedMap = new EnumMap<>(DiffExpressionCallDAO.Attribute.class);
-        expectedMap.put(DiffExpressionCallDAO.Attribute.DIFF_EXPR_AFFYMETRIX_DATA, DataState.LOWQUALITY);
         expectedMap.put(DiffExpressionCallDAO.Attribute.DIFF_EXPR_RNA_SEQ_DATA, DataState.LOWQUALITY);
         
         assertEquals("Incorrect filtering data types retrieved with all LOWQUALITY", expectedMap, 
                 callTO.extractFilteringDataTypes());
         
         callTO = new DiffExpressionCallTO(null, null, null, null, 
-                null, null, null, null, null, 
                 null, DataState.NODATA, null, null, null);
         expectedMap = new EnumMap<>(DiffExpressionCallDAO.Attribute.class);
         
@@ -103,10 +94,8 @@ public class DiffExpressionCallDAOTest extends TestAncestor {
                 callTO.extractFilteringDataTypes());
         
         callTO = new DiffExpressionCallTO(null, null, null, null, 
-                null, DataState.HIGHQUALITY, null, null, null, 
                 null, DataState.HIGHQUALITY, null, null, null);
         expectedMap = new EnumMap<>(DiffExpressionCallDAO.Attribute.class);
-        expectedMap.put(DiffExpressionCallDAO.Attribute.DIFF_EXPR_AFFYMETRIX_DATA, DataState.HIGHQUALITY);
         expectedMap.put(DiffExpressionCallDAO.Attribute.DIFF_EXPR_RNA_SEQ_DATA, DataState.HIGHQUALITY);
         
         assertEquals("Incorrect filtering data types retrieved with all HIGHQUALITY", expectedMap, 

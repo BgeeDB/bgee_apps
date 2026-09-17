@@ -22,7 +22,6 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotation
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.call.MySQLDiffExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
@@ -170,8 +169,6 @@ public abstract class TestAncestor
         public final MySQLSpeciesDataGroupDAO mockSpeciesDataGroupDAO = 
                 mock(MySQLSpeciesDataGroupDAO.class);
         public final MySQLDownloadFileDAO mockDownloadFileDAO = mock(MySQLDownloadFileDAO.class);
-        public final MySQLAffymetrixProbesetDAO mockAffymetrixProbesetDAO = 
-                mock(MySQLAffymetrixProbesetDAO.class);
         public final MySQLInSituSpotDAO mockInSituSpotDAO = mock(MySQLInSituSpotDAO.class);
         public final MySQLRNASeqResultAnnotatedSampleDAO mockRNASeqResultDAO =
                 mock(MySQLRNASeqResultAnnotatedSampleDAO.class);
@@ -270,10 +267,6 @@ public abstract class TestAncestor
         @Override
         protected MySQLDownloadFileDAO getNewDownloadFileDAO() {
             return this.mockDownloadFileDAO;
-        }
-        @Override
-        protected MySQLAffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {
-            return this.mockAffymetrixProbesetDAO;
         }
         @Override
         protected MySQLInSituSpotDAO getNewInSituSpotDAO() {

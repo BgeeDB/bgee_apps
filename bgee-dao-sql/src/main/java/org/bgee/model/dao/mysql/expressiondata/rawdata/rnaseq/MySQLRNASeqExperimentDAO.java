@@ -53,14 +53,23 @@ implements RNASeqExperimentDAO{
 
         // add boolean isTargetBase to the SELECT clause
         //XXX in the future this boolean could be added to the DB
-        sb.append(", (CASE WHEN(SELECT distinct 1 from rnaSeqLibrary as t2 inner join rnaSeqLibraryAnnotatedSample "
-                + "as t3 on t2.rnaSeqLibraryId = t3.rnaSeqLibraryId where t2.rnaSeqExperimentId = rnaSeqExperiment.rnaSeqExperimentId "
-                + "and t3.multipleLibraryIndividualSample = 1) then 1 else 0 end) as isTargetBase ");
+        if (isSingleCell != null && isSingleCell) {
+            sb.append(", (CASE WHEN tb.rnaSeqExperimentId IS NOT NULL THEN 1 ELSE 0 END) AS isTargetBase ");
+        }
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
                 processedFilters, isSingleCell, Set.of(TABLE_NAME),
                 DAODataType.RNA_SEQ);
+        //left join clause used to quickly retrieve isTargetBased information
+        if (isSingleCell != null && isSingleCell) {
+            sb.append(" LEFT JOIN (")
+              .append("    SELECT DISTINCT l2.rnaSeqExperimentId ")
+              .append("    FROM rnaSeqLibrary AS l2 ")
+              .append("    INNER JOIN rnaSeqLibraryAnnotatedSample AS s ON l2.rnaSeqLibraryId = s.rnaSeqLibraryId ")
+              .append("    WHERE s.multipleLibraryIndividualSample = 1 ")
+              .append(") AS tb ON tb.rnaSeqExperimentId = rnaSeqExperiment.rnaSeqExperimentId");
+        }
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {

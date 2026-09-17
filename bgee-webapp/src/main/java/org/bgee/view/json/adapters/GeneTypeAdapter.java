@@ -69,6 +69,7 @@ public final class GeneTypeAdapter extends TypeAdapter<Gene> {
         out.name("geneBioType");
 
         this.gson.getAdapter(GeneBioType.class).write(out, value.getGeneBioType());
+        out.name("geneLength").value(value.getGeneLength());
         out.name("geneMappedToSameGeneIdCount").value(value.getGeneMappedToSameGeneIdCount());
 
         out.endObject();

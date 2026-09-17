@@ -86,6 +86,7 @@ DAOCallFilter, Condition2, ConditionFilter2> {
 
         private final Map<Integer, ConditionRankInfoTO> maxRankPerSpecies;
 
+        //TODO: remove maxRankPerSpecies from that processed filter. Scores are now calculated by the pipeline and stored in the database. OTF propagation does not require maxRanksPerSpecies anymore.
         ExpressionCallProcessedFilterInvariablePart(Map<Integer, GeneBioType> geneBioTypeMap,
                 Map<Integer, Source> sourceMap, Map<Integer, ConditionRankInfoTO> maxRankPerSpecies) {
             super(geneBioTypeMap, sourceMap);

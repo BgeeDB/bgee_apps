@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -385,65 +386,26 @@ public class ExpressionCallLoader extends CommonService {
             return log.traceExit(true);
         }
 
-        BigDecimal allPValue = call.getAllDataTypePValue();
-        if (allPValue == null) {
+        //A call matches when its own summary call type and quality, inferred with the same
+        //thresholds, is the requested one with a quality at least as good as the requested one
+        //(the SummaryQuality enum is declared from the lowest to the highest quality, so that
+        //its compareTo can be used).
+        //XXX: an absent call cannot be better than BRONZE when no p-value over the data types
+        //trusted for absent calls is available. Of note, generateOTFExpressionCall currently
+        //feeds that p-value with the single-cell data as well, although SC_RNA_SEQ is declared
+        //as not trusted for absent calls: to be decided.
+        Entry<ExpressionSummary, SummaryQuality> callTypeQuality = OTFExpressionCallFilterEngine
+                .inferSummaryCallTypeAndQuality(call,
+                        this.processedFilter.getPresentHighThreshold(),
+                        this.processedFilter.getPresentLowThreshold(),
+                        this.processedFilter.getAbsentLowThreshold(),
+                        this.processedFilter.getAbsentHighThreshold());
+        if (callTypeQuality == null) {
             return log.traceExit(false);
         }
-
         boolean match = requestedSummaryCallTypeQualityFilter.entrySet().stream()
-                .anyMatch(e -> {
-                    ExpressionSummary summary = e.getKey();
-                    SummaryQuality quality = e.getValue();
-
-                    if (ExpressionSummary.EXPRESSED.equals(summary)) {
-                        if (SummaryQuality.GOLD.equals(quality)) {
-                            return allPValue.compareTo(this.processedFilter.getPresentHighThreshold()) <= 0;
-                        }
-                        // SILVER and BRONZE: present in self+descendant.
-                        if (allPValue.compareTo(this.processedFilter.getPresentLowThreshold()) <= 0) {
-                            return true;
-                        }
-                        // BRONZE also accepts calls present in at least one descendant condition.
-                        return SummaryQuality.BRONZE.equals(quality)
-                                && call.getBestDirectDescendantAllDataTypePValue() != null
-                                && call.getBestDirectDescendantAllDataTypePValue()
-                                        .compareTo(this.processedFilter.getPresentLowThreshold()) <= 0;
-                    }
-                    if (ExpressionSummary.NOT_EXPRESSED.equals(summary)) {
-                        BigDecimal absentThreshold = SummaryQuality.GOLD.equals(quality)?
-                                this.processedFilter.getAbsentHighThreshold():
-                                this.processedFilter.getAbsentLowThreshold();
-
-                        // Must be absent in self+descendant considering all requested data types.
-                        if (allPValue.compareTo(absentThreshold) <= 0) {
-                            return false;
-                        }
-                        // Must have observed data in self condition.
-                        if (!Boolean.TRUE.equals(call.getDataPropagation().isIncludingObservedData())) {
-                            return false;
-                        }
-                        // Must have no PRESENT evidence in descendants (all requested data types).
-                        if (call.getBestDirectDescendantAllDataTypePValue() != null &&
-                                call.getBestDirectDescendantAllDataTypePValue()
-                                        .compareTo(this.processedFilter.getPresentLowThreshold()) <= 0) {
-                            return false;
-                        }
-
-                        if (SummaryQuality.BRONZE.equals(quality)) {
-                            return true;
-                        }
-
-                        // SILVER/GOLD: same constraints must hold on trusted data types.
-                        BigDecimal trustedPValue = call.getTrustedDataTypePValue();
-                        if (trustedPValue == null || trustedPValue.compareTo(absentThreshold) <= 0) {
-                            return false;
-                        }
-                        return call.getBestDirectDescendantTrustedDataTypePValue() == null ||
-                                call.getBestDirectDescendantTrustedDataTypePValue()
-                                        .compareTo(this.processedFilter.getPresentLowThreshold()) > 0;
-                    }
-                    return false;
-                });
+                .anyMatch(e -> callTypeQuality.getKey().equals(e.getKey()) &&
+                        callTypeQuality.getValue().compareTo(e.getValue()) >= 0);
 
         return log.traceExit(match);
     }

@@ -2,6 +2,7 @@ package org.bgee.model.expressiondata.call;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -197,6 +198,44 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     //*************************************************************************
 
     /**
+     * Single-cell RNA-Seq is not trusted for absent calls ({@link DataType#SC_RNA_SEQ}), so a call
+     * only supported by single-cell data must not carry any p-value over the data types trusted
+     * for absent calls. It is what prevents such a call from being a better than BRONZE absent
+     * call (see {@code OTFExpressionCallFilterEngine#inferSummaryCallTypeAndQuality(
+     * OTFExpressionCall, BigDecimal, BigDecimal, BigDecimal, BigDecimal)}), while a call
+     * supported by bulk RNA-Seq carries one.
+     */
+    @Test
+    public void shouldNotTrustSingleCellDataForAbsentCalls() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, A, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Set<OTFExpressionCall> singleCellCalls = loader.propagateCalls(
+                Map.of(GENE_ID, Map.of(L1, Set.of(singleCellObservation(L1, "0.8", "10", "10")))),
+                chainGraph(), Collections.emptySet(), KEEP_REDUNDANT_ANCESTORS).get(gene);
+        for (OTFExpressionCall call: singleCellCalls) {
+            assertNotNull("A p-value over all data types is expected for every propagated call",
+                    call.getAllDataTypePValue());
+            assertNull("Single-cell data must not produce a p-value over the data types trusted "
+                    + "for absent calls, call: " + call, call.getTrustedDataTypePValue());
+            assertNull("Single-cell data must not produce a best descendant p-value over the data "
+                    + "types trusted for absent calls, call: " + call,
+                    call.getBestDirectDescendantTrustedDataTypePValue());
+        }
+
+        //Same propagation with bulk RNA-Seq, which is trusted for absent calls
+        Set<OTFExpressionCall> bulkCalls = loader.propagateCalls(
+                Map.of(GENE_ID, Map.of(L1, Set.of(bulkObservation(L1, "0.8", "10", "10")))),
+                chainGraph(), Collections.emptySet(), KEEP_REDUNDANT_ANCESTORS).get(gene);
+        for (OTFExpressionCall call: bulkCalls) {
+            assertNotNull("Bulk RNA-Seq is trusted for absent calls, a p-value over the trusted "
+                    + "data types is expected, call: " + call, call.getTrustedDataTypePValue());
+        }
+    }
+
+
+    /**
      * @return  An {@code ExpressionCallLoader} with its condition and gene maps seeded with
      *          {@code condMap} and {@code geneMap}, all its {@code DAO}s and {@code Service}s
      *          being mocks: {@code propagateCalls} performs no query.
@@ -219,6 +258,19 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
             condMap.put(condId, mock(Condition2.class));
         }
         return condMap;
+    }
+
+    /**
+     * @return  An {@code ObservedExpressionTO} holding one droplet-based single-cell RNA-Seq
+     *          observation, all other data types being absent from the condition.
+     */
+    private static ObservedExpressionTO singleCellObservation(int condId, String pValue,
+            String score, String weight) {
+        return new ObservedExpressionTO(null, condId, GENE_ID,
+                null, null, null, null,
+                null, null, null, null,
+                new BigDecimal(score), new BigDecimal(pValue), new BigDecimal(weight), 1,
+                null, null, null, null);
     }
 
     /**

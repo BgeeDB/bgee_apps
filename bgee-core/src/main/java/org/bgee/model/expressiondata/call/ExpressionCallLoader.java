@@ -578,6 +578,10 @@ public class ExpressionCallLoader extends CommonService {
         //first, compute information from data in the condition itself.
         //We use Lists not to loose equals PValues
         List<BigDecimal> allDataTypePValues = new ArrayList<>();
+        //Only the data types trusted for absent calls feed this list: an absent call cannot be
+        //better than BRONZE when it is not supported by any of them (see
+        //OTFExpressionCallFilterEngine#inferSummaryCallTypeAndQuality). The list is left empty
+        //in that case, so that the resulting p-value is null.
         List<BigDecimal> trustedDataTypePValues = new ArrayList<>();
         //The weight of each data type is the total weight of the score it carries (for instance,
         //for RNA-Seq, the sum of the distinct rank counts of all the samples of that gene in that
@@ -596,7 +600,9 @@ public class ExpressionCallLoader extends CommonService {
         for (ObservedExpressionTO obsExpression : usedSelfObservations) {
             if (obsExpression.getBulkNumberObs() != null && obsExpression.getBulkNumberObs() != 0) {
                 allDataTypePValues.addAll(Collections.nCopies(obsExpression.getBulkNumberObs(), obsExpression.getBulkPValue()));
-                trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getBulkNumberObs(), obsExpression.getBulkPValue()));
+                if (DataType.RNA_SEQ.isTrustedForAbsentCalls()) {
+                    trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getBulkNumberObs(), obsExpression.getBulkPValue()));
+                }
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getBulkScore()
                                 .multiply(obsExpression.getBulkWeight())));
@@ -606,7 +612,9 @@ public class ExpressionCallLoader extends CommonService {
             }
             if (obsExpression.getInSituNumberObs() != null && obsExpression.getInSituNumberObs() != 0) {
                 allDataTypePValues.addAll(Collections.nCopies(obsExpression.getInSituNumberObs(), obsExpression.getInSituPValue()));
-                trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getInSituNumberObs(), obsExpression.getInSituPValue()));
+                if (DataType.IN_SITU.isTrustedForAbsentCalls()) {
+                    trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getInSituNumberObs(), obsExpression.getInSituPValue()));
+                }
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getInSituScore()
                                 .multiply(obsExpression.getInSituWeight())));
@@ -616,7 +624,9 @@ public class ExpressionCallLoader extends CommonService {
             }
             if (obsExpression.getFullLengthNumberObs() != null && obsExpression.getFullLengthNumberObs() != 0) {
                 allDataTypePValues.addAll(Collections.nCopies(obsExpression.getFullLengthNumberObs(), obsExpression.getFullLengthPValue()));
-                trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getFullLengthNumberObs(), obsExpression.getFullLengthPValue()));
+                if (DataType.SC_RNA_SEQ.isTrustedForAbsentCalls()) {
+                    trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getFullLengthNumberObs(), obsExpression.getFullLengthPValue()));
+                }
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getFullLengthScore()
                                 .multiply(obsExpression.getFullLengthWeight())));
@@ -626,7 +636,9 @@ public class ExpressionCallLoader extends CommonService {
             }
             if (obsExpression.getDropletNumberObs() != null && obsExpression.getDropletNumberObs() != 0) {
                 allDataTypePValues.addAll(Collections.nCopies(obsExpression.getDropletNumberObs(), obsExpression.getDropletPValue()));
-                trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getDropletNumberObs(), obsExpression.getDropletPValue()));
+                if (DataType.SC_RNA_SEQ.isTrustedForAbsentCalls()) {
+                    trustedDataTypePValues.addAll(Collections.nCopies(obsExpression.getDropletNumberObs(), obsExpression.getDropletPValue()));
+                }
                 scoreByWeightSum = scoreByWeightSum
                         .add((obsExpression.getDropletScore()
                                 .multiply(obsExpression.getDropletWeight())));

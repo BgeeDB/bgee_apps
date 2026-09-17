@@ -78,31 +78,27 @@ public abstract class CommandExpressionSupport extends CommandParent{
                 }
         }
 
+        /**
+         * The key of the cached results of an {@code ExpressionCallFilter2}. It holds
+         * the filter only: the cached value is the complete result of the propagation,
+         * it does not depend on the requested offset and limit. Including them would store
+         * a copy of that same complete result for every page browsed.
+         */
         public static class ExprCallResultCacheKey {
 
                 private final ExpressionCallFilter2 sourceFilter;
-                private final Long offset;
-                private final Integer limit;
 
-                public ExprCallResultCacheKey(ExpressionCallFilter2 sourceFilter, Long offset, Integer limit) {
+                public ExprCallResultCacheKey(ExpressionCallFilter2 sourceFilter) {
                         this.sourceFilter = sourceFilter;
-                        this.offset = offset;
-                        this.limit = limit;
                 }
 
                 public ExpressionCallFilter2 getSourceFilter() {
                         return sourceFilter;
                 }
-                public Long getOffset() {
-                        return offset;
-                }
-                public Integer getLimit() {
-                        return limit;
-                }
 
                 @Override
                 public int hashCode() {
-                        return Objects.hash(limit, offset, sourceFilter);
+                        return Objects.hash(sourceFilter);
                 }
                 @Override
                 public boolean equals(Object obj) {
@@ -113,17 +109,14 @@ public abstract class CommandExpressionSupport extends CommandParent{
                         if (getClass() != obj.getClass())
                                 return false;
                         ExprCallResultCacheKey other = (ExprCallResultCacheKey) obj;
-                        return Objects.equals(limit, other.limit) && Objects.equals(offset, other.offset)
-                                        && Objects.equals(sourceFilter, other.sourceFilter);
+                        return Objects.equals(sourceFilter, other.sourceFilter);
                 }
 
                 @Override
                 public String toString() {
                         StringBuilder builder = new StringBuilder();
                         builder.append("ExprCallResultCacheKey [")
-                                   .append("offset=").append(offset)
-                                   .append(", limit=").append(limit)
-                                   .append(", sourceFilter=").append(sourceFilter)
+                                   .append("sourceFilter=").append(sourceFilter)
                                    .append("]");
                         return builder.toString();
                 }
@@ -223,20 +216,23 @@ public abstract class CommandExpressionSupport extends CommandParent{
                         int defaultLimit, int limitMax) throws InvalidRequestException {
                 log.traceEntry("{}, {}, {}", callLoader, defaultLimit, limitMax);
 
+                //The requested offset and limit are only validated here: the complete result of
+                //the propagation is returned, and it is up to the caller to paginate it. The
+                //total number of results and the post-filter are derived from that complete
+                //result (see CommandData#processExprCallPage), so truncating it here would make
+                //both of them wrong.
                 Integer limit = this.requestParameters.getLimit() == null? defaultLimit:
                         this.requestParameters.getLimit();
                 if (limit > limitMax) {
                         throw log.throwing(new InvalidRequestException("It is not possible to request more than "
                                         + limitMax + " results."));
                 }
-                Long offset = this.requestParameters.getOffset() == null? 0:
-                        this.requestParameters.getOffset();
+                Long offset = this.requestParameters.getOffset();
                 if (offset != null && offset < 0) {
                         throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
                 }
                 ExprCallResultCacheKey cacheKey = new ExprCallResultCacheKey(
-                                callLoader.getProcessedFilter().getSourceFilter(),
-                                offset, limit);
+                                callLoader.getProcessedFilter().getSourceFilter());
                 //Suppress warnings because we are responsible for the insertion and know the generic type
                 @SuppressWarnings("unchecked")
                 List<OTFExpressionCall> results = this.cacheService.useCacheNonAtomic(

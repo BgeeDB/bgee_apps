@@ -30,7 +30,6 @@ import org.bgee.controller.user.User;
 import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.controller.utils.BgeeCacheService.CacheDefinition;
 import org.bgee.controller.utils.BgeeCacheService.CacheType;
-import org.bgee.model.ComposedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
@@ -621,7 +620,6 @@ public class CommandData extends CommandExpressionSupport {
      * for convenience when comparing to start and end times provided as {@code long}.
      *
      * @see #loadRawDataPostFilters(RawDataLoader, EnumSet, InformationType)
-     * @see #loadExprCallPostFilters(ExpressionCallLoader)
      */
     private final static long COMPUTE_TIME_POST_FILTER_CACHE_MS = 1000L;
 
@@ -882,7 +880,7 @@ public class CommandData extends CommandExpressionSupport {
                 //in that case we don't retrieve filters.
                 if (this.requestParameters.isGetFilters() && postFilter == null) {
                     long startTimePostFilter = System.currentTimeMillis();
-                    postFilter = this.buildPostFilterFromOtfCalls(allOtfCalls, condParams);
+                    postFilter = ExpressionCallPostFilter.fromCalls(allOtfCalls, condParams);
                     log.debug("Post-filter built in {} ms", System.currentTimeMillis() - startTimePostFilter);
                 }
 
@@ -1437,33 +1435,6 @@ public class CommandData extends CommandExpressionSupport {
                         () -> new EnumMap<>(DataType.class))));
     }
 
-    /**
-     * Build an {@link ExpressionCallPostFilter} by extracting the distinct condition-parameter
-     * entities that appear in the given OTF propagation results.
-     */
-    private ExpressionCallPostFilter buildPostFilterFromOtfCalls(List<OTFExpressionCall> allCalls,
-            Set<ConditionParameter<?, ?>> condParams) {
-        log.traceEntry("{}, {}", allCalls, condParams);
-        if (allCalls == null || allCalls.isEmpty()) {
-            return log.traceExit(new ExpressionCallPostFilter());
-        }
-        Map<ConditionParameter<?, ?>, Set<? extends Object>> condParamEntities = new HashMap<>();
-        for (ConditionParameter<?, ?> cp : condParams) {
-            Set<Object> entities = new HashSet<>();
-            for (OTFExpressionCall c : allCalls) {
-                if (c.getCondition() == null) continue;
-                ComposedEntity<?> compEnt = c.getCondition().getConditionParameterValue(cp);
-                if (compEnt == null) continue;
-                for (Object e : compEnt.getEntities()) {
-                    if (e != null) entities.add(e);
-                }
-            }
-            if (!entities.isEmpty()) {
-                condParamEntities.put(cp, entities);
-            }
-        }
-        return log.traceExit(new ExpressionCallPostFilter(condParamEntities));
-    }
 
     private EnumMap<DataType, List<ColumnDescription>> getColumnDescriptions(String action,
             EnumSet<DataType> dataTypes) throws InvalidRequestException {

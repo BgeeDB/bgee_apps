@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -23,20 +22,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.anatdev.Sex;
-import org.bgee.model.anatdev.SexService;
-import org.bgee.model.anatdev.Strain;
-import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOObservedExpressionFilter;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpressionTO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.RawConditionToSelfGlobalConditionTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
@@ -66,10 +56,6 @@ public class ExpressionCallLoader extends CommonService {
 
     private final GeneDAO geneDAO;
     private final ConditionDAO condDAO;
-    private final AnatEntityService anatEntityService;
-    private final DevStageService devStageService;
-    private final SexService sexService;
-    private final StrainService strainService;
     private final CallServiceUtils utils;
     /**
      * @see #getProcessedFilter()
@@ -120,10 +106,6 @@ public class ExpressionCallLoader extends CommonService {
         this.utils = utils;
         this.geneDAO = this.getDaoManager().getGeneDAO();
         this.condDAO = this.getDaoManager().getConditionDAO();
-        this.anatEntityService = this.getServiceFactory().getAnatEntityService();
-        this.devStageService = this.getServiceFactory().getDevStageService();
-        this.sexService = this.getServiceFactory().getSexService();
-        this.strainService = this.getServiceFactory().getStrainService();
         this.processedFilter = processedFilter;
         //The conditions and genes identified by the processed filter are never updated by this
         //Loader, so they are exposed as unmodifiable views rather than copied.
@@ -667,75 +649,6 @@ public class ExpressionCallLoader extends CommonService {
         );
     }
 
-    public ExpressionCallPostFilter loadPostFilter() {
-        log.traceEntry();
-        //If the DAOCallFilters are null (different from: not-null and empty)
-        //it means there was no matching conds and thus no result for sure
-        if (this.processedFilter.getDaoFilters() == null) {
-            return log.traceExit(new ExpressionCallPostFilter());
-        }
-
-        Function<Collection<ConditionDAO.Attribute>, ConditionTOResultSet> condRequestFun = (attrs) ->
-        this.condDAO.getGlobalConditionsFromCallFilters(this.getProcessedFilter().getDaoFilters(), attrs);
-        Map<ConditionParameter<?, ?>, Set<? extends Object>> condParamEntities = new HashMap<>();
-
-        // retrieve anatEntities and cell types
-        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
-                .contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
-            Set<String> anatEntityIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
-                    .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
-            Set<String> cellTypeIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.CELL_TYPE_ID))
-                    .stream()
-                    .map(c -> c.getCellTypeId())
-                    //cell type is the only condition param that can be NULL,
-                    //we end up requesting an anat. entity with ID "NULL"
-                    .filter(s -> s != null)
-                    .collect(Collectors.toSet());
-            Set<String> anatEntityCellTypeIds = new HashSet<>(anatEntityIds);
-            anatEntityCellTypeIds.addAll(cellTypeIds);
-            Set<AnatEntity> anatEntityCellTypes = anatEntityCellTypeIds.isEmpty()?
-                    new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityCellTypeIds, false)
-                    .collect(Collectors.toSet());
-            condParamEntities.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatEntityCellTypes);
-        }
-
-        //retrieve dev. stages
-        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
-                .contains(ConditionParameter.DEV_STAGE)) {
-            Set<String> stageIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.STAGE_ID))
-                    .stream().map(c -> c.getStageId()).collect(Collectors.toSet());
-            Set<DevStage> stages = stageIds.isEmpty()?
-                    new HashSet<>() : devStageService.loadDevStages(null, null, stageIds, false)
-                    .collect(Collectors.toSet());
-            condParamEntities.put(ConditionParameter.DEV_STAGE, stages);
-        }
-
-        // retrieve strains
-        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
-                .contains(ConditionParameter.STRAIN)) {
-            Set<String> strainIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.STRAIN_ID))
-                    .stream().map(c -> c.getStrainId()).collect(Collectors.toSet());
-            Set<Strain> strains = strainIds.isEmpty()? new HashSet<>():
-                this.strainService.loadStrains(strainIds).collect(Collectors.toSet());
-            condParamEntities.put(ConditionParameter.STRAIN, strains);
-        }
-
-        //retrieve sexes
-        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
-                .contains(ConditionParameter.SEX)) {
-            Set<String> sexIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.SEX_ID))
-                    .stream().map(c -> c.getSex().getStringRepresentation()).collect(Collectors.toSet());
-            Set<Sex> sexes = this.sexService.loadSexes(sexIds).collect(Collectors.toSet());
-            condParamEntities.put(ConditionParameter.SEX, sexes);
-        }
-
-        return log.traceExit(new ExpressionCallPostFilter(condParamEntities));
-    }
 
     public ExpressionCallProcessedFilter getProcessedFilter() {
         return processedFilter;

@@ -28,6 +28,7 @@ import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.TaxonService;
+import org.bgee.model.species.TaxonTreeService;
 
 /**
  * Factory allowing to obtain {@link Service}s. 
@@ -294,6 +295,14 @@ public class ServiceFactory implements AutoCloseable {
     public TaxonService getTaxonService() {
         log.traceEntry();
         return log.traceExit(new TaxonService(this));
+    }
+
+    /**
+     * @return  A newly instantiated {@code TaxonTreeService}
+     */
+    public TaxonTreeService getTaxonTreeService() {
+        log.traceEntry();
+        return log.traceExit(new TaxonTreeService(this));
     }
     
     /**

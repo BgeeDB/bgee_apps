@@ -1,6 +1,8 @@
 package org.bgee.model.anatdev.multispemapping;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -57,6 +59,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
     @Before
     public void setMockObjects() {
         log.traceEntry();
+        AnatEntitySimilarityService.clearAnatEntitySimilarityCache();
 
         when(this.anatEntityService.loadAnatEntities(
                 new HashSet<>(Arrays.asList(anatEntityWithNoSimilarityId, nonExistingAnatEntityId)), false))
@@ -748,6 +751,30 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthActinoSim, anusActinoSim,
                 swimBladderActinoSim, lungActinoSim));
         assertEquals(expectedResults, service.loadAnatEntitySimilaritiesRespectingNegations(7898, false));
+    }
+
+    /**
+     * Homology graphs for a taxon are reused across {@code AnatEntitySimilarityService}
+     * instances in the same JVM. {@code null} and empty species filters share one entry.
+     */
+    @Test
+    public void shouldReuseCachedAnatEntitySimilaritiesAcrossCalls() {
+        SummarySimilarityAnnotationTOResultSet emptyNegAnnotRS = getMockResultSet(
+                SummarySimilarityAnnotationTOResultSet.class,
+                Collections.<SummarySimilarityAnnotationTO>emptyList());
+        when(this.sumSimAnnotDAO.getSummarySimilarityAnnotations(7898, true, false, false, null, null))
+                .thenReturn(emptyNegAnnotRS);
+
+        AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
+        Set<AnatEntitySimilarity> first = service.loadAnatEntitySimilaritiesRespectingNegations(7898, false);
+        Set<AnatEntitySimilarity> second = service.loadAnatEntitySimilaritiesRespectingNegations(
+                7898, false, Collections.emptyList());
+        assertEquals("Identical homology requests must return the same graph", first, second);
+
+        verify(this.sumSimAnnotDAO, times(1))
+                .getSummarySimilarityAnnotations(7898, true, true, true, null, null);
+        verify(this.sumSimAnnotDAO, times(1))
+                .getSummarySimilarityAnnotations(7898, true, false, false, null, null);
     }
 
     /**

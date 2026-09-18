@@ -8,11 +8,14 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,6 +42,74 @@ import org.bgee.model.species.Taxon;
  */
 public class AnatEntitySimilarityService extends Service {
     private final static Logger log = LogManager.getLogger(AnatEntitySimilarityService.class.getName());
+
+    /**
+     * Maximum number of homology graphs kept in {@link #ANAT_ENTITY_SIMILARITY_CACHE}.
+     * Entries are shared across {@code AnatEntitySimilarityService} instances (and thus
+     * HTTP requests) in the same JVM.
+     */
+    private static final int ANAT_ENTITY_SIMILARITY_CACHE_MAX_SIZE = 8;
+    private static final Object ANAT_ENTITY_SIMILARITY_CACHE_LOCK = new Object();
+    /**
+     * LRU cache of homology graphs keyed by taxon, trusted-only flag, and optional
+     * species filter. Gene filters and SUMMARY/discard condition filters are applied
+     * after this load, so they are not part of the key.
+     */
+    private static final LinkedHashMap<AnatEntitySimilarityCacheKey, Set<AnatEntitySimilarity>>
+            ANAT_ENTITY_SIMILARITY_CACHE = new LinkedHashMap<AnatEntitySimilarityCacheKey, Set<AnatEntitySimilarity>>(
+                    16, 0.75f, true) {
+                private static final long serialVersionUID = 1L;
+                @Override
+                protected boolean removeEldestEntry(
+                        Map.Entry<AnatEntitySimilarityCacheKey, Set<AnatEntitySimilarity>> eldest) {
+                    return size() > ANAT_ENTITY_SIMILARITY_CACHE_MAX_SIZE;
+                }
+            };
+
+    private static final class AnatEntitySimilarityCacheKey {
+        private final int taxonId;
+        private final boolean onlyTrusted;
+        private final Set<Integer> speciesIds;
+
+        private AnatEntitySimilarityCacheKey(int taxonId, boolean onlyTrusted,
+                Collection<Integer> speciesIdsForFiltering) {
+            this.taxonId = taxonId;
+            this.onlyTrusted = onlyTrusted;
+            this.speciesIds = toSortedIntSet(speciesIdsForFiltering);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(taxonId, onlyTrusted, speciesIds);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            AnatEntitySimilarityCacheKey other = (AnatEntitySimilarityCacheKey) obj;
+            return taxonId == other.taxonId
+                    && onlyTrusted == other.onlyTrusted
+                    && speciesIds.equals(other.speciesIds);
+        }
+    }
+
+    private static Set<Integer> toSortedIntSet(Collection<Integer> values) {
+        if (values == null || values.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return values.stream().filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    static void clearAnatEntitySimilarityCache() {
+        synchronized (ANAT_ENTITY_SIMILARITY_CACHE_LOCK) {
+            ANAT_ENTITY_SIMILARITY_CACHE.clear();
+        }
+    }
 
     /**
      * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
@@ -373,6 +444,9 @@ public class AnatEntitySimilarityService extends Service {
      *                                  #loadPositiveAnatEntitySimilarities(int, boolean, Collection)}
      *                                  for details.
      * @return                          A {@code Set} of {@link AnatEntitySimilarity}s.
+     *                                  Results for a given taxon, trusted-only flag, and species
+     *                                  filter are cached in the JVM. Callers receive a mutable
+     *                                  copy and must not mutate the cached elements.
      */
     public Set<AnatEntitySimilarity> loadAnatEntitySimilaritiesRespectingNegations(int taxonId,
             boolean onlyTrusted, Collection<Integer> speciesIdsForFiltering) {
@@ -380,6 +454,32 @@ public class AnatEntitySimilarityService extends Service {
         if (taxonId <= 0) {
             throw log.throwing(new IllegalArgumentException("Taxon ID must be strictly positive."));
         }
+        AnatEntitySimilarityCacheKey cacheKey = new AnatEntitySimilarityCacheKey(
+                taxonId, onlyTrusted, speciesIdsForFiltering);
+        Set<AnatEntitySimilarity> cached = getCachedAnatEntitySimilarities(cacheKey);
+        if (cached != null) {
+            log.info("AnatEntitySimilarity cache hit for taxonId={} onlyTrusted={} speciesIds={}",
+                    taxonId, onlyTrusted, cacheKey.speciesIds.size());
+            return log.traceExit(new HashSet<AnatEntitySimilarity>(cached));
+        }
+        Set<AnatEntitySimilarity> computed = this.computeAnatEntitySimilaritiesRespectingNegations(
+                taxonId, onlyTrusted, speciesIdsForFiltering);
+        synchronized (ANAT_ENTITY_SIMILARITY_CACHE_LOCK) {
+            ANAT_ENTITY_SIMILARITY_CACHE.putIfAbsent(cacheKey,
+                    Collections.unmodifiableSet(new HashSet<AnatEntitySimilarity>(computed)));
+        }
+        return log.traceExit(new HashSet<AnatEntitySimilarity>(computed));
+    }
+
+    private static Set<AnatEntitySimilarity> getCachedAnatEntitySimilarities(
+            AnatEntitySimilarityCacheKey cacheKey) {
+        synchronized (ANAT_ENTITY_SIMILARITY_CACHE_LOCK) {
+            return ANAT_ENTITY_SIMILARITY_CACHE.get(cacheKey);
+        }
+    }
+
+    private Set<AnatEntitySimilarity> computeAnatEntitySimilaritiesRespectingNegations(int taxonId,
+            boolean onlyTrusted, Collection<Integer> speciesIdsForFiltering) {
         Set<Integer> clonedSpeIds = speciesIdsForFiltering == null ? new HashSet<>()
                 : new HashSet<>(speciesIdsForFiltering);
 

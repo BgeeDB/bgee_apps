@@ -210,6 +210,58 @@ public class CommandDataMultispecTest extends TestAncestor {
     }
 
     @Test
+    public void shouldProcessMultispecRequestWithGenesFromOneSpecies() throws Exception {
+        Gene humanGene2 = new Gene("ENSG00000244734", humanSpecies, new GeneBioType("protein_coding"));
+        List<String> geneIds = Arrays.asList(humanGene.getGeneId(), humanGene2.getGeneId());
+        when(geneService.searchGenesByIds(geneIds)).thenReturn(new SearchResult<>(
+                geneIds, Collections.emptyList(), Arrays.asList(humanGene, humanGene2)));
+
+        when(taxonService.loadLeastCommonAncestor(new HashSet<>(Collections.singletonList(HUMAN_ID))))
+                .thenReturn(new Taxon(LCA_ID, "Euarchontoglires", null, "Euarchontoglires", 1, true));
+        TaxonWithSpecies taxonTree = new TaxonWithSpecies(
+                new Taxon(LCA_ID, "Euarchontoglires", null, "Euarchontoglires", 1, true),
+                List.of(), List.of());
+        when(taxonTreeService.buildTaxonTreeWithSpecies(
+                eq(new HashSet<>(Collections.singletonList(HUMAN_ID))), any()))
+                .thenReturn(taxonTree);
+
+        SimilarityExpressionCall2 similarityCall = buildSimilarityCall();
+        when(loader.loadDataCount()).thenReturn(7L);
+        when(loader.loadData(5L, 10)).thenReturn(Collections.singletonList(similarityCall));
+
+        RequestParameters params = newMultispecParams();
+        params.addValues(params.getUrlParametersInstance().getParamGeneList(), geneIds);
+        params.addValue(params.getUrlParametersInstance().getParamGetResults(), true);
+        params.addValue(params.getUrlParametersInstance().getParamGetResultCount(), true);
+        params.addValue(params.getUrlParametersInstance().getParamOffset(), 5L);
+        params.addValue(params.getUrlParametersInstance().getParamLimit(), 10);
+
+        buildController(params).processRequest();
+
+        ArgumentCaptor<SimilarityExpressionCallFilter> filterCaptor =
+                ArgumentCaptor.forClass(SimilarityExpressionCallFilter.class);
+        verify(multiSpeciesCallService).loadSimilarityCallLoader(filterCaptor.capture());
+        SimilarityExpressionCallFilter capturedFilter = filterCaptor.getValue();
+        assertEquals(LCA_ID, capturedFilter.getTaxonId());
+        assertEquals(1, capturedFilter.getGeneFilters().size());
+        assertEquals(HUMAN_ID, capturedFilter.getGeneFilters().iterator().next().getSpeciesId());
+
+        verify(loader).loadDataCount();
+        verify(loader).loadData(5L, 10);
+
+        ArgumentCaptor<MultispecExprCallResponse> responseCaptor =
+                ArgumentCaptor.forClass(MultispecExprCallResponse.class);
+        verify(dataDisplay).displayMultispecExprCallPage(
+                any(TaxonWithSpecies.class),
+                eq(null),
+                eq(null),
+                responseCaptor.capture(),
+                eq(7L),
+                eq(null));
+        assertEquals(1, responseCaptor.getValue().getCalls().size());
+    }
+
+    @Test
     public void shouldProcessMultispecRequestWithResultsAndCount() throws Exception {
         stubGeneSearch();
 

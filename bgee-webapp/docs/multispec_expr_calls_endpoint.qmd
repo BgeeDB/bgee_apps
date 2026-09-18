@@ -49,7 +49,7 @@ GET /bgee-webapp/?page=data&action=multispec_expr_calls&...
 |-----------|-------------|---------|
 | `page` | Must be `data` | `page=data` |
 | `action` | Must be `multispec_expr_calls` | `action=multispec_expr_calls` |
-| `gene_list` | Newline-separated (`%0D%0A`) list of gene IDs. | `gene_list=ENSG00000170178%0D%0AENSMUSG00000001823%0D%0AENSDARG00000059263` |
+| `gene_list` | Newline-separated (`%0D%0A`) list of at least two gene IDs. Genes may belong to one or more species. | `gene_list=ENSG00000170178%0D%0AENSMUSG00000001823%0D%0AENSDARG00000059263` |
 
 ## Optional
 

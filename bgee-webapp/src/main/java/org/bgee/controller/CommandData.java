@@ -1133,11 +1133,6 @@ public class CommandData extends CommandParent {
             throw log.throwing(new InvalidRequestException(
                     "No gene from species present in Bgee was found."));
         }
-        /* TODO: Allow single-species multi-species calls. For now, we throw an error. */
-        if (species.size() == 1) {
-            throw log.throwing(new InvalidRequestException(
-                    "Genes must be from at least two species for multi-species expression calls."));
-        }
 
         URLParameters urlParams = this.requestParameters.getUrlParametersInstance();
         Set<String> selectedCondParams = new HashSet<>(

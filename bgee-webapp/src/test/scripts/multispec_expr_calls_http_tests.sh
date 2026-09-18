@@ -113,7 +113,21 @@ read -r HTTP_CODE TIME <<< "$(request "${OUT}" \
 check "page past the end is empty (HTTP ${HTTP_CODE} in ${TIME}s)" \
     "$(jq -e '(.data.expressionData.expressionCalls | length) == 0' "${OUT}" > /dev/null; echo $?)"
 
-echo "=== E2E-3: error handling (expect HTTP 400 + InvalidRequestException) ==="
+echo "=== E2E-3: single-species gene list accepted ==="
+OUT="${WORKDIR}/c3.json"
+read -r HTTP_CODE TIME <<< "$(request "${OUT}" \
+    "get_results=1&get_result_count=1&limit=5&${SUMMARY_FILTER}&gene_list=${GENES_ONE_SPECIES}")"
+echo "  (HTTP ${HTTP_CODE} in ${TIME}s)"
+check "HTTP status is 200" "$([ "${HTTP_CODE}" = "200" ]; echo $?)"
+check "JSON envelope code is 200, status SUCCESS" \
+    "$(jq -e '.code == 200 and .status == "SUCCESS"' "${OUT}" > /dev/null; echo $?)"
+check "only human present in speciesByTaxon leaves" \
+    "$(jq -e '[.data.speciesByTaxon | recurse(.children[]?) | .species[]?.id]
+        | unique == [9606]' "${OUT}" > /dev/null; echo $?)"
+check "expressionCallCount is a positive number" \
+    "$(jq -e '.data.expressionCallCount > 0' "${OUT}" > /dev/null; echo $?)"
+
+echo "=== E2E-4: error handling (expect HTTP 400 + InvalidRequestException) ==="
 expect_error() { # expect_error <description> <query-suffix> <message-grep> [<exception-type>]
     local out="${WORKDIR}/err.json"
     local exception_type="${4:-InvalidRequestException}"
@@ -131,8 +145,6 @@ expect_error() { # expect_error <description> <query-suffix> <message-grep> [<ex
 }
 expect_error "single gene rejected" \
     "get_results=1&gene_list=${GENE_SINGLE}" "at least two gene"
-expect_error "single-species gene list rejected" \
-    "get_results=1&gene_list=${GENES_ONE_SPECIES}" "at least two species"
 # Invalid quality values are rejected by the data_qual parameter format regex
 # at the RequestParameters level, before reaching the controller.
 expect_error "invalid data_qual rejected" \
@@ -145,7 +157,7 @@ expect_error "negative offset rejected" \
 expect_error "get_filters rejected (post-filters unsupported)" \
     "get_filters=1&gene_list=${GENES_TWO_SPECIES}" "not supported"
 
-echo "=== E2E-4: column definitions ==="
+echo "=== E2E-5: column definitions ==="
 OUT="${WORKDIR}/c4.json"
 read -r HTTP_CODE TIME <<< "$(request "${OUT}" \
     "get_column_definition=1&gene_list=${GENES_TWO_SPECIES}")"

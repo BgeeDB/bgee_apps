@@ -1059,34 +1059,34 @@ public class MultiSpeciesCallService extends CommonService {
         int afterCellFilterCount = homologyCount;
         boolean hasAnatInclude = !userFilterIds.anatEntityIds.isEmpty();
         boolean hasAnatReject = !userFilterIds.anatEntityIdsToReject.isEmpty();
-        if (hasAnatInclude || hasAnatReject || !userFilterIds.cellTypeIds.isEmpty()) {
-            Set<AnatEntitySimilarity> matching = new HashSet<>();
-            if (hasAnatInclude || hasAnatReject) {
-                Set<AnatEntitySimilarity> anatMatches = anatEntitySimilarities.stream()
-                        .filter(s -> s.getAllAnatEntities().stream()
-                                .anyMatch(ae -> !isCellTypeAnatEntity(ae)
-                                        && matchesAnatEntityId(ae.getId(), userFilterIds)))
-                        .collect(Collectors.toSet());
-                afterAnatFilterCount = anatMatches.size();
-                matching.addAll(anatMatches);
-            }
-            if (!userFilterIds.cellTypeIds.isEmpty()) {
-                Set<AnatEntitySimilarity> cellMatches = anatEntitySimilarities.stream()
-                        .filter(s -> s.getAllAnatEntities().stream()
-                                .anyMatch(ae -> isCellTypeAnatEntity(ae)
-                                        && userFilterIds.cellTypeIds.contains(ae.getId())))
-                        .collect(Collectors.toSet());
-                afterCellFilterCount = cellMatches.size();
-                matching.addAll(cellMatches);
-            }
-            anatEntitySimilarities = matching;
+        // Anat and cell type are parameters of one condition, not two independent axes.
+        // When an organ include/discard is present, keep only matching organ groups;
+        // cell types attach later from each loaded call ("{cell type} in {anat}").
+        // A cell-type homology filter is used only when there is no anat constraint.
+        if (hasAnatInclude || hasAnatReject) {
+            Set<AnatEntitySimilarity> anatMatches = anatEntitySimilarities.stream()
+                    .filter(s -> s.getAllAnatEntities().stream()
+                            .anyMatch(ae -> !isCellTypeAnatEntity(ae)
+                                    && matchesAnatEntityId(ae.getId(), userFilterIds)))
+                    .collect(Collectors.toSet());
+            afterAnatFilterCount = anatMatches.size();
+            afterCellFilterCount = 0;
+            anatEntitySimilarities = anatMatches;
+        } else if (!userFilterIds.cellTypeIds.isEmpty()) {
+            Set<AnatEntitySimilarity> cellMatches = anatEntitySimilarities.stream()
+                    .filter(s -> s.getAllAnatEntities().stream()
+                            .anyMatch(ae -> isCellTypeAnatEntity(ae)
+                                    && userFilterIds.cellTypeIds.contains(ae.getId())))
+                    .collect(Collectors.toSet());
+            afterCellFilterCount = cellMatches.size();
+            anatEntitySimilarities = cellMatches;
         }
         log.info("prepareFilter taxonId={}: homology {} ms / {} groups; expandIds {} ms "
-                + "(userAnatIds={}, userAnatRejectIds={}, userCellIds={}); "
+                + "(userAnatIds={}, userAnatRejectIds={}, userCellIds={}, unrestrictedCellTypes={}); "
                 + "afterAnatFilter={}; afterCellFilter={}; kept={}",
                 taxonId, homologyMs, homologyCount, expandMs,
                 userFilterIds.anatEntityIds.size(), userFilterIds.anatEntityIdsToReject.size(),
-                userFilterIds.cellTypeIds.size(),
+                userFilterIds.cellTypeIds.size(), userFilterIds.unrestrictedCellTypes,
                 afterAnatFilterCount, afterCellFilterCount, anatEntitySimilarities.size());
 
         Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntity =
@@ -1126,6 +1126,7 @@ public class MultiSpeciesCallService extends CommonService {
         return new SimilarityExpressionCallPreparedFilter(filter, orderedSimilarities,
                 anatEntitySimilarities, similaritiesByAnatEntity,
                 userFilterIds.anatEntityIds, userFilterIds.cellTypeIds,
+                userFilterIds.unrestrictedCellTypes,
                 orderedGeneFilters, filter.getSummaryCallTypeQualityFilter(),
                 requestedTaxon, taxonOntology, globalAnatEntityIds, globalCellTypeIds);
     }
@@ -1141,7 +1142,8 @@ public class MultiSpeciesCallService extends CommonService {
         Map<String, AnatEntitySimilarity> fallbackCellSimsById = new HashMap<>();
         Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter =
                 buildAnatEntityCellTypeCondParamToFilter(
-                        new AnatCellTypeFilterIds(ctx.getUserAnatEntityIds(), ctx.getUserCellTypeIds()),
+                        new AnatCellTypeFilterIds(ctx.getUserAnatEntityIds(),
+                                ctx.getUserCellTypeIds(), ctx.isUnrestrictedCellTypes()),
                         ctx.getGlobalAnatEntityIds(), ctx.getGlobalCellTypeIds(), true);
         List<ExpressionCall2> allCalls = loadExpressionCalls(ctx, condParamToFilter);
         List<SimilarityExpressionCall2> secs = buildSimilarityExpressionCallsFromExpressionCalls(
@@ -1342,16 +1344,33 @@ public class MultiSpeciesCallService extends CommonService {
         /** When non-empty and {@link #anatEntityIds} is empty, keep organs whose IDs are not in this set. */
         private final Set<String> anatEntityIdsToReject;
         private final Set<String> cellTypeIds;
+        /**
+         * {@code true} when expanding an anatomical term and its children: do not restrict
+         * the expression query to {@code cell_type_id}, so cell types come from calls in
+         * that organ tree only.
+         */
+        private final boolean unrestrictedCellTypes;
 
         private AnatCellTypeFilterIds(Set<String> anatEntityIds, Set<String> cellTypeIds) {
-            this(anatEntityIds, Set.of(), cellTypeIds);
+            this(anatEntityIds, Set.of(), cellTypeIds, false);
+        }
+
+        private AnatCellTypeFilterIds(Set<String> anatEntityIds, Set<String> cellTypeIds,
+                boolean unrestrictedCellTypes) {
+            this(anatEntityIds, Set.of(), cellTypeIds, unrestrictedCellTypes);
         }
 
         private AnatCellTypeFilterIds(Set<String> anatEntityIds, Set<String> anatEntityIdsToReject,
                 Set<String> cellTypeIds) {
+            this(anatEntityIds, anatEntityIdsToReject, cellTypeIds, false);
+        }
+
+        private AnatCellTypeFilterIds(Set<String> anatEntityIds, Set<String> anatEntityIdsToReject,
+                Set<String> cellTypeIds, boolean unrestrictedCellTypes) {
             this.anatEntityIds = anatEntityIds;
             this.anatEntityIdsToReject = anatEntityIdsToReject;
             this.cellTypeIds = cellTypeIds;
+            this.unrestrictedCellTypes = unrestrictedCellTypes;
         }
     }
 
@@ -1379,6 +1398,7 @@ public class MultiSpeciesCallService extends CommonService {
         Set<Integer> speciesIds = new HashSet<>();
         Set<String> ontologySeedIds = new HashSet<>();
         boolean needsExpansion = false;
+        boolean unrestrictedCellTypes = false;
         List<ConditionFilter2> filtersWithComposedIds = new ArrayList<>();
         for (ConditionFilter2 cf : conditionFilters) {
             ComposedFilterIds<String> composed = cf.getComposedFilterIds(
@@ -1400,9 +1420,13 @@ public class MultiSpeciesCallService extends CommonService {
                     ontologySeedIds.addAll(anatIds.getIds());
                     ontologySeedIds.addAll(anatIds.getExcludeTermsAndChildrenIds());
                     needsExpansion |= anatIds.isIncludeChildTerms() && !anatIds.getIds().isEmpty();
+                    // Expanding one organ (request 3): cell types are those on calls in
+                    // that tree, not a second global cell-type homology axis.
+                    unrestrictedCellTypes |= anatIds.isIncludeChildTerms()
+                            && !anatIds.getIds().isEmpty();
                 }
             }
-            if (cellIds != null) {
+            if (cellIds != null && !unrestrictedCellTypes) {
                 ontologySeedIds.addAll(cellIds.getIds());
                 ontologySeedIds.addAll(cellIds.getExcludeTermsAndChildrenIds());
                 needsExpansion |= cellIds.isIncludeChildTerms() && !cellIds.getIds().isEmpty();
@@ -1433,13 +1457,15 @@ public class MultiSpeciesCallService extends CommonService {
             } else {
                 filterAnatEntityIds.addAll(expandFilterIds(anatIds, anatOntology));
             }
-            filterCellTypeIds.addAll(expandFilterIds(cellIds, anatOntology));
+            if (!unrestrictedCellTypes) {
+                filterCellTypeIds.addAll(expandFilterIds(cellIds, anatOntology));
+            }
         }
-        log.info("extractAnatAndCellTypeFilterIds: expandedAnatIds={}, anatRejectIds={}, expandedCellIds={}",
+        log.info("extractAnatAndCellTypeFilterIds: expandedAnatIds={}, anatRejectIds={}, expandedCellIds={}, unrestrictedCellTypes={}",
                 filterAnatEntityIds.size(), filterAnatEntityIdsToReject.size(),
-                filterCellTypeIds.size());
+                filterCellTypeIds.size(), unrestrictedCellTypes);
         return log.traceExit(new AnatCellTypeFilterIds(filterAnatEntityIds,
-                filterAnatEntityIdsToReject, filterCellTypeIds));
+                filterAnatEntityIdsToReject, filterCellTypeIds, unrestrictedCellTypes));
     }
 
     /**
@@ -1534,9 +1560,14 @@ public class MultiSpeciesCallService extends CommonService {
             boolean preferUserWhenPresent) {
         Set<String> anatIdsForLoad = resolveIdsForLoad(userFilterIds.anatEntityIds,
                 similarityAnatEntityIds, preferUserWhenPresent);
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        if (userFilterIds.unrestrictedCellTypes) {
+            condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                    new ComposedFilterIds<>(List.of(new FilterIds<>(anatIdsForLoad, false))));
+            return condParamToFilter;
+        }
         Set<String> cellIdsForLoad = resolveIdsForLoad(userFilterIds.cellTypeIds,
                 similarityCellTypeIds, preferUserWhenPresent);
-        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
         condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
                 new ComposedFilterIds<>(List.of(
                         new FilterIds<>(anatIdsForLoad, false),

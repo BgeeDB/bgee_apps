@@ -29,6 +29,11 @@ final class SimilarityExpressionCallPreparedFilter {
     private final Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntity;
     private final Set<String> userAnatEntityIds;
     private final Set<String> userCellTypeIds;
+    /**
+     * When {@code true}, expression loading does not restrict cell types (any cell type
+     * in the selected anatomical tree). Used when expanding an anat. term and its children.
+     */
+    private final boolean unrestrictedCellTypes;
     private final List<GeneFilter> orderedGeneFilters;
     private final Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter;
     private final Taxon requestedTaxon;
@@ -40,6 +45,7 @@ final class SimilarityExpressionCallPreparedFilter {
             List<AnatEntitySimilarity> orderedSimilarities, Set<AnatEntitySimilarity> positiveSimilarities,
             Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntity,
             Set<String> userAnatEntityIds, Set<String> userCellTypeIds,
+            boolean unrestrictedCellTypes,
             List<GeneFilter> orderedGeneFilters,
             Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
             Taxon requestedTaxon, Ontology<Taxon, Integer> taxonOntology,
@@ -50,6 +56,7 @@ final class SimilarityExpressionCallPreparedFilter {
         this.similaritiesByAnatEntity = Collections.unmodifiableMap(similaritiesByAnatEntity);
         this.userAnatEntityIds = Collections.unmodifiableSet(userAnatEntityIds);
         this.userCellTypeIds = Collections.unmodifiableSet(userCellTypeIds);
+        this.unrestrictedCellTypes = unrestrictedCellTypes;
         this.orderedGeneFilters = Collections.unmodifiableList(orderedGeneFilters);
         this.summaryCallTypeQualityFilter = Collections.unmodifiableMap(summaryCallTypeQualityFilter);
         this.requestedTaxon = requestedTaxon;
@@ -80,6 +87,10 @@ final class SimilarityExpressionCallPreparedFilter {
 
     Set<String> getUserCellTypeIds() {
         return userCellTypeIds;
+    }
+
+    boolean isUnrestrictedCellTypes() {
+        return unrestrictedCellTypes;
     }
 
     List<GeneFilter> getOrderedGeneFilters() {

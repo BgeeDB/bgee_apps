@@ -833,8 +833,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
     }
 
     /**
-     * Organ homology groups and cell-type homology groups are selected independently.
-     * A cell-type root filter must not drop organ groups that do not contain that cell type.
+     * An organ include plus a cell-type filter still keeps the organ homology group.
+     * Cell-type groups are not added as a second global axis when an anat constraint is present.
      */
     @Test
     public void shouldKeepOrganSimilarityWhenCellTypeFilterIsOrthogonal() {
@@ -910,6 +910,139 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         assertEquals("Organ homology group must be kept when a cell-type filter is also present",
                 organSim, results.get(0).getMultiSpeciesCondition().getAnatSimilarity());
         verify(exprCallService, times(1)).loadCallLoader(any());
+    }
+
+    /**
+     * Expanding one organ (request 3) keeps only that organ tree. Cell types come from
+     * calls in that tree, not from a global cell-type homology union, even if
+     * {@code cell_type_descendant} is set.
+     */
+    @Test
+    public void shouldRestrictExpandRequestToCellTypesInOrganTree() {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        org.bgee.model.expressiondata.call.ExpressionCallService exprCallService =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallService.class);
+        org.bgee.model.expressiondata.call.ExpressionCallLoader exprCallLoader =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallLoader.class);
+        AnatEntitySimilarityService aeSimService = mock(AnatEntitySimilarityService.class);
+        OntologyService ontService = mock(OntologyService.class);
+
+        when(serviceFactory.getExpressionCallService()).thenReturn(exprCallService);
+        when(serviceFactory.getAnatEntitySimilarityService()).thenReturn(aeSimService);
+        when(serviceFactory.getSpeciesService()).thenReturn(mock(SpeciesService.class));
+        when(serviceFactory.getCallService()).thenReturn(mock(CallService.class));
+        when(serviceFactory.getDevStageSimilarityService())
+                .thenReturn(mock(org.bgee.model.anatdev.multispemapping.DevStageSimilarityService.class));
+        when(serviceFactory.getOntologyService()).thenReturn(ontService);
+        when(serviceFactory.getGeneService()).thenReturn(mock(org.bgee.model.gene.GeneService.class));
+
+        int taxonId = 10;
+        Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
+        int speciesId1 = 1;
+        Species species1 = new Species(speciesId1);
+        String parentId = "UBERON:0000955";
+        String childId = "UBERON:0001890";
+        AnatEntity parentAe = new AnatEntity(parentId);
+        AnatEntity childAe = new AnatEntity(childId);
+        AnatEntity neuron = new AnatEntity("CL:0000540", "neuron", null, true);
+        Gene gene1 = new Gene("gene1a", species1, new GeneBioType("biotype1"));
+        GeneFilter geneFilter1 = new GeneFilter(speciesId1, Collections.singleton(gene1.getGeneId()));
+
+        @SuppressWarnings("unchecked")
+        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
+        when(anatOnt.getDescendantIds(parentId, false)).thenReturn(Set.of(childId));
+        when(anatOnt.getDescendantIds(childId, false)).thenReturn(Collections.emptySet());
+        when(anatOnt.getDescendantIds(ConditionDAO.CELL_TYPE_ROOT_ID, false))
+                .thenReturn(Set.of(neuron.getId()));
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Collection<String>> seedCaptor = ArgumentCaptor.forClass(Collection.class);
+        when(ontService.getAnatEntityOntology(anyCollection(), seedCaptor.capture(), any(),
+                eq(false), eq(true))).thenReturn(anatOnt);
+
+        Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
+                new AnatEntitySimilarityTaxonSummary(taxon, true, true));
+        AnatEntitySimilarity simParent = new AnatEntitySimilarity(
+                Arrays.asList(parentAe), null, taxon, aeSimTaxonSummaries, taxOnt);
+        AnatEntitySimilarity simChild = new AnatEntitySimilarity(
+                Arrays.asList(childAe), null, taxon, aeSimTaxonSummaries, taxOnt);
+        AnatEntitySimilarity simNeuron = new AnatEntitySimilarity(
+                Arrays.asList(neuron), null, taxon, aeSimTaxonSummaries, taxOnt);
+        when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
+                .thenReturn(new HashSet<>(Arrays.asList(simParent, simChild, simNeuron)));
+
+        org.bgee.model.expressiondata.call.Call.ExpressionCall2 mockCall1 =
+                mock(org.bgee.model.expressiondata.call.Call.ExpressionCall2.class);
+        org.bgee.model.expressiondata.call.Condition2 mockCond1 =
+                mock(org.bgee.model.expressiondata.call.Condition2.class);
+        @SuppressWarnings("unchecked")
+        org.bgee.model.ComposedEntity<AnatEntity> mockComposed = mock(org.bgee.model.ComposedEntity.class);
+        when(mockCall1.getGene()).thenReturn(gene1);
+        when(mockCall1.getCondition()).thenReturn(mockCond1);
+        when(mockCall1.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
+        when(mockCond1.getConditionParameterValue(
+                org.bgee.model.expressiondata.baseelements.ConditionParameter.ANAT_ENTITY_CELL_TYPE))
+                .thenReturn(mockComposed);
+        when(mockComposed.isEmpty()).thenReturn(false);
+        when(mockComposed.size()).thenReturn(2);
+        when(mockComposed.getEntity(0)).thenReturn(neuron);
+        when(mockComposed.getEntity(1)).thenReturn(childAe);
+
+        ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
+                ArgumentCaptor.forClass(ExpressionCallFilter2.class);
+        when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
+        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Arrays.asList(mockCall1));
+
+        FilterIds<String> anatFilter = new FilterIds<>(Set.of(parentId), true);
+        FilterIds<String> cellFilter = new FilterIds<>(
+                Set.of(ConditionDAO.CELL_TYPE_ROOT_ID), true);
+        ComposedFilterIds<String> composed = new ComposedFilterIds<>(List.of(anatFilter, cellFilter));
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, composed);
+        ConditionFilter2 condFilter = new ConditionFilter2(speciesId1, condParamToFilter,
+                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false);
+
+        MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
+        List<SimilarityExpressionCall2> results = service.loadSimilarityExpressionCalls2(
+                taxonId, Collections.singleton(geneFilter1), Collections.singleton(condFilter),
+                true, SummaryQuality.BRONZE)
+                .collect(Collectors.toList());
+
+        assertTrue("Ontology must be seeded with the expanded organ only",
+                seedCaptor.getValue().contains(parentId));
+        assertFalse("Cell-type root must not be an ontology seed when expanding an organ",
+                seedCaptor.getValue().contains(ConditionDAO.CELL_TYPE_ROOT_ID));
+        assertFalse("Unrelated cell-type terms must not be ontology seeds",
+                seedCaptor.getValue().contains(neuron.getId()));
+
+        List<FilterIds<String>> loadedCellFilters = exprFilterCaptor.getAllValues().stream()
+                .flatMap(f -> f.getConditionFilters().stream())
+                .map(cf -> cf.getComposedFilterIds(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
+                        .getFilterIds(1))
+                .collect(Collectors.toList());
+        assertFalse(loadedCellFilters.isEmpty());
+        assertTrue("Expression load must not restrict cell types when expanding an organ",
+                loadedCellFilters.stream().allMatch(ids -> ids == null));
+
+        Set<String> loadedAnatIds = exprFilterCaptor.getAllValues().stream()
+                .flatMap(f -> f.getConditionFilters().stream())
+                .map(cf -> cf.getComposedFilterIds(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
+                        .getFilterIds(0))
+                .filter(ids -> ids != null)
+                .flatMap(ids -> ids.getIds().stream())
+                .collect(Collectors.toSet());
+        assertTrue(loadedAnatIds.contains(parentId));
+        assertTrue(loadedAnatIds.contains(childId));
+
+        assertEquals(1, results.size());
+        assertEquals("Result must hang off the child organ, not a global cell-type group",
+                simChild, results.get(0).getMultiSpeciesCondition().getAnatSimilarity());
+        assertEquals(neuron.getId(), results.get(0).getMultiSpeciesCondition()
+                .getCellTypeSimilarity().getSourceAnatEntities().iterator().next().getId());
+        assertFalse("Global cell-type homology must not appear as its own driving organ row",
+                results.stream().anyMatch(r -> simNeuron.equals(
+                        r.getMultiSpeciesCondition().getAnatSimilarity())));
     }
 
     /**

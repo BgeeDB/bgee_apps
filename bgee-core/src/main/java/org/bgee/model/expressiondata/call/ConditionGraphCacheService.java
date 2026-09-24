@@ -156,11 +156,100 @@ public final class ConditionGraphCacheService extends CommonService{
         private final Map<Integer, int[]> globalCondToDirectDescendants;
         private final int[] topoOrder;
 
+        //Dense view of the same graph, used by the on-the-fly propagation. The index of
+        //a condition is its position in topoOrder, so the index of a parent is always greater
+        //than the index of its children: walking the indexes in ascending order is
+        //a topological walk, and comparing two indexes tells which one comes first without
+        //any lookup. Holding the relations as int[] indexed by index, rather than as
+        //Map<Integer, int[]>, is what allows the propagation to run without boxing a single
+        //condition ID on its hot path.
+        private final Map<Integer, Integer> condIdToIndex;
+        private final int[][] directAncestorIndexes;
+        private final int[][] directDescendantIndexes;
+
         public ConditionGraphCache(Map<Integer, int[]> globalCondToDirectAncestors,
                 Map<Integer, int[]> globalCondToDirectDescendants, int[] topoOrder) {
             this.globalCondToDirectAncestors = globalCondToDirectAncestors;
             this.globalCondToDirectDescendants = globalCondToDirectDescendants;
             this.topoOrder = topoOrder;
+
+            this.condIdToIndex = new HashMap<>(topoOrder.length * 2);
+            for (int i = 0; i < topoOrder.length; i++) {
+                this.condIdToIndex.put(topoOrder[i], i);
+            }
+            this.directAncestorIndexes = toIndexes(globalCondToDirectAncestors, this.condIdToIndex,
+                    topoOrder);
+            this.directDescendantIndexes = toIndexes(globalCondToDirectDescendants,
+                    this.condIdToIndex, topoOrder);
+        }
+        /**
+         * Convert a {@code Map} of relations between condition IDs into an array of relations
+         * between condition indexes. A condition absent from {@code relations}, or a related
+         * condition absent from {@code condIdToIndex}, yields no relation: such a condition
+         * is not part of the topological order and is therefore never reached
+         * by the propagation.
+         */
+        private static int[][] toIndexes(Map<Integer, int[]> relations,
+                Map<Integer, Integer> condIdToIndex, int[] topoOrder) {
+            int[][] indexes = new int[topoOrder.length][];
+            for (int i = 0; i < topoOrder.length; i++) {
+                int[] relatedCondIds = relations.get(topoOrder[i]);
+                if (relatedCondIds == null || relatedCondIds.length == 0) {
+                    indexes[i] = EMPTY_ARRAY;
+                    continue;
+                }
+                int[] relatedIndexes = new int[relatedCondIds.length];
+                int count = 0;
+                for (int relatedCondId: relatedCondIds) {
+                    Integer relatedIndex = condIdToIndex.get(relatedCondId);
+                    if (relatedIndex != null) {
+                        relatedIndexes[count++] = relatedIndex;
+                    }
+                }
+                indexes[i] = count == relatedIndexes.length? relatedIndexes:
+                    Arrays.copyOf(relatedIndexes, count);
+            }
+            return indexes;
+        }
+
+        /**
+         * @param condId    An {@code int} that is the ID of a global condition.
+         * @return          An {@code int} that is the index of that condition, or {@code -1}
+         *                  if it is not part of this graph.
+         */
+        public int getIndex(int condId) {
+            Integer index = this.condIdToIndex.get(condId);
+            return index == null? -1: index.intValue();
+        }
+        /**
+         * @param index An {@code int} that is the index of a condition.
+         * @return      An {@code int} that is the ID of the global condition at that index.
+         */
+        public int getCondId(int index) {
+            return this.topoOrder[index];
+        }
+        /**
+         * @return  An {@code int} that is the number of conditions of this graph, which is also
+         *          the exclusive upper bound of the condition indexes.
+         */
+        public int getConditionCount() {
+            return this.topoOrder.length;
+        }
+        /**
+         * @param index An {@code int} that is the index of a condition.
+         * @return      An {@code int[]} that contains the indexes of its direct ancestors.
+         *              Never {@code null}, empty when it has none.
+         */
+        public int[] getDirectAncestorIndexes(int index) {
+            return this.directAncestorIndexes[index];
+        }
+        /**
+         * @param index An {@code int} that is the index of a condition.
+         * @return      An {@code int[]} that contains the indexes of its direct descendants.
+         *              Never {@code null}, empty when it has none.
+         */
+        public int[] getDirectDescendantIndexes(int index) {
+            return this.directDescendantIndexes[index];
         }
 
         public Map<Integer, int[]> getGlobalCondToDirectAncestors() {

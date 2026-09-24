@@ -42,6 +42,7 @@ import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.Call;
 import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.CallServiceUtils;
 import org.bgee.model.expressiondata.call.ConditionFilter;
 import org.bgee.model.expressiondata.call.ConditionFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
@@ -1064,10 +1065,11 @@ public class MultiSpeciesCallService extends CommonService {
         // cell types attach later from each loaded call ("{cell type} in {anat}").
         // A cell-type homology filter is used only when there is no anat constraint.
         if (hasAnatInclude || hasAnatReject) {
+            // Match the terms that are shown as the row label (source entities).
+            // transformation_of members must not keep a group whose source was discarded:
+            // otherwise a leftover structure homologous to brain is still returned as "brain".
             Set<AnatEntitySimilarity> anatMatches = anatEntitySimilarities.stream()
-                    .filter(s -> s.getAllAnatEntities().stream()
-                            .anyMatch(ae -> !isCellTypeAnatEntity(ae)
-                                    && matchesAnatEntityId(ae.getId(), userFilterIds)))
+                    .filter(s -> sourceAnatEntityMatches(s, userFilterIds))
                     .collect(Collectors.toSet());
             afterAnatFilterCount = anatMatches.size();
             afterCellFilterCount = 0;
@@ -1472,7 +1474,9 @@ public class MultiSpeciesCallService extends CommonService {
      * Expands {@code filterIds} the same way as
      * {@link org.bgee.model.expressiondata.call.CallServiceUtils}: include IDs, optionally
      * their descendants, then subtract excluded terms and their descendants (except
-     * {@link FilterIds#getNotToExcludeIds()}).
+     * {@link FilterIds#getNotToExcludeIds()}). Only exclude seeds that are descendants
+     * of a protected include term are applied; see
+     * {@link CallServiceUtils#expandApplicableExcludeIds(FilterIds, java.util.function.Function)}.
      */
     private static Set<String> expandFilterIds(FilterIds<String> filterIds,
             OntologyBase<AnatEntity, String> anatOntology) {
@@ -1486,13 +1490,9 @@ public class MultiSpeciesCallService extends CommonService {
                     .collect(Collectors.toSet()));
         }
         if (!filterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
-            Set<String> idsToExclude = new HashSet<>(filterIds.getExcludeTermsAndChildrenIds());
-            if (anatOntology != null) {
-                idsToExclude.addAll(filterIds.getExcludeTermsAndChildrenIds().stream()
-                        .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
-                        .collect(Collectors.toSet()));
-            }
-            idsToExclude.removeAll(filterIds.getNotToExcludeIds());
+            Set<String> idsToExclude = CallServiceUtils.expandApplicableExcludeIds(
+                    filterIds,
+                    anatOntology == null ? null : id -> anatOntology.getDescendantIds(id, false));
             if (expanded.removeAll(idsToExclude) && expanded.isEmpty()) {
                 throw log.throwing(new IllegalArgumentException(
                         "No result should be retrieved because of anat. entity exclusion"));
@@ -1519,6 +1519,21 @@ public class MultiSpeciesCallService extends CommonService {
 
     private static boolean isAnatEntityRootId(String id) {
         return id != null && ANAT_ENTITY_ROOT_IDS.contains(id);
+    }
+
+    /**
+     * {@code true} when a source anatomical entity of {@code similarity} — the terms
+     * written as {@code anatEntities} in the response — satisfies {@code userFilterIds}.
+     * Transformation-of members are ignored here; they are not the row label.
+     */
+    private static boolean sourceAnatEntityMatches(AnatEntitySimilarity similarity,
+            AnatCellTypeFilterIds userFilterIds) {
+        if (similarity == null) {
+            return false;
+        }
+        return similarity.getSourceAnatEntities().stream()
+                .anyMatch(ae -> !isCellTypeAnatEntity(ae)
+                        && matchesAnatEntityId(ae.getId(), userFilterIds));
     }
 
     private static boolean matchesAnatEntityId(String anatEntityId, AnatCellTypeFilterIds userFilterIds) {

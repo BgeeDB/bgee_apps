@@ -178,7 +178,7 @@ public abstract class CommandExpressionSupport extends CommandParent{
         log.traceEntry("{}, {}, {}", consideringFilters, condParams, dataTypes);
 
         long startTimeFilter = System.currentTimeMillis();
-        ExpressionCallFilter2 filter = this.loadExprCallFilter(consideringFilters, condParams, dataTypes, true);
+        ExpressionCallFilter2 filter = this.loadExprCallFilter(consideringFilters, condParams, dataTypes, false);
         log.debug("ExpressionCallFilter2 built in {} ms", System.currentTimeMillis() - startTimeFilter);
 
         return log.traceExit(this.loadExprCallLoader(filter));

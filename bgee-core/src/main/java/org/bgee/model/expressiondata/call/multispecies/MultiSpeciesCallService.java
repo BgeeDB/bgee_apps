@@ -1191,13 +1191,15 @@ public class MultiSpeciesCallService extends CommonService {
                     Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
                     Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
                     false);
+            Boolean observedData = ctx.getSourceFilter().getCallObservedData();
             ExpressionCallFilter2 exprCallFilter = new ExpressionCallFilter2(
                     ctx.getSummaryCallTypeQualityFilter(), gf,
                     Collections.singleton(speciesCondFilter),
                     null,
                     Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
-                    ConditionParameter.noneOf(),
-                    null);
+                    observedData == null ? ConditionParameter.noneOf()
+                            : Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
+                    observedData);
             org.bgee.model.expressiondata.call.ExpressionCallLoader loader =
                     exprCallService.loadCallLoader(exprCallFilter);
             loaders++;

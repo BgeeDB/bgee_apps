@@ -1182,7 +1182,8 @@ public class CommandData extends CommandParent {
                 int lcaId = this.serviceFactory.getTaxonService().loadLeastCommonAncestor(
                         species.stream().map(Species::getId).collect(Collectors.toSet())).getId();
                 SimilarityExpressionCallFilter filter = new SimilarityExpressionCallFilter(
-                        lcaId, geneFilters, condFilters, false, qual);
+                        lcaId, geneFilters, condFilters, false, qual,
+                        this.requestParameters.getObservedData());
                 //Loader construction is expensive (it prepares anat. entity similarities
                 //from the database), so it is deferred until a cache miss actually requires
                 //loading data. The supplier memoizes the loader so that count and results

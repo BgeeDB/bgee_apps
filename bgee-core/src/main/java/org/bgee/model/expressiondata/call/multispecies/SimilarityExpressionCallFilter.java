@@ -35,6 +35,12 @@ extends CallFilter<ExpressionCallData, ExpressionSummary, ConditionFilter2> {
 
     private final int taxonId;
     private final boolean onlyTrusted;
+    /**
+     * {@code true} to keep only calls observed in the anatomical entity and cell type,
+     * {@code false} to keep only calls that are not observed there, {@code null} for no
+     * observation filter. Corresponds to the {@code observed_data} request parameter.
+     */
+    private final Boolean callObservedData;
 
     /**
      * @param taxonId           An {@code int} that is the NCBI ID of the taxon for which
@@ -54,6 +60,29 @@ extends CallFilter<ExpressionCallData, ExpressionSummary, ConditionFilter2> {
     public SimilarityExpressionCallFilter(int taxonId, Collection<GeneFilter> geneFilters,
             Collection<ConditionFilter2> conditionFilters, boolean onlyTrusted,
             SummaryQuality summaryQuality) throws IllegalArgumentException {
+        this(taxonId, geneFilters, conditionFilters, onlyTrusted, summaryQuality, null);
+    }
+
+    /**
+     * @param taxonId           An {@code int} that is the NCBI ID of the taxon for which
+     *                          calls should be retrieved. Must be strictly positive.
+     * @param geneFilters       A non-empty {@code Collection} of {@code GeneFilter}s.
+     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter2}s, or
+     *                          {@code null}/empty for no condition filtering.
+     * @param onlyTrusted       A {@code boolean} defining whether results should be restricted
+     *                          to trusted anatomical entity similarities.
+     * @param summaryQuality    A {@code SummaryQuality} defining the minimum quality level
+     *                          for expression calls to be included. If {@code null},
+     *                          {@link SummaryQuality#BRONZE} is used.
+     * @param callObservedData  {@code true} to retrieve only calls observed in the anatomical
+     *                          entity and cell type, {@code false} to retrieve only calls that
+     *                          are not observed there (propagation only), or {@code null} to
+     *                          apply no observation filter. Corresponds to the
+     *                          {@code observed_data} request parameter.
+     */
+    public SimilarityExpressionCallFilter(int taxonId, Collection<GeneFilter> geneFilters,
+            Collection<ConditionFilter2> conditionFilters, boolean onlyTrusted,
+            SummaryQuality summaryQuality, Boolean callObservedData) throws IllegalArgumentException {
         super(buildSummaryCallTypeQualityFilter(summaryQuality),
                 geneFilters == null ? Set.of() : Set.copyOf(geneFilters),
                 conditionFilters == null ? Set.of() : Set.copyOf(conditionFilters),
@@ -69,6 +98,7 @@ extends CallFilter<ExpressionCallData, ExpressionSummary, ConditionFilter2> {
         }
         this.taxonId = taxonId;
         this.onlyTrusted = onlyTrusted;
+        this.callObservedData = callObservedData;
     }
 
     public int getTaxonId() {
@@ -77,6 +107,15 @@ extends CallFilter<ExpressionCallData, ExpressionSummary, ConditionFilter2> {
 
     public boolean isOnlyTrusted() {
         return onlyTrusted;
+    }
+
+    /**
+     * @return  {@code true} when only calls observed in the anatomical entity and cell type
+     *          are requested, {@code false} when only non-observed calls are requested,
+     *          or {@code null} when no observation filter is applied.
+     */
+    public Boolean getCallObservedData() {
+        return callObservedData;
     }
 
     @Override
@@ -106,7 +145,7 @@ extends CallFilter<ExpressionCallData, ExpressionSummary, ConditionFilter2> {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(onlyTrusted, taxonId);
+        result = prime * result + Objects.hash(callObservedData, onlyTrusted, taxonId);
         return result;
     }
 
@@ -122,7 +161,8 @@ extends CallFilter<ExpressionCallData, ExpressionSummary, ConditionFilter2> {
             return false;
         }
         SimilarityExpressionCallFilter other = (SimilarityExpressionCallFilter) obj;
-        return onlyTrusted == other.onlyTrusted && taxonId == other.taxonId;
+        return Objects.equals(callObservedData, other.callObservedData)
+                && onlyTrusted == other.onlyTrusted && taxonId == other.taxonId;
     }
 
     @Override
@@ -130,6 +170,7 @@ extends CallFilter<ExpressionCallData, ExpressionSummary, ConditionFilter2> {
         StringBuilder builder = new StringBuilder();
         builder.append("SimilarityExpressionCallFilter [taxonId=").append(taxonId)
                .append(", onlyTrusted=").append(onlyTrusted)
+               .append(", callObservedData=").append(callObservedData)
                .append(", summaryCallTypeQualityFilter=").append(getSummaryCallTypeQualityFilter())
                .append(", dataTypeFilters=").append(getDataTypeFilters())
                .append(", geneFilters=").append(getGeneFilters())

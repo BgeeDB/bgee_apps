@@ -285,6 +285,7 @@ public class CommandDataMultispecTest extends TestAncestor {
         SimilarityExpressionCallFilter capturedFilter = filterCaptor.getValue();
         assertEquals(LCA_ID, capturedFilter.getTaxonId());
         assertEquals(false, capturedFilter.isOnlyTrusted());
+        assertEquals(null, capturedFilter.getCallObservedData());
         assertEquals(2, capturedFilter.getGeneFilters().size());
 
         verify(loader).loadDataCount();
@@ -310,6 +311,25 @@ public class CommandDataMultispecTest extends TestAncestor {
         assertEquals(ExpressionSummary.EXPRESSED, call.getSummaryCallType());
         assertEquals(1, call.getCalls().size());
         assertEquals(EnumSet.allOf(DataType.class), response.getRequestedDataTypes());
+    }
+
+    @Test
+    public void shouldPassObservedDataToMultispecFilter() throws Exception {
+        stubGeneSearch();
+        when(loader.loadData(0L, 100)).thenReturn(Collections.emptyList());
+
+        RequestParameters params = newMultispecParams();
+        params.addValues(params.getUrlParametersInstance().getParamGeneList(),
+                Arrays.asList(humanGene.getGeneId(), mouseGene.getGeneId()));
+        params.addValue(params.getUrlParametersInstance().getParamGetResults(), true);
+        params.addValue(params.getUrlParametersInstance().getParamObservedData(), true);
+
+        buildController(params).processRequest();
+
+        ArgumentCaptor<SimilarityExpressionCallFilter> filterCaptor =
+                ArgumentCaptor.forClass(SimilarityExpressionCallFilter.class);
+        verify(multiSpeciesCallService).loadSimilarityCallLoader(filterCaptor.capture());
+        assertEquals(Boolean.TRUE, filterCaptor.getValue().getCallObservedData());
     }
 
     /**

@@ -354,7 +354,8 @@ public class ExpressionCallService extends CallServiceParent {
         //       of condition parameters with there descendants. It would be way way faster.
         Set<DAOConditionFilter2> daoCondFilters =
                 this.utils.convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
-                        this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered());
+                        this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered(),
+                        filter.getCondParamCombination());
         log.debug("convertConditionFiltersToDAOConditionFilters() completed in {} ms ({} DAO filters)",
                 System.currentTimeMillis() - t0, daoCondFilters.size());
         t0 = System.currentTimeMillis();

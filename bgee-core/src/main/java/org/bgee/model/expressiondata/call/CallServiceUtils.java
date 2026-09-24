@@ -296,15 +296,42 @@ public class CallServiceUtils {
             this.convertDataTypeToDAODataType(dataTypesToConsider));
     }
 
+    /**
+     * @param condParamCombination  A {@code Collection} of {@code ConditionParameter}s that is
+     *                              the condition parameter combination requested. The condition
+     *                              parameters it does not contain are restricted to their root,
+     *                              as the conditions of the other combinations hold no data for
+     *                              this query. When no {@code ConditionFilter2} is provided, it
+     *                              is the only information restricting the conditions retrieved,
+     *                              besides the species.
+     */
     public Set<DAOConditionFilter2> convertConditionFiltersToDAOConditionFilters(
             Collection<ConditionFilter2> condFilters, OntologyService ontService,
-            AnatEntityService anatEntityService, Set<Integer> consideredSpeciesIds) {
-        log.traceEntry("{}, {}, {}, {}", condFilters, ontService, anatEntityService, consideredSpeciesIds);
+            AnatEntityService anatEntityService, Set<Integer> consideredSpeciesIds,
+            Collection<ConditionParameter<?, ?>> condParamCombination) {
+        log.traceEntry("{}, {}, {}, {}, {}", condFilters, ontService, anatEntityService,
+                consideredSpeciesIds, condParamCombination);
         if (condFilters == null || condFilters.isEmpty()) {
             if(consideredSpeciesIds == null || consideredSpeciesIds.isEmpty()) {
                 return log.traceExit(new HashSet<>());
             }
-            return log.traceExit(Set.of(new DAOConditionFilter2(consideredSpeciesIds, null, null, null, null, null, null, null)));
+            //Restrict to the requested condition parameter combination, exactly as it is done
+            //below when ConditionFilter2s are provided.
+            Set<ConditionParameter<?, ?>> condParamComb =
+                    condParamCombination == null || condParamCombination.isEmpty()?
+                    ConditionParameter.allOf(): new HashSet<>(condParamCombination);
+            return log.traceExit(Set.of(new DAOConditionFilter2(consideredSpeciesIds,
+                    condParamComb.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)? null:
+                        Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID),
+                    condParamComb.contains(ConditionParameter.DEV_STAGE)? null:
+                        Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID),
+                    condParamComb.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)? null:
+                        Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID),
+                    condParamComb.contains(ConditionParameter.SEX)? null:
+                        Collections.singleton(ConditionDAO.SEX_ROOT_ID),
+                    condParamComb.contains(ConditionParameter.STRAIN)? null:
+                        Collections.singleton(ConditionDAO.STRAIN_ROOT_ID),
+                    null, null)));
         }
     
         //First, in order to load appropriately the ontologies,

@@ -1,46 +1,42 @@
 package org.bgee.model.expressiondata.call;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.anatdev.Sex;
-import org.bgee.model.anatdev.SexService;
-import org.bgee.model.anatdev.Strain;
-import org.bgee.model.anatdev.StrainService;
-import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.DAOObservedExpressionFilter;
+import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO;
+import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpressionTO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTOResultSet;
-import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.RawConditionToSelfGlobalConditionTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.call.ConditionGraphCacheService.ConditionGraphCache;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneBioType;
-import org.bgee.model.species.Species;
 
 public class ExpressionCallLoader extends CommonService {
     private final static Logger log = LogManager.getLogger(ExpressionCallLoader.class.getName());
@@ -51,29 +47,18 @@ public class ExpressionCallLoader extends CommonService {
      * Value: 10,000.
      */
     public static int LIMIT_MAX = 10000;
+    public final static BigDecimal EXPRESSION_SCORE_MAX_VALUE = new BigDecimal("100");
     /**
-     * An {@code int} that is the maximum number of elements
-     * in {@link #conditionMap} and {@link #geneMap} before starting
-     * to flushing some existing entries. It is not a <strong>guarantee</strong>
-     * that those {@code Map}s will never exceed that size, just a trigger
-     * to flushing entries as much as possible.
-     *
-     * @see #updateConditionMap(Set)
-     * @see #updateGeneMap(Set)
+     * The {@code DataType}s indexed by their ordinal, to rebuild the data types supporting a call
+     * from the bit mask they are aggregated into.
      */
-    private static final int MAX_ELEMENTS_IN_MAP = 10000;
+    private final static DataType[] DATA_TYPES = DataType.values();
 
 
 
-    private final GlobalExpressionCallDAO globalExprCallDAO;
     private final GeneDAO geneDAO;
     private final ConditionDAO condDAO;
-    private final AnatEntityService anatEntityService;
-    private final DevStageService devStageService;
-    private final SexService sexService;
-    private final StrainService strainService;
     private final CallServiceUtils utils;
-    private final CallMapping callMapping;
     /**
      * @see #getProcessedFilter()
      */
@@ -83,14 +68,13 @@ public class ExpressionCallLoader extends CommonService {
     //We keep the speciesMap and geneBiotypeMap inside the rawDataProcessedFilter,
     //as there will be no update to them by this RawDataLoader.
     /**
-     * A {@code Map} where keys are {@code Integer}s that are internal IDs of raw data conditions,
-     * the value being the associated {@code Condition2}. this {@code Map} is used
-     * to store the retrieved {@code Condition2}s over several independent calls
-     * to this {@code ExpressionCallLoader}, in order to avoid querying multiple times for the same
-     * conditions.
-     *
-     * @see #MAX_ELEMENTS_IN_MAP
-     * @see #updateRawDataConditionMap(Set)
+     * An unmodifiable view of the {@code Condition2}s identified by the processed filter, where
+     * keys are {@code Integer}s that are their internal IDs. Every condition reached by the
+     * propagation is in this {@code Map}: the conditions queried, and the ancestors the
+     * propagation is allowed to reach, are both bounded by its key set (see
+     * {@link #loadDataOnTheFly()}). It is a view, and not a copy, so that several
+     * {@code ExpressionCallLoader}s sharing a same processed filter do not each hold
+     * a copy of the conditions of a whole species.
      */
     private final Map<Integer, Condition2> conditionMap;
     /**
@@ -100,18 +84,16 @@ public class ExpressionCallLoader extends CommonService {
      * to this {@code ExpressionCallLoader}, in order to avoid querying multiple times for the same
      * genes.
      *
-     * @see #MAX_ELEMENTS_IN_MAP
-     * @see #updateGeneMap(Set)
+     * Unmodifiable, as {@link #conditionMap}.
      */
     private final Map<Integer, Gene> geneMap;
 
     ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter, ServiceFactory serviceFactory) {
-        this(processedFilter, serviceFactory, new CallServiceUtils(),
-                new CallMapping(processedFilter));
+        this(processedFilter, serviceFactory, new CallServiceUtils());
     }
     //Constructor package protected so that only the RawDataService can instantiate this class
     ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter,
-            ServiceFactory serviceFactory, CallServiceUtils utils, CallMapping callMapping) {
+            ServiceFactory serviceFactory, CallServiceUtils utils) {
         super(serviceFactory);
 
         if (processedFilter == null) {
@@ -123,469 +105,962 @@ public class ExpressionCallLoader extends CommonService {
             throw log.throwing(new IllegalArgumentException(
                     "A CallServiceUtils must be provided"));
         }
-        if (callMapping == null) {
-            throw log.throwing(new IllegalArgumentException(
-                    "A CallMapping must be provided"));
-        }
         this.utils = utils;
-        this.callMapping = callMapping;
-        this.globalExprCallDAO = this.getDaoManager().getGlobalExpressionCallDAO();
         this.geneDAO = this.getDaoManager().getGeneDAO();
         this.condDAO = this.getDaoManager().getConditionDAO();
-        this.anatEntityService = this.getServiceFactory().getAnatEntityService();
-        this.devStageService = this.getServiceFactory().getDevStageService();
-        this.sexService = this.getServiceFactory().getSexService();
-        this.strainService = this.getServiceFactory().getStrainService();
         this.processedFilter = processedFilter;
-        this.conditionMap = new HashMap<>();
-        this.geneMap = new HashMap<>();
-        //Seed the Maps with any condition or gene already identified
-        //from the processed filter.
-        //We keep the speciesMap and geneBiotypeMap inside the processedFilter,
-        //as there will be no update to them by this Loader.
-        this.conditionMap.putAll(this.processedFilter.getRequestedConditionMap());
-        this.geneMap.putAll(this.processedFilter.getRequestedGeneMap());
+        //The conditions and genes identified by the processed filter are never updated by this
+        //Loader, so they are exposed as unmodifiable views rather than copied.
+        Map<Integer, Condition2> requestedCondMap = this.processedFilter.getRequestedConditionMap();
+        Map<Integer, Gene> requestedGeneMap = this.processedFilter.getRequestedGeneMap();
+        this.conditionMap = requestedCondMap == null? Map.of():
+            Collections.unmodifiableMap(requestedCondMap);
+        this.geneMap = requestedGeneMap == null? Map.of():
+            Collections.unmodifiableMap(requestedGeneMap);
     }
 
-    //If we want to let users decide which of the anat. entity, dev. stage, etc, to retrieve
-    //in the Conditions of the ExpressionCall, we should let them set Attributes.
-    //Currently, the condition parameters to return are determined by the combination
-    //selected in the source ExpressionCallFilter. It's a bit weird that is the a filter
-    //that determine the attributes visualized in return.
-    //But if there were attributes, we would still need to provide the condition parameters
-    //to the filter, because it is important to configure the query.
-    //So, maybe that should be its own argument of the method, rather than being in both the filter
-    //and the attributes?
-    //TODO But then it should be provided at the level of ExpressionCallService.loadCallLoader!
-    //(because this is where the ExpressionCallFilter is provided, some of the Conditions retrieved, etc)
-    //One of the Attribute could be "CONDITION", rather than the detail of the condition parameters.
-    //And then there would be another argument, the condition parameters, that would affect both
-    //the filtering in the query and the fields retrieved in the returned Conditions.
-    //
-    //offset is a Long because sometimes the number of potential results can be very large.
-    public List<ExpressionCall2> loadData(Long offset, Integer limit) {
-        log.traceEntry("{}, {}", offset, limit);
 
-        //If the DAOCallFilters are null (different from: not-null and empty)
+    //right now 
+    public Map<Gene, List<OTFExpressionCall>> loadDataOnTheFly() {
+      //If the DAOCallFilters are null (different from: not-null and empty)
         //it means there was no matching conds and thus no result for sure
         if (this.processedFilter.getDaoFilters() == null) {
-            return log.traceExit(new ArrayList<>());
+            return log.traceExit(new HashMap<>());
         }
 
-        if (offset != null && offset < 0) {
-            throw log.throwing(new IllegalArgumentException("offset cannot be less than 0"));
+        EnumSet<ConditionDAO.ConditionParameter> daoCondParams =
+                this.utils.convertCondParamsToDAOCondParams(
+                        this.processedFilter.getSourceFilter().getCondParamCombination());
+
+        EnumSet<DataType> queriedDataTypes = this.processedFilter.getSourceFilter().getDataTypeFilters();
+        EnumSet<DAODataType> queriedDaoDataTypes = queriedDataTypes
+                .stream()
+                .map(dt -> convertDataTypeToDAODataType(dt)).collect(() -> 
+                        EnumSet.noneOf(DAODataType.class),
+                        EnumSet::add,
+                        EnumSet::addAll);
+
+        //FIXME: at this point we assume a single species per request (validated by processExprCallPage)
+        int speciesId = this.processedFilter.getGeneSpeciesPart()
+                .getSpeciesMap().keySet().iterator().next();
+        long startTimeCondGraph = System.currentTimeMillis();
+        ConditionGraphCache condGraphCache = new ConditionGraphCacheService(this.getServiceFactory())
+                .getOrLoadGraph(speciesId);
+        log.debug("Condition graph retrieved for species {} in {} ms",
+                speciesId, System.currentTimeMillis() - startTimeCondGraph);
+
+        //2. retrieve rawconditionIds from the globalCond and the condition parameters.
+        //   If conditionMap is empty (no condition filter provided), use all global conditions
+        //   from the graph so that observed expressions are not missed.
+        //   Snapshot filter-matching condition IDs before any ancestor expansion so that
+        //   propagateCalls() can stop propagating upward at the filter boundary.
+        final Set<Integer> filterConditionIds = conditionMap.isEmpty()?
+                Collections.emptySet(): new HashSet<>(conditionMap.keySet());
+        Set<Integer> globalCondIdsToQuery = conditionMap.isEmpty()?
+                condGraphCache.getGlobalCondToDirectAncestors().keySet():
+                conditionMap.keySet();
+        long startTimeRawConds = System.currentTimeMillis();
+        List<RawConditionToSelfGlobalConditionTO> rawCondToSeflGlobalCondTOs = this.condDAO
+        .getRawConditionToSelfGlobalConditionFromGlobalConditionIds(globalCondIdsToQuery,
+                daoCondParams).getAllTOs();
+        Map<Integer, Integer> rawCondIdToGlobalCondIds = rawCondToSeflGlobalCondTOs.stream()
+                .collect(Collectors.toMap(
+                        RawConditionToSelfGlobalConditionTO::getRawConditionId,
+                        RawConditionToSelfGlobalConditionTO::getGlobalConditionId));
+        log.debug("Raw condition IDs retrieved ({} entries) in {} ms",
+                rawCondIdToGlobalCondIds.size(), System.currentTimeMillis() - startTimeRawConds);
+
+        if (rawCondIdToGlobalCondIds.isEmpty()) {
+            log.debug("No raw conditions matched the requested global conditions; returning empty result");
+            return log.traceExit(new HashMap<>());
         }
-        if (limit != null && limit <= 0) {
+
+        //3. retrieve the rawExpressionCalls filtering on rawConditionIds and datatypes
+        ObservedExpressionDAO obsExprDAO = this.getDaoManager().getObservedExpressionDAO();
+        // generate the filter from all info we already have
+        //XXX: Could be created directly when instantiating the ExpressionCallLoader, Didn't want to touch the Loader while testing the new approach
+        DAOObservedExpressionFilter obsExprFilter = new DAOObservedExpressionFilter(this.geneMap.keySet(),
+                queriedDaoDataTypes, rawCondIdToGlobalCondIds.keySet());
+
+        // first key -> bgeeGeneId, 2nd key globalConditionId
+        long startTimeObsExpr = System.currentTimeMillis();
+        List<ObservedExpressionTO> observedExpressionTOs =
+            obsExprDAO.getObservedExpression(obsExprFilter, null).stream().toList();
+        Set<Integer> unmatchedRawCondIds = observedExpressionTOs.stream()
+            .map(ObservedExpressionTO::getConditionId)
+            .filter(id -> !rawCondIdToGlobalCondIds.containsKey(id))
+            .collect(Collectors.toSet());
+        if (!unmatchedRawCondIds.isEmpty()) {
+            throw log.throwing(new IllegalStateException(
+                "Observed expression rows reference raw condition IDs missing from "
+                + "raw-to-global mapping: " + unmatchedRawCondIds));
+        }
+        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneToGlobalCondIdToRawExpressionCall =
+            observedExpressionTOs.stream()
+                    .collect(Collectors.groupingBy(
+                        ObservedExpressionTO::getBgeeGeneId,
+                        Collectors.groupingBy(
+                            to -> rawCondIdToGlobalCondIds.get(to.getConditionId()),
+                            Collectors.toSet()
+                        )
+                    ));
+        log.debug("Observed expression calls retrieved ({} genes) in {} ms",
+                geneToGlobalCondIdToRawExpressionCall.size(), System.currentTimeMillis() - startTimeObsExpr);
+
+        //5. use the topological order and the map<condId, Set<directParentCondId>> to propagate the calls.
+        //   filterConditionIds restricts score computation to the queried conditions;
+        //   propagation stops at the filter boundary so no wasteful scores are computed
+        //   for ancestor conditions (e.g. "nervous system" when only "brain" was requested).
+        long startTimePropagation = System.currentTimeMillis();
+        Map<Gene, Map<Integer, OTFExpressionCall>> propagatedExpressionCalls = propagateCalls(
+                geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds);
+        log.debug("Calls propagated ({} genes) in {} ms",
+                propagatedExpressionCalls.size(), System.currentTimeMillis() - startTimePropagation);
+
+        // filter condition needed for on-the-fly propagation but not requested by the condition filters
+        // happens when a condition parameter value is provided for anat. entity, cell type of dev. stage
+        // but child terms are not expected.
+        // ALSO filter on the requested summary call type (present/absent) if any, and discard
+        // the calls that are redundant with a more precise one if requested.
+        //TODO: benchmark advantage of doing these steps during propagation. It would probably be harder to debug
+        //      but would be faster
+        Predicate<OTFExpressionCall> condFilter = OTFExpressionCallFilterEngine.compile(
+                this.processedFilter.getSourceFilter().getConditionFilters());
+        boolean filterRedundantCalls = this.processedFilter.getSourceFilter()
+                .isRedundantAncestorCallsFilter();
+        boolean specificCallTypeRequested = this.isSpecificSummaryCallTypeRequested();
+        //The summary call type and quality of a call are inferred once and reused: both
+        //the filtering on the requested call type and the identification of the redundant calls
+        //need them. They are not inferred at all when neither does.
+        boolean callTypeQualityNeeded = filterRedundantCalls || specificCallTypeRequested;
+        //Whether calls observed in the condition itself, or on the contrary calls only propagated
+        //from sub-conditions, were requested ({@code null} when both are wanted). The propagation
+        //state of a call already answers that question, for the requested combination of condition
+        //parameters: the conditions the observations are aggregated into are precisely
+        //the conditions of that combination. An observation requested over another combination
+        //is therefore not something the propagation can answer.
+        Boolean requestedObservedData = this.processedFilter.getSourceFilter()
+                .getCallObservedDataFilter();
+        if (requestedObservedData != null &&
+                !this.processedFilter.getSourceFilter().getCallObservedDataCondParams().equals(
+                        this.processedFilter.getSourceFilter().getCondParamCombination())) {
+            throw log.throwing(new UnsupportedOperationException("The filtering on observed data "
+                    + "is only supported over the requested combination of condition parameters ("
+                    + this.processedFilter.getSourceFilter().getCondParamCombination()
+                    + "), requested over: "
+                    + this.processedFilter.getSourceFilter().getCallObservedDataCondParams()));
+        }
+
+        //The calls of a gene are returned in a defined order, by decreasing expression score:
+        //callers paginate and cache this result (see CommandExpressionSupport
+        //#loadExprCallResults(ExpressionCallLoader, int, int)), which an unspecified order would
+        //make incoherent from one request to the next. It is only a default: presenting the calls
+        //in another order, such as by increasing score for absent calls, is the business of
+        //the caller, which knows what it displays.
+        Comparator<OTFExpressionCall> callComparator = Comparator.comparing(
+                OTFExpressionCall::getExpressionScore,
+                Comparator.nullsLast(Comparator.reverseOrder()));
+
+        long startTimeFiltering = System.currentTimeMillis();
+        Map<Gene, List<OTFExpressionCall>> sortedCalls = new HashMap<>();
+        for (Entry<Gene, Map<Integer, OTFExpressionCall>> geneEntry:
+                propagatedExpressionCalls.entrySet()) {
+            Map<Integer, OTFExpressionCall> keptCalls = new HashMap<>();
+            Map<Integer, Entry<ExpressionSummary, SummaryQuality>> keptCallTypeQualities =
+                    filterRedundantCalls? new HashMap<>(): null;
+
+            for (Entry<Integer, OTFExpressionCall> callEntry: geneEntry.getValue().entrySet()) {
+                OTFExpressionCall call = callEntry.getValue();
+                if (!condFilter.test(call)) {
+                    continue;
+                }
+                //A call includes observed data when the gene was observed in the condition itself,
+                //whatever the observations made in its sub-conditions.
+                if (requestedObservedData != null && !requestedObservedData.equals(
+                        call.getDataPropagation().isIncludingObservedData())) {
+                    continue;
+                }
+                Entry<ExpressionSummary, SummaryQuality> callTypeQuality = !callTypeQualityNeeded?
+                        null: this.inferSummaryCallTypeAndQuality(call);
+                //A call to which no summary call type applies is only discarded when a specific
+                //call type was requested: with no such request it is returned as before,
+                //and the response simply carries no expression state for it.
+                if (specificCallTypeRequested &&
+                        !this.matchesRequestedSummaryCallType(callTypeQuality)) {
+                    continue;
+                }
+                keptCalls.put(callEntry.getKey(), call);
+                if (keptCallTypeQualities != null && callTypeQuality != null) {
+                    keptCallTypeQualities.put(callEntry.getKey(), callTypeQuality);
+                }
+            }
+
+            if (filterRedundantCalls) {
+                Set<Integer> redundantCondIds = identifyRedundantCalls(
+                        geneEntry.getValue().keySet(), keptCallTypeQualities, condGraphCache);
+                log.debug("Discarding {} redundant call(s) out of {} for gene {}",
+                        redundantCondIds.size(), keptCalls.size(), geneEntry.getKey().getGeneId());
+                keptCalls.keySet().removeAll(redundantCondIds);
+            }
+
+            sortedCalls.put(geneEntry.getKey(), keptCalls.values().stream()
+                    .sorted(callComparator)
+                    .toList());
+        }
+        log.debug("Calls filtered and ordered in {} ms",
+                System.currentTimeMillis() - startTimeFiltering);
+
+        return log.traceExit(sortedCalls);
+    }
+
+    /**
+     * @return  A {@code boolean} that is {@code true} if a specific summary call type
+     *          was requested, so that the calls that do not match it must be discarded.
+     */
+    private boolean isSpecificSummaryCallTypeRequested() {
+        log.traceEntry();
+        Map<ExpressionSummary, SummaryQuality> requestedSummaryCallTypeQualityFilter =
+                this.processedFilter.getSourceFilter().getSummaryCallTypeQualityFilter();
+        return log.traceExit(requestedSummaryCallTypeQualityFilter != null &&
+                !requestedSummaryCallTypeQualityFilter.isEmpty() &&
+                !requestedSummaryCallTypeQualityFilter.equals(ExpressionCallFilter2.ALL_CALLS));
+    }
+    /**
+     * @param call  The {@code OTFExpressionCall} to infer the summary call type and quality of.
+     * @return      An {@code Entry} where the key is the {@code ExpressionSummary} and the value
+     *              the {@code SummaryQuality} of {@code call}, {@code null} if no summary call
+     *              type applies to it.
+     */
+    private Entry<ExpressionSummary, SummaryQuality> inferSummaryCallTypeAndQuality(
+            OTFExpressionCall call) {
+        log.traceEntry("{}", call);
+        return log.traceExit(OTFExpressionCallFilterEngine.inferSummaryCallTypeAndQuality(call,
+                this.processedFilter.getPresentHighThreshold(),
+                this.processedFilter.getPresentLowThreshold(),
+                this.processedFilter.getAbsentLowThreshold(),
+                this.processedFilter.getAbsentHighThreshold()));
+    }
+    /**
+     * @param callTypeQuality   The summary call type and quality inferred for a call,
+     *                          {@code null} if none applies to it.
+     * @return                  A {@code boolean} that is {@code true} if the call is of
+     *                          a requested summary call type, with a quality at least as good
+     *                          as the one requested for that call type.
+     */
+    private boolean matchesRequestedSummaryCallType(
+            Entry<ExpressionSummary, SummaryQuality> callTypeQuality) {
+        log.traceEntry("{}", callTypeQuality);
+
+        if (callTypeQuality == null) {
+            return log.traceExit(false);
+        }
+        //(the SummaryQuality enum is declared from the lowest to the highest quality, so that
+        //its compareTo can be used)
+        boolean match = this.processedFilter.getSourceFilter().getSummaryCallTypeQualityFilter()
+                .entrySet().stream()
+                .anyMatch(e -> callTypeQuality.getKey().equals(e.getKey()) &&
+                        callTypeQuality.getValue().compareTo(e.getValue()) >= 0);
+
+        return log.traceExit(match);
+    }
+
+    /**
+     * Identify the calls that are redundant with a more precise call: a call is redundant when
+     * one of the conditions more precise than its own carries a call of the same
+     * {@code ExpressionSummary} with a {@code SummaryQuality} at least as good.
+     * <p>
+     * The rule applies to present and to absent calls alike, and always discards the less precise
+     * call. It follows the same logic used for filtering redundant calls before the OTF propagation.
+     * For a present call the more precise call is the one
+     * the expression was propagated from, for an absent call it is the one carrying the most
+     * convincing absence. A call is never discarded in favour of a less confident one, so that
+     * the surviving call always is the strongest statement available about the most precise
+     * condition.
+     * <p>
+     * Only the calls of {@code condIdToCallTypeQuality} are candidates, and only they make
+     * another call redundant: a call already discarded by the condition filters or by
+     * the requested call type is not in there, so every discarded call does have a more precise
+     * counterpart in the result. A condition that is not a candidate still relays the calls
+     * of its own sub-conditions, so that a chain of conditions collapses whatever the calls
+     * it holds in between.
+     *
+     * @param propagatedCondIds         A {@code Set} of {@code Integer}s that are the IDs of all
+     *                                  the global conditions a call was propagated to for one
+     *                                  gene, candidates or not.
+     * @param condIdToCallTypeQuality   The summary call type and quality of the candidates,
+     *                                  by global condition ID.
+     * @param condGraphCache            The {@code ConditionGraphCache} holding the relations
+     *                                  between the conditions.
+     * @return                          A {@code Set} of {@code Integer}s that are the IDs of
+     *                                  the global conditions whose call is redundant, always
+     *                                  candidates.
+     */
+    //Package-private rather than private to allow unit testing over synthetic condition graphs
+    //(see ExpressionCallLoaderPropagationTest).
+    Set<Integer> identifyRedundantCalls(Set<Integer> propagatedCondIds,
+            Map<Integer, Entry<ExpressionSummary, SummaryQuality>> condIdToCallTypeQuality,
+            ConditionGraphCache condGraphCache) {
+        log.traceEntry("{}, {}, {}", propagatedCondIds, condIdToCallTypeQuality, condGraphCache);
+
+        //The conditions are visited children before parents, so that a condition already knows
+        //the best quality of each call type carried by its sub-conditions when it is visited:
+        //the index of a condition is its position in the topological order of the graph.
+        List<Integer> condIdsToVisit = new ArrayList<>(propagatedCondIds);
+        condIdsToVisit.sort(Comparator.comparingInt(condGraphCache::getIndex));
+
+        //The best quality of a candidate present call, respectively absent call, found in
+        //the sub-conditions of a condition. An entry is created when a descendant contributes
+        //to a condition, and removed when that condition is visited: the maps only ever hold
+        //the conditions not visited yet that have a candidate below them.
+        Map<Integer, SummaryQuality> bestPresentQualBelow = new HashMap<>();
+        Map<Integer, SummaryQuality> bestAbsentQualBelow = new HashMap<>();
+        Set<Integer> redundantCondIds = new HashSet<>();
+
+        for (int condId: condIdsToVisit) {
+            SummaryQuality presentQualBelow = bestPresentQualBelow.remove(condId);
+            SummaryQuality absentQualBelow = bestAbsentQualBelow.remove(condId);
+            Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
+                    condIdToCallTypeQuality.get(condId);
+            boolean present = callTypeQuality != null &&
+                    ExpressionSummary.EXPRESSED.equals(callTypeQuality.getKey());
+            SummaryQuality ownQual = callTypeQuality == null? null: callTypeQuality.getValue();
+
+            if (ownQual != null) {
+                SummaryQuality qualBelow = present? presentQualBelow: absentQualBelow;
+                //(the SummaryQuality enum is declared from the lowest to the highest quality,
+                //so that its compareTo can be used)
+                if (qualBelow != null && qualBelow.compareTo(ownQual) >= 0) {
+                    redundantCondIds.add(condId);
+                }
+            }
+
+            //What this condition contributes to its parents: the best qualities carried by its
+            //sub-conditions, and its own call if it is a candidate, redundant or not. Passing up
+            //the call of a redundant condition changes nothing, since it is redundant with
+            //a call at least as good that is passed up as well.
+            SummaryQuality presentQualUp = present?
+                    bestQuality(presentQualBelow, ownQual): presentQualBelow;
+            SummaryQuality absentQualUp = present?
+                    absentQualBelow: bestQuality(absentQualBelow, ownQual);
+            if (presentQualUp == null && absentQualUp == null) {
+                continue;
+            }
+            int[] parentCondIds = condGraphCache.getGlobalCondToDirectAncestors().get(condId);
+            if (parentCondIds == null) {
+                continue;
+            }
+            for (int parentCondId: parentCondIds) {
+                //A parent the propagation did not reach is outside the requested conditions,
+                //and so is everything only reachable through it: it can neither be a candidate
+                //nor relay this condition to a propagated ancestor.
+                if (!propagatedCondIds.contains(parentCondId)) {
+                    continue;
+                }
+                if (presentQualUp != null) {
+                    bestPresentQualBelow.merge(parentCondId, presentQualUp,
+                            ExpressionCallLoader::bestQuality);
+                }
+                if (absentQualUp != null) {
+                    bestAbsentQualBelow.merge(parentCondId, absentQualUp,
+                            ExpressionCallLoader::bestQuality);
+                }
+            }
+        }
+
+        return log.traceExit(redundantCondIds);
+    }
+    /**
+     * @return  The best of the two {@code SummaryQuality}s, {@code null}-tolerant:
+     *          a {@code null} stands for the absence of quality, and loses against any quality.
+     */
+    private static SummaryQuality bestQuality(SummaryQuality qual1, SummaryQuality qual2) {
+        if (qual1 == null) {
+            return qual2;
+        }
+        if (qual2 == null) {
+            return qual1;
+        }
+        return qual1.compareTo(qual2) >= 0? qual1: qual2;
+    }
+
+    /**
+     * @return  A {@code Map} where keys are {@code Gene}s, the associated value being
+     *          a {@code Map} where keys are {@code Integer}s that are global condition IDs,
+     *          the associated value being the {@code OTFExpressionCall} propagated to that
+     *          condition. Whether a call is redundant with a more precise one is not assessed
+     *          here, it needs the summary call types: see {@link #identifyRedundantCalls(
+     *          Set, Map, ConditionGraphCache)}.
+     */
+    //Package-private rather than private to allow unit testing of the propagation
+    //over synthetic condition graphs (see ExpressionCallLoaderPropagationTest).
+    Map<Gene, Map<Integer, OTFExpressionCall>> propagateCalls(
+            Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneToGlobalCondIdToRawExpressionCall,
+            ConditionGraphCache condGraphCache, Set<Integer> filterConditionIds) {
+        log.traceEntry("{}, {}, {}", geneToGlobalCondIdToRawExpressionCall, condGraphCache,
+                filterConditionIds);
+
+        int condCount = condGraphCache.getConditionCount();
+        //Dense view of the filter, so that the propagation recognises the filter boundary with
+        //an array read rather than with a lookup in a Set of boxed IDs. Left null when
+        //the propagation is not restricted.
+        boolean[] inFilter = null;
+        if (!filterConditionIds.isEmpty()) {
+            inFilter = new boolean[condCount];
+            for (int filterCondId: filterConditionIds) {
+                int filterIndex = condGraphCache.getIndex(filterCondId);
+                if (filterIndex >= 0) {
+                    inFilter[filterIndex] = true;
+                }
+            }
+        }
+        //Scratch buffers reused for every gene of this call: a gene only touches a small part
+        //of them, and the stamps make the reset proportional to what was touched rather than
+        //to the size of the graph.
+        PropagationBuffers buffers = new PropagationBuffers(condCount);
+
+        Map<Gene, Map<Integer, OTFExpressionCall>> geneToExpressionCall = new HashMap<>();
+
+        // For each gene independently
+        for (Map.Entry<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneEntry :
+                geneToGlobalCondIdToRawExpressionCall.entrySet()) {
+            long startTimeGene = System.currentTimeMillis();
+
+            //the Id of the gene for which we propagate calls
+            Integer geneId = geneEntry.getKey();
+            //Every gene reached by the propagation must have been identified by the processed
+            //filter. A missing one would silently produce calls without gene, so we fail instead.
+            Gene propagatedGene = geneMap.get(geneId);
+            if (propagatedGene == null) {
+                throw log.throwing(new IllegalStateException("No Gene for the Bgee gene ID "
+                        + geneId + " reached by the propagation"));
+            }
+
+            buffers.startGene();
+            //Aggregate the observations into every condition they contribute to, before walking
+            //the graph: each observed condition contributes to each of its ancestors exactly
+            //once, whatever the number of paths connecting them.
+            for (Entry<Integer, Set<ObservedExpressionTO>> observedEntry:
+                    geneEntry.getValue().entrySet()) {
+                int observedIndex = condGraphCache.getIndex(observedEntry.getKey());
+                if (observedIndex < 0) {
+                    //A condition that is part of no relation is absent from the topological
+                    //order: it has no ancestor and produces no call.
+                    continue;
+                }
+                buffers.accumulateUpward(condGraphCache, inFilter, observedIndex,
+                        ObservedCondAggregate.of(observedEntry.getValue()));
+            }
+
+            //The conditions touched by the accumulation are exactly the conditions to process:
+            //the observed ones, and their ancestors within the filter. Because the index of
+            //a condition is its position in the topological order, sorting their indexes walks
+            //them children before parents, and no condition outside that set is ever visited.
+            int[] toProcess = buffers.sortedTouchedIndexes();
+            int toProcessCount = buffers.touchedCount;
+            Map<Integer, OTFExpressionCall> geneCalls = new HashMap<>();
+            for (int i = 0; i < toProcessCount; i++) {
+                int index = toProcess[i];
+                int condId = condGraphCache.getCondId(index);
+                //Every condition reached by the propagation must have been identified by
+                //the processed filter: the conditions queried and the ancestors the propagation
+                //may reach are both bounded by conditionMap. A missing one would silently
+                //produce a call without condition, so we fail instead.
+                Condition2 propagatedCond = conditionMap.get(condId);
+                if (propagatedCond == null) {
+                    throw log.throwing(new IllegalStateException("No Condition2 for the global "
+                            + "condition ID " + condId + " reached by the propagation"));
+                }
+                OTFExpressionCall expressionCall = generateOTFExpressionCall(propagatedGene,
+                        propagatedCond, buffers, index, condGraphCache);
+                //The call is held in the buffers for the ancestors of that condition to read
+                //while computing their own, and returned to the caller.
+                buffers.calls[index] = expressionCall;
+                geneCalls.put(condId, expressionCall);
+            }
+
+            geneToExpressionCall.put(propagatedGene, geneCalls);
+            log.debug("Propagation for gene {} completed in {} ms, {} calls generated",
+                    geneId, System.currentTimeMillis() - startTimeGene, geneCalls.size());
+        }
+
+        return log.traceExit(geneToExpressionCall);
+    }
+
+    /**
+     * 
+     * @param unsortedCalls                 A {@code Set} of {@code ExpressionCallOTF} that contains all calls to filter and/or order
+     * @param keepOnlyParentsMoreExpressed  A boolean used to filter (true) or not filter (false) calls that have a descendant call with
+     *                                      higher or equal expression score. It allows to avoid showing lots of generic terms
+     * @param orderingAttribute
+     * @return
+     */
+    //TODO: investigate why keepOnlyParentsMoreExpressed is useful and choosing the summary quality is not enough. SummaryQuality.SILVER allows to remove all
+    //      condition for which a gene does not have delf observation. The only calls this filtering removes compared to SummaryQuality.BRONZE are the calls
+    //      that have self expression lower than the descendant condition. Isn't it an interesting info to provide?
+//    public List<OTFExpressionCall> filterAndOrderExpressionCalls(Set<OTFExpressionCall> unsortedCalls, boolean keepOnlyParentsMoreExpressed,
+//            EnumSet<OTFExpressionCall.OrderingAttribute> orderingAttribute) {
+//        log.traceEntry("{}, {}, {}", unsortedCalls, keepOnlyParentsMoreExpressed, orderingAttribute);
+//        
+//        return null;
+//    }
+
+    /**
+     * The observations of a gene in one condition, reduced once into the quantities the
+     * propagation sums. The reduction is what allows the upward walk to contribute to
+     * an ancestor with a handful of additions, rather than iterating the observations and
+     * multiplying again for each of the ancestors reached.
+     * <p>
+     * Weights are stored as {@code bigint} and scores as {@code decimal(9,2)}, so summing
+     * the weights as {@code long}, and the scores as their unscaled value at scale 2, is exact:
+     * the quantities aggregated over thousands of conditions are the very same as the ones
+     * a {@code BigDecimal} accumulation would produce. Only the p-values, stored as
+     * {@code decimal(31,30)}, need {@code BigDecimal} to be summed without any loss.
+     */
+    private static final class ObservedCondAggregate {
+        /**
+         * @param observations  The observations made in one condition for one gene.
+         * @return              An {@code ObservedCondAggregate} reducing them. Never {@code null}:
+         *                      observations that all have a number of observations of 0 yield
+         *                      an aggregate contributing nothing, so that the condition still
+         *                      produces a call, as it did when the observations were aggregated
+         *                      one condition at a time.
+         */
+        private static ObservedCondAggregate of(Collection<ObservedExpressionTO> observations) {
+            BigDecimal pValueByWeightSum = BigDecimal.ZERO;
+            BigDecimal trustedPValueByWeightSum = BigDecimal.ZERO;
+            long pValueWeightSum = 0;
+            long trustedPValueWeightSum = 0;
+            long scoreByWeightSumUnscaled = 0;
+            long weightSum = 0;
+            int observationCount = 0;
+            int dataTypeMask = 0;
+
+            for (ObservedExpressionTO obs: observations) {
+                for (int dataTypeIndex = 0; dataTypeIndex < 4; dataTypeIndex++) {
+                    Integer numberObs = null;
+                    BigDecimal pValue = null;
+                    BigDecimal score = null;
+                    BigDecimal weight = null;
+                    DataType dataType = null;
+                    switch (dataTypeIndex) {
+                    case 0:
+                        numberObs = obs.getBulkNumberObs();
+                        pValue = obs.getBulkPValue();
+                        score = obs.getBulkScore();
+                        weight = obs.getBulkWeight();
+                        dataType = DataType.RNA_SEQ;
+                        break;
+                    case 1:
+                        numberObs = obs.getInSituNumberObs();
+                        pValue = obs.getInSituPValue();
+                        score = obs.getInSituScore();
+                        weight = obs.getInSituWeight();
+                        dataType = DataType.IN_SITU;
+                        break;
+                    case 2:
+                        numberObs = obs.getFullLengthNumberObs();
+                        pValue = obs.getFullLengthPValue();
+                        score = obs.getFullLengthScore();
+                        weight = obs.getFullLengthWeight();
+                        dataType = DataType.SC_RNA_SEQ;
+                        break;
+                    default:
+                        numberObs = obs.getDropletNumberObs();
+                        pValue = obs.getDropletPValue();
+                        score = obs.getDropletScore();
+                        weight = obs.getDropletWeight();
+                        dataType = DataType.SC_RNA_SEQ;
+                        break;
+                    }
+                    if (numberObs == null || numberObs == 0) {
+                        continue;
+                    }
+                    //Exact: the weight is an integer, and the product of a score of scale 2
+                    //by an integer is of scale 2. An input that would not fit these assumptions
+                    //makes longValueExact() or setScale() throw, rather than silently changing
+                    //the aggregated values.
+                    long weightValue = weight.longValueExact();
+                    long scoreByWeightUnscaled = Math.multiplyExact(
+                            score.setScale(2, RoundingMode.UNNECESSARY).unscaledValue()
+                                .longValueExact(),
+                            weightValue);
+                    BigDecimal pValueByWeight = pValue.multiply(weight);
+
+                    pValueByWeightSum = pValueByWeightSum.add(pValueByWeight);
+                    pValueWeightSum = Math.addExact(pValueWeightSum, weightValue);
+                    //Only the data types trusted for absent calls feed the trusted p-value:
+                    //an absent call cannot be better than BRONZE when it is not supported
+                    //by any of them.
+                    if (dataType.isTrustedForAbsentCalls()) {
+                        trustedPValueByWeightSum = trustedPValueByWeightSum.add(pValueByWeight);
+                        trustedPValueWeightSum = Math.addExact(trustedPValueWeightSum, weightValue);
+                    }
+                    scoreByWeightSumUnscaled = Math.addExact(scoreByWeightSumUnscaled,
+                            scoreByWeightUnscaled);
+                    weightSum = Math.addExact(weightSum, weightValue);
+                    observationCount += numberObs;
+                    dataTypeMask |= 1 << dataType.ordinal();
+                }
+            }
+            return new ObservedCondAggregate(pValueByWeightSum, trustedPValueByWeightSum,
+                    pValueWeightSum, trustedPValueWeightSum, scoreByWeightSumUnscaled, weightSum,
+                    observationCount, dataTypeMask);
+        }
+
+        private final BigDecimal pValueByWeightSum;
+        private final BigDecimal trustedPValueByWeightSum;
+        private final long pValueWeightSum;
+        private final long trustedPValueWeightSum;
+        private final long scoreByWeightSumUnscaled;
+        private final long weightSum;
+        private final int observationCount;
+        private final int dataTypeMask;
+
+        private ObservedCondAggregate(BigDecimal pValueByWeightSum,
+                BigDecimal trustedPValueByWeightSum, long pValueWeightSum,
+                long trustedPValueWeightSum, long scoreByWeightSumUnscaled, long weightSum,
+                int observationCount, int dataTypeMask) {
+            this.pValueByWeightSum = pValueByWeightSum;
+            this.trustedPValueByWeightSum = trustedPValueByWeightSum;
+            this.pValueWeightSum = pValueWeightSum;
+            this.trustedPValueWeightSum = trustedPValueWeightSum;
+            this.scoreByWeightSumUnscaled = scoreByWeightSumUnscaled;
+            this.weightSum = weightSum;
+            this.observationCount = observationCount;
+            this.dataTypeMask = dataTypeMask;
+        }
+    }
+
+    /**
+     * The quantities aggregated over each condition and all its sub-conditions, from which
+     * the calls of one gene are produced.
+     * <p>
+     * The condition graph is a DAG, not a tree: a same condition can be reached from an ancestor
+     * through several distinct paths. Aggregating by summing the aggregates of the direct
+     * children would then count such a condition once per path. {@link #accumulateUpward(
+     * ConditionGraphCache, boolean[], int, ObservedCondAggregate)} walks up from each observed
+     * condition instead, and contributes to each of its ancestors exactly once.
+     * <p>
+     * The quantities are held in arrays indexed by condition index (see
+     * {@code ConditionGraphCache#getIndex(int)}), and not in a {@code Map} keyed by condition ID:
+     * contributing to an ancestor then costs a few additions into arrays, with no boxing,
+     * no hash lookup and no allocation. This matters because the propagation of a single gene
+     * contributes to the order of a million condition-ancestor pairs.
+     * <p>
+     * The arrays are sized for the whole graph but only the conditions touched by the current
+     * gene are ever read or written, so a same instance is reused for all the genes propagated
+     * together: {@link #startGene()} only has to invalidate the previous stamp.
+     */
+    private static final class PropagationBuffers {
+        private static final byte SELF_OBSERVATION = 1;
+        private static final byte DESCENDANT_OBSERVATION = 2;
+
+        private final BigDecimal[] pValueByWeightSum;
+        private final BigDecimal[] trustedPValueByWeightSum;
+        private final long[] pValueWeightSum;
+        private final long[] trustedPValueWeightSum;
+        private final long[] scoreByWeightSumUnscaled;
+        private final long[] weightSum;
+        private final int[] observationCount;
+        private final int[] dataTypeMask;
+        private final byte[] flags;
+        private final OTFExpressionCall[] calls;
+
+        /**
+         * The indexes of the conditions touched by the gene being propagated. Sorted in place
+         * by {@link #sortedTouchedIndexes()} once the accumulation is over.
+         */
+        private final int[] touched;
+        private int touchedCount;
+        /**
+         * {@link #geneStamp} holds, for each condition, the stamp of the last gene that touched
+         * it. Comparing it to {@link #currentGeneStamp} tells whether the values held for
+         * that condition belong to the gene being propagated, which makes starting a new gene
+         * a single increment instead of a reset of the whole arrays.
+         */
+        private final int[] geneStamp;
+        private int currentGeneStamp;
+        /**
+         * Same mechanism as {@link #geneStamp}, to visit an ancestor exactly once while walking
+         * up from one observed condition.
+         */
+        private final int[] visitStamp;
+        private int currentVisitStamp;
+        /**
+         * The stack of the upward walk. Sized for the whole graph, which no walk can exceed
+         * since a condition is pushed at most once.
+         */
+        private final int[] stack;
+
+        private PropagationBuffers(int condCount) {
+            this.pValueByWeightSum = new BigDecimal[condCount];
+            this.trustedPValueByWeightSum = new BigDecimal[condCount];
+            this.pValueWeightSum = new long[condCount];
+            this.trustedPValueWeightSum = new long[condCount];
+            this.scoreByWeightSumUnscaled = new long[condCount];
+            this.weightSum = new long[condCount];
+            this.observationCount = new int[condCount];
+            this.dataTypeMask = new int[condCount];
+            this.flags = new byte[condCount];
+            this.calls = new OTFExpressionCall[condCount];
+            this.touched = new int[condCount];
+            this.geneStamp = new int[condCount];
+            this.visitStamp = new int[condCount];
+            this.stack = new int[condCount];
+        }
+
+        /**
+         * Start propagating a new gene. The values held for the previous gene are not erased:
+         * they are invalidated by the new stamp, and overwritten when a condition is touched
+         * again (see {@link #touch(int)}).
+         */
+        private void startGene() {
+            this.touchedCount = 0;
+            this.currentGeneStamp++;
+        }
+        /**
+         * @param index An {@code int} that is the index of a condition.
+         * @return      {@code true} if the values held for that condition belong to the gene
+         *              being propagated.
+         */
+        private boolean isTouched(int index) {
+            return this.geneStamp[index] == this.currentGeneStamp;
+        }
+        /**
+         * Make the values held for a condition belong to the gene being propagated, resetting
+         * them if they do not yet.
+         */
+        private void touch(int index) {
+            if (this.isTouched(index)) {
+                return;
+            }
+            this.geneStamp[index] = this.currentGeneStamp;
+            this.touched[this.touchedCount++] = index;
+            this.pValueByWeightSum[index] = BigDecimal.ZERO;
+            this.trustedPValueByWeightSum[index] = BigDecimal.ZERO;
+            this.pValueWeightSum[index] = 0;
+            this.trustedPValueWeightSum[index] = 0;
+            this.scoreByWeightSumUnscaled[index] = 0;
+            this.weightSum[index] = 0;
+            this.observationCount[index] = 0;
+            this.dataTypeMask[index] = 0;
+            this.flags[index] = 0;
+            this.calls[index] = null;
+        }
+
+        /**
+         * Contribute the observations made in one condition to that condition and to all
+         * its ancestors within the filter, each of them exactly once.
+         *
+         * @param graph             The {@code ConditionGraphCache} to walk up.
+         * @param inFilter          A {@code boolean[]} telling, for each condition index, whether
+         *                          the propagation is allowed to reach it, {@code null} when
+         *                          it is not restricted.
+         * @param observedIndex     An {@code int} that is the index of the condition
+         *                          the observations were made in.
+         * @param aggregate         The {@code ObservedCondAggregate} of those observations.
+         */
+        private void accumulateUpward(ConditionGraphCache graph, boolean[] inFilter,
+                int observedIndex, ObservedCondAggregate aggregate) {
+            this.currentVisitStamp++;
+            this.visitStamp[observedIndex] = this.currentVisitStamp;
+            this.contribute(observedIndex, aggregate, true);
+
+            int stackSize = 0;
+            this.stack[stackSize++] = observedIndex;
+            while (stackSize > 0) {
+                int index = this.stack[--stackSize];
+                for (int parentIndex: graph.getDirectAncestorIndexes(index)) {
+                    //Propagation stops at the filter boundary: an ancestor outside the filter
+                    //(e.g. "nervous system" when brain was queried) is not reached, and neither
+                    //is anything only reachable through it.
+                    if (inFilter != null && !inFilter[parentIndex]) {
+                        continue;
+                    }
+                    //Already contributed to through another path
+                    if (this.visitStamp[parentIndex] == this.currentVisitStamp) {
+                        continue;
+                    }
+                    this.visitStamp[parentIndex] = this.currentVisitStamp;
+                    this.contribute(parentIndex, aggregate, false);
+                    this.stack[stackSize++] = parentIndex;
+                }
+            }
+        }
+        /**
+         * @param self  Whether the condition being contributed to is the one the observations
+         *              were made in, or one of its ancestors.
+         */
+        private void contribute(int index, ObservedCondAggregate aggregate, boolean self) {
+            this.touch(index);
+            this.flags[index] |= self? SELF_OBSERVATION: DESCENDANT_OBSERVATION;
+            if (aggregate.dataTypeMask == 0) {
+                //Nothing was observed, only the propagation state is contributed
+                return;
+            }
+            this.pValueByWeightSum[index] = this.pValueByWeightSum[index]
+                    .add(aggregate.pValueByWeightSum);
+            this.trustedPValueByWeightSum[index] = this.trustedPValueByWeightSum[index]
+                    .add(aggregate.trustedPValueByWeightSum);
+            this.pValueWeightSum[index] = Math.addExact(this.pValueWeightSum[index],
+                    aggregate.pValueWeightSum);
+            this.trustedPValueWeightSum[index] = Math.addExact(this.trustedPValueWeightSum[index],
+                    aggregate.trustedPValueWeightSum);
+            this.scoreByWeightSumUnscaled[index] = Math.addExact(
+                    this.scoreByWeightSumUnscaled[index], aggregate.scoreByWeightSumUnscaled);
+            this.weightSum[index] = Math.addExact(this.weightSum[index], aggregate.weightSum);
+            this.observationCount[index] += aggregate.observationCount;
+            this.dataTypeMask[index] |= aggregate.dataTypeMask;
+        }
+
+        /**
+         * @return  The {@code int[]} of the indexes touched by the gene being propagated, sorted
+         *          in ascending order, which is the topological order, children before parents.
+         *          Only its {@link #touchedCount} first elements are meaningful.
+         */
+        private int[] sortedTouchedIndexes() {
+            Arrays.sort(this.touched, 0, this.touchedCount);
+            return this.touched;
+        }
+        /**
+         * @return  The {@code OTFExpressionCall} already generated for a condition of the gene
+         *          being propagated, {@code null} if it has none. Values left by a previously
+         *          propagated gene are never returned.
+         */
+        private OTFExpressionCall getCall(int index) {
+            return this.isTouched(index)? this.calls[index]: null;
+        }
+    }
+
+    /**
+     * Generate the call of one condition, from the quantities already aggregated over that
+     * condition and all its sub-conditions, and from the calls of its direct sub-conditions.
+     * The aggregated quantities are not recomputed from the calls of the sub-conditions, which
+     * would count a sub-condition reachable through several paths once per path. The calls of
+     * the direct sub-conditions are only used for the "best descendant" values, which are minima
+     * and maxima, and are therefore insensitive to a condition being seen several times.
+     */
+    private OTFExpressionCall generateOTFExpressionCall(Gene gene, Condition2 cond,
+            PropagationBuffers buf, int index, ConditionGraphCache graph) {
+        log.traceEntry("{}, {}, {}, {}, {}", gene, cond, buf, index, graph);
+
+        if (!buf.isTouched(index)) {
             throw log.throwing(new IllegalArgumentException(
-                    "limit cannot be less than or equal to 0"));
+                    "No observation aggregated for the condition " + cond));
         }
-        if (limit != null && limit > LIMIT_MAX) {
-            throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
-                    + LIMIT_MAX));
-        }
-        long newOffset = offset == null? 0L: offset;
-        int newLimit = limit == null? LIMIT_MAX: limit;
 
-        //We obtain the results from the data source
-        ExpressionCallFilter2 callFilter = this.processedFilter.getSourceFilter();
-        EnumSet<CallService.Attribute> attrs = this.getAttributes(callFilter);
-        GlobalExpressionCallTOResultSet rs = this.globalExprCallDAO
-                .getGlobalExpressionCalls2(
-                        this.processedFilter.getDaoFilters(),
-                        convertServiceAttrToGlobalExprDAOAttr(attrs, callFilter),
-                        //for now we always order by bgeeGeneId, conditionId
-                        convertServiceOrderingAttrToGlobalExprDAOOrderingAttr(callFilter),
-                        newOffset,
-                        newLimit);
+        byte flags = buf.flags[index];
+        PropagationState dataPropagation = (flags & PropagationBuffers.SELF_OBSERVATION) != 0?
+                ((flags & PropagationBuffers.DESCENDANT_OBSERVATION) != 0?
+                        PropagationState.SELF_AND_DESCENDANT: PropagationState.SELF):
+                PropagationState.DESCENDANT;
 
-        //We iterate a first time the calls to retrieve the bgeeGeneIds and the condIds,
-        //and we store them along the way
-        Set<Integer> bgeeGeneIds = new HashSet<>();
-        Set<Integer> condIds = new HashSet<>();
-        List<GlobalExpressionCallTO> callTOs = new ArrayList<>();
-        while (rs.next()) {
-            GlobalExpressionCallTO callTO = rs.getTO();
-            if (callTO.getBgeeGeneId() != null) {
-                bgeeGeneIds.add(callTO.getBgeeGeneId());
+        BigDecimal bestDescendantAllDataTypePValue = null;
+        BigDecimal bestDescendantTrustedDataTypePValue = null;
+        BigDecimal bestDescendantExpressionScore = null;
+        BigDecimal bestDescendantExpressionScoreWeight = null;
+        for (int childIndex: graph.getDirectDescendantIndexes(index)) {
+            //A child always comes first in the topological order, and the conditions are
+            //processed in that order: a child with a call has necessarily been processed already.
+            if (childIndex >= index) {
+                throw log.throwing(new IllegalStateException("Condition index " + childIndex
+                        + " is not before its parent " + index + " — cycle or propagation bug"));
             }
-            if (callTO.getConditionId() != null) {
-                condIds.add(callTO.getConditionId());
+            OTFExpressionCall childCall = buf.getCall(childIndex);
+            if (childCall == null) {
+                continue;
             }
-            callTOs.add(callTO);
+            bestDescendantAllDataTypePValue = getBestDescendantValue(bestDescendantAllDataTypePValue,
+                    childCall.getAllDataTypePValue(), childCall.getBestDirectDescendantAllDataTypePValue());
+            bestDescendantTrustedDataTypePValue = getBestDescendantValue(bestDescendantTrustedDataTypePValue,
+                    childCall.getTrustedDataTypePValue(), childCall.getBestDirectDescendantTrustedDataTypePValue());
+            if (bestDescendantExpressionScore == null ||
+                    childCall.getExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
+                bestDescendantExpressionScore = childCall.getExpressionScore();
+                bestDescendantExpressionScoreWeight = childCall.getExpressionScoreWeight();
+            }
+            if (childCall.getBestDirectDescendantExpressionScore() != null &&
+                    childCall.getBestDirectDescendantExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
+                bestDescendantExpressionScore = childCall.getBestDirectDescendantExpressionScore();
+                bestDescendantExpressionScoreWeight = childCall.getBestDirectDescendantExpressionScoreWeight();
+            }
         }
-        //Now we update the geneMap and condMap
-        this.updateConditionMap(condIds);
-        this.updateGeneMap(bgeeGeneIds);
 
-        //Now we generate the final result
-        return log.traceExit(callTOs.stream()
-                .map(cTO -> this.callMapping.mapGlobalCallTOToExpressionCall(cTO,
-                        this.geneMap, this.conditionMap, callFilter,
-                        this.processedFilter.getMaxRankPerSpecies(), attrs))
-                .collect(Collectors.toList()));
-        
+        long weightSum = buf.weightSum[index];
+        BigDecimal allDataTypePValueWeight = BigDecimal.valueOf(buf.pValueWeightSum[index]);
+        BigDecimal trustedDataTypePValueWeight = BigDecimal.valueOf(buf.trustedPValueWeightSum[index]);
+        BigDecimal ultimateAllDataTypePValue = weightedMean(buf.pValueByWeightSum[index],
+                allDataTypePValueWeight);
+        BigDecimal ultimateTrustedDataTypePValue = weightedMean(buf.trustedPValueByWeightSum[index],
+                trustedDataTypePValueWeight);
+        if (weightSum == 0) {
+            log.warn("weightSum is zero for gene {} in condition {} - all observation counts are null/0. Defaulting score to 0.", gene, cond);
+        }
+        BigDecimal weightedAverageExpressionScore = weightSum == 0? BigDecimal.ZERO:
+                //The sum of the scores multiplied by their weight is held as its unscaled value
+                //at scale 2, the scale the scores are stored with.
+                BigDecimal.valueOf(buf.scoreByWeightSumUnscaled[index], 2)
+                    .divide(BigDecimal.valueOf(weightSum), 2, RoundingMode.HALF_UP);
+
+        EnumSet<DataType> supportingDataTypes = EnumSet.noneOf(DataType.class);
+        for (int mask = buf.dataTypeMask[index], ordinal = 0; mask != 0; mask >>>= 1, ordinal++) {
+            if ((mask & 1) != 0) {
+                supportingDataTypes.add(DATA_TYPES[ordinal]);
+            }
+        }
+
+        OTFExpressionCall resultingCall = new OTFExpressionCall(gene, cond,
+              supportingDataTypes,
+              ultimateAllDataTypePValue, allDataTypePValueWeight,
+              ultimateTrustedDataTypePValue, trustedDataTypePValueWeight,
+              buf.observationCount[index],
+              bestDescendantAllDataTypePValue, bestDescendantTrustedDataTypePValue,
+              BigDecimal.valueOf(weightSum), weightedAverageExpressionScore,
+              bestDescendantExpressionScoreWeight, bestDescendantExpressionScore,
+              dataPropagation);
+
+        return log.traceExit(resultingCall);
     }
 
-    public long loadDataCount() {
-        log.traceEntry();
+    private static BigDecimal getBestDescendantValue(BigDecimal currentBestDescendantValue,
+            BigDecimal descendantValue, BigDecimal descendantBestDescendantValue) {
+        log.traceEntry("{}, {}, {}", currentBestDescendantValue, descendantValue, descendantBestDescendantValue);
 
-        //If the DAOCallFilters are null (different from: not-null and empty)
-        //it means there was no matching conds and thus no result for sure
-        if (this.processedFilter.getDaoFilters() == null) {
-            return log.traceExit(0L);
+        if (descendantValue != null && (currentBestDescendantValue == null ||
+                descendantValue.compareTo(currentBestDescendantValue) < 0)) {
+            currentBestDescendantValue = descendantValue;
         }
-        //FIXME: this value, and maybe also per species, must be inserted in a new table of the database,
-        //and getGlobalExpressionCallsCount to detect when the filter is empty and use that table
-        if (this.processedFilter.getSourceFilter().isEmptyFilter()) {
-            return log.traceExit(7111443197L);
+        if (descendantBestDescendantValue != null && (currentBestDescendantValue == null ||
+                descendantBestDescendantValue.compareTo(currentBestDescendantValue) < 0)) {
+            currentBestDescendantValue = descendantBestDescendantValue;
         }
-        return log.traceExit(this.globalExprCallDAO.getGlobalExpressionCallsCount(
-                this.processedFilter.getDaoFilters()));
+        return log.traceExit(currentBestDescendantValue);
     }
 
-    public ExpressionCallPostFilter loadPostFilter() {
-        log.traceEntry();
-        //If the DAOCallFilters are null (different from: not-null and empty)
-        //it means there was no matching conds and thus no result for sure
-        if (this.processedFilter.getDaoFilters() == null) {
-            return log.traceExit(new ExpressionCallPostFilter());
+
+    /**
+     * @param valueByWeightSum  A {@code BigDecimal} that is the sum of the values multiplied
+     *                          by their weight.
+     * @param weightSum         A {@code BigDecimal} that is the sum of the weights.
+     * @return                  A {@code BigDecimal} that is the weighted mean, or {@code null}
+     *                          if {@code weightSum} is zero, meaning that nothing contributed.
+     */
+    protected BigDecimal weightedMean(BigDecimal valueByWeightSum, BigDecimal weightSum) {
+        log.traceEntry("{}, {}", valueByWeightSum, weightSum);
+        if (weightSum == null || BigDecimal.ZERO.compareTo(weightSum) == 0) {
+            return log.traceExit((BigDecimal) null);
         }
-
-        Function<Collection<ConditionDAO.Attribute>, ConditionTOResultSet> condRequestFun = (attrs) ->
-        this.condDAO.getGlobalConditionsFromCallFilters(this.getProcessedFilter().getDaoFilters(), attrs);
-        Map<ConditionParameter<?, ?>, Set<? extends Object>> condParamEntities = new HashMap<>();
-
-        // retrieve anatEntities and cell types
-        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
-                .contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
-            Set<String> anatEntityIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
-                    .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
-            Set<String> cellTypeIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.CELL_TYPE_ID))
-                    .stream()
-                    .map(c -> c.getCellTypeId())
-                    //cell type is the only condition param that can be NULL,
-                    //we end up requesting an anat. entity with ID "NULL"
-                    .filter(s -> s != null)
-                    .collect(Collectors.toSet());
-            Set<String> anatEntityCellTypeIds = new HashSet<>(anatEntityIds);
-            anatEntityCellTypeIds.addAll(cellTypeIds);
-            Set<AnatEntity> anatEntityCellTypes = anatEntityCellTypeIds.isEmpty()?
-                    new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityCellTypeIds, false)
-                    .collect(Collectors.toSet());
-            condParamEntities.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatEntityCellTypes);
-        }
-
-        //retrieve dev. stages
-        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
-                .contains(ConditionParameter.DEV_STAGE)) {
-            Set<String> stageIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.STAGE_ID))
-                    .stream().map(c -> c.getStageId()).collect(Collectors.toSet());
-            Set<DevStage> stages = stageIds.isEmpty()?
-                    new HashSet<>() : devStageService.loadDevStages(null, null, stageIds, false)
-                    .collect(Collectors.toSet());
-            condParamEntities.put(ConditionParameter.DEV_STAGE, stages);
-        }
-
-        // retrieve strains
-        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
-                .contains(ConditionParameter.STRAIN)) {
-            Set<String> strainIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.STRAIN_ID))
-                    .stream().map(c -> c.getStrainId()).collect(Collectors.toSet());
-            Set<Strain> strains = strainIds.isEmpty()? new HashSet<>():
-                this.strainService.loadStrains(strainIds).collect(Collectors.toSet());
-            condParamEntities.put(ConditionParameter.STRAIN, strains);
-        }
-
-        //retrieve sexes
-        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
-                .contains(ConditionParameter.SEX)) {
-            Set<String> sexIds = condRequestFun.apply(
-                    Set.of(ConditionDAO.Attribute.SEX_ID))
-                    .stream().map(c -> c.getSex().getStringRepresentation()).collect(Collectors.toSet());
-            Set<Sex> sexes = this.sexService.loadSexes(sexIds).collect(Collectors.toSet());
-            condParamEntities.put(ConditionParameter.SEX, sexes);
-        }
-
-        //Species are unnecessary, we allow filtering only when one species is selected
-//        Set<Integer> speciesIds = condRequestFun.apply(
-//                Set.of(ConditionDAO.Attribute.SPECIES_ID))
-//                .stream().map(c -> c.getSpeciesId()).collect(Collectors.toSet());
-//        Set<Species> species = speciesIds.isEmpty()?
-//                new HashSet<>() : this.getProcessedFilter().getSpeciesMap().values()
-//                .stream().filter(s -> speciesIds.contains(s.getId()))
-//                .collect(Collectors.toSet());
-//        assert speciesIds.size() == species.size();
-
-        return log.traceExit(new ExpressionCallPostFilter(condParamEntities));
+        return log.traceExit(valueByWeightSum.divide(weightSum, MathContext.DECIMAL128));
     }
+
+
 
     public ExpressionCallProcessedFilter getProcessedFilter() {
         return processedFilter;
     }
 
-    //TODO to continue here
-//    private ExpressionCallPostFilter loadConditionPostFilter(BiFunction<Collection<DAOCallFilter>,
-//            Collection<ConditionDAO.Attribute>, ConditionTOResultSet> condRequest) {
-//        log.traceEntry("{}", condRequest);
-//
-//        //If the DaoRawDataFilters are null it means there was no matching conds
-//        //and thus no result for sure
-//        if (this.processedFilter.getDaoFilters() == null) {
-//            return log.traceExit(new ExpressionCallPostFilter(null));
-//        }
-//
-//        // retrieve anatEntities
-//        Set<String> anatEntityIds = condRequest.apply(this.processedFilter
-//        .getDaoFilters(), Set.of(ConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
-//        .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
-//        Set<AnatEntity> anatEntities = anatEntityIds.isEmpty()?
-//                new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityIds, false)
-//                .collect(Collectors.toSet());
-//
-//        // retrieve cellTypes
-//        Set<String> cellTypeIds = condRequest.apply(this.getRawDataProcessedFilter()
-//                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
-//                .stream()
-//                .map(c -> c.getCellTypeId())
-//                //cell type is the only condition param that can be NULL,
-//                //we end up requesting an anat. entity with ID "NULL"
-//                .filter(s -> s != null)
-//                .collect(Collectors.toSet());
-//        Set<AnatEntity> cellTypes = cellTypeIds.isEmpty()?
-//                new HashSet<>() : anatEntityService.loadAnatEntities(cellTypeIds, false)
-//                .collect(Collectors.toSet());
-//
-//        //retrieve dev. stages
-//        Set<String> stageIds = condRequest.apply(this.getRawDataProcessedFilter()
-//                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.STAGE_ID))
-//                .stream().map(c -> c.getStageId()).collect(Collectors.toSet());
-//        Set<DevStage> stages = stageIds.isEmpty()?
-//                new HashSet<>() : devStageService.loadDevStages(null, null, stageIds, false)
-//                .collect(Collectors.toSet());
-//
-//        // retrieve strains
-//        Set<String> strains = condRequest.apply(this.getRawDataProcessedFilter()
-//                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.STRAIN))
-//                .stream().map(c -> c.getStrainId()).collect(Collectors.toSet());
-//
-//        //retrieve sexes
-//        Set<RawDataSex> sexes = condRequest.apply(this.getRawDataProcessedFilter()
-//                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.SEX)).stream()
-//                .map(c -> mapDAORawDataSexToRawDataSex(c.getSex())).collect(Collectors.toSet());
-//
-//        return log.traceExit(new RawDataPostFilter(anatEntities, stages, cellTypes,
-//                sexes, strains, dataType));
-//    }
 
-    private void updateConditionMap(Set<Integer> condIds) {
-        log.traceEntry("{}", condIds);
 
-        Set<Integer> missingCondIds = new HashSet<>(condIds);
-        missingCondIds.removeAll(this.conditionMap.keySet());
-        if (missingCondIds.isEmpty()) {
-            log.traceExit(); return;
-        }
-        Map<Integer, Species> speciesMap = this.processedFilter.getSpeciesMap();
-        Map<Integer, Condition2> missingCondMap = this.utils.loadConditionMapFromResultSet(
-                        (attrs) -> this.condDAO.getGlobalConditionsFromIds(missingCondIds, attrs),
-                        this.utils.convertCondParamsToDAOCondAttributes(
-                                this.processedFilter.getSourceFilter().getCondParamCombination()),
-                        speciesMap.values(), this.anatEntityService, this.devStageService,
-                        this.sexService, this.strainService);
-        //If the Map is going to grow too big, we keep only the entries needed
-        //for this method call
-        if (this.conditionMap.size() + missingCondMap.size() > MAX_ELEMENTS_IN_MAP) {
-            this.conditionMap.keySet().retainAll(condIds);
-        }
-        this.conditionMap.putAll(missingCondMap);
 
-        log.traceExit(); return;
-    }
-    private void updateGeneMap(Set<Integer> bgeeGeneIds) {
-        log.traceEntry("{}", bgeeGeneIds);
 
-        Set<Integer> missingGeneIds = new HashSet<>(bgeeGeneIds);
-        missingGeneIds.removeAll(this.geneMap.keySet());
-        if (missingGeneIds.isEmpty()) {
-            log.traceExit(); return;
-        }
-        Map<Integer, Species> speciesMap = this.processedFilter.getSpeciesMap();
-        Map<Integer, GeneBioType> geneBioTypeMap = this.processedFilter.getGeneBioTypeMap();
-        Map<Integer, Gene> missingGeneMap = this.geneDAO.getGenesByBgeeIds(missingGeneIds).stream()
-                .collect(Collectors.toMap(gTO -> gTO.getId(), gTO -> mapGeneTOToGene(gTO,
-                        Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
-                        .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
-                        null, null,
-                        Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
-                        .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")))));
-        //If the Map is going to grow too big, we keep only the entries needed
-        //for this method call
-        if (this.geneMap.size() + missingGeneMap.size() > MAX_ELEMENTS_IN_MAP) {
-            this.geneMap.keySet().retainAll(bgeeGeneIds);
-        }
-        this.geneMap.putAll(missingGeneMap);
-
-        log.traceExit(); return;
-    }
-
-    private EnumSet<CallService.Attribute> getAttributes(ExpressionCallFilter2 callFilter) {
-        log.traceEntry("{}", callFilter);
-      //For now we define the attributes ourselves, and we still use the Attributes
-        //from the CallService
-        //TODO: implement Attributes in ExpressionCallLoader
-        EnumSet<CallService.Attribute> attributes = EnumSet.of(
-                CallService.Attribute.GENE,
-                CallService.Attribute.CALL_TYPE,
-                CallService.Attribute.DATA_QUALITY,
-                CallService.Attribute.EXPRESSION_SCORE,
-                //to know how the propagation status of the call
-                CallService.Attribute.OBSERVED_DATA,
-                //We need the p-value info per data type to know which data types
-                //produced the calls
-                CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE,
-                //We also want to know the global FDR-corrected p-value
-                CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
-        attributes.addAll(callFilter.getCondParamCombination().stream()
-                .flatMap(param -> {
-                    //Any condition parameter attribute would do to retrieve the condition IDs,
-                    //but we map properly anyway.
-                    if (ConditionParameter.ANAT_ENTITY_CELL_TYPE.equals(param)) {
-                        return Stream.of(CallService.Attribute.ANAT_ENTITY_ID,
-                                CallService.Attribute.CELL_TYPE_ID);
-                    } else if (ConditionParameter.DEV_STAGE.equals(param)) {
-                        return Stream.of(CallService.Attribute.DEV_STAGE_ID);
-                    } else if (ConditionParameter.SEX.equals(param)) {
-                        return Stream.of(CallService.Attribute.SEX_ID);
-                    } else if (ConditionParameter.STRAIN.equals(param)) {
-                        return Stream.of(CallService.Attribute.STRAIN_ID);
-                    }
-                    throw log.throwing(new UnsupportedOperationException(
-                            "Unsupported ConditionParameter: " + param));
-                })
-                .collect(Collectors.toSet()));
-        return log.traceExit(attributes);
-    }
-    private Set<GlobalExpressionCallDAO.AttributeInfo> convertServiceAttrToGlobalExprDAOAttr(
-            EnumSet<CallService.Attribute> attributes, ExpressionCallFilter2 callFilter) {
-        log.traceEntry("{}, {}", attributes, callFilter);
-
-        EnumSet<DAODataType> daoDataTypes = this.utils.convertDataTypeToDAODataType(callFilter == null? null:
-            callFilter.getDataTypeFilters());
-        EnumSet<DAODataType> daoDataTypesTrustedForAbsentCalls =
-                this.utils.convertTrustedAbsentDataTypesToDAODataTypes(callFilter == null? null:
-                    callFilter.getDataTypeFilters());
-        //TODO to upate to use ConditionDAO.ConditionParameter
-        EnumSet<ConditionDAO.Attribute> daoCondParamComb = this.utils
-                .convertCondParamsToDAOCondAttributes(callFilter.getCondParamCombination());
-
-        return log.traceExit(attributes.stream().flatMap(attr -> {
-            if (attr.isConditionParameter()) {
-
-                return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID));
-
-            } else if (attr.equals(CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
-                    attr.equals(CallService.Attribute.CALL_TYPE) ||
-                    attr.equals(CallService.Attribute.DATA_QUALITY)) {
-
-                Set<GlobalExpressionCallDAO.AttributeInfo> pValAttributes = new HashSet<>();
-                pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO,
-                        daoDataTypes, null));
-                pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
-                        daoDataTypes, null));
-                if (!daoDataTypesTrustedForAbsentCalls.isEmpty()) {
-                    pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                            GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO,
-                            daoDataTypesTrustedForAbsentCalls, null));
-                    pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                            GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
-                            daoDataTypesTrustedForAbsentCalls, null));
-                }
-                return pValAttributes.stream();
-
-            } else if (attr.equals(CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE)) {
-
-                return daoDataTypes.stream()
-                        .flatMap(dt -> Stream.of(
-                                new GlobalExpressionCallDAO.AttributeInfo(
-                                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO,
-                                        EnumSet.of(dt), null),
-                                new GlobalExpressionCallDAO.AttributeInfo(
-                                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
-                                        EnumSet.of(dt), null)));
-
-            } else if (attr.equals(CallService.Attribute.GENE)) {
-
-                return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID));
-
-            } else if (attr.equals(CallService.Attribute.OBSERVED_DATA)) {
-
-                //TODO: actually why do we use getAllPossibleCondParamCombinations in DAO?
-                //We could generate the combination in bgee-core and just convert them
-                return ConditionDAO.Attribute.getAllPossibleCondParamCombinations(daoCondParamComb)
-                        .stream().map(comb -> new GlobalExpressionCallDAO.AttributeInfo(
-                                GlobalExpressionCallDAO.Attribute.DATA_TYPE_OBSERVATION_COUNT_INFO,
-                                daoDataTypes, comb));
-
-            } else if (attr.equals(CallService.Attribute.MEAN_RANK) ||
-                    attr.equals(CallService.Attribute.EXPRESSION_SCORE) ||
-                    attr.equals(CallService.Attribute.GENE_QUAL_EXPR_LEVEL) ||
-                    attr.equals(CallService.Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL)) {
-
-                Set<GlobalExpressionCallDAO.AttributeInfo> rankAttributes = new HashSet<>();
-                rankAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.MEAN_RANK,
-                        daoDataTypes, null));
-                //We need to know the species to compute expression scores,
-                //in order to retrieve the max rank in that species.
-                if (attr.equals(CallService.Attribute.EXPRESSION_SCORE)) {
-                    //The species info can be retrieved either from the gene or from the condition
-                    if (!attributes.contains(CallService.Attribute.GENE) &&
-                            Collections.disjoint(attributes,
-                                    CallService.Attribute.getAllConditionParameters())) {
-                        rankAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
-                                GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID));
-                    }
-                }
-                return rankAttributes.stream();
-
-            } else if (attr.equals(CallService.Attribute.DATA_TYPE_RANK_INFO)) {
-
-                return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.DATA_TYPE_RANK_INFO,
-                        daoDataTypes, null));
-
-            } else {
-                throw log.throwing(new IllegalStateException(
-                        "Unsupported Attributes from CallService: " + attr));
-            }
-        }).collect(Collectors.toSet()));
-    }
-
-    private LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction>
-    convertServiceOrderingAttrToGlobalExprDAOOrderingAttr(ExpressionCallFilter2 callFilter) {
-        log.traceEntry("{}", callFilter);
-        //for now we always order by bgeeGeneId, conditionId
-        LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> orderAttrs =
-                new LinkedHashMap<>();
-        orderAttrs.put(
-                new GlobalExpressionCallDAO.OrderingAttributeInfo(
-                        GlobalExpressionCallDAO.OrderingAttribute.BGEE_GENE_ID),
-                DAO.Direction.ASC);
-        orderAttrs.put(
-                new GlobalExpressionCallDAO.OrderingAttributeInfo(
-                        GlobalExpressionCallDAO.OrderingAttribute.GLOBAL_CONDITION_ID),
-                DAO.Direction.ASC);
-
-        return log.traceExit(orderAttrs);
-    }
-
-    
 }

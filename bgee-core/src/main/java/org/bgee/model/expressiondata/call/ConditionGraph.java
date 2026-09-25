@@ -2,8 +2,12 @@ package org.bgee.model.expressiondata.call;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,6 +73,17 @@ public class ConditionGraph {
      * @see #isInferredDescendantConditions()
      */
     private final boolean inferDescendantConditions;
+    /**
+     * Inverted indices mapping each parameter value to the {@code Condition}s that contain it.
+     * Built once at construction to replace the O(n) full-scan in {@link #getRelativeConditions}
+     * with O(|ancestor_values|) index lookups. Stores only references to already-existing
+     * {@code Condition} objects, so memory cost is ~5 * n * 8 bytes.
+     */
+    private final Map<DevStage, Set<Condition>> devStageIndex;
+    private final Map<AnatEntity, Set<Condition>> anatEntityIndex;
+    private final Map<AnatEntity, Set<Condition>> cellTypeIndex;
+    private final Map<Sex, Set<Condition>> sexIndex;
+    private final Map<Strain, Set<Condition>> strainIndex;
     /**
      * Constructor accepting all parameters.  
      * 
@@ -186,6 +201,26 @@ public class ConditionGraph {
         this.sexOnt = sexOnt;
         this.inferAncestralConditions = inferAncestralConds;
         this.inferDescendantConditions = inferDescendantConds;
+
+        // Build inverted indices: paramValue -> Set<Condition>.
+        // Allows getRelativeConditions to avoid scanning all conditions for every query.
+        Map<DevStage, Set<Condition>> devStageIdx = new HashMap<>();
+        Map<AnatEntity, Set<Condition>> anatEntityIdx = new HashMap<>();
+        Map<AnatEntity, Set<Condition>> cellTypeIdx = new HashMap<>();
+        Map<Sex, Set<Condition>> sexIdx = new HashMap<>();
+        Map<Strain, Set<Condition>> strainIdx = new HashMap<>();
+        for (Condition c : this.conditions) {
+            devStageIdx.computeIfAbsent(c.getDevStage(), k -> new HashSet<>()).add(c);
+            anatEntityIdx.computeIfAbsent(c.getAnatEntity(), k -> new HashSet<>()).add(c);
+            cellTypeIdx.computeIfAbsent(c.getCellType(), k -> new HashSet<>()).add(c);
+            sexIdx.computeIfAbsent(c.getSex(), k -> new HashSet<>()).add(c);
+            strainIdx.computeIfAbsent(c.getStrain(), k -> new HashSet<>()).add(c);
+        }
+        this.devStageIndex = Collections.unmodifiableMap(devStageIdx);
+        this.anatEntityIndex = Collections.unmodifiableMap(anatEntityIdx);
+        this.cellTypeIndex = Collections.unmodifiableMap(cellTypeIdx);
+        this.sexIndex = Collections.unmodifiableMap(sexIdx);
+        this.strainIndex = Collections.unmodifiableMap(strainIdx);
         log.traceExit();
     }
     
@@ -355,6 +390,29 @@ public class ConditionGraph {
     }
 
     /**
+     * Same as {@link #getAncestorConditions(Condition, boolean)} but uses caller-supplied
+     * memoization caches to avoid recomputing the same ancestor sets repeatedly.
+     * This is useful when querying many conditions in parallel (e.g., from a
+     * {@code parallelStream}): the cache is created once by the caller, passed here,
+     * and shared across all calls so that each unique condition's ancestor set
+     * is computed at most once.
+     * <p>
+     * The cache must be a {@code ConcurrentHashMap} since it is accessed concurrently.
+     *
+     * @param cond              A {@code Condition} for which we want to retrieve ancestor {@code Condition}s.
+     * @param directRelOnly     A {@code boolean} defining whether only direct parents should be returned.
+     * @param ancestorCache     A {@code ConcurrentHashMap} used to memoize all-ancestor results
+     *                          (i.e., results for {@code directRelOnly=false}).
+     * @return                  A {@code Set} of ancestor {@code Condition}s.
+     */
+    public Set<Condition> getAncestorConditions(Condition cond, boolean directRelOnly,
+            ConcurrentHashMap<Condition, Set<Condition>> ancestorCache)
+            throws IllegalArgumentException {
+        log.traceEntry("{}, {}", cond, directRelOnly);
+        return log.traceExit(this.getRelativeConditions(cond, true, directRelOnly, ancestorCache));
+    }
+
+    /**
      * Notes on implementation of this method: because we do not insert all possible conditions
      * in the database, but only those that have some parameters observed in annotations,
      * the graph is disconnected, and some conditions might not always have "real" direct parents or descendants.
@@ -396,46 +454,140 @@ public class ConditionGraph {
         log.trace("Sexes retrieved: {}", sexes);
         log.trace("Strains retrieved: {}", strains);
         
-        Set<Condition> relativeConds = this.conditions.stream()
-                .filter(e -> !e.equals(cond) &&
-                        devStages.contains(e.getDevStage()) &&
-                        anatEntities.contains(e.getAnatEntity()) &&
-                        cellTypes.contains(e.getCellType()) &&
-                        sexes.contains(e.getSex()) &&
-                        strains.contains(e.getStrain()))
-           .collect(Collectors.toSet());
+        // Use inverted indices to avoid a full O(n) scan over all conditions.
+        // Start with the union of conditions matching any ancestor dev. stage, then
+        // progressively narrow down by intersecting with the other dimensions.
+        Set<Condition> relativeConds = unionFromIndex(devStages, this.devStageIndex);
+        intersectWithIndex(relativeConds, anatEntities, this.anatEntityIndex);
+        intersectWithIndex(relativeConds, cellTypes, this.cellTypeIndex);
+        intersectWithIndex(relativeConds, sexes, this.sexIndex);
+        intersectWithIndex(relativeConds, strains, this.strainIndex);
+        relativeConds.remove(cond);
 
         if (directRelOnly) {
-            Set<DevStage> directDevStages = getRelativeElements(this.devStageOnt, cond.getDevStage(),
-                    ancestors, true);
-            Set<AnatEntity> directAnatEntities = getRelativeElements(this.anatEntityOnt, cond.getAnatEntity(),
-                    ancestors, true);
-            Set<AnatEntity> directCellTypes = getRelativeElements(this.cellTypeOnt, cond.getCellType(),
-                    ancestors, true);
-            Set<Sex> directSexes = getRelativeElements(this.sexOnt, cond.getSex(),
-                    ancestors, true);
-            Set<Strain> directStrains = getRelativeElements(this.strainOnt, cond.getStrain(),
-                    ancestors, true);
-            Set<Condition> relativesOfRelatives = relativeConds.stream()
-                    .flatMap(c -> this.getRelativeConditions(c, ancestors, false).stream())
-                    .collect(Collectors.toSet());
-
+            // Keep only the maximal elements of relativeConds (transitive reduction).
+            // Ancestor sets are precomputed once per unique dimension value — O(R) calls to
+            // ont.getAncestors() instead of O(R²) inside the pairwise dominance check.
+            Map<AnatEntity, Set<AnatEntity>> anatAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getAnatEntity, this.anatEntityOnt);
+            Map<AnatEntity, Set<AnatEntity>> cellTypeAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getCellType, this.cellTypeOnt);
+            Map<DevStage, Set<DevStage>> devStageAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getDevStage, this.devStageOnt);
+            Map<Sex, Set<Sex>> sexAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getSex, this.sexOnt);
+            Map<Strain, Set<Strain>> strainAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getStrain, this.strainOnt);
+            final Set<Condition> allRelatives = relativeConds;
             relativeConds = relativeConds.stream()
-                    .filter(e ->
-                        //Either the relative conditions is really a direct relative
-                        //by the relations in the ontologies
-                        directDevStages.contains(e.getDevStage()) &&
-                        directAnatEntities.contains(e.getAnatEntity()) &&
-                        directCellTypes.contains(e.getCellType()) &&
-                        directSexes.contains(e.getSex()) &&
-                        directStrains.contains(e.getStrain()) ||
-                        //Or it is a disconnected relative (because of condition filtering),
-                        //not reachable by any other relatives, so we consider it as "direct".
-                        !relativesOfRelatives.contains(e))
+                    .filter(e -> !isDominated(e, allRelatives, ancestors,
+                            anatAncMap, cellTypeAncMap, devStageAncMap, sexAncMap, strainAncMap))
                     .collect(Collectors.toSet());
         }
         log.trace("Done retrieving relative conditions for {}: {}", cond, relativeConds.size());
         return log.traceExit(relativeConds);
+    }
+
+    /**
+     * Cache-aware overload of {@link #getRelativeConditions(Condition, boolean, boolean)}.
+     * When {@code directRelOnly=false}, checks {@code ancestorCache} before computing and stores
+     * the result afterwards. The recursive calls inside the {@code directRelOnly=true} path
+     * also use the cache, so each unique condition's full ancestor set is computed
+     * at most once across all calls sharing the same cache.
+     *
+     * @param ancestorCache   caller-supplied cache for all-ancestor results ({@code directRelOnly=false});
+     *                        may be {@code null} to skip memoization.
+     */
+    private Set<Condition> getRelativeConditions(Condition cond, boolean ancestors, boolean directRelOnly,
+            ConcurrentHashMap<Condition, Set<Condition>> ancestorCache)
+            throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", cond, ancestors, directRelOnly);
+        // Fast path: return memoized result for the all-ancestors case.
+        if (!directRelOnly && ancestorCache != null) {
+            Set<Condition> cached = ancestorCache.get(cond);
+            if (cached != null) {
+                return log.traceExit(cached);
+            }
+        }
+        log.trace("Start retrieving relative conditions for {}", cond);
+        if (!this.getConditions().contains(cond)) {
+            throw log.throwing(new IllegalArgumentException("The provided condition "
+                    + "is not registered to this ConditionGraph: " + cond));
+        }
+
+        Set<DevStage> devStages = getRelativeElements(this.devStageOnt, cond.getDevStage(), ancestors, false);
+        Set<AnatEntity> anatEntities = getRelativeElements(this.anatEntityOnt, cond.getAnatEntity(), ancestors, false);
+        Set<AnatEntity> cellTypes = getRelativeElements(this.cellTypeOnt, cond.getCellType(), ancestors, false);
+        Set<Sex> sexes = getRelativeElements(this.sexOnt, cond.getSex(), ancestors, false);
+        Set<Strain> strains = getRelativeElements(this.strainOnt, cond.getStrain(), ancestors, false);
+
+        log.trace("Stages retrieved: {}", devStages);
+        log.trace("Anat. entities retrieved: {}", anatEntities);
+        log.trace("Cell types retrieved: {}", cellTypes);
+        log.trace("Sexes retrieved: {}", sexes);
+        log.trace("Strains retrieved: {}", strains);
+
+        Set<Condition> relativeConds = unionFromIndex(devStages, this.devStageIndex);
+        intersectWithIndex(relativeConds, anatEntities, this.anatEntityIndex);
+        intersectWithIndex(relativeConds, cellTypes, this.cellTypeIndex);
+        intersectWithIndex(relativeConds, sexes, this.sexIndex);
+        intersectWithIndex(relativeConds, strains, this.strainIndex);
+        relativeConds.remove(cond);
+
+        if (directRelOnly) {
+            Map<AnatEntity, Set<AnatEntity>> anatAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getAnatEntity, this.anatEntityOnt);
+            Map<AnatEntity, Set<AnatEntity>> cellTypeAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getCellType, this.cellTypeOnt);
+            Map<DevStage, Set<DevStage>> devStageAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getDevStage, this.devStageOnt);
+            Map<Sex, Set<Sex>> sexAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getSex, this.sexOnt);
+            Map<Strain, Set<Strain>> strainAncMap = buildDimAncestorMap(
+                    relativeConds, Condition::getStrain, this.strainOnt);
+            final Set<Condition> allRelatives = relativeConds;
+            relativeConds = relativeConds.stream()
+                    .filter(e -> !isDominated(e, allRelatives, ancestors,
+                            anatAncMap, cellTypeAncMap, devStageAncMap, sexAncMap, strainAncMap))
+                    .collect(Collectors.toSet());
+        }
+        log.trace("Done retrieving relative conditions for {}: {}", cond, relativeConds.size());
+        if (!directRelOnly && ancestorCache != null) {
+            Set<Condition> result = Collections.unmodifiableSet(relativeConds);
+            ancestorCache.putIfAbsent(cond, result);
+            return log.traceExit(result);
+        }
+        return log.traceExit(relativeConds);
+    }
+
+    /**
+     * Returns the union of all {@code Condition}s in {@code index} whose key is in {@code params}.
+     */
+    private static <T> Set<Condition> unionFromIndex(Set<T> params, Map<T, Set<Condition>> index) {
+        Set<Condition> result = new HashSet<>();
+        for (T param : params) {
+            Set<Condition> conds = index.get(param);
+            if (conds != null) {
+                result.addAll(conds);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Retains in {@code candidates} only those {@code Condition}s whose parameter value
+     * (of the dimension represented by {@code index}) is in {@code params}.
+     */
+    private static <T> void intersectWithIndex(Set<Condition> candidates, Set<T> params,
+            Map<T, Set<Condition>> index) {
+        Set<Condition> matching = new HashSet<>();
+        for (T param : params) {
+            Set<Condition> conds = index.get(param);
+            if (conds != null) {
+                matching.addAll(conds);
+            }
+        }
+        candidates.retainAll(matching);
     }
 
     private static <T extends NamedEntity<?> & OntologyElement<T, ?>> Set<T>
@@ -454,6 +606,96 @@ public class ConditionGraph {
                         ont.getAncestors(startElement, directRelsOnly).stream():
                         ont.getDescendants(startElement, directRelsOnly).stream()
                 ).collect(Collectors.toSet()));
+    }
+
+    /**
+     * Precomputes a map from each unique dimension value found in {@code conds} to the full
+     * set of its ancestors in {@code ont}. Used to reduce {@code ont.getAncestors()} calls
+     * from O(R²) to O(R) in the pairwise dominance check, where R = {@code |conds|}.
+     */
+    private static <T extends NamedEntity<?> & OntologyElement<T, ?>> Map<T, Set<T>>
+    buildDimAncestorMap(Set<Condition> conds, Function<Condition, T> extractor, Ontology<T, ?> ont) {
+        Map<T, Set<T>> map = new HashMap<>();
+        for (Condition c : conds) {
+            T val = extractor.apply(c);
+            if (val != null) {
+                map.computeIfAbsent(val, v -> ont == null ? Collections.emptySet()
+                        : Collections.unmodifiableSet(ont.getAncestors(v, false)));
+            }
+        }
+        return map;
+    }
+
+    /**
+     * Returns {@code true} if some condition {@code c} in {@code candidates} (other than
+     * {@code e} itself) lies strictly between the source condition and {@code e} in the
+     * condition partial order, making {@code e} non-maximal (dominated).
+     * <p>
+     * Ancestor sets are supplied as precomputed maps (one per dimension) to avoid repeated
+     * {@code ont.getAncestors()} calls in the inner loop.
+     */
+    private static boolean isDominated(Condition e, Set<Condition> candidates, boolean ancestors,
+            Map<AnatEntity, Set<AnatEntity>> anatAncMap,
+            Map<AnatEntity, Set<AnatEntity>> cellTypeAncMap,
+            Map<DevStage, Set<DevStage>> devStageAncMap,
+            Map<Sex, Set<Sex>> sexAncMap,
+            Map<Strain, Set<Strain>> strainAncMap) {
+        for (Condition c : candidates) {
+            if (c.equals(e)) continue;
+            if (isCloserToCondInAllDimensions(c, e, ancestors,
+                    anatAncMap, cellTypeAncMap, devStageAncMap, sexAncMap, strainAncMap)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if {@code c} is strictly closer to the source condition than
+     * {@code e} in every dimension simultaneously.
+     */
+    private static boolean isCloserToCondInAllDimensions(Condition c, Condition e, boolean ancestors,
+            Map<AnatEntity, Set<AnatEntity>> anatAncMap,
+            Map<AnatEntity, Set<AnatEntity>> cellTypeAncMap,
+            Map<DevStage, Set<DevStage>> devStageAncMap,
+            Map<Sex, Set<Sex>> sexAncMap,
+            Map<Strain, Set<Strain>> strainAncMap) {
+        if (c.equals(e)) return false;
+        // ancestors=true: c is closer iff e.dim ∈ ancestors(c.dim) → look up c's ancestor set
+        // ancestors=false: c is closer iff c.dim ∈ ancestors(e.dim) → look up e's ancestor set
+        return isDimCloserToCond(c.getAnatEntity(), e.getAnatEntity(),
+                    ancestors ? anatAncMap.get(c.getAnatEntity()) : anatAncMap.get(e.getAnatEntity()), ancestors)
+            && isDimCloserToCond(c.getCellType(), e.getCellType(),
+                    ancestors ? cellTypeAncMap.get(c.getCellType()) : cellTypeAncMap.get(e.getCellType()), ancestors)
+            && isDimCloserToCond(c.getDevStage(), e.getDevStage(),
+                    ancestors ? devStageAncMap.get(c.getDevStage()) : devStageAncMap.get(e.getDevStage()), ancestors)
+            && isDimCloserToCond(c.getSex(), e.getSex(),
+                    ancestors ? sexAncMap.get(c.getSex()) : sexAncMap.get(e.getSex()), ancestors)
+            && isDimCloserToCond(c.getStrain(), e.getStrain(),
+                    ancestors ? strainAncMap.get(c.getStrain()) : strainAncMap.get(e.getStrain()), ancestors);
+    }
+
+    /**
+     * Returns {@code true} if {@code cVal} is at least as close to the source condition as
+     * {@code eVal} in a single ontology dimension, using a precomputed ancestor set.
+     * <p>
+     * Ancestor direction ({@code ancestors=true}): {@code precomputedAncestors} = ancestors of
+     * {@code cVal}; check that {@code eVal} is among them.<br>
+     * Descendant direction ({@code ancestors=false}): {@code precomputedAncestors} = ancestors of
+     * {@code eVal}; check that {@code cVal} is among them.
+     */
+    private static <T extends NamedEntity<?>> boolean isDimCloserToCond(
+            T cVal, T eVal, Set<T> precomputedAncestors, boolean ancestors) {
+        if (eVal == null && cVal == null) return true;
+        if (ancestors) {
+            if (eVal == null) return true;  // null (most general) is ancestor of everything
+            if (cVal == null) return false; // null cannot be more specific than a real eVal
+            if (cVal.equals(eVal)) return true;
+            return precomputedAncestors != null && precomputedAncestors.contains(eVal);
+        } else {
+            if (cVal == null) return true;  // null (most general) is always an ancestor
+            if (eVal == null) return false;
+            if (cVal.equals(eVal)) return true;
+            return precomputedAncestors != null && precomputedAncestors.contains(cVal);
+        }
     }
 
     /**

@@ -10,7 +10,7 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
  * A filter to request expression calls based on their observation status in a condition:
  * whether the call has been directly observed in a condition, or propagated from some descendant
  * conditions of the considered condition. This filter accepts the data types to consider
- * (for instance, whether the call was observed from Affymetrix and/or RNA-Seq data)
+ * (for instance, whether the call was observed from RNA-Seq data)
  * and the condition parameters to consider (for instance, whether the call was observed
  * in an anat. entity, while accepting that it might have been propagated along the dev. stage
  * ontology).

@@ -13,11 +13,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneXRefDAO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTOResultSet;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.gene.MySQLGeneXRefDAO.MySQLGeneXRefTOResultSet;
 
 /** 
  * A {@code GeneXRefDAO} for MySQL.
@@ -51,8 +54,9 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
     public GeneXRefTOResultSet getAllGeneXRefs(Collection<GeneXRefDAO.Attribute> attributes)
             throws DAOException {
         log.traceEntry("{}", attributes);
-        return log.traceExit(this.getGeneXRefs(null, null, null, attributes));
+        return log.traceExit(this.getGeneXRefs(null, null, null, null, null, true, attributes));
     }
+    
 
     @Override
     public GeneXRefTOResultSet getGeneXRefsByBgeeGeneIds(Collection<Integer> bgeeGeneIds,
@@ -86,6 +90,23 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
     private GeneXRefTOResultSet getGeneXRefs(Collection<Integer> bgeeGeneIds,
             Collection<String> geneIds, Collection<Integer> speciesIds,
             Collection<String> xRefIds, Collection<Integer> dataSourceIds,
+            Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", bgeeGeneIds, geneIds, speciesIds, xRefIds,
+                dataSourceIds, attributes);
+        return log.traceExit(this.getGeneXRefs(bgeeGeneIds, geneIds, speciesIds,
+            xRefIds, dataSourceIds, false, attributes));
+    }
+
+    // The geneXRef table can hold tens of millions of rows. By default, MySQL
+    // Connector reads the entire ResultSet into client-side memory during
+    // executeQuery(), before any row is handed back to the caller. Fixing the statement
+    // fetch size to Integer.MIN_VALUE allows to switches this statement to true row-by-row
+    // streaming instead. The boolean useStmtFetchSize is used for that purpose.
+    // XXX: do not run another query on this same connection while useStmtFetchSize is set to true).
+    private GeneXRefTOResultSet getGeneXRefs(Collection<Integer> bgeeGeneIds,
+            Collection<String> geneIds, Collection<Integer> speciesIds,
+            Collection<String> xRefIds, Collection<Integer> dataSourceIds,
+            boolean useStmtFetchSize,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}, {}", bgeeGeneIds, geneIds, speciesIds, xRefIds,
                 dataSourceIds, attributes);
@@ -153,6 +174,9 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
         // not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if(useStmtFetchSize) {
+                stmt.getRealPreparedStatement().setFetchSize(Integer.MIN_VALUE);
+            }
             int offsetParamIndex = 1;
             if (!clonedBgeeGeneIds.isEmpty()) {
                 stmt.setIntegers(offsetParamIndex, clonedBgeeGeneIds, true);

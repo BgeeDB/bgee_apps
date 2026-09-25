@@ -1,5 +1,7 @@
 package org.bgee.model.dao.api;
 
+import static org.mockito.Mockito.mock;
+
 import java.util.Properties;
 
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
@@ -10,22 +12,16 @@ import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
@@ -46,8 +42,6 @@ import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.TaxonDAO;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * A class to simulate an implementation of {@link DAOManager}, that is discovered 
@@ -157,9 +151,13 @@ public class MockDAOManager extends DAOManager {
     protected RawDataConditionDAO getNewRawDataConditionDAO() {
         return this.instanceMockManager.getNewRawDataConditionDAO();
     }
+//    @Override
+//    protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
+//        return this.instanceMockManager.getNewRawExpressionCallDAO();
+//    }
     @Override
-    protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
-        return this.instanceMockManager.getNewRawExpressionCallDAO();
+    protected ObservedExpressionDAO getNewObservedExpressionDAO() {
+        return this.instanceMockManager.getNewObservedExpressionDAO();
     }
     @Override
     protected GlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {
@@ -172,10 +170,6 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected AnatEntityDAO getNewAnatEntityDAO() {
         return this.instanceMockManager.getNewAnatEntityDAO();
-    }
-    @Override
-    protected AffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {
-        return this.instanceMockManager.getNewAffymetrixProbesetDAO();
     }
     @Override
     protected InSituSpotDAO getNewInSituSpotDAO() {
@@ -247,16 +241,6 @@ public class MockDAOManager extends DAOManager {
     }
 
     @Override
-    protected AffymetrixChipDAO getNewAffymetrixChipDAO() {
-        return this.instanceMockManager.getNewAffymetrixChipDAO();
-    }
-
-    @Override
-    protected MicroarrayExperimentDAO getNewMicroarrayExperimentDAO() {
-        return this.instanceMockManager.getNewMicroarrayExperimentDAO();
-    }
-
-    @Override
     protected RNASeqExperimentDAO getNewRnaSeqExperimentDAO() {
         return this.instanceMockManager.getNewRnaSeqExperimentDAO();
     }
@@ -279,21 +263,6 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected RawDataCountDAO getNewRawDataCountDAO() {
         return this.instanceMockManager.getRawDataCountDAO();
-    }
-
-    @Override
-    protected AffymetrixChipTypeDAO getNewAffymetrixChipTypeDAO() {
-        return this.instanceMockManager.getAffymetrixChipTypeDAO();
-    }
-
-    @Override
-    protected ESTLibraryDAO getNewESTLibraryDAO() {
-        return this.instanceMockManager.getESTLibraryDAO();
-    }
-
-    @Override
-    protected ESTDAO getNewESTDAO() {
-        return this.instanceMockManager.getESTDAO();
     }
 
     @Override

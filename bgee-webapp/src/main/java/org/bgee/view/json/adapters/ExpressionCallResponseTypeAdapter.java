@@ -1,8 +1,8 @@
 package org.bgee.view.json.adapters;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.EnumSet;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,8 +12,10 @@ import org.bgee.model.expressiondata.call.CallData.ExpressionCallData2;
 import org.bgee.controller.CommandData.ExpressionCallResponse;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -58,17 +60,16 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
         if (value.getCalls() != null) {
             out.name("expressionCalls");
             out.beginArray();
-            for (ExpressionCall2 call: value.getCalls()) {
-                EnumSet<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData2::getDataType)
-                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-                boolean highQualScore = false;
-                if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) &&
-                        (dataTypes.contains(DataType.AFFYMETRIX) ||
-                                dataTypes.contains(DataType.RNA_SEQ) ||
-                                dataTypes.contains(DataType.SC_RNA_SEQ) ||
-                                call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
-                    highQualScore = true;
-                }
+            for (OTFExpressionCall call: value.getCalls()) {
+                EnumSet<DataType> dataTypes = call.getSupportingDataTypes();
+                //The summary call type and quality inferred for that call, with the thresholds
+                //the calls were filtered with (see CommandData#processExprCallPage).
+                Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
+                        value.getCallTypeQuality(call);
+                boolean highQualScore = callTypeQuality != null &&
+                        !SummaryQuality.BRONZE.equals(callTypeQuality.getValue()) &&
+                        (dataTypes.contains(DataType.RNA_SEQ) ||
+                                dataTypes.contains(DataType.SC_RNA_SEQ));
                 out.beginObject();
 
                 out.name("gene");
@@ -78,7 +79,7 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
 
                 out.name("expressionScore");
                 out.beginObject();
-                out.name("expressionScore").value(call.getFormattedExpressionScore());
+                out.name("expressionScore").value(call.getExpressionScore());
                 out.name("expressionScoreConfidence");
                 if (highQualScore) {
                     out.value("high");
@@ -87,8 +88,7 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
                 }
                 out.endObject();
 
-                String fdr = call.getPValueWithEqualDataTypes(value.getRequestedDataTypes())
-                        .getFormattedPValue();
+                String fdr = call.getFormattedAllDatatypePValue();
                 out.name("fdr").value(fdr);
 
                 out.name("dataTypesWithData");
@@ -103,9 +103,12 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
                     out.name(d.name()).value(dataTypes.contains(d));
                 }
                 out.endObject();
-
-                out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
-                out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());
+                if (callTypeQuality != null) {
+                    out.name("expressionState")
+                            .value(callTypeQuality.getKey().toString().toLowerCase());
+                    out.name("expressionQuality")
+                            .value(callTypeQuality.getValue().toString().toLowerCase());
+                }
 
                 out.endObject();
             }

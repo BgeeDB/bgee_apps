@@ -64,12 +64,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
      *                                      species allowing to filter the calls to use.
      * @param factor                        A {@code ComparisonFactor} that is the comparison factor
      *                                      allowing to filter the calls to use.
-     * @param diffExprCallTypeAffymetrix    A {@code DiffExprCallType} that is the type of the 
-     *                                      differential expression calls to be used for Affymetrix 
-     *                                      data.
-     * @param includeAffymetrixTypes        A {@code boolean} defining whether differential 
-     *                                      expression call types from Affymetrix data should be 
-     *                                      include or exclude.
      * @param diffExprCallTypeRNASeq        A {@code DiffExprCallType} that is the type of the 
      *                                      differential expression calls to be used for RNA-seq 
      *                                      data.
@@ -86,10 +80,9 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
      */
     private DiffExpressionCallTOResultSet getDiffExpressionCalls(
             String omaTaxonId, Set<Integer> speciesIds,
-            ComparisonFactor factor, Set<DiffExprCallType> diffExprCallTypeAffymetrix,
-            boolean includeAffymetrixTypes, Set<DiffExprCallType> diffExprCallTypeRNASeq, 
+            ComparisonFactor factor,Set<DiffExprCallType> diffExprCallTypeRNASeq, 
             boolean includeRnaSeqTypes, boolean isSatisfyAllCallTypeCondition) {
-        log.entry(omaTaxonId, speciesIds, factor, diffExprCallTypeAffymetrix, includeAffymetrixTypes, 
+        log.entry(omaTaxonId, speciesIds, factor,
                 diffExprCallTypeRNASeq, includeRnaSeqTypes, isSatisfyAllCallTypeCondition);
 
         // Construct sql query
@@ -179,11 +172,9 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
             sql += diffExprTableName;
         }
         
-        boolean filterAffymetrixTypes = 
-                (diffExprCallTypeAffymetrix != null && diffExprCallTypeAffymetrix.size() != 0 );
         boolean filterRNASeqTypes = 
                 (diffExprCallTypeRNASeq != null && diffExprCallTypeRNASeq.size() != 0 );
-        if (factor != null || filterAffymetrixTypes || filterRNASeqTypes) {
+        if (factor != null || filterRNASeqTypes) {
             if (hasSpecies && !hasOMATaxon && !orderTOsByOmaGroup) {
                 sql += " AND ";                
             } else {
@@ -194,9 +185,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
             sql += diffExprTableName + ".comparisonFactor = ?";
         }
         int nbFilterCallType = 0;
-        if (filterAffymetrixTypes) {
-            nbFilterCallType++;
-        }
         if (filterRNASeqTypes) {
             nbFilterCallType++;
         }
@@ -206,14 +194,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
         }
         if (nbFilterCallType > 1) {
             sql += " (";
-        }
-        if (filterAffymetrixTypes) {
-            sql += diffExprTableName + ".diffExprCallAffymetrix ";
-            if (!includeAffymetrixTypes) {
-                sql += "NOT";
-            }
-            sql += " IN (" + BgeePreparedStatement.generateParameterizedQueryString(
-                            diffExprCallTypeAffymetrix.size()) + ")";
         }
         if (nbFilterCallType > 1) {
             if (isSatisfyAllCallTypeCondition) {
@@ -268,11 +248,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                 stmtIndex++;
             }
             
-            if (filterAffymetrixTypes) {
-                stmt.setEnumDAOFields(stmtIndex, diffExprCallTypeAffymetrix, true);
-                stmtIndex += diffExprCallTypeAffymetrix.size();
-            }             
-            
             if (filterRNASeqTypes) {
                 stmt.setEnumDAOFields(stmtIndex, diffExprCallTypeRNASeq, true);
                 stmtIndex += diffExprCallTypeRNASeq.size();
@@ -325,18 +300,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                 sql += "conditionId";
             } else if (attribute.equals(DiffExpressionCallDAO.Attribute.COMPARISON_FACTOR)) {
                 sql += "comparisonFactor";
-            } else if (attribute.equals(DiffExpressionCallDAO.Attribute.DIFF_EXPR_CALL_AFFYMETRIX)) {
-                sql += "diffExprCallAffymetrix";
-            } else if (attribute.equals(DiffExpressionCallDAO.Attribute.DIFF_EXPR_AFFYMETRIX_DATA)) {
-                sql += "diffExprAffymetrixData";
-            } else if (attribute.equals(DiffExpressionCallDAO.Attribute.BEST_P_VALUE_AFFYMETRIX)) {
-                sql += "bestPValueAffymetrix";
-            } else if (attribute.equals(
-                    DiffExpressionCallDAO.Attribute.CONSISTENT_DEA_COUNT_AFFYMETRIX)) {
-                sql += "consistentDEACountAffymetrix";
-            } else if (attribute.equals(
-                    DiffExpressionCallDAO.Attribute.INCONSISTENT_DEA_COUNT_AFFYMETRIX)) {
-                sql += "inconsistentDEACountAffymetrix";
             } else if (attribute.equals(DiffExpressionCallDAO.Attribute.DIFF_EXPR_CALL_RNA_SEQ)) {
                 sql += "diffExprCallRNASeq";
             } else if (attribute.equals(DiffExpressionCallDAO.Attribute.DIFF_EXPR_RNA_SEQ_DATA)) {
@@ -413,11 +376,10 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
 
             Integer id = null, geneId = null, conditionId = null;
             ComparisonFactor comparisonFactor = null;
-            DataState diffExprAffymetrixData = null, diffExprRNASeqData = null;
-            DiffExprCallType diffExprCallTypeAffymetrix = null, diffExprCallTypeRNASeq = null;
-            Float bestPValueAffymetrix = null, bestPValueRNASeq = null;
-            Integer consistentDEACountAffymetrix = null, inconsistentDEACountAffymetrix = null,
-                    consistentDEACountRNASeq = null, inconsistentDEACountRNASeq = null;
+            DataState diffExprRNASeqData = null;
+            DiffExprCallType diffExprCallTypeRNASeq = null;
+            Float bestPValueRNASeq = null;
+            Integer consistentDEACountRNASeq = null, inconsistentDEACountRNASeq = null;
 
             //every call to values() returns a newly cloned array, so we cache the array
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -435,27 +397,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                         comparisonFactor = ComparisonFactor.convertToComparisonFactor(
                                 this.getCurrentResultSet().getString(column.getKey()));
                         
-                    } else if (column.getValue().equals("diffExprCallAffymetrix")) {
-                        diffExprCallTypeAffymetrix = DiffExprCallType.convertToDiffExprCallType(
-                                this.getCurrentResultSet().getString(column.getKey()));
-
-                    } else if (column.getValue().equals("diffExprAffymetrixData")) {
-                        diffExprAffymetrixData = DataState.convertToDataState(
-                                this.getCurrentResultSet().getString(column.getKey()));
-
-                    } else if (column.getValue().equals("bestPValueAffymetrix")) {
-                        bestPValueAffymetrix = this.getCurrentResultSet().getFloat(
-                                column.getKey());
-
-                    } else if (column.getValue().equals("consistentDEACountAffymetrix")) {
-                        consistentDEACountAffymetrix = this.getCurrentResultSet().getInt(
-                                column.getKey());
-                        
-                    } else if (column.getValue().equals("inconsistentDEACountAffymetrix")) {
-                        inconsistentDEACountAffymetrix = this.getCurrentResultSet().getInt(
-                                column.getKey());
-                        
-                    } else if (column.getValue().equals("diffExprCallRNASeq")) {
+                    }else if (column.getValue().equals("diffExprCallRNASeq")) {
                         diffExprCallTypeRNASeq = DiffExprCallType.convertToDiffExprCallType(
                                 this.getCurrentResultSet().getString(column.getKey()));
                         
@@ -486,9 +428,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                 }
             }
             return log.traceExit(new DiffExpressionCallTO(id, geneId, conditionId, 
-                    comparisonFactor, diffExprCallTypeAffymetrix, diffExprAffymetrixData, 
-                    bestPValueAffymetrix, consistentDEACountAffymetrix, inconsistentDEACountAffymetrix, 
-                    diffExprCallTypeRNASeq, diffExprRNASeqData, bestPValueRNASeq, 
+                    comparisonFactor, diffExprCallTypeRNASeq, diffExprRNASeqData, bestPValueRNASeq, 
                     consistentDEACountRNASeq, inconsistentDEACountRNASeq));
         }
     }

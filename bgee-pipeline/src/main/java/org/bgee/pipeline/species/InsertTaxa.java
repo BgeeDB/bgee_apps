@@ -147,6 +147,8 @@ public class InsertTaxa extends MySQLDAOUser {
      * we use the chimp genome (ID 9598), because bonobo is not in Ensembl. 
      */
     public static final String SPECIES_GENOME_ID_KEY= "genomeSpeciesId";
+
+    public static final String DEV_ONTOLOGY_XREF_KEY= "devOntologyXRef";
     /**
      * A {@code String} that is the key to retrieve the fake prefix of genes for species 
      * whose genome is not in Ensembl, and that are used in Bgee, 
@@ -689,9 +691,11 @@ public class InsertTaxa extends MySQLDAOUser {
 
             Integer genomeSpeciesId = (Integer) species.get(SPECIES_GENOME_ID_KEY);
 
+            String devOntologyXRef = (String) species.get(DEV_ONTOLOGY_XREF_KEY);
+
             speciesTOs.add(new SpeciesTO(speciesId, commonName, genus, speciesName, displayOrder,
                     parentTaxonId, genomeFilePath, genomeVersion, genomeAssemblyXRef, dataSourceId,
-                    genomeSpeciesId));
+                    genomeSpeciesId, devOntologyXRef));
         }
         if (speciesTOs.size() != allSpecies.size()) {
             throw log.throwing(new IllegalStateException("The taxonomy ontology " +

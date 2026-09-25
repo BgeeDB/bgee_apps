@@ -30,27 +30,6 @@ public interface SamplePValueDAO extends DAO<SamplePValueDAO.Attribute> {
     }
 
     /**
-     * Retrieve affymetrix p-values from the data source, linked to expression IDs
-     * of the raw expression table, and bgee internal affymetrix chip ID,
-     * and ordered by gene ID and expression ID of raw expression table.
-     * <p>
-     * The data are retrieved and returned as an {@code SamplePValueTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
-     * 
-     * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
-     *                              of the genes to retrieve Affymetrix p-values for.
-     * @return                      An {@code SamplePValueTOResultSet} allowing to obtain 
-     *                              the requested {@code SamplePValueTO}s.
-     * @throws DAOException             If an error occurred while accessing the data source.
-     * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
-     */
-    //If we retrieve the experiment ID, the public chip ID is a String and is unique in an experiment.
-    //If we don't retrieve the experiment ID, the Bgee internal chip ID is an int and is unique
-    //over the whole Bgee database, it's why we define the sample ID type as Integer.
-    public SamplePValueTOResultSet<String, Integer> getAffymetrixPValuesOrderedByGeneIdAndExprId(
-            Collection<Integer> geneIds) throws DAOException, IllegalArgumentException;
-
-    /**
      * Retrieve RNA-Seq p-values from the data source, linked to expression IDs
      * of the raw expression table, and RNA-Seq experiment and library IDs,
      * and ordered by gene ID and expression ID of raw expression table.
@@ -84,26 +63,6 @@ public interface SamplePValueDAO extends DAO<SamplePValueDAO.Attribute> {
      * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
     public SamplePValueTOResultSet<String, String> getInSituPValuesOrderedByGeneIdAndExprId(
-            Collection<Integer> geneIds) throws DAOException, IllegalArgumentException;
-
-    /**
-     * Retrieve EST p-values from the data source, linked to expression IDs
-     * of the raw expression table, and EST library IDs,
-     * and ordered by gene ID and expression ID of raw expression table.
-     * <p>
-     * The data are retrieved and returned as an {@code SamplePValueTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
-     * 
-     * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
-     *                              of the genes to retrieve EST p-values for.
-     * @return                      An {@code SamplePValueTOResultSet} allowing to obtain 
-     *                              the requested {@code SamplePValueTO}s.
-     * @throws DAOException             If an error occurred while accessing the data source.
-     * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
-     */
-    //There is no experiment ID for EST data, only library IDs, that will be populated
-    //in the returned SamplePValueTOs as 'sampleId'.
-    public SamplePValueTOResultSet<String, String> getESTPValuesOrderedByGeneIdAndExprId(
             Collection<Integer> geneIds) throws DAOException, IllegalArgumentException;
 
     /**

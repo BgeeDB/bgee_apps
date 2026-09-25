@@ -258,7 +258,6 @@ public class CommandGene extends CommandExpressionSupport {
         String action = requestParameters.getAction();
         GeneService geneService = serviceFactory.getGeneService();
         GeneHomologsService geneHomologsService = serviceFactory.getGeneHomologsService();
-        CallService callService = serviceFactory.getCallService();
         ExpressionCallService expressionCallService = serviceFactory.getExpressionCallService();
 
         //*******************************************
@@ -313,7 +312,7 @@ public class CommandGene extends CommandExpressionSupport {
             log.traceExit(); return;
         }
         if (RequestParameters.ACTION_GENE_EXPRESSION.equals(action)) {
-            this.processExpressionRequest(callService, expressionCallService, display);
+            this.processExpressionRequest(expressionCallService, display);
             log.traceExit(); return;
         }
 
@@ -441,15 +440,14 @@ public class CommandGene extends CommandExpressionSupport {
      * since in Bgee we sometimes use the genome of a closely related species
      * for a species with no genome, a gene ID can exist in several species.
      *
-     * @param callService
      * @param display
      * @throws InvalidRequestException
      * @throws PageNotFoundException
      */
-    private void processExpressionRequest(CallService callService,
-            ExpressionCallService expressionCallService, GeneDisplay display)
+    private void processExpressionRequest(ExpressionCallService expressionCallService,
+            GeneDisplay display)
             throws InvalidRequestException, PageNotFoundException {
-        log.traceEntry("{}, {}, {}", callService, expressionCallService, display);
+        log.traceEntry("{}, {}", expressionCallService, display);
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
         long startTime = System.currentTimeMillis();
@@ -500,12 +498,12 @@ public class CommandGene extends CommandExpressionSupport {
             throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
         }
 //        GeneExpressionResponse exprResponse = loadExpression(callType, geneId, speciesId, condParamAttrs,
-//            dataTypes, callService, expressionCallService, getClusteringFunction());
+//            dataTypes, expressionCallService, getClusteringFunction());
         log.debug("request parameters retrieved in {} ms",
                 System.currentTimeMillis() - startTime);
         startTime = System.currentTimeMillis();
         GeneExpressionResponse exprResponse = loadExpression(callType, geneId, speciesId, condParamAttrs,
-                dataTypes, callService, expressionCallService, null);
+                dataTypes, expressionCallService, null);
         log.debug("expression data loaded in {} ms",
                 System.currentTimeMillis() - startTime);
         startTime = System.currentTimeMillis();
@@ -598,12 +596,11 @@ public class CommandGene extends CommandExpressionSupport {
 
     private GeneExpressionResponse loadExpression(ExpressionSummary callType,
             String geneId, Integer speciesId, EnumSet<CallService.Attribute> condParamAttrs,
-            EnumSet<DataType> dataTypes, CallService callService,
-            ExpressionCallService expressionCallService,
+            EnumSet<DataType> dataTypes, ExpressionCallService expressionCallService,
             Function<List<OTFExpressionCall>, Map<OTFExpressionCall, Integer>> clusteringFunction)
                 throws PageNotFoundException, InvalidRequestException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", callType, geneId, speciesId,
-            condParamAttrs, dataTypes, callService, expressionCallService, clusteringFunction);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", callType, geneId, speciesId,
+            condParamAttrs, dataTypes, expressionCallService, clusteringFunction);
 
         try {
             Set<ConditionParameter<?, ?>> condParams = convertCondParamAttrsToCondParams(condParamAttrs);

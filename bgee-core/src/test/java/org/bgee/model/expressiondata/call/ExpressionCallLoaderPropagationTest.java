@@ -8,21 +8,27 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpressionTO;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.ConditionGraphCacheService.ConditionGraphCache;
 import org.bgee.model.gene.Gene;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link ExpressionCallLoader#propagateCalls(Map, ConditionGraphCache, Set, boolean)},
+ * Unit tests for {@link ExpressionCallLoader#propagateCalls(Map, ConditionGraphCache, Set)}
+ * and for {@link ExpressionCallLoader#identifyRedundantCalls(Set, Map, ConditionGraphCache)},
  * run over small synthetic condition graphs.
  * <p>
  * The condition graph is a DAG, not a tree: a same condition can be reached from an ancestor
@@ -30,11 +36,9 @@ import org.junit.Test;
  * descendant into account exactly once per ancestor, whatever the number of paths
  * connecting them.
  * <p>
- * Except for {@link #shouldPruneRedundantAncestors()}, which targets that feature, the tests
- * run with the filtering of redundant ancestor calls disabled: every condition of the graph
- * is then present in the result and can be asserted on. Running them with the filtering
- * enabled would remove conditions from the result, and could hide a propagation error whose
- * incorrect value happens to be equal to that of a descendant.
+ * The propagation itself never discards a redundant call: which calls are redundant depends on
+ * their summary call type, only known once the propagated calls have been filtered, so it is
+ * identified afterwards, by the method this class also tests.
  *
  * @author  Julien Wollbrett
  * @version Bgee 16
@@ -42,11 +46,6 @@ import org.junit.Test;
 public class ExpressionCallLoaderPropagationTest extends TestAncestor {
 
     private static final int GENE_ID = 100;
-
-    //Values of the 'filterRedundantAncestorCalls' argument of propagateCalls,
-    //named for readability at the call sites.
-    private static final boolean FILTER_REDUNDANT_ANCESTORS = true;
-    private static final boolean KEEP_REDUNDANT_ANCESTORS = false;
 
     //Global condition IDs used to build the synthetic graphs
     private static final int L1 = 1;
@@ -73,8 +72,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(
                 GENE_ID, Map.of(L1, Set.of(bulkObservation(L1, "0.01", "80", "10"))));
 
-        Set<OTFExpressionCall> calls = loader.propagateCalls(observations, chainGraph(),
-                Collections.emptySet(), KEEP_REDUNDANT_ANCESTORS).get(gene);
+        Collection<OTFExpressionCall> calls = loader.propagateCalls(observations, chainGraph(),
+                Collections.emptySet()).get(gene).values();
 
         assertEquals("All the conditions of the chain should have been propagated",
                 3, calls.size());
@@ -112,8 +111,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
                         L1, Set.of(bulkObservation(L1, "0.01", "80", "10")),
                         L2, Set.of(bulkObservation(L2, "0.02", "60", "10"))));
 
-        Set<OTFExpressionCall> calls = loader.propagateCalls(observations, diamondGraph(),
-                Collections.emptySet(), KEEP_REDUNDANT_ANCESTORS).get(gene);
+        Collection<OTFExpressionCall> calls = loader.propagateCalls(observations, diamondGraph(),
+                Collections.emptySet()).get(gene).values();
 
         assertEquals("All the conditions of the diamond should have been propagated",
                 5, calls.size());
@@ -127,31 +126,89 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     }
 
     /**
-     * Characterization test of the filtering of redundant ancestor calls, over the same chain
-     * {@code L1 -> A -> R} and the same single observation as
-     * {@link #shouldPropagateCallsOverAChain()}. Every ancestor then has exactly the score of
-     * {@code L1}: when the filtering is requested, only the call for {@code L1} is returned.
-     * <p>
-     * This test does not endorse that behaviour - discarding rather than flagging a redundant
-     * ancestor means a query filtering on an ancestor term returns nothing, and the equality
-     * is tested on scores rounded to two decimals. It pins the current behaviour so that any
-     * change to it fails here explicitly.
+     * A present call is redundant when a more precise condition carries a present call of
+     * a quality at least as good: over the chain {@code L1 -> A -> R}, the two ancestors of
+     * {@code L1} are discarded, and {@code L1} itself is kept.
      */
     @Test
-    public void shouldPruneRedundantAncestors() {
-        Map<Integer, Condition2> condMap = mockConditionMap(L1, A, R);
-        Gene gene = mock(Gene.class);
-        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+    public void shouldIdentifyRedundantPresentCalls() {
+        ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
+                Map.of(GENE_ID, mock(Gene.class)));
 
-        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(
-                GENE_ID, Map.of(L1, Set.of(bulkObservation(L1, "0.01", "80", "10"))));
+        assertEquals("The ancestors of L1, carrying the same present call, should be redundant",
+                Set.of(A, R),
+                loader.identifyRedundantCalls(Set.of(L1, A, R),
+                        Map.of(L1, present(SummaryQuality.GOLD),
+                                A, present(SummaryQuality.GOLD),
+                                R, present(SummaryQuality.GOLD)),
+                        chainGraph()));
+    }
 
-        Set<OTFExpressionCall> calls = loader.propagateCalls(observations, chainGraph(),
-                Collections.emptySet(), FILTER_REDUNDANT_ANCESTORS).get(gene);
+    /**
+     * An absent call is redundant under the very same rule, which discards the less precise
+     * condition: the absence reported in {@code L1} is the most precise one, so the absent calls
+     * of {@code A} and {@code R} are discarded. This mirrors what the rank-based
+     * {@code ExpressionCall#identifyRedundantCalls(List, ConditionGraph)} does for
+     * the precomputed absent calls, which are ordered by decreasing rank before being filtered.
+     */
+    @Test
+    public void shouldIdentifyRedundantAbsentCalls() {
+        ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
+                Map.of(GENE_ID, mock(Gene.class)));
 
-        assertEquals("Both ancestors carrying the score of L1 should have been discarded",
-                1, calls.size());
-        assertCall("remaining condition L1", calls, condMap.get(L1), "10", "80");
+        assertEquals("The ancestors of L1, carrying the same absent call, should be redundant",
+                Set.of(A, R),
+                loader.identifyRedundantCalls(Set.of(L1, A, R),
+                        Map.of(L1, absent(SummaryQuality.SILVER),
+                                A, absent(SummaryQuality.SILVER),
+                                R, absent(SummaryQuality.SILVER)),
+                        chainGraph()));
+    }
+
+    /**
+     * A call is never discarded in favour of a less confident one, and calls of different summary
+     * call types never make each other redundant: over the chain {@code L1 -> A -> R}, a BRONZE
+     * call in {@code L1} leaves the GOLD call of {@code A} in place, and the present call
+     * of {@code R} is not made redundant by the absent calls below it.
+     */
+    @Test
+    public void shouldNotDiscardACallInFavourOfAWeakerOrDifferentOne() {
+        ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
+                Map.of(GENE_ID, mock(Gene.class)));
+
+        assertEquals("A GOLD call must not be discarded in favour of a BRONZE descendant",
+                Collections.emptySet(),
+                loader.identifyRedundantCalls(Set.of(L1, A),
+                        Map.of(L1, absent(SummaryQuality.BRONZE),
+                                A, absent(SummaryQuality.GOLD)),
+                        chainGraph()));
+
+        assertEquals("An absent call must not make a present call redundant, nor the other way round",
+                Collections.emptySet(),
+                loader.identifyRedundantCalls(Set.of(L1, A),
+                        Map.of(L1, absent(SummaryQuality.GOLD),
+                                A, present(SummaryQuality.GOLD)),
+                        chainGraph()));
+    }
+
+    /**
+     * A condition that carries no candidate call - discarded by the condition filters or by
+     * the requested summary call type - still relays the calls of its own sub-conditions, so that
+     * the chain {@code L1 -> A -> R} collapses onto {@code L1} even when {@code A} is not
+     * a candidate. Were the relay missing, {@code R} would be kept while the very same call
+     * is displayed for {@code L1}.
+     */
+    @Test
+    public void shouldRelayThroughAConditionCarryingNoCandidateCall() {
+        ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
+                Map.of(GENE_ID, mock(Gene.class)));
+
+        assertEquals("R should be redundant with L1, through the non-candidate A",
+                Set.of(R),
+                loader.identifyRedundantCalls(Set.of(L1, A, R),
+                        Map.of(L1, present(SummaryQuality.GOLD),
+                                R, present(SummaryQuality.GOLD)),
+                        chainGraph()));
     }
 
     //*************************************************************************
@@ -211,9 +268,9 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         Gene gene = mock(Gene.class);
         ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
 
-        Set<OTFExpressionCall> singleCellCalls = loader.propagateCalls(
+        Collection<OTFExpressionCall> singleCellCalls = loader.propagateCalls(
                 Map.of(GENE_ID, Map.of(L1, Set.of(singleCellObservation(L1, "0.8", "10", "10")))),
-                chainGraph(), Collections.emptySet(), KEEP_REDUNDANT_ANCESTORS).get(gene);
+                chainGraph(), Collections.emptySet()).get(gene).values();
         for (OTFExpressionCall call: singleCellCalls) {
             assertNotNull("A p-value over all data types is expected for every propagated call",
                     call.getAllDataTypePValue());
@@ -225,9 +282,9 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         }
 
         //Same propagation with bulk RNA-Seq, which is trusted for absent calls
-        Set<OTFExpressionCall> bulkCalls = loader.propagateCalls(
+        Collection<OTFExpressionCall> bulkCalls = loader.propagateCalls(
                 Map.of(GENE_ID, Map.of(L1, Set.of(bulkObservation(L1, "0.8", "10", "10")))),
-                chainGraph(), Collections.emptySet(), KEEP_REDUNDANT_ANCESTORS).get(gene);
+                chainGraph(), Collections.emptySet()).get(gene).values();
         for (OTFExpressionCall call: bulkCalls) {
             assertNotNull("Bulk RNA-Seq is trusted for absent calls, a p-value over the trusted "
                     + "data types is expected, call: " + call, call.getTrustedDataTypePValue());
@@ -250,6 +307,22 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
 
         return new ExpressionCallLoader(processedFilter, serviceFactory,
                 mock(CallServiceUtils.class));
+    }
+
+    /**
+     * @return  The summary call type and quality of a present call of the provided quality,
+     *          as {@code OTFExpressionCallFilterEngine#inferSummaryCallTypeAndQuality(
+     *          OTFExpressionCall, BigDecimal, BigDecimal, BigDecimal, BigDecimal)} returns it.
+     */
+    private static Entry<ExpressionSummary, SummaryQuality> present(SummaryQuality quality) {
+        return new AbstractMap.SimpleEntry<>(ExpressionSummary.EXPRESSED, quality);
+    }
+
+    /**
+     * @return  The summary call type and quality of an absent call of the provided quality.
+     */
+    private static Entry<ExpressionSummary, SummaryQuality> absent(SummaryQuality quality) {
+        return new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED, quality);
     }
 
     private static Map<Integer, Condition2> mockConditionMap(int... condIds) {
@@ -289,7 +362,7 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     /**
      * Asserts the weight and the expression score of the call propagated for {@code cond}.
      */
-    private static void assertCall(String condDescription, Set<OTFExpressionCall> calls,
+    private static void assertCall(String condDescription, Collection<OTFExpressionCall> calls,
             Condition2 cond, String expectedWeight, String expectedScore) {
         OTFExpressionCall call = callForCondition(condDescription, calls, cond);
         assertBigDecimalEquals("Unexpected weight for the " + condDescription,
@@ -311,7 +384,7 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     }
 
     private static OTFExpressionCall callForCondition(String condDescription,
-            Set<OTFExpressionCall> calls, Condition2 cond) {
+            Collection<OTFExpressionCall> calls, Condition2 cond) {
         assertNotNull("No call propagated for the gene", calls);
         OTFExpressionCall found = null;
         for (OTFExpressionCall call: calls) {

@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata.call;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -211,69 +212,121 @@ public class ExpressionCallLoader extends CommonService {
         //   propagation stops at the filter boundary so no wasteful scores are computed
         //   for ancestor conditions (e.g. "nervous system" when only "brain" was requested).
         long startTimePropagation = System.currentTimeMillis();
-        Map<Gene, Set<OTFExpressionCall>> propagatedExpressionCalls = propagateCalls(
-                geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds,
-                this.processedFilter.getSourceFilter().isRedundantAncestorCallsFilter());
+        Map<Gene, Map<Integer, OTFExpressionCall>> propagatedExpressionCalls = propagateCalls(
+                geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds);
         log.debug("Calls propagated ({} genes) in {} ms",
                 propagatedExpressionCalls.size(), System.currentTimeMillis() - startTimePropagation);
+
         // filter condition needed for on-the-fly propagation but not requested by the condition filters
         // happens when a condition parameter value is provided for anat. entity, cell type of dev. stage
         // but child terms are not expected.
-        // ALSO filter on the requested summary call type (present/absent) if any.
+        // ALSO filter on the requested summary call type (present/absent) if any, and discard
+        // the calls that are redundant with a more precise one if requested.
         //TODO: benchmark advantage of doing these steps during propagation. It would probably be harder to debug
         //      but would be faster
-        Predicate<OTFExpressionCall> filter =
-                OTFExpressionCallFilterEngine.compile(this.processedFilter.getSourceFilter().getConditionFilters());
-        Map<Gene, Set<OTFExpressionCall>> filtered =
-                propagatedExpressionCalls.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().stream()
-                            .filter(filter)
-                            .filter(this::matchesRequestedSummaryCallType)
-                            .collect(Collectors.toSet())
-                        ));
-        //order result and filter present/absent if required.
-        Map<Gene, List<OTFExpressionCall>> sortedCalls =
-                filtered.entrySet().stream()
-                        .collect(Collectors.toMap(
-                                Map.Entry::getKey,
-                                e -> e.getValue().stream()
-                                        .sorted(Comparator.comparing(
-                                                OTFExpressionCall::getExpressionScore,
-                                                Comparator.nullsLast(Comparator.reverseOrder())
-                                        ))
-                                        .toList()
-                        ));
+        Predicate<OTFExpressionCall> condFilter = OTFExpressionCallFilterEngine.compile(
+                this.processedFilter.getSourceFilter().getConditionFilters());
+        boolean filterRedundantCalls = this.processedFilter.getSourceFilter()
+                .isRedundantAncestorCallsFilter();
+        boolean specificCallTypeRequested = this.isSpecificSummaryCallTypeRequested();
+        //The summary call type and quality of a call are inferred once and reused: both
+        //the filtering on the requested call type and the identification of the redundant calls
+        //need them. They are not inferred at all when neither does.
+        boolean callTypeQualityNeeded = filterRedundantCalls || specificCallTypeRequested;
+
+        long startTimeFiltering = System.currentTimeMillis();
+        Map<Gene, List<OTFExpressionCall>> sortedCalls = new HashMap<>();
+        for (Entry<Gene, Map<Integer, OTFExpressionCall>> geneEntry:
+                propagatedExpressionCalls.entrySet()) {
+            Map<Integer, OTFExpressionCall> keptCalls = new HashMap<>();
+            Map<Integer, Entry<ExpressionSummary, SummaryQuality>> keptCallTypeQualities =
+                    filterRedundantCalls? new HashMap<>(): null;
+
+            for (Entry<Integer, OTFExpressionCall> callEntry: geneEntry.getValue().entrySet()) {
+                OTFExpressionCall call = callEntry.getValue();
+                if (!condFilter.test(call)) {
+                    continue;
+                }
+                Entry<ExpressionSummary, SummaryQuality> callTypeQuality = !callTypeQualityNeeded?
+                        null: this.inferSummaryCallTypeAndQuality(call);
+                //A call to which no summary call type applies is only discarded when a specific
+                //call type was requested: with no such request it is returned as before,
+                //and the response simply carries no expression state for it.
+                if (specificCallTypeRequested &&
+                        !this.matchesRequestedSummaryCallType(callTypeQuality)) {
+                    continue;
+                }
+                keptCalls.put(callEntry.getKey(), call);
+                if (keptCallTypeQualities != null && callTypeQuality != null) {
+                    keptCallTypeQualities.put(callEntry.getKey(), callTypeQuality);
+                }
+            }
+
+            if (filterRedundantCalls) {
+                Set<Integer> redundantCondIds = identifyRedundantCalls(
+                        geneEntry.getValue().keySet(), keptCallTypeQualities, condGraphCache);
+                log.debug("Discarding {} redundant call(s) out of {} for gene {}",
+                        redundantCondIds.size(), keptCalls.size(), geneEntry.getKey().getGeneId());
+                keptCalls.keySet().removeAll(redundantCondIds);
+            }
+
+            sortedCalls.put(geneEntry.getKey(), keptCalls.values().stream()
+                    .sorted(Comparator.comparing(
+                            OTFExpressionCall::getExpressionScore,
+                            Comparator.nullsLast(Comparator.reverseOrder())))
+                    .toList());
+        }
+        log.debug("Calls filtered and ordered in {} ms",
+                System.currentTimeMillis() - startTimeFiltering);
 
         return log.traceExit(sortedCalls);
     }
 
-    private boolean matchesRequestedSummaryCallType(OTFExpressionCall call) {
-        log.traceEntry("{}", call);
-
+    /**
+     * @return  A {@code boolean} that is {@code true} if a specific summary call type
+     *          was requested, so that the calls that do not match it must be discarded.
+     */
+    private boolean isSpecificSummaryCallTypeRequested() {
+        log.traceEntry();
         Map<ExpressionSummary, SummaryQuality> requestedSummaryCallTypeQualityFilter =
                 this.processedFilter.getSourceFilter().getSummaryCallTypeQualityFilter();
-        if (requestedSummaryCallTypeQualityFilter == null ||
-                requestedSummaryCallTypeQualityFilter.isEmpty() ||
-                requestedSummaryCallTypeQualityFilter.equals(ExpressionCallFilter2.ALL_CALLS)) {
-            return log.traceExit(true);
-        }
+        return log.traceExit(requestedSummaryCallTypeQualityFilter != null &&
+                !requestedSummaryCallTypeQualityFilter.isEmpty() &&
+                !requestedSummaryCallTypeQualityFilter.equals(ExpressionCallFilter2.ALL_CALLS));
+    }
+    /**
+     * @param call  The {@code OTFExpressionCall} to infer the summary call type and quality of.
+     * @return      An {@code Entry} where the key is the {@code ExpressionSummary} and the value
+     *              the {@code SummaryQuality} of {@code call}, {@code null} if no summary call
+     *              type applies to it.
+     */
+    private Entry<ExpressionSummary, SummaryQuality> inferSummaryCallTypeAndQuality(
+            OTFExpressionCall call) {
+        log.traceEntry("{}", call);
+        return log.traceExit(OTFExpressionCallFilterEngine.inferSummaryCallTypeAndQuality(call,
+                this.processedFilter.getPresentHighThreshold(),
+                this.processedFilter.getPresentLowThreshold(),
+                this.processedFilter.getAbsentLowThreshold(),
+                this.processedFilter.getAbsentHighThreshold()));
+    }
+    /**
+     * @param callTypeQuality   The summary call type and quality inferred for a call,
+     *                          {@code null} if none applies to it.
+     * @return                  A {@code boolean} that is {@code true} if the call is of
+     *                          a requested summary call type, with a quality at least as good
+     *                          as the one requested for that call type.
+     */
+    private boolean matchesRequestedSummaryCallType(
+            Entry<ExpressionSummary, SummaryQuality> callTypeQuality) {
+        log.traceEntry("{}", callTypeQuality);
 
-        //A call matches when its own summary call type and quality, inferred with the same
-        //thresholds, is the requested one with a quality at least as good as the requested one
-        //(the SummaryQuality enum is declared from the lowest to the highest quality, so that
-        //its compareTo can be used).
-        Entry<ExpressionSummary, SummaryQuality> callTypeQuality = OTFExpressionCallFilterEngine
-                .inferSummaryCallTypeAndQuality(call,
-                        this.processedFilter.getPresentHighThreshold(),
-                        this.processedFilter.getPresentLowThreshold(),
-                        this.processedFilter.getAbsentLowThreshold(),
-                        this.processedFilter.getAbsentHighThreshold());
         if (callTypeQuality == null) {
             return log.traceExit(false);
         }
-        boolean match = requestedSummaryCallTypeQualityFilter.entrySet().stream()
+        //(the SummaryQuality enum is declared from the lowest to the highest quality, so that
+        //its compareTo can be used)
+        boolean match = this.processedFilter.getSourceFilter().getSummaryCallTypeQualityFilter()
+                .entrySet().stream()
                 .anyMatch(e -> callTypeQuality.getKey().equals(e.getKey()) &&
                         callTypeQuality.getValue().compareTo(e.getValue()) >= 0);
 
@@ -281,22 +334,139 @@ public class ExpressionCallLoader extends CommonService {
     }
 
     /**
-     * @param filterRedundantAncestorCalls  A {@code boolean} defining whether ancestor conditions
-     *                                      carrying exactly the score and p-value of one of their
-     *                                      descendants should be discarded from the result
-     *                                      (see {@code ExpressionCallFilter2
-     *                                      #isRedundantAncestorCallsFilter()}). Redundant
-     *                                      conditions are always identified, only their removal
-     *                                      is conditioned by this argument.
+     * Identify the calls that are redundant with a more precise call: a call is redundant when
+     * one of the conditions more precise than its own carries a call of the same
+     * {@code ExpressionSummary} with a {@code SummaryQuality} at least as good.
+     * <p>
+     * The rule applies to present and to absent calls alike, and always discards the less precise
+     * call. It follows the same logic used for filtering redundant calls before the OTF propagation.
+     * For a present call the more precise call is the one
+     * the expression was propagated from, for an absent call it is the one carrying the most
+     * convincing absence. A call is never discarded in favour of a less confident one, so that
+     * the surviving call always is the strongest statement available about the most precise
+     * condition.
+     * <p>
+     * Only the calls of {@code condIdToCallTypeQuality} are candidates, and only they make
+     * another call redundant: a call already discarded by the condition filters or by
+     * the requested call type is not in there, so every discarded call does have a more precise
+     * counterpart in the result. A condition that is not a candidate still relays the calls
+     * of its own sub-conditions, so that a chain of conditions collapses whatever the calls
+     * it holds in between.
+     *
+     * @param propagatedCondIds         A {@code Set} of {@code Integer}s that are the IDs of all
+     *                                  the global conditions a call was propagated to for one
+     *                                  gene, candidates or not.
+     * @param condIdToCallTypeQuality   The summary call type and quality of the candidates,
+     *                                  by global condition ID.
+     * @param condGraphCache            The {@code ConditionGraphCache} holding the relations
+     *                                  between the conditions.
+     * @return                          A {@code Set} of {@code Integer}s that are the IDs of
+     *                                  the global conditions whose call is redundant, always
+     *                                  candidates.
+     */
+    //Package-private rather than private to allow unit testing over synthetic condition graphs
+    //(see ExpressionCallLoaderPropagationTest).
+    Set<Integer> identifyRedundantCalls(Set<Integer> propagatedCondIds,
+            Map<Integer, Entry<ExpressionSummary, SummaryQuality>> condIdToCallTypeQuality,
+            ConditionGraphCache condGraphCache) {
+        log.traceEntry("{}, {}, {}", propagatedCondIds, condIdToCallTypeQuality, condGraphCache);
+
+        //The conditions are visited children before parents, so that a condition already knows
+        //the best quality of each call type carried by its sub-conditions when it is visited:
+        //the index of a condition is its position in the topological order of the graph.
+        List<Integer> condIdsToVisit = new ArrayList<>(propagatedCondIds);
+        condIdsToVisit.sort(Comparator.comparingInt(condGraphCache::getIndex));
+
+        //The best quality of a candidate present call, respectively absent call, found in
+        //the sub-conditions of a condition. An entry is created when a descendant contributes
+        //to a condition, and removed when that condition is visited: the maps only ever hold
+        //the conditions not visited yet that have a candidate below them.
+        Map<Integer, SummaryQuality> bestPresentQualBelow = new HashMap<>();
+        Map<Integer, SummaryQuality> bestAbsentQualBelow = new HashMap<>();
+        Set<Integer> redundantCondIds = new HashSet<>();
+
+        for (int condId: condIdsToVisit) {
+            SummaryQuality presentQualBelow = bestPresentQualBelow.remove(condId);
+            SummaryQuality absentQualBelow = bestAbsentQualBelow.remove(condId);
+            Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
+                    condIdToCallTypeQuality.get(condId);
+            boolean present = callTypeQuality != null &&
+                    ExpressionSummary.EXPRESSED.equals(callTypeQuality.getKey());
+            SummaryQuality ownQual = callTypeQuality == null? null: callTypeQuality.getValue();
+
+            if (ownQual != null) {
+                SummaryQuality qualBelow = present? presentQualBelow: absentQualBelow;
+                //(the SummaryQuality enum is declared from the lowest to the highest quality,
+                //so that its compareTo can be used)
+                if (qualBelow != null && qualBelow.compareTo(ownQual) >= 0) {
+                    redundantCondIds.add(condId);
+                }
+            }
+
+            //What this condition contributes to its parents: the best qualities carried by its
+            //sub-conditions, and its own call if it is a candidate, redundant or not. Passing up
+            //the call of a redundant condition changes nothing, since it is redundant with
+            //a call at least as good that is passed up as well.
+            SummaryQuality presentQualUp = present?
+                    bestQuality(presentQualBelow, ownQual): presentQualBelow;
+            SummaryQuality absentQualUp = present?
+                    absentQualBelow: bestQuality(absentQualBelow, ownQual);
+            if (presentQualUp == null && absentQualUp == null) {
+                continue;
+            }
+            int[] parentCondIds = condGraphCache.getGlobalCondToDirectAncestors().get(condId);
+            if (parentCondIds == null) {
+                continue;
+            }
+            for (int parentCondId: parentCondIds) {
+                //A parent the propagation did not reach is outside the requested conditions,
+                //and so is everything only reachable through it: it can neither be a candidate
+                //nor relay this condition to a propagated ancestor.
+                if (!propagatedCondIds.contains(parentCondId)) {
+                    continue;
+                }
+                if (presentQualUp != null) {
+                    bestPresentQualBelow.merge(parentCondId, presentQualUp,
+                            ExpressionCallLoader::bestQuality);
+                }
+                if (absentQualUp != null) {
+                    bestAbsentQualBelow.merge(parentCondId, absentQualUp,
+                            ExpressionCallLoader::bestQuality);
+                }
+            }
+        }
+
+        return log.traceExit(redundantCondIds);
+    }
+    /**
+     * @return  The best of the two {@code SummaryQuality}s, {@code null}-tolerant:
+     *          a {@code null} stands for the absence of quality, and loses against any quality.
+     */
+    private static SummaryQuality bestQuality(SummaryQuality qual1, SummaryQuality qual2) {
+        if (qual1 == null) {
+            return qual2;
+        }
+        if (qual2 == null) {
+            return qual1;
+        }
+        return qual1.compareTo(qual2) >= 0? qual1: qual2;
+    }
+
+    /**
+     * @return  A {@code Map} where keys are {@code Gene}s, the associated value being
+     *          a {@code Map} where keys are {@code Integer}s that are global condition IDs,
+     *          the associated value being the {@code OTFExpressionCall} propagated to that
+     *          condition. Whether a call is redundant with a more precise one is not assessed
+     *          here, it needs the summary call types: see {@link #identifyRedundantCalls(
+     *          Set, Map, ConditionGraphCache)}.
      */
     //Package-private rather than private to allow unit testing of the propagation
     //over synthetic condition graphs (see ExpressionCallLoaderPropagationTest).
-    Map<Gene, Set<OTFExpressionCall>> propagateCalls(
+    Map<Gene, Map<Integer, OTFExpressionCall>> propagateCalls(
             Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneToGlobalCondIdToRawExpressionCall,
-            ConditionGraphCache condGraphCache, Set<Integer> filterConditionIds,
-            boolean filterRedundantAncestorCalls) {
-        log.traceEntry("{}, {}, {}, {}", geneToGlobalCondIdToRawExpressionCall, condGraphCache,
-                filterConditionIds, filterRedundantAncestorCalls);
+            ConditionGraphCache condGraphCache, Set<Integer> filterConditionIds) {
+        log.traceEntry("{}, {}, {}", geneToGlobalCondIdToRawExpressionCall, condGraphCache,
+                filterConditionIds);
 
         int condCount = condGraphCache.getConditionCount();
         //Dense view of the filter, so that the propagation recognises the filter boundary with
@@ -317,7 +487,7 @@ public class ExpressionCallLoader extends CommonService {
         //to the size of the graph.
         PropagationBuffers buffers = new PropagationBuffers(condCount);
 
-        Map<Gene, Set<OTFExpressionCall>> geneToExpressionCall = new HashMap<>();
+        Map<Gene, Map<Integer, OTFExpressionCall>> geneToExpressionCall = new HashMap<>();
 
         // For each gene independently
         for (Map.Entry<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneEntry :
@@ -356,11 +526,7 @@ public class ExpressionCallLoader extends CommonService {
             //them children before parents, and no condition outside that set is ever visited.
             int[] toProcess = buffers.sortedTouchedIndexes();
             int toProcessCount = buffers.touchedCount;
-            // Redundancy is only collected during the walk; the redundant calls are discarded
-            // after it, so that every ancestor can still read a child's call while computing
-            // its own. Transitive redundancy (A==B score/pval, B==C) is handled correctly:
-            // B still has its call when C is processed, so C is also detected.
-            int redundantCount = 0;
+            Map<Integer, OTFExpressionCall> geneCalls = new HashMap<>();
             for (int i = 0; i < toProcessCount; i++) {
                 int index = toProcess[i];
                 int condId = condGraphCache.getCondId(index);
@@ -375,43 +541,12 @@ public class ExpressionCallLoader extends CommonService {
                 }
                 OTFExpressionCall expressionCall = generateOTFExpressionCall(propagatedGene,
                         propagatedCond, buffers, index, condGraphCache);
+                //The call is held in the buffers for the ancestors of that condition to read
+                //while computing their own, and returned to the caller.
                 buffers.calls[index] = expressionCall;
-
-                // Check immediately whether the condition is redundant by comparing it to
-                // the best descendant score/p-value already computed in expressionCall.
-                if (expressionCall.getExpressionScore() != null
-                        && expressionCall.getBestDirectDescendantExpressionScore() != null
-                        && expressionCall.getExpressionScore().compareTo(
-                                expressionCall.getBestDirectDescendantExpressionScore()) == 0) {
-                    buffers.flags[index] |= PropagationBuffers.REDUNDANT;
-                    redundantCount++;
-                }
+                geneCalls.put(condId, expressionCall);
             }
 
-            if (redundantCount > 0) {
-                if (filterRedundantAncestorCalls) {
-                    log.debug("Pruning {} redundant ancestor condition(s) for gene {} "
-                            + "(same score and p-value as a descendant)", redundantCount, geneId);
-                    for (int i = 0; i < toProcessCount; i++) {
-                        int index = toProcess[i];
-                        if ((buffers.flags[index] & PropagationBuffers.REDUNDANT) != 0) {
-                            buffers.calls[index] = null;
-                        }
-                    }
-                } else {
-                    log.debug("Keeping {} redundant ancestor condition(s) for gene {}, "
-                            + "the filtering of redundant ancestor calls was not requested",
-                            redundantCount, geneId);
-                }
-            }
-
-            Set<OTFExpressionCall> geneCalls = new HashSet<>();
-            for (int i = 0; i < toProcessCount; i++) {
-                OTFExpressionCall call = buffers.calls[toProcess[i]];
-                if (call != null) {
-                    geneCalls.add(call);
-                }
-            }
             geneToExpressionCall.put(propagatedGene, geneCalls);
             log.debug("Propagation for gene {} completed in {} ms, {} calls generated",
                     geneId, System.currentTimeMillis() - startTimeGene, geneCalls.size());
@@ -588,7 +723,6 @@ public class ExpressionCallLoader extends CommonService {
     private static final class PropagationBuffers {
         private static final byte SELF_OBSERVATION = 1;
         private static final byte DESCENDANT_OBSERVATION = 2;
-        private static final byte REDUNDANT = 4;
 
         private final BigDecimal[] pValueByWeightSum;
         private final BigDecimal[] trustedPValueByWeightSum;

@@ -24,7 +24,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
@@ -33,7 +32,6 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
-import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 /**
  * An {@code ConditionDAO} for MySQL. 
@@ -266,57 +264,6 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         }
     }
     
-    @Override
-    public ConditionTOResultSet getGlobalConditionsFromCallFilters(Collection<DAOCallFilter> callFilters, 
-            Collection<ConditionDAO.Attribute> attributes) throws DAOException {
-
-        // clone attributes and perform sanity check
-        final LinkedHashSet<DAOCallFilter> clonedCallFilters = callFilters == null?
-                new LinkedHashSet<>(): new LinkedHashSet<>(callFilters);
-        final Set<ConditionDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attributes == null? 
-                EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
-        StringBuilder sb = new StringBuilder();
-        if (clonedCallFilters.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("At least one DAOCallFilter must"
-                    + " be provided"));
-        }
-
-        // initialize variables used to generate the query
-        // no need to join on globalExpression table if no filter on
-        // observedDataFilters or FDRPValueFilters
-        boolean globalExpTableName = clonedCallFilters.stream()
-                .anyMatch(e -> !e.getCallObservedDataFilters()
-                .isEmpty() || !e.getPValueFilters().isEmpty() || !e.getGeneIds().isEmpty());
-        // no need to join on gene table if no filtering on globalExpression and species Id
-        String geneTableName = globalExpTableName && clonedCallFilters.stream()
-                .anyMatch(e -> !e.getSpeciesIds().isEmpty())? MySQLGeneDAO.TABLE_NAME: null;
-        // if require join on gene table then the gene table is used to filter on species ID.
-        // Otherwize filtering on species ID is done in the globalCond table
-        String speciesIdFilterTableName = geneTableName == null ? TABLE_NAME: geneTableName;
-        
-        // generate SELECT clause
-        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(), true, true, clonedAttrs));
-        
-        // generate FROM clause
-        sb.append(MySQLGlobalExpressionCallDAO.generateTableReferences2(
-                speciesIdFilterTableName, true, geneTableName != null,
-                globalExpTableName));
-        
-        // generate WHERE clause
-        sb.append(MySQLGlobalExpressionCallDAO.generateWhereClause2(clonedCallFilters,
-                speciesIdFilterTableName, TABLE_NAME));
-        //we don't use a try-with-resource, because we return a pointer to the results,
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
-            MySQLGlobalExpressionCallDAO.configureCallStatement2(stmt, clonedCallFilters, null, null);
-            return log.traceExit(new MySQLConditionTOResultSet(stmt));
-
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
-
 
     @Override
     public ConditionTOResultSet getGlobalConditionsFromIds(Collection<Integer> conditionIds,

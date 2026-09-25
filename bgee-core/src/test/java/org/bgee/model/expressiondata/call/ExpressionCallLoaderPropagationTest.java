@@ -20,6 +20,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpressionTO;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.ConditionGraphCacheService.ConditionGraphCache;
@@ -253,6 +254,35 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     //*************************************************************************
     // HELPERS
     //*************************************************************************
+
+    /**
+     * The {@code PropagationState} of a call tells whether the gene was observed in the condition
+     * itself, which is what the filtering on observed data is assessed on (see
+     * {@code ExpressionCallLoader#loadDataOnTheFly()}), and what makes an absent call valid
+     * (see {@code OTFExpressionCallFilterEngine#inferSummaryCallTypeAndQuality(OTFExpressionCall,
+     * BigDecimal, BigDecimal, BigDecimal, BigDecimal)}). Over the chain {@code L1 -> A -> R}
+     * with a single observation in {@code L1}, only {@code L1} includes observed data.
+     */
+    @Test
+    public void shouldReportWhetherACallIncludesObservedData() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, A, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Map<Integer, OTFExpressionCall> callsByCondId = loader.propagateCalls(
+                Map.of(GENE_ID, Map.of(L1, Set.of(bulkObservation(L1, "0.01", "80", "10")))),
+                chainGraph(), Collections.emptySet()).get(gene);
+
+        assertEquals("The observed condition itself must carry a SELF propagation state",
+                PropagationState.SELF, callsByCondId.get(L1).getDataPropagation());
+        assertEquals("An ancestor with no observation of its own must carry a DESCENDANT "
+                + "propagation state", PropagationState.DESCENDANT,
+                callsByCondId.get(A).getDataPropagation());
+        assertEquals("Only the observed condition includes observed data",
+                Boolean.TRUE, callsByCondId.get(L1).getDataPropagation().isIncludingObservedData());
+        assertEquals("An ancestor with no observation of its own includes no observed data",
+                Boolean.FALSE, callsByCondId.get(R).getDataPropagation().isIncludingObservedData());
+    }
 
     /**
      * Single-cell RNA-Seq is not trusted for absent calls ({@link DataType#SC_RNA_SEQ}), so a call

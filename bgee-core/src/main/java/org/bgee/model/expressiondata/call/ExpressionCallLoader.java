@@ -233,6 +233,33 @@ public class ExpressionCallLoader extends CommonService {
         //the filtering on the requested call type and the identification of the redundant calls
         //need them. They are not inferred at all when neither does.
         boolean callTypeQualityNeeded = filterRedundantCalls || specificCallTypeRequested;
+        //Whether calls observed in the condition itself, or on the contrary calls only propagated
+        //from sub-conditions, were requested ({@code null} when both are wanted). The propagation
+        //state of a call already answers that question, for the requested combination of condition
+        //parameters: the conditions the observations are aggregated into are precisely
+        //the conditions of that combination. An observation requested over another combination
+        //is therefore not something the propagation can answer.
+        Boolean requestedObservedData = this.processedFilter.getSourceFilter()
+                .getCallObservedDataFilter();
+        if (requestedObservedData != null &&
+                !this.processedFilter.getSourceFilter().getCallObservedDataCondParams().equals(
+                        this.processedFilter.getSourceFilter().getCondParamCombination())) {
+            throw log.throwing(new UnsupportedOperationException("The filtering on observed data "
+                    + "is only supported over the requested combination of condition parameters ("
+                    + this.processedFilter.getSourceFilter().getCondParamCombination()
+                    + "), requested over: "
+                    + this.processedFilter.getSourceFilter().getCallObservedDataCondParams()));
+        }
+
+        //The calls of a gene are returned in a defined order, by decreasing expression score:
+        //callers paginate and cache this result (see CommandExpressionSupport
+        //#loadExprCallResults(ExpressionCallLoader, int, int)), which an unspecified order would
+        //make incoherent from one request to the next. It is only a default: presenting the calls
+        //in another order, such as by increasing score for absent calls, is the business of
+        //the caller, which knows what it displays.
+        Comparator<OTFExpressionCall> callComparator = Comparator.comparing(
+                OTFExpressionCall::getExpressionScore,
+                Comparator.nullsLast(Comparator.reverseOrder()));
 
         long startTimeFiltering = System.currentTimeMillis();
         Map<Gene, List<OTFExpressionCall>> sortedCalls = new HashMap<>();
@@ -245,6 +272,12 @@ public class ExpressionCallLoader extends CommonService {
             for (Entry<Integer, OTFExpressionCall> callEntry: geneEntry.getValue().entrySet()) {
                 OTFExpressionCall call = callEntry.getValue();
                 if (!condFilter.test(call)) {
+                    continue;
+                }
+                //A call includes observed data when the gene was observed in the condition itself,
+                //whatever the observations made in its sub-conditions.
+                if (requestedObservedData != null && !requestedObservedData.equals(
+                        call.getDataPropagation().isIncludingObservedData())) {
                     continue;
                 }
                 Entry<ExpressionSummary, SummaryQuality> callTypeQuality = !callTypeQualityNeeded?
@@ -271,9 +304,7 @@ public class ExpressionCallLoader extends CommonService {
             }
 
             sortedCalls.put(geneEntry.getKey(), keptCalls.values().stream()
-                    .sorted(Comparator.comparing(
-                            OTFExpressionCall::getExpressionScore,
-                            Comparator.nullsLast(Comparator.reverseOrder())))
+                    .sorted(callComparator)
                     .toList());
         }
         log.debug("Calls filtered and ordered in {} ms",

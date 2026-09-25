@@ -622,6 +622,16 @@ public class CommandGene extends CommandExpressionSupport {
             ExpressionCallLoader callLoader = this.loadExprCallLoader(exprCallFilter);
             List<OTFExpressionCall> calls = this.loadExprCallResults(
                     callLoader, DEFAULT_LIMIT, LIMIT_MAX);
+            //The loader returns the calls by decreasing expression score. For absent calls,
+            //the least expressed condition is the most convincingly absent one, so this table
+            //is displayed the other way round. A new List is created rather than sorting in place:
+            //the List returned by loadExprCallResults is held in a cache shared by all requests.
+            if (ExpressionSummary.NOT_EXPRESSED.equals(callType)) {
+                calls = calls.stream()
+                        .sorted(Comparator.comparing(OTFExpressionCall::getExpressionScore,
+                                Comparator.nullsLast(Comparator.naturalOrder())))
+                        .collect(Collectors.toList());
+            }
 
             if (calls.isEmpty()) {
                 log.debug("No calls for gene {} in species {}", geneId, speciesId);

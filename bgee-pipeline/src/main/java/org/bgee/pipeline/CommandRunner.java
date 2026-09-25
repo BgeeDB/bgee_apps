@@ -14,7 +14,6 @@ import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.easybgee.BgeeToEasyBgee;
 import org.bgee.pipeline.expression.GenoFishProject;
 import org.bgee.pipeline.expression.InsertPropagatedConditions;
-//import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateXRefsFilesWithExprInfo;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateBioSODAFile;
@@ -266,9 +265,6 @@ public class CommandRunner {
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            FilterNoExprCalls.main(newArgs);
 //            break;
-//        case "InsertPropagatedCalls":
-//            InsertPropagatedCalls.main(newArgs);
-//            break;
         case "CorrectTaxonConstraints":
             CorrectTaxonConstraints.main(newArgs);
             break;
@@ -286,11 +282,6 @@ public class CommandRunner {
 //            break;
 //        case "InsertSpeciesDataGroups":
 //            InsertSpeciesDataGroups.main(newArgs);
-//            break;
-        //Rank download files
-        case "GenerateRankFile":
-            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
-//            GenerateRankFile.main(newArgs);
 //            break;
         case "GenerateOncoMXFile":
             GenerateOncoMXFile.main(newArgs);

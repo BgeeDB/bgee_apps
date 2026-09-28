@@ -1,12 +1,19 @@
 package org.bgee.model.ontology;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +42,7 @@ import org.bgee.model.source.Source;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -50,6 +58,11 @@ public class OntologyServiceTest extends TestAncestor {
     @Override
     protected Logger getLogger() {
         return log;
+    }
+
+    @Before
+    public void clearAnatEntityOntologyCache() {
+        OntologyService.clearAnatEntityOntologyCache();
     }
 
     /**
@@ -173,11 +186,18 @@ public class OntologyServiceTest extends TestAncestor {
                 new TaxonConstraint<>("UBERON:0002p", 33),
                 new TaxonConstraint<>("UBERON:0003", 11),
                 new TaxonConstraint<>("UBERON:0003", 22));
-        // Note: we need to use thenReturn() twice because a stream can be use only once 
+        // Note: a stream can be used only once, so return a fresh stream on each call
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds))
-            .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream())
-            .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream())
-            .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream());
+            .thenAnswer(invocation -> taxonConstraints.stream());
+        when(tcService.loadAnatEntityTaxonConstraints(eq(speciesIds), any()))
+            .thenAnswer(invocation -> {
+                Collection<String> requestedIds = invocation.getArgument(1);
+                Stream<TaxonConstraint<String>> stream = taxonConstraints.stream();
+                if (requestedIds == null || requestedIds.isEmpty()) {
+                    return stream;
+                }
+                return stream.filter(tc -> requestedIds.contains(tc.getEntityId()));
+            });
         
         List<TaxonConstraint<Integer>> relationTaxonConstraints = Arrays.asList(
                 // UBERON:0001 ------------------
@@ -334,9 +354,11 @@ public class OntologyServiceTest extends TestAncestor {
                 new TaxonConstraint<>("UBERON:0002", null),
                 new TaxonConstraint<>("UBERON:0003", null),
                 new TaxonConstraint<>("UBERON:0004", null)));
-        // Note: we need to use thenReturn() twice because a stream can be use only once 
+        // Note: a stream can be used only once, so return a fresh stream on each call
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds))
-            .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream());
+            .thenAnswer(invocation -> taxonConstraints.stream());
+        when(tcService.loadAnatEntityTaxonConstraints(eq(speciesIds), any()))
+            .thenAnswer(invocation -> taxonConstraints.stream());
         
         Set<TaxonConstraint<Integer>> relationTaxonConstraints = new HashSet<>(Arrays.asList(
                 new TaxonConstraint<>(1, null),
@@ -377,6 +399,62 @@ public class OntologyServiceTest extends TestAncestor {
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology1, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                         expRelationTypes, true, true));
+    }
+
+    /**
+     * Anatomical-entity ontologies with a bounded seed set are reused across
+     * {@code OntologyService} instances in the same JVM, including when a later
+     * request's seeds are already present in a previously loaded subgraph.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void shouldReuseCachedAnatEntityOntologyAcrossCalls() {
+        DAOManager managerMock = mock(DAOManager.class);
+        RelationDAO relationDao = mock(RelationDAO.class);
+        when(managerMock.getRelationDAO()).thenReturn(relationDao);
+        TaxonConstraintDAO tcDAO = mock(TaxonConstraintDAO.class);
+        when(managerMock.getTaxonConstraintDAO()).thenReturn(tcDAO);
+        when(tcDAO.getAnatEntityRelationTaxonConstraints(any(), any(), any()))
+                .thenAnswer(invocation -> getMockResultSet(TaxonConstraintTOResultSet.class,
+                        new ArrayList<TaxonConstraintTO<Integer>>()));
+        when(relationDao.getAnatEntityRelations(any(), anyBoolean(), any(), any(),
+                anyBoolean(), any(), any(), any()))
+                .thenAnswer(invocation -> getMockResultSet(RelationTOResultSet.class,
+                        new ArrayList<RelationTO<String>>()));
+
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(11, 22));
+        Set<String> seedIds = new HashSet<>(Arrays.asList("UBERON:0001", "UBERON:0002"));
+
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        AnatEntityService anatEntityService = mock(AnatEntityService.class);
+        when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
+        when(anatEntityService.loadAnatEntities(eq(speciesIds), eq(true), eq(seedIds), eq(true)))
+                .thenAnswer(invocation -> Stream.of(
+                        new AnatEntity("UBERON:0001"),
+                        new AnatEntity("UBERON:0002")));
+
+        TaxonConstraintService tcService = mock(TaxonConstraintService.class);
+        when(serviceFactory.getTaxonConstraintService()).thenReturn(tcService);
+        when(tcService.loadAnatEntityTaxonConstraints(eq(speciesIds), any()))
+                .thenAnswer(invocation -> Stream.<TaxonConstraint<String>>empty());
+
+        OntologyService service = new OntologyService(serviceFactory);
+        Set<RelationType> relationTypes = EnumSet.of(RelationType.ISA_PARTOF);
+
+        MultiSpeciesOntology<AnatEntity, String> first = service.getAnatEntityOntology(
+                speciesIds, seedIds, relationTypes, false, true);
+        MultiSpeciesOntology<AnatEntity, String> second = service.getAnatEntityOntology(
+                speciesIds, seedIds, relationTypes, false, true);
+        assertSame("Identical ontology requests must reuse the cached instance", first, second);
+
+        MultiSpeciesOntology<AnatEntity, String> covering = service.getAnatEntityOntology(
+                speciesIds, Collections.singleton("UBERON:0002"), relationTypes, false, true);
+        assertSame("A subgraph already present in a cached ontology must be reused",
+                first, covering);
+
+        verify(anatEntityService, times(1)).loadAnatEntities(
+                eq(speciesIds), eq(true), eq(seedIds), eq(true));
     }
 
     /**

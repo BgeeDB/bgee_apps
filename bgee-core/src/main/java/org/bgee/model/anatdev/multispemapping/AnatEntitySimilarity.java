@@ -270,6 +270,43 @@ public class AnatEntitySimilarity {
     }
 
     /**
+     * Return the taxon that scopes this homology group for display and cross-species comparison.
+     * <p>
+     * Among the <strong>positive</strong> {@link AnatEntitySimilarityTaxonSummary}s, this is the
+     * most specific taxon that is not a strict descendant of any other positive summary taxon
+     * (the "maximal" positive annotation taxon). For a similarity split after a negative
+     * annotation, this identifies the sub-clade (e.g. Actinopterygii for swim bladder, or
+     * Gnathostomata when nested positives exist at Gnathostomata and Sarcopterygii).
+     * When several disjoint maximal positive taxa exist (which should not occur within a single
+     * {@code AnatEntitySimilarity} instance), the taxon with the highest taxonomic level
+     * (closest to species) is returned.
+     *
+     * @return  The {@code Taxon} scoping this homology group, or {@code null} if no positive
+     *          summary is available.
+     */
+    public Taxon getHomologyScopeTaxon() {
+        log.traceEntry();
+        Set<Taxon> positiveTaxa = this.getAnnotTaxonSummaries().stream()
+                .filter(AnatEntitySimilarityTaxonSummary::isPositive)
+                .map(AnatEntitySimilarityTaxonSummary::getTaxon)
+                .collect(Collectors.toSet());
+        if (positiveTaxa.isEmpty()) {
+            return log.traceExit((Taxon) null);
+        }
+        Set<Taxon> maximalTaxa = positiveTaxa.stream()
+                .filter(t -> positiveTaxa.stream()
+                        .filter(other -> !other.equals(t))
+                        .noneMatch(other -> this.taxonOntology.getAncestors(t).contains(other)))
+                .collect(Collectors.toSet());
+        if (maximalTaxa.size() == 1) {
+            return log.traceExit(maximalTaxa.iterator().next());
+        }
+        return log.traceExit(positiveTaxa.stream()
+                .max(Comparator.comparingInt(Taxon::getLevel))
+                .orElse(null));
+    }
+
+    /**
      * @return  A {@code boolean} that is {@code true} if the similarity relation have enough support
      *          to be considered reliable, {@code false} otherwise. {@code true} if at least
      *          one of the underlying {@code AnatEntitySimilarityTaxonSummary}s (see {@link 

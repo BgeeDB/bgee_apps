@@ -11,6 +11,7 @@ import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.call.CallService;
@@ -680,6 +681,75 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         assertEquals(null, unrestricted.getCallObservedDataFilter());
         assertFalse(observed.equals(propagatedOnly));
         assertFalse(observed.equals(unrestricted));
+    }
+
+    /**
+     * {@code data_type} and {@code exclude_non_informative} must be forwarded to the
+     * expression-call query of each species, as for single-species expression calls.
+     */
+    @Test
+    public void shouldApplyDataTypesAndExcludeNonInformativeToExpressionCallFilter() {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        org.bgee.model.expressiondata.call.ExpressionCallService exprCallService =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallService.class);
+        org.bgee.model.expressiondata.call.ExpressionCallLoader exprCallLoader =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallLoader.class);
+        AnatEntitySimilarityService aeSimService = mock(AnatEntitySimilarityService.class);
+
+        when(serviceFactory.getExpressionCallService()).thenReturn(exprCallService);
+        when(serviceFactory.getAnatEntitySimilarityService()).thenReturn(aeSimService);
+        when(serviceFactory.getSpeciesService()).thenReturn(mock(SpeciesService.class));
+        when(serviceFactory.getCallService()).thenReturn(mock(CallService.class));
+        when(serviceFactory.getDevStageSimilarityService())
+                .thenReturn(mock(org.bgee.model.anatdev.multispemapping.DevStageSimilarityService.class));
+        when(serviceFactory.getOntologyService()).thenReturn(mock(OntologyService.class));
+        when(serviceFactory.getGeneService()).thenReturn(mock(org.bgee.model.gene.GeneService.class));
+
+        int taxonId = 10;
+        Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
+        int speciesId1 = 1;
+        Species species1 = new Species(speciesId1);
+        Gene gene1 = new Gene("gene1a", species1, new GeneBioType("biotype1"));
+        GeneFilter geneFilter1 = new GeneFilter(speciesId1, Collections.singleton(gene1.getGeneId()));
+        AnatEntitySimilarity aeSim1 = new AnatEntitySimilarity(
+                Arrays.asList(new AnatEntity("anatEntityId1a")), null, taxon,
+                Collections.singleton(new AnatEntitySimilarityTaxonSummary(taxon, true, true)),
+                taxOnt);
+        when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, false))
+                .thenReturn(new HashSet<>(Arrays.asList(aeSim1)));
+
+        ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
+                ArgumentCaptor.forClass(ExpressionCallFilter2.class);
+        when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
+        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+
+        MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
+        Collection<GeneFilter> geneFilters = Collections.singleton(geneFilter1);
+        ConditionFilter2 excludeNonInfoFilter = new ConditionFilter2(speciesId1, null,
+                null, null, true);
+
+        SimilarityExpressionCallFilter restricted = new SimilarityExpressionCallFilter(
+                taxonId, geneFilters, Collections.singleton(excludeNonInfoFilter),
+                EnumSet.of(DataType.RNA_SEQ, DataType.SC_RNA_SEQ), false, SummaryQuality.BRONZE, null);
+        assertTrue(restricted.isExcludeNonInformative());
+        service.loadSimilarityCallLoader(restricted).loadData(0L, 10);
+        ExpressionCallFilter2 restrictedExprFilter = exprFilterCaptor.getValue();
+        assertEquals(EnumSet.of(DataType.RNA_SEQ, DataType.SC_RNA_SEQ),
+                restrictedExprFilter.getDataTypeFilters());
+        assertTrue(restrictedExprFilter.getConditionFilters().stream()
+                .allMatch(ConditionFilter2::isExcludeNonInformative));
+
+        SimilarityExpressionCallFilter unrestricted = new SimilarityExpressionCallFilter(
+                taxonId, geneFilters, null, false, SummaryQuality.BRONZE);
+        assertFalse(unrestricted.isExcludeNonInformative());
+        service.loadSimilarityCallLoader(unrestricted).loadData(0L, 10);
+        ExpressionCallFilter2 unrestrictedExprFilter = exprFilterCaptor.getValue();
+        assertEquals(EnumSet.allOf(DataType.class), unrestrictedExprFilter.getDataTypeFilters());
+        assertTrue(unrestrictedExprFilter.getConditionFilters().stream()
+                .noneMatch(ConditionFilter2::isExcludeNonInformative));
+        assertFalse(restricted.equals(unrestricted));
     }
 
     /**

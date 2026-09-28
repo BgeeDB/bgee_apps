@@ -1182,7 +1182,7 @@ public class CommandData extends CommandParent {
                 int lcaId = this.serviceFactory.getTaxonService().loadLeastCommonAncestor(
                         species.stream().map(Species::getId).collect(Collectors.toSet())).getId();
                 SimilarityExpressionCallFilter filter = new SimilarityExpressionCallFilter(
-                        lcaId, geneFilters, condFilters, false, qual,
+                        lcaId, geneFilters, condFilters, dataTypes, false, qual,
                         this.requestParameters.getObservedData());
                 //Loader construction is expensive (it prepares anat. entity similarities
                 //from the database), so it is deferred until a cache miss actually requires
@@ -1319,7 +1319,8 @@ public class CommandData extends CommandParent {
      * @param condParams         The requested {@code ConditionParameter}s.
      * @param speciesIds         A {@code Set} of species IDs present in submitted genes.
      * @return A {@code Collection} of {@code ConditionFilter2}, one per species in
-     *         {@code speciesIds}, or {@code null} when no filter parameters are specified.
+     *         {@code speciesIds}, or {@code null} when no filter parameters are specified
+     *         and non-informative conditions are not excluded.
      */
     private Collection<ConditionFilter2> loadMultispecConditionFilter(boolean consideringFilters,
             Set<ConditionParameter<?, ?>> condParams, Set<Integer> speciesIds)
@@ -1468,9 +1469,10 @@ public class CommandData extends CommandParent {
                         new ComposedFilterIds<>(strainFilter));
             }
 
+            boolean excludeNonInformative = this.requestParameters.isExcludeNonInformative();
             // As in processExprCallPage, requests without any condition filters must remain valid.
-            if (condParamToComposedFilterIds.isEmpty()
-                    || condParamToComposedFilterIds.values().stream().allMatch(f -> f.isEmpty())) {
+            if (!excludeNonInformative && (condParamToComposedFilterIds.isEmpty()
+                    || condParamToComposedFilterIds.values().stream().allMatch(f -> f.isEmpty()))) {
                 return null;
             }
 
@@ -1484,7 +1486,7 @@ public class CommandData extends CommandParent {
                             condParamToComposedFilterIds,
                             condParams,
                             null,
-                            false))
+                            excludeNonInformative))
                     .collect(Collectors.toList());
             if (condFilters.isEmpty() || condFilters.stream()
                     .allMatch(ConditionFilter2::areAllFiltersExceptSpeciesEmpty)) {

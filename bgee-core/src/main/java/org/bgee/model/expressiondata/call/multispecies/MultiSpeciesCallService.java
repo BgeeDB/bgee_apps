@@ -1184,18 +1184,20 @@ public class MultiSpeciesCallService extends CommonService {
         List<ExpressionCall2> allCalls = new ArrayList<>();
         long allStartMs = System.currentTimeMillis();
         int loaders = 0;
+        SimilarityExpressionCallFilter sourceFilter = ctx.getSourceFilter();
+        Boolean observedData = sourceFilter.getCallObservedData();
+        boolean excludeNonInformative = sourceFilter.isExcludeNonInformative();
         for (GeneFilter gf : ctx.getOrderedGeneFilters()) {
             long speciesStartMs = System.currentTimeMillis();
             ConditionFilter2 speciesCondFilter = new ConditionFilter2(
                     gf.getSpeciesId(), condParamToFilter,
                     Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
                     Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
-                    false);
-            Boolean observedData = ctx.getSourceFilter().getCallObservedData();
+                    excludeNonInformative);
             ExpressionCallFilter2 exprCallFilter = new ExpressionCallFilter2(
                     ctx.getSummaryCallTypeQualityFilter(), gf,
                     Collections.singleton(speciesCondFilter),
-                    null,
+                    sourceFilter.getDataTypeFilters(),
                     Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
                     observedData == null ? ConditionParameter.noneOf()
                             : Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),

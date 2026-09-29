@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterGeneSpeciesPart;
@@ -297,18 +296,10 @@ public class ExpressionCallService extends CallServiceParent {
             //Sources to be used by the RawDataLoader
             Map<Integer, Source> sourceMap = this.getServiceFactory().getSourceService()
                     .loadSourcesByIds(null);
-            //Retrieve max rank for the requested species if EXPRESSION_SCORE requested
-            //(the max rank is required to convert mean ranks into expression scores)
-            //TODO: in a future version with Attributes, to retrieve only if necessary
-//            Map<Integer, ConditionRankInfoTO> maxRankPerSpecies = conditionDAO
-//                    .getMaxRanks(null,
-//                            //We always request the max rank over all data types,
-//                            //independently of the data types requested in the query,
-//                            //because ranks are all normalized based on the max rank over all data types
-//                            null);
+            //No max rank is needed any more: expression scores are computed by the pipeline
+            //and stored in the database, the propagation does not convert ranks into scores.
             PROCESSED_FILTER_INVARIABLE_PART =
-                    new ExpressionCallProcessedFilterInvariablePart(geneBioTypeMap, sourceMap,
-                            null);
+                    new ExpressionCallProcessedFilterInvariablePart(geneBioTypeMap, sourceMap);
         } else {
             log.debug("loadIfNecessaryAndGetInvariablePart: cache hit, reusing invariable part");
         }

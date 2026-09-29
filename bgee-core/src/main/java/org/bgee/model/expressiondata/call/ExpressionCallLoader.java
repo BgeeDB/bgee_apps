@@ -587,24 +587,6 @@ public class ExpressionCallLoader extends CommonService {
     }
 
     /**
-     * 
-     * @param unsortedCalls                 A {@code Set} of {@code ExpressionCallOTF} that contains all calls to filter and/or order
-     * @param keepOnlyParentsMoreExpressed  A boolean used to filter (true) or not filter (false) calls that have a descendant call with
-     *                                      higher or equal expression score. It allows to avoid showing lots of generic terms
-     * @param orderingAttribute
-     * @return
-     */
-    //TODO: investigate why keepOnlyParentsMoreExpressed is useful and choosing the summary quality is not enough. SummaryQuality.SILVER allows to remove all
-    //      condition for which a gene does not have delf observation. The only calls this filtering removes compared to SummaryQuality.BRONZE are the calls
-    //      that have self expression lower than the descendant condition. Isn't it an interesting info to provide?
-//    public List<OTFExpressionCall> filterAndOrderExpressionCalls(Set<OTFExpressionCall> unsortedCalls, boolean keepOnlyParentsMoreExpressed,
-//            EnumSet<OTFExpressionCall.OrderingAttribute> orderingAttribute) {
-//        log.traceEntry("{}, {}, {}", unsortedCalls, keepOnlyParentsMoreExpressed, orderingAttribute);
-//        
-//        return null;
-//    }
-
-    /**
      * The observations of a gene in one condition, reduced once into the quantities the
      * propagation sums. The reduction is what allows the upward walk to contribute to
      * an ancestor with a handful of additions, rather than iterating the observations and

@@ -87,13 +87,33 @@ public class ExpressionCallLoader extends CommonService {
      * Unmodifiable, as {@link #conditionMap}.
      */
     private final Map<Integer, Gene> geneMap;
+    /**
+     * The condition parameters the propagation is allowed to move along, empty when it may move
+     * along all of them.
+     * <p>
+     * Restricting them propagates the observations only towards the ancestors leaving every other
+     * condition parameter unchanged. With only {@code DEV_STAGE}, the observations made in an
+     * anatomical entity are propagated to the ancestor stages of that very anatomical entity,
+     * and never to its ancestor anatomical entities: the call of a condition is then computed
+     * from the observations made in its own anatomical entity alone.
+     */
+    private final Set<ConditionParameter<?, ?>> propagationCondParams;
 
     ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter, ServiceFactory serviceFactory) {
-        this(processedFilter, serviceFactory, new CallServiceUtils());
+        this(processedFilter, serviceFactory, new CallServiceUtils(), null);
+    }
+    ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter,
+            ServiceFactory serviceFactory, Set<ConditionParameter<?, ?>> propagationCondParams) {
+        this(processedFilter, serviceFactory, new CallServiceUtils(), propagationCondParams);
     }
     //Constructor package protected so that only the RawDataService can instantiate this class
     ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter,
             ServiceFactory serviceFactory, CallServiceUtils utils) {
+        this(processedFilter, serviceFactory, utils, null);
+    }
+    ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter,
+            ServiceFactory serviceFactory, CallServiceUtils utils,
+            Set<ConditionParameter<?, ?>> propagationCondParams) {
         super(serviceFactory);
 
         if (processedFilter == null) {
@@ -117,6 +137,54 @@ public class ExpressionCallLoader extends CommonService {
             Collections.unmodifiableMap(requestedCondMap);
         this.geneMap = requestedGeneMap == null? Map.of():
             Collections.unmodifiableMap(requestedGeneMap);
+        this.propagationCondParams = propagationCondParams == null? Set.of():
+            Collections.unmodifiableSet(new HashSet<>(propagationCondParams));
+        if (!this.propagationCondParams.isEmpty() &&
+                !processedFilter.getSourceFilter().getCondParamCombination()
+                .containsAll(this.propagationCondParams)) {
+            throw log.throwing(new IllegalArgumentException("The propagation can only be "
+                    + "restricted to condition parameters of the requested combination ("
+                    + processedFilter.getSourceFilter().getCondParamCombination()
+                    + "), restricted to: " + this.propagationCondParams));
+        }
+    }
+
+    /**
+     * @param condGraphCache    The {@code ConditionGraphCache} of the species being propagated.
+     * @return                  An {@code int[]} giving, for each condition index, the group of
+     *                          conditions the propagation may move within: two conditions share
+     *                          a group when every condition parameter the propagation may not
+     *                          move along holds the same value in both. {@code null} when
+     *                          the propagation is not restricted.
+     */
+    //Package-private rather than private to allow unit testing over synthetic condition graphs
+    //(see ExpressionCallLoaderPropagationTest).
+    int[] propagationGroups(ConditionGraphCache condGraphCache) {
+        log.traceEntry("{}", condGraphCache);
+        if (this.propagationCondParams.isEmpty()) {
+            return log.traceExit((int[]) null);
+        }
+        Set<ConditionParameter<?, ?>> fixedParams = this.processedFilter.getSourceFilter()
+                .getCondParamCombination().stream()
+                .filter(p -> !this.propagationCondParams.contains(p))
+                .collect(Collectors.toSet());
+        int condCount = condGraphCache.getConditionCount();
+        int[] groups = new int[condCount];
+        Map<String, Integer> groupIds = new HashMap<>();
+        for (int index = 0; index < condCount; index++) {
+            Condition2 cond = this.conditionMap.get(condGraphCache.getCondId(index));
+            if (cond == null) {
+                //A condition the processed filter did not identify is in no group: a negative
+                //value unique to that index, so that it is never considered to share a group
+                groups[index] = -(index + 1);
+                continue;
+            }
+            String key = fixedParams.stream()
+                    .map(p -> String.valueOf(cond.getConditionParameterId(p)))
+                    .collect(Collectors.joining("//"));
+            groups[index] = groupIds.computeIfAbsent(key, k -> groupIds.size());
+        }
+        return log.traceExit(groups);
     }
 
 
@@ -212,8 +280,12 @@ public class ExpressionCallLoader extends CommonService {
         //   propagation stops at the filter boundary so no wasteful scores are computed
         //   for ancestor conditions (e.g. "nervous system" when only "brain" was requested).
         long startTimePropagation = System.currentTimeMillis();
+        //Null unless the propagation is restricted to some condition parameters, in which case
+        //it tells which conditions may be propagated into which
+        int[] propagationGroup = this.propagationGroups(condGraphCache);
         Map<Gene, Map<Integer, OTFExpressionCall>> propagatedExpressionCalls = propagateCalls(
-                geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds);
+                geneToGlobalCondIdToRawExpressionCall, condGraphCache, filterConditionIds,
+                propagationGroup);
         log.debug("Calls propagated ({} genes) in {} ms",
                 propagatedExpressionCalls.size(), System.currentTimeMillis() - startTimePropagation);
 
@@ -297,7 +369,8 @@ public class ExpressionCallLoader extends CommonService {
 
             if (filterRedundantCalls) {
                 Set<Integer> redundantCondIds = identifyRedundantCalls(
-                        geneEntry.getValue().keySet(), keptCallTypeQualities, condGraphCache);
+                        geneEntry.getValue().keySet(), keptCallTypeQualities, condGraphCache,
+                        propagationGroup);
                 log.debug("Discarding {} redundant call(s) out of {} for gene {}",
                         redundantCondIds.size(), keptCalls.size(), geneEntry.getKey().getGeneId());
                 keptCalls.keySet().removeAll(redundantCondIds);
@@ -400,7 +473,21 @@ public class ExpressionCallLoader extends CommonService {
     Set<Integer> identifyRedundantCalls(Set<Integer> propagatedCondIds,
             Map<Integer, Entry<ExpressionSummary, SummaryQuality>> condIdToCallTypeQuality,
             ConditionGraphCache condGraphCache) {
-        log.traceEntry("{}, {}, {}", propagatedCondIds, condIdToCallTypeQuality, condGraphCache);
+        return this.identifyRedundantCalls(propagatedCondIds, condIdToCallTypeQuality,
+                condGraphCache, null);
+    }
+    /**
+     * @param propagationGroup  An {@code int[]} giving, for each condition index, the group of
+     *                          conditions the propagation may move within, {@code null} when it
+     *                          may move along every relation. A condition can only be redundant
+     *                          with a more precise one of its own group: two groups reached
+     *                          separately hold calls computed from distinct observations.
+     */
+    Set<Integer> identifyRedundantCalls(Set<Integer> propagatedCondIds,
+            Map<Integer, Entry<ExpressionSummary, SummaryQuality>> condIdToCallTypeQuality,
+            ConditionGraphCache condGraphCache, int[] propagationGroup) {
+        log.traceEntry("{}, {}, {}, {}", propagatedCondIds, condIdToCallTypeQuality,
+                condGraphCache, propagationGroup);
 
         //The conditions are visited children before parents, so that a condition already knows
         //the best quality of each call type carried by its sub-conditions when it is visited:
@@ -456,6 +543,11 @@ public class ExpressionCallLoader extends CommonService {
                 if (!propagatedCondIds.contains(parentCondId)) {
                     continue;
                 }
+                if (propagationGroup != null &&
+                        propagationGroup[condGraphCache.getIndex(parentCondId)] !=
+                        propagationGroup[condGraphCache.getIndex(condId)]) {
+                    continue;
+                }
                 if (presentQualUp != null) {
                     bestPresentQualBelow.merge(parentCondId, presentQualUp,
                             ExpressionCallLoader::bestQuality);
@@ -496,8 +588,21 @@ public class ExpressionCallLoader extends CommonService {
     Map<Gene, Map<Integer, OTFExpressionCall>> propagateCalls(
             Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneToGlobalCondIdToRawExpressionCall,
             ConditionGraphCache condGraphCache, Set<Integer> filterConditionIds) {
-        log.traceEntry("{}, {}, {}", geneToGlobalCondIdToRawExpressionCall, condGraphCache,
-                filterConditionIds);
+        return this.propagateCalls(geneToGlobalCondIdToRawExpressionCall, condGraphCache,
+                filterConditionIds, null);
+    }
+    /**
+     * @param propagationGroup  An {@code int[]} giving, for each condition index, the group of
+     *                          conditions the propagation may move within, {@code null} when it
+     *                          may move along every relation. See {@link #propagationGroups(
+     *                          ConditionGraphCache)}.
+     */
+    Map<Gene, Map<Integer, OTFExpressionCall>> propagateCalls(
+            Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> geneToGlobalCondIdToRawExpressionCall,
+            ConditionGraphCache condGraphCache, Set<Integer> filterConditionIds,
+            int[] propagationGroup) {
+        log.traceEntry("{}, {}, {}, {}", geneToGlobalCondIdToRawExpressionCall, condGraphCache,
+                filterConditionIds, propagationGroup);
 
         int condCount = condGraphCache.getConditionCount();
         //Dense view of the filter, so that the propagation recognises the filter boundary with
@@ -547,8 +652,8 @@ public class ExpressionCallLoader extends CommonService {
                     //order: it has no ancestor and produces no call.
                     continue;
                 }
-                buffers.accumulateUpward(condGraphCache, inFilter, observedIndex,
-                        ObservedCondAggregate.of(observedEntry.getValue()));
+                buffers.accumulateUpward(condGraphCache, inFilter, propagationGroup,
+                        observedIndex, ObservedCondAggregate.of(observedEntry.getValue()));
             }
 
             //The conditions touched by the accumulation are exactly the conditions to process:
@@ -571,7 +676,7 @@ public class ExpressionCallLoader extends CommonService {
                             + "condition ID " + condId + " reached by the propagation"));
                 }
                 OTFExpressionCall expressionCall = generateOTFExpressionCall(propagatedGene,
-                        propagatedCond, buffers, index, condGraphCache);
+                        propagatedCond, buffers, index, condGraphCache, propagationGroup);
                 //The call is held in the buffers for the ancestors of that condition to read
                 //while computing their own, and returned to the caller.
                 buffers.calls[index] = expressionCall;
@@ -843,7 +948,7 @@ public class ExpressionCallLoader extends CommonService {
          * @param aggregate         The {@code ObservedCondAggregate} of those observations.
          */
         private void accumulateUpward(ConditionGraphCache graph, boolean[] inFilter,
-                int observedIndex, ObservedCondAggregate aggregate) {
+                int[] propagationGroup, int observedIndex, ObservedCondAggregate aggregate) {
             this.currentVisitStamp++;
             this.visitStamp[observedIndex] = this.currentVisitStamp;
             this.contribute(observedIndex, aggregate, true);
@@ -857,6 +962,13 @@ public class ExpressionCallLoader extends CommonService {
                     //(e.g. "nervous system" when brain was queried) is not reached, and neither
                     //is anything only reachable through it.
                     if (inFilter != null && !inFilter[parentIndex]) {
+                        continue;
+                    }
+                    //A restricted propagation only moves towards the ancestors leaving every
+                    //condition parameter it may not move along unchanged: the observations made
+                    //in an anatomical entity do not reach its ancestor anatomical entities.
+                    if (propagationGroup != null &&
+                            propagationGroup[parentIndex] != propagationGroup[index]) {
                         continue;
                     }
                     //Already contributed to through another path
@@ -923,8 +1035,8 @@ public class ExpressionCallLoader extends CommonService {
      * and maxima, and are therefore insensitive to a condition being seen several times.
      */
     private OTFExpressionCall generateOTFExpressionCall(Gene gene, Condition2 cond,
-            PropagationBuffers buf, int index, ConditionGraphCache graph) {
-        log.traceEntry("{}, {}, {}, {}, {}", gene, cond, buf, index, graph);
+            PropagationBuffers buf, int index, ConditionGraphCache graph, int[] propagationGroup) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", gene, cond, buf, index, graph, propagationGroup);
 
         if (!buf.isTouched(index)) {
             throw log.throwing(new IllegalArgumentException(
@@ -942,6 +1054,13 @@ public class ExpressionCallLoader extends CommonService {
         BigDecimal bestDescendantExpressionScore = null;
         BigDecimal bestDescendantExpressionScoreWeight = null;
         for (int childIndex: graph.getDirectDescendantIndexes(index)) {
+            //A restricted propagation reads the same relations downward as upward: a child that
+            //the observations of this condition's group were not propagated through does not
+            //inform it either.
+            if (propagationGroup != null &&
+                    propagationGroup[childIndex] != propagationGroup[index]) {
+                continue;
+            }
             //A child always comes first in the topological order, and the conditions are
             //processed in that order: a child with a call has necessarily been processed already.
             if (childIndex >= index) {

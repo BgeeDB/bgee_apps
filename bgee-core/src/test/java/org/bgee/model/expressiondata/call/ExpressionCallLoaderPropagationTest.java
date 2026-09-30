@@ -20,11 +20,14 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpressionTO;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.ConditionGraphCacheService.ConditionGraphCache;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
 import org.junit.Test;
 
 /**
@@ -55,6 +58,12 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     private static final int B  = 4;
     private static final int R  = 5;
 
+    //Conditions of the graph crossing two anatomical entities and two developmental stages:
+    //the anatomical entity A' is a descendant of B', and the stage A a descendant of the stage B
+    private static final int A_PRIME_A = 11;
+    private static final int A_PRIME_B = 12;
+    private static final int B_PRIME_A = 13;
+    private static final int B_PRIME_B = 14;
     //Conditions of the double diamond graph, named after the letters of the graph drawn in
     //shouldNotCountTwiceADescendantOverTwoChainedDiamonds()
     private static final int DD_A = 21;
@@ -64,6 +73,19 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     private static final int DD_E = 25;
     private static final int DD_F = 26;
     private static final int DD_G = 27;
+
+    private static final String ANAT_A_PRIME = "A'";
+    private static final String ANAT_B_PRIME = "B'";
+    /**
+     * The condition parameter combination of the graph crossing anatomical entities and stages.
+     */
+    private static final Set<ConditionParameter<?, ?>> ANAT_AND_STAGE = Set.of(
+            ConditionParameter.ANAT_ENTITY_CELL_TYPE, ConditionParameter.DEV_STAGE);
+    /**
+     * The only condition parameter the restricted propagations of these tests move along.
+     */
+    private static final Set<ConditionParameter<?, ?>> STAGE_ONLY =
+            Set.of(ConditionParameter.DEV_STAGE);
 
     //*************************************************************************
     // TESTS
@@ -363,6 +385,74 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         assertCall("condition c", calls, condMap.get(DD_C), "10", "80");
     }
 
+    /**
+     * A propagation restricted to some condition parameters only moves towards the ancestors
+     * leaving every other condition parameter unchanged. Over the graph
+     * <pre>
+     *        B'B
+     *        / \
+     *     A'B   B'A
+     *        \ /
+     *        A'A        the only condition holding an observation
+     * </pre>
+     * where the anatomical entity {@code A'} is a descendant of {@code B'} and the stage
+     * {@code A} a descendant of {@code B}, propagating along the developmental stages only must
+     * produce the calls of {@code A'A} and {@code A'B}, and nothing for {@code B'}: the
+     * observations of an anatomical entity never reach its ancestor anatomical entities.
+     */
+    @Test
+    public void shouldNotPropagateOutsideTheRequestedConditionParameters() {
+        Map<Integer, Condition2> condMap = anatAndStageConditionMap();
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene), STAGE_ONLY);
+
+        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(
+                GENE_ID, Map.of(A_PRIME_A,
+                        Set.of(bulkObservation(A_PRIME_A, "0.01", "80", "10"))));
+
+        ConditionGraphCache graph = anatAndStageGraph();
+        Map<Integer, OTFExpressionCall> calls = loader.propagateCalls(observations, graph,
+                Collections.emptySet(), loader.propagationGroups(graph)).get(gene);
+
+        assertEquals("Only the conditions of the observed anatomical entity should hold a call",
+                Set.of(A_PRIME_A, A_PRIME_B), calls.keySet());
+        assertCall("ancestor stage of the observed anat. entity", calls.values(),
+                condMap.get(A_PRIME_B), "10", "80");
+    }
+
+    /**
+     * Over the same graph as {@link #shouldNotPropagateOutsideTheRequestedConditionParameters()},
+     * with an observation in {@code A'A} of score 80 and one in {@code B'A} of score 20, both of
+     * weight 10. Propagating along the developmental stages only, the call of {@code B'B} must be
+     * computed from the observation of {@code B'A} alone, whether or not {@code B'B} holds
+     * observations of its own: a weight of 10 and a score of 20.
+     * <p>
+     * A propagation moving along the anatomical entities as well would add the observation of
+     * {@code A'A}, yielding a weight of 20 and a score of (80 * 10 + 20 * 10) / 20 = 50.
+     */
+    @Test
+    public void shouldPropagateAlongTheRequestedConditionParametersOnly() {
+        Map<Integer, Condition2> condMap = anatAndStageConditionMap();
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene), STAGE_ONLY);
+
+        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(
+                GENE_ID, Map.of(
+                        A_PRIME_A, Set.of(bulkObservation(A_PRIME_A, "0.01", "80", "10")),
+                        B_PRIME_A, Set.of(bulkObservation(B_PRIME_A, "0.5", "20", "10"))));
+
+        ConditionGraphCache graph = anatAndStageGraph();
+        Map<Integer, OTFExpressionCall> calls = loader.propagateCalls(observations, graph,
+                Collections.emptySet(), loader.propagationGroups(graph)).get(gene);
+
+        assertEquals("Every condition of the two observed anatomical entities should hold a call",
+                Set.of(A_PRIME_A, A_PRIME_B, B_PRIME_A, B_PRIME_B), calls.keySet());
+        assertCall("ancestor stage of the observed anat. entity A'", calls.values(),
+                condMap.get(A_PRIME_B), "10", "80");
+        assertCall("ancestor stage of the observed anat. entity B'", calls.values(),
+                condMap.get(B_PRIME_B), "10", "20");
+    }
+
     //*************************************************************************
     // HELPERS
     //*************************************************************************
@@ -452,6 +542,28 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     }
 
     /**
+     * @param propagationCondParams The {@code ConditionParameter}s the propagation may move along,
+     *                              the requested combination being the one they belong to.
+     * @return                      An {@code ExpressionCallLoader} propagating along
+     *                              {@code propagationCondParams} only.
+     */
+    private static ExpressionCallLoader mockLoader(Map<Integer, Condition2> condMap,
+            Map<Integer, Gene> geneMap, Set<ConditionParameter<?, ?>> propagationCondParams) {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(mock(DAOManager.class));
+        ExpressionCallProcessedFilter processedFilter = mock(ExpressionCallProcessedFilter.class);
+        when(processedFilter.getRequestedConditionMap()).thenReturn(condMap);
+        when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
+        //A real filter rather than a mock: the propagation reads the requested combination from it
+        //to know which condition parameters it may not move along
+        when(processedFilter.getSourceFilter()).thenReturn(new ExpressionCallFilter2(null,
+                new GeneFilter(1, "gene1"), null, null, ANAT_AND_STAGE, null, null, false));
+
+        return new ExpressionCallLoader(processedFilter, serviceFactory,
+                mock(CallServiceUtils.class), propagationCondParams);
+    }
+
+    /**
      * @return  The summary call type and quality of a present call of the provided quality,
      *          as {@code OTFExpressionCallFilterEngine#inferSummaryCallTypeAndQuality(
      *          OTFExpressionCall, BigDecimal, BigDecimal, BigDecimal, BigDecimal)} returns it.
@@ -491,6 +603,42 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         //The index of a condition is its position in the topological order, children first
         return new ConditionGraphCache(directAncestors, directDescendants,
                 new int[] {DD_A, DD_B, DD_C, DD_D, DD_E, DD_F, DD_G});
+    }
+
+    /**
+     * @return  The graph crossing two anatomical entities and two developmental stages, where
+     *          {@code A'A} has {@code A'B} as ancestor stage and {@code B'A} as ancestor
+     *          anatomical entity, both leading to {@code B'B}.
+     */
+    private static ConditionGraphCache anatAndStageGraph() {
+        Map<Integer, int[]> directAncestors = new HashMap<>();
+        directAncestors.put(A_PRIME_A, new int[] {A_PRIME_B, B_PRIME_A});
+        directAncestors.put(A_PRIME_B, new int[] {B_PRIME_B});
+        directAncestors.put(B_PRIME_A, new int[] {B_PRIME_B});
+        directAncestors.put(B_PRIME_B, new int[0]);
+        Map<Integer, int[]> directDescendants = new HashMap<>();
+        directDescendants.put(A_PRIME_B, new int[] {A_PRIME_A});
+        directDescendants.put(B_PRIME_A, new int[] {A_PRIME_A});
+        directDescendants.put(B_PRIME_B, new int[] {A_PRIME_B, B_PRIME_A});
+        return new ConditionGraphCache(directAncestors, directDescendants,
+                new int[] {A_PRIME_A, A_PRIME_B, B_PRIME_A, B_PRIME_B});
+    }
+
+    /**
+     * @return  The conditions of {@link #anatAndStageGraph()}, each telling which anatomical
+     *          entity it targets: that is what the propagation groups the conditions by when
+     *          it may only move along the developmental stages.
+     */
+    private static Map<Integer, Condition2> anatAndStageConditionMap() {
+        Map<Integer, Condition2> condMap = new HashMap<>();
+        for (int condId: new int[] {A_PRIME_A, A_PRIME_B, B_PRIME_A, B_PRIME_B}) {
+            Condition2 cond = mock(Condition2.class);
+            when(cond.getConditionParameterId(ConditionParameter.ANAT_ENTITY_CELL_TYPE))
+                    .thenReturn(condId == A_PRIME_A || condId == A_PRIME_B?
+                            ANAT_A_PRIME: ANAT_B_PRIME);
+            condMap.put(condId, cond);
+        }
+        return condMap;
     }
 
     private static Map<Integer, Condition2> mockConditionMap(int... condIds) {

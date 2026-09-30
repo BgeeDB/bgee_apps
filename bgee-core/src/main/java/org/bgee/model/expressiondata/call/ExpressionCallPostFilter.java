@@ -1,7 +1,10 @@
 package org.bgee.model.expressiondata.call;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -9,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.bgee.model.ComposedEntity;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 
@@ -17,6 +21,52 @@ public class ExpressionCallPostFilter {
 
     //Species are unnecessary, we allow filtering only when one species is selected
 //    private final Set<Species> species;
+
+    /**
+     * Build the {@code ExpressionCallPostFilter} of a result: for each {@code ConditionParameter}
+     * of {@code condParams}, the entities appearing in the conditions of {@code calls}.
+     * <p>
+     * It is built from the calls themselves, and not from the conditions matching the query
+     * in the data source: the propagation computes the calls on the fly, and discards some of
+     * them afterwards (summary call type and quality, redundant ancestor calls), so a term
+     * present in the data source can very well hold no call in the result. Filtering on it
+     * would then return nothing.
+     *
+     * @param calls         A {@code Collection} of {@code OTFExpressionCall}s that are
+     *                      the calls of the result.
+     * @param condParams    A {@code Collection} of {@code ConditionParameter}s for which
+     *                      to retrieve the entities.
+     * @return              The {@code ExpressionCallPostFilter} of {@code calls}.
+     */
+    public static ExpressionCallPostFilter fromCalls(Collection<OTFExpressionCall> calls,
+            Collection<ConditionParameter<?, ?>> condParams) {
+        if (calls == null || calls.isEmpty() || condParams == null) {
+            return new ExpressionCallPostFilter();
+        }
+        Map<ConditionParameter<?, ?>, Set<? extends Object>> condParamEntities = new HashMap<>();
+        for (ConditionParameter<?, ?> condParam: condParams) {
+            Set<Object> entities = new HashSet<>();
+            for (OTFExpressionCall call: calls) {
+                if (call.getCondition() == null) {
+                    continue;
+                }
+                ComposedEntity<?> composedEntity = call.getCondition()
+                        .getConditionParameterValue(condParam);
+                if (composedEntity == null) {
+                    continue;
+                }
+                for (Object entity: composedEntity.getEntities()) {
+                    if (entity != null) {
+                        entities.add(entity);
+                    }
+                }
+            }
+            //No need to skip the empty Sets, the constructor stores an entry
+            //for every ConditionParameter anyway.
+            condParamEntities.put(condParam, entities);
+        }
+        return new ExpressionCallPostFilter(condParamEntities);
+    }
 
     public ExpressionCallPostFilter() {
         this(null);

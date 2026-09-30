@@ -78,7 +78,7 @@ public class DownloadFileService extends CommonService {
         }
         //We have no experiment download files for data types other than AFFYMETRIX, RNA_SEQ, SC_RNA_SEQ,
         //so we return an empty list.
-        if (!dataType.equals(DataType.AFFYMETRIX) && !dataType.equals(DataType.RNA_SEQ)
+        if (!dataType.equals(DataType.RNA_SEQ)
                 && !dataType.equals(DataType.SC_RNA_SEQ)) {
             return log.traceExit(List.of());
         }
@@ -96,30 +96,12 @@ public class DownloadFileService extends CommonService {
         Set<Integer> speciesIds = condDAO.getRawDataConditionsLinkedToDataType(
                     Set.of(filter),
                     daoDataType,
-                    dataType.equals(DataType.AFFYMETRIX)? null: (dataType.equals(DataType.SC_RNA_SEQ)? true: false),
+                    dataType.equals(DataType.SC_RNA_SEQ)? true: false,
                     EnumSet.of(RawDataConditionDAO.Attribute.SPECIES_ID)
                 ).stream()
                 .map(condTO -> condTO.getSpeciesId())
                 .collect(Collectors.toSet());
         Set<Species> species = this.getServiceFactory().getSpeciesService().loadSpeciesByIds(speciesIds, false);
-
-        if (dataType.equals(DataType.AFFYMETRIX)) {
-            return log.traceExit(species.stream()
-                    .map(s -> new ExperimentDownloadFile(
-                            this.getServiceFactory().getBgeeProperties().getDownloadAffyProcExprValueFilesRootDirectory() +
-                                    s.getSpeciesFullNameWithoutSpace() + "/",
-                            s.getSpeciesFullNameWithoutSpace() +
-                                    "_Affymetrix_probesets_" + experimentId + ".tar.gz",
-                            "Affymetrix processed expression values in " + s.getScientificName()/* +
-                                    " in experiment " + experimentId*/,
-                            //Since we don't store yet this info to database, we don't have access to the file size
-                            0L,
-                            ExperimentDownloadFile.Category.ANNOTATED_SAMPLES,
-                            dataType,
-                            false,
-                            s)
-                    ).collect(Collectors.toList()));
-        }
 
         assert dataType.equals(DataType.RNA_SEQ) || dataType.equals(DataType.SC_RNA_SEQ);
 
@@ -251,10 +233,6 @@ public class DownloadFileService extends CommonService {
                 return log.traceExit(SpeciesDownloadFile.Category.DIFF_EXPR_DEV_SIMPLE);
             case ORTHOLOG:
                 return log.traceExit(SpeciesDownloadFile.Category.ORTHOLOG);
-            case AFFY_ANNOT:
-                return log.traceExit(SpeciesDownloadFile.Category.AFFY_ANNOT);
-            case AFFY_DATA:
-                return log.traceExit(SpeciesDownloadFile.Category.AFFY_DATA);
             case RNASEQ_ANNOT:
                 return log.traceExit(SpeciesDownloadFile.Category.RNASEQ_ANNOT);
             case RNASEQ_DATA:
@@ -294,10 +272,6 @@ public class DownloadFileService extends CommonService {
                 return log.traceExit(DownloadFileTO.CategoryEnum.DIFF_EXPR_DEV_SIMPLE);
             case ORTHOLOG:
                 return log.traceExit(DownloadFileTO.CategoryEnum.ORTHOLOG);
-            case AFFY_ANNOT:
-                return log.traceExit(DownloadFileTO.CategoryEnum.AFFY_ANNOT);
-            case AFFY_DATA:
-                return log.traceExit(DownloadFileTO.CategoryEnum.AFFY_DATA);
             case RNASEQ_ANNOT:
                 return log.traceExit(DownloadFileTO.CategoryEnum.RNASEQ_ANNOT);
             case RNASEQ_DATA:

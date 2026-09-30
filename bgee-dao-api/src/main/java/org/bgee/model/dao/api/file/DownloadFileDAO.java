@@ -85,8 +85,6 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          *   <li>{@code DIFF_EXPR_DEV_COMPLETE} a complete differential expression across developmental stages file</li>
          *   <li>{@code DIFF_EXPR_DEV_SIMPLE}a simple differential expression across developmental stages file</li>
          *   <li>{@code ORTHOLOG} corresponds to an orthologies file</li>
-         *   <li>{@code AFFY_ANNOT} corresponds to an Affymetrix annoations file</li>
-         *   <li>{@code AFFY_DATA} corresponds to an Affymetrix signal intensities file</li>
          *   <li>{@code RNASEQ_ANNOT} corresponds to RNA-Seq annotations file</li>
          *   <li>{@code RNASEQ_DATA} corresponds toRNA-Seq data file</li>
          * </ul>
@@ -103,8 +101,6 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
             DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete"),
             DIFF_EXPR_DEV_SIMPLE("diff_expr_dev_simple"),
             ORTHOLOG("ortholog"),
-            AFFY_ANNOT("affy_annot"),
-            AFFY_DATA("affy_data"),
             RNASEQ_ANNOT("rnaseq_annot"),
             RNASEQ_DATA("rnaseq_data"),
             FULL_LENGTH_ANNOT("full_length_annot"),

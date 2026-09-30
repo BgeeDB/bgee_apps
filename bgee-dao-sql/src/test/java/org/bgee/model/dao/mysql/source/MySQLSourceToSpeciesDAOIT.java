@@ -112,7 +112,7 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
         // Test recovery of one attribute with filter on data source IDs and data types
         EnumSet<Attribute> attributes = EnumSet.of(SourceToSpeciesDAO.Attribute.DATA_TYPE);
         Set<Integer> dataSourceIds = new HashSet<>(Arrays.asList(4, 99));
-        EnumSet<DAODataType> dataTypes = EnumSet.of(DAODataType.EST, DAODataType.IN_SITU);
+        EnumSet<DAODataType> dataTypes = EnumSet.of(DAODataType.RNA_SEQ, DAODataType.IN_SITU);
         expectedTOs = this.getAllSourceToSpeciesTOs().stream()
                 .filter(s -> dataSourceIds.contains(s.getDataSourceId()))
                 .filter(s -> dataTypes.contains(s.getDataType()))
@@ -143,14 +143,14 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
 
     private List<SourceToSpeciesTO> getAllSourceToSpeciesTOs() {
         return Arrays.asList(
-                new SourceToSpeciesTO(1, 11, DAODataType.AFFYMETRIX, InfoType.DATA),
-                new SourceToSpeciesTO(1, 11, DAODataType.AFFYMETRIX, InfoType.ANNOTATION),
-                new SourceToSpeciesTO(1, 21, DAODataType.AFFYMETRIX, InfoType.DATA),
-                new SourceToSpeciesTO(1, 21, DAODataType.AFFYMETRIX, InfoType.ANNOTATION),
-                new SourceToSpeciesTO(2, 11, DAODataType.EST, InfoType.DATA),
-                new SourceToSpeciesTO(3, 11, DAODataType.EST, InfoType.ANNOTATION),
-                new SourceToSpeciesTO(4, 11, DAODataType.EST, InfoType.DATA),
-                new SourceToSpeciesTO(4, 11, DAODataType.EST, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(1, 11, DAODataType.RNA_SEQ, InfoType.DATA),
+                new SourceToSpeciesTO(1, 11, DAODataType.RNA_SEQ, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(1, 21, DAODataType.RNA_SEQ, InfoType.DATA),
+                new SourceToSpeciesTO(1, 21, DAODataType.RNA_SEQ, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(2, 11, DAODataType.IN_SITU, InfoType.DATA),
+                new SourceToSpeciesTO(3, 11, DAODataType.IN_SITU, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(4, 11, DAODataType.IN_SITU, InfoType.DATA),
+                new SourceToSpeciesTO(4, 11, DAODataType.IN_SITU, InfoType.ANNOTATION),
                 new SourceToSpeciesTO(4, 21, DAODataType.RNA_SEQ, InfoType.DATA),
                 new SourceToSpeciesTO(4, 21, DAODataType.IN_SITU, InfoType.ANNOTATION));
     }

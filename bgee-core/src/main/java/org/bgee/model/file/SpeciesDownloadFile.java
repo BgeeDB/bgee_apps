@@ -29,8 +29,6 @@ public class SpeciesDownloadFile extends DownloadFile {
      *   <li>{@code DIFF_EXPR_DEV_COMPLETE} a complete differential expression across developmental stages file</li>
      *   <li>{@code DIFF_EXPR_DEV_SIMPLE}a simple differential expression across developmental stages file</li>
      *   <li>{@code ORTHOLOG} corresponds to an orthologies file</li>
-     *   <li>{@code AFFY_ANNOT} corresponds to an Affymetrix annoations file</li>
-     *   <li>{@code AFFY_DATA} corresponds to an Affymetrix signal intensities file</li>
      *   <li>{@code RNASEQ_ANNOT} corresponds to RNA-Seq annotations file</li>
      *   <li>{@code RNASEQ_DATA} corresponds to RNA-Seq data file</li>
      *   <li>{@code FULL_LENGTH_ANNOT} corresponds to full length single cell RNA-Seq annotations file</li>
@@ -55,8 +53,6 @@ public class SpeciesDownloadFile extends DownloadFile {
         DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete", true, false),
         DIFF_EXPR_DEV_SIMPLE("diff_expr_dev_simple", true, false),
         ORTHOLOG("ortholog", false, true),
-        AFFY_ANNOT("affy_annot", false, true),
-        AFFY_DATA("affy_data", false, true),
         RNASEQ_ANNOT("rnaseq_annot", false, true),
         RNASEQ_DATA("rnaseq_data", false, true),
         FULL_LENGTH_ANNOT("full_length_annot", false, true),

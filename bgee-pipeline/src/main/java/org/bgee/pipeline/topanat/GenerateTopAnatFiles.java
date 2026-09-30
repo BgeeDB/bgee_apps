@@ -34,9 +34,12 @@ public class GenerateTopAnatFiles {
      * of every species of the database.
      * <li>A boolean (see {@code CommandRunner#parseArgumentAsBoolean(String)}) telling whether
      * the species whose files already exist must be generated again, rather than skipped.
+     * <li>The number of gene batches to propagate at the same time, an empty argument meaning
+     * every core of the machine. Both the memory the propagation needs and the number of database
+     * connections it opens grow with it.
      * </ol>
      * Example of use:
-     * <pre>{@code GenerateTopAnatFiles /var/bgee/topanat - false}</pre>
+     * <pre>{@code GenerateTopAnatFiles /var/bgee/topanat - false 8}</pre>
      *
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the expected parameters.
@@ -44,7 +47,7 @@ public class GenerateTopAnatFiles {
     public static void main(String[] args) {
         log.traceEntry("{}", (Object[]) args);
 
-        int expectedArgLength = 3;
+        int expectedArgLength = 4;
         if (args == null || args.length != expectedArgLength) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments "
                     + "provided, expected " + expectedArgLength + " arguments, "
@@ -53,12 +56,16 @@ public class GenerateTopAnatFiles {
         String directory = args[0];
         List<Integer> speciesIds = CommandRunner.parseListArgumentAsInt(args[1]);
         boolean overwriteExistingFiles = CommandRunner.parseArgumentAsBoolean(args[2]);
+        Integer requestedParallelism = CommandRunner.parseArgumentAsInteger(args[3]);
+        int parallelism = requestedParallelism == null?
+                Runtime.getRuntime().availableProcessors(): requestedParallelism;
+        log.info("Generating the topAnat call files with a parallelism of {}", parallelism);
 
         try (ServiceFactory serviceFactory = new ServiceFactory()) {
             //One ServiceFactory per thread: the genes of a species are propagated by batches
             //in parallel, and a ServiceFactory is not thread-safe
             new TopAnatCallFileService(serviceFactory, ServiceFactory::new)
-            .generateFiles(speciesIds, directory, overwriteExistingFiles);
+            .generateFiles(speciesIds, directory, overwriteExistingFiles, parallelism);
         }
 
         log.traceExit();

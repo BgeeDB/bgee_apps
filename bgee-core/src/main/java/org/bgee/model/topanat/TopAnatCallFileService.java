@@ -19,13 +19,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.commons.lang3.StringUtils;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.CommonService;
 import org.bgee.model.ComposedEntity;
 import org.bgee.model.ServiceFactory;
@@ -90,15 +94,55 @@ public class TopAnatCallFileService extends CommonService {
      * the generated files, and the patterns of their names.
      */
     public final static String CALL_FILE_DIRECTORY = "topanat_calls";
+
     /**
-     * The file whose observations are propagated along every condition parameter.
+     * The kinds of file this service generates, one of each per species. Both hold the same
+     * columns and differ by the relations the observations are propagated along, as described
+     * in the documentation of this class.
      */
-    public final static String PROPAGATED_FILE_NAME_PATTERN = "topanat_calls_propagated_species_%d.tsv";
+    public static enum CallFileType implements BgeeEnumField {
+        /**
+         * The file whose observations are propagated along every condition parameter.
+         */
+        PROPAGATED("propagated"),
+        /**
+         * The file whose observations are only propagated along the developmental stages, so that
+         * the anatomical entities and cell types it reports are the observed ones.
+         */
+        OBSERVED("observed");
+
+        private final String representation;
+
+        private CallFileType(String representation) {
+            this.representation = representation;
+        }
+        @Override
+        public String getStringRepresentation() {
+            return this.representation;
+        }
+        /**
+         * @param speciesId An {@code int} that is the ID of a species.
+         * @return          A {@code String} that is the name of the file of this kind holding
+         *                  the calls of that species.
+         */
+        public String getFileName(int speciesId) {
+            return "topanat_calls_" + this.representation + "_species_" + speciesId + ".tsv";
+        }
+    }
+
     /**
-     * The file whose observations are only propagated along the developmental stages, so that
-     * the anatomical entities and cell types it reports are the observed ones.
+     * The columns of the generated files that do not depend on the data types, the other ones
+     * being named after the combination of data types they report (see
+     * {@link #combinationColumnName(EnumSet)}).
      */
-    public final static String OBSERVED_FILE_NAME_PATTERN = "topanat_calls_observed_species_%d.tsv";
+    public final static String GENE_ID_COLUMN = "geneId";
+    public final static String STAGE_ID_COLUMN = "stageId";
+    public final static String ANAT_ENTITY_ID_COLUMN = "anatEntityId";
+    public final static String CELL_TYPE_ID_COLUMN = "cellTypeId";
+    /**
+     * Separates the columns of the generated files.
+     */
+    public final static String COLUMN_SEPARATOR = "\t";
     /**
      * The extension of the files being written. The final files are only created, by an atomic
      * move, once they are complete: a file that exists is a file that can be read.
@@ -164,6 +208,24 @@ public class TopAnatCallFileService extends CommonService {
     }
 
     /**
+     * @param rootDirectory The path to the directory holding {@link #CALL_FILE_DIRECTORY}.
+     * @param fileType      The {@code CallFileType} of the file to locate.
+     * @param speciesId     An {@code int} that is the ID of a species.
+     * @return              The {@code Path} of the file holding the calls of that species,
+     *                      whether or not it has been generated yet.
+     */
+    public static Path getCallFilePath(String rootDirectory, CallFileType fileType,
+            int speciesId) {
+        log.traceEntry("{}, {}, {}", rootDirectory, fileType, speciesId);
+        if (StringUtils.isBlank(rootDirectory) || fileType == null) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A root directory and a file type must be provided"));
+        }
+        return log.traceExit(Paths.get(rootDirectory, CALL_FILE_DIRECTORY,
+                fileType.getFileName(speciesId)));
+    }
+
+    /**
      * Generate the files of each species that does not have them yet. A species whose two files
      * already exist is skipped, so that this can be called at every server start.
      *
@@ -171,10 +233,13 @@ public class TopAnatCallFileService extends CommonService {
      *                      of the database when {@code null} or empty.
      * @param rootDirectory The path to the directory holding {@link #CALL_FILE_DIRECTORY},
      *                      where the files are written.
+     * @param parallelism   The number of genes batches to propagate at the same time, 1 to
+     *                      propagate them one after the other.
      */
-    public void generateFilesIfMissing(Collection<Integer> speciesIds, String rootDirectory) {
-        log.traceEntry("{}, {}", speciesIds, rootDirectory);
-        this.generateFiles(speciesIds, rootDirectory, false);
+    public void generateFilesIfMissing(Collection<Integer> speciesIds, String rootDirectory,
+            int parallelism) {
+        log.traceEntry("{}, {}, {}", speciesIds, rootDirectory, parallelism);
+        this.generateFiles(speciesIds, rootDirectory, false, parallelism);
         log.traceExit();
     }
 
@@ -188,13 +253,25 @@ public class TopAnatCallFileService extends CommonService {
      *                                  {@link #CALL_FILE_DIRECTORY}, where the files are written.
      * @param overwriteExistingFiles    Whether the species whose files already exist must be
      *                                  processed again, rather than skipped.
+     * @param parallelism               The number of gene batches to propagate at the same time,
+     *                                  1 to propagate them one after the other. Both the memory
+     *                                  the propagation needs and the number of database
+     *                                  connections it opens grow with it: a batch holds buffers
+     *                                  sized to the number of conditions of the species, and
+     *                                  a {@code ServiceFactory} of its own.
      */
     public void generateFiles(Collection<Integer> speciesIds, String rootDirectory,
-            boolean overwriteExistingFiles) {
-        log.traceEntry("{}, {}, {}", speciesIds, rootDirectory, overwriteExistingFiles);
+            boolean overwriteExistingFiles, int parallelism) {
+        log.traceEntry("{}, {}, {}, {}", speciesIds, rootDirectory, overwriteExistingFiles,
+                parallelism);
         if (StringUtils.isBlank(rootDirectory)) {
             throw log.throwing(new IllegalArgumentException(
                     "A directory to write the files into must be provided"));
+        }
+        if (parallelism < 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "At least one gene batch must be propagated at a time, requested: "
+                    + parallelism));
         }
         //No species requested means every species of the database: the files of a species
         //are independent of each other, this service simply generates them all.
@@ -212,10 +289,9 @@ public class TopAnatCallFileService extends CommonService {
         }
 
         for (Integer speciesId: requestedSpeciesIds) {
-            Path propagatedFile = directory.resolve(
-                    String.format(PROPAGATED_FILE_NAME_PATTERN, speciesId));
-            Path observedFile = directory.resolve(
-                    String.format(OBSERVED_FILE_NAME_PATTERN, speciesId));
+            Path propagatedFile = getCallFilePath(rootDirectory, CallFileType.PROPAGATED,
+                    speciesId);
+            Path observedFile = getCallFilePath(rootDirectory, CallFileType.OBSERVED, speciesId);
             if (!overwriteExistingFiles &&
                     Files.exists(propagatedFile) && Files.exists(observedFile)) {
                 log.info("topAnat call files already generated for species {}", speciesId);
@@ -223,7 +299,7 @@ public class TopAnatCallFileService extends CommonService {
             }
             long startTime = System.currentTimeMillis();
             log.info("Generating the topAnat call files of species {}...", speciesId);
-            this.generateFiles(speciesId, propagatedFile, observedFile);
+            this.generateFiles(speciesId, propagatedFile, observedFile, parallelism);
             log.info("Done generating the topAnat call files of species {} in {} ms",
                     speciesId, System.currentTimeMillis() - startTime);
         }
@@ -235,8 +311,9 @@ public class TopAnatCallFileService extends CommonService {
      * to their final path once complete, so that an interrupted generation never leaves a partial
      * file behind that the next start would consider done.
      */
-    private void generateFiles(int speciesId, Path propagatedFile, Path observedFile) {
-        log.traceEntry("{}, {}, {}", speciesId, propagatedFile, observedFile);
+    private void generateFiles(int speciesId, Path propagatedFile, Path observedFile,
+            int parallelism) {
+        log.traceEntry("{}, {}, {}, {}", speciesId, propagatedFile, observedFile, parallelism);
 
         List<String> geneIds = this.getServiceFactory().getGeneService()
                 .loadGenes(new GeneFilter(speciesId))
@@ -270,9 +347,10 @@ public class TopAnatCallFileService extends CommonService {
             observedWriter.write(header);
 
             AtomicInteger index = new AtomicInteger(0);
-            geneIds.stream()
+            Collection<List<String>> geneBatches = geneIds.stream()
             .collect(Collectors.groupingBy(id -> index.getAndIncrement() / GENE_BATCH_SIZE))
-            .values().parallelStream().forEach(geneBatch -> {
+            .values();
+            Consumer<List<String>> propagateBatch = geneBatch -> {
                 ExpressionCallService callService = this.serviceFactorySupplier.get()
                         .getExpressionCallService();
                 //The two files are two propagations of the same observations, one along every
@@ -290,7 +368,34 @@ public class TopAnatCallFileService extends CommonService {
                 log.debug("Species {}: {}/{} genes processed, {} propagated rows, "
                         + "{} observed rows written", speciesId, count, geneIds.size(),
                         propagatedRowCount.get(), observedRowCount.get());
-            });
+            };
+
+            if (parallelism > 1) {
+                //A pool of this generation's own rather than the common ForkJoinPool: that one is
+                //shared by the whole JVM, and this generation runs for far too long to be allowed
+                //to starve anything else using a parallel stream.
+                ForkJoinPool pool = new ForkJoinPool(parallelism);
+                try {
+                    pool.submit(() -> geneBatches.parallelStream().forEach(propagateBatch)).get();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw log.throwing(new IllegalStateException("Interrupted while generating "
+                            + "the topAnat call files of species " + speciesId, e));
+                } catch (ExecutionException e) {
+                    //The propagation of a batch only throws unchecked exceptions, rethrown as
+                    //they were rather than wrapped into one more layer
+                    Throwable cause = e.getCause();
+                    if (cause instanceof RuntimeException) {
+                        throw log.throwing((RuntimeException) cause);
+                    }
+                    throw log.throwing(new IllegalStateException("Could not generate the topAnat "
+                            + "call files of species " + speciesId, cause));
+                } finally {
+                    pool.shutdown();
+                }
+            } else {
+                geneBatches.forEach(propagateBatch);
+            }
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException(
                     "Could not write " + propagatedTmpFile + " and " + observedTmpFile, e));
@@ -454,11 +559,11 @@ public class TopAnatCallFileService extends CommonService {
     }
 
     private static String header(List<EnumSet<DataType>> combinations) {
-        List<String> columns = new ArrayList<>(List.of("geneId", "stageId", "anatEntityId",
-                "cellTypeId"));
+        List<String> columns = new ArrayList<>(List.of(GENE_ID_COLUMN, STAGE_ID_COLUMN,
+                ANAT_ENTITY_ID_COLUMN, CELL_TYPE_ID_COLUMN));
         combinations.stream().map(TopAnatCallFileService::combinationColumnName)
                 .forEach(columns::add);
-        return String.join("\t", columns);
+        return String.join(COLUMN_SEPARATOR, columns);
     }
 
     /**
@@ -478,7 +583,7 @@ public class TopAnatCallFileService extends CommonService {
             SummaryQuality quality = qualities.get(combination);
             values.add(quality == null? NO_CALL_VALUE: quality.name());
         }
-        return String.join("\t", values);
+        return String.join(COLUMN_SEPARATOR, values);
     }
 
     /**

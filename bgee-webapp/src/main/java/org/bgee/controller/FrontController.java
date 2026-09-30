@@ -446,7 +446,12 @@ public class FrontController extends HttpServlet {
         try {
             new TopAnatCallFileService(this.serviceFactoryProvider.get(),
                     this.serviceFactoryProvider)
-            .generateFilesIfMissing(speciesIds, this.prop.getTopAnatResultsWritingDirectory());
+            .generateFilesIfMissing(speciesIds, this.prop.getTopAnatResultsWritingDirectory(),
+                    //One gene batch at a time: the files are normally produced by the pipeline,
+                    //this only fills a gap and must not take every core of the server. The
+                    //propagation of a batch would otherwise run in the ForkJoinPool common to
+                    //the whole JVM, for hours.
+                    1);
         } catch (Exception e) {
             log.error("Could not generate the topAnat call files, topAnat analyses will not run");
             log.catching(e);

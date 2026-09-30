@@ -55,6 +55,16 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     private static final int B  = 4;
     private static final int R  = 5;
 
+    //Conditions of the double diamond graph, named after the letters of the graph drawn in
+    //shouldNotCountTwiceADescendantOverTwoChainedDiamonds()
+    private static final int DD_A = 21;
+    private static final int DD_B = 22;
+    private static final int DD_C = 23;
+    private static final int DD_D = 24;
+    private static final int DD_E = 25;
+    private static final int DD_F = 26;
+    private static final int DD_G = 27;
+
     //*************************************************************************
     // TESTS
     //*************************************************************************
@@ -251,6 +261,108 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
                 new int[] {L1, L2, A, B, R});
     }
 
+    /**
+     * Test over a graph chaining two diamonds, where the single observed condition {@code a}
+     * reaches {@code e} through two paths and {@code g} through three:
+     * <pre>
+     *          g
+     *         / \
+     *        e   f
+     *       / \   \
+     *      b   c   d
+     *       \  |  /
+     *         \|/
+     *          a        the only condition holding an observation
+     * </pre>
+     * The walk reaches {@code g} through {@code f} before coming back to {@code e}, so the
+     * relation {@code e -> g} is met when {@code g} has already been contributed to, and the
+     * relation {@code b -> e} when {@code e} has. Every condition must still hold the single
+     * observation exactly once: a weight of 10, a score of 80, and an observation count of 1,
+     * which is what keeps the p-value uncalibrated at 0.01.
+     * <p>
+     * Counting the observation once per path would give {@code e} a weight of 20 and {@code g}
+     * a weight of 30, and their observation counts of 2 and 3 would double their p-value.
+     */
+    @Test
+    public void shouldNotCountTwiceADescendantOverTwoChainedDiamonds() {
+        Map<Integer, Condition2> condMap = mockConditionMap(DD_A, DD_B, DD_C, DD_D, DD_E, DD_F,
+                DD_G);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(
+                GENE_ID, Map.of(DD_A, Set.of(bulkObservation(DD_A, "0.01", "80", "10"))));
+
+        Collection<OTFExpressionCall> calls = loader.propagateCalls(observations,
+                doubleDiamondGraph(), Collections.emptySet()).get(gene).values();
+
+        assertEquals("Every condition of the graph should have been propagated",
+                7, calls.size());
+        //The two conditions reached through several paths, and the intermediate ones
+        for (int condId: new int[] {DD_B, DD_C, DD_D, DD_E, DD_F, DD_G}) {
+            String desc = "condition " + condId;
+            assertCall(desc, calls, condMap.get(condId), "10", "80");
+            OTFExpressionCall call = callForCondition(desc, calls, condMap.get(condId));
+            assertEquals("The single observation should be counted once in the " + desc,
+                    1, call.getObservationCount());
+            assertBigDecimalEquals("Unexpected p-value for the " + desc, "0.01",
+                    call.getAllDataTypePValue());
+        }
+    }
+
+    /**
+     * Test over the graph of {@link #shouldNotCountTwiceADescendantOverTwoChainedDiamonds()},
+     * with an observation in {@code a} (p-value 0.01, score 80, weight 10) and one in the
+     * intermediate condition {@code e} (p-value 0.4, score 20, weight 10).
+     * <p>
+     * The walk started from {@code a} marks {@code g} as already reached, but that marking only
+     * holds for that walk: the stamp is incremented for each observed condition, so the walk
+     * started from {@code e} does reach {@code g}, which therefore holds both observations —
+     * a weight of 20 and a score of (80 * 10 + 20 * 10) / 20 = 50.
+     * <p>
+     * What every walk pushes is the aggregate of the observations of its own condition, never
+     * an accumulated total: the walk from {@code e} carries the observation of {@code e} alone,
+     * so the observation of {@code a} reaches {@code g} exactly once, and not a second time
+     * through {@code e}.
+     * <p>
+     * {@code f} is above {@code a} but not above {@code e}, and {@code b} and {@code c} are
+     * below {@code e}: all three must hold the observation of {@code a} only.
+     */
+    @Test
+    public void shouldPropagateTheObservationsOfAnIntermediateCondition() {
+        Map<Integer, Condition2> condMap = mockConditionMap(DD_A, DD_B, DD_C, DD_D, DD_E, DD_F,
+                DD_G);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(
+                GENE_ID, Map.of(
+                        DD_A, Set.of(bulkObservation(DD_A, "0.01", "80", "10")),
+                        DD_E, Set.of(bulkObservation(DD_E, "0.4", "20", "10"))));
+
+        Collection<OTFExpressionCall> calls = loader.propagateCalls(observations,
+                doubleDiamondGraph(), Collections.emptySet()).get(gene).values();
+
+        assertEquals("Every condition of the graph should have been propagated",
+                7, calls.size());
+        //e holds its own observation and the one propagated from a
+        assertCall("intermediate condition e", calls, condMap.get(DD_E), "20", "50");
+        //g is above both, and must hold each observation exactly once
+        assertCall("top condition g", calls, condMap.get(DD_G), "20", "50");
+        OTFExpressionCall topCall = callForCondition("top condition g", calls, condMap.get(DD_G));
+        assertEquals("The two observations should be counted once each in the top condition g",
+                2, topCall.getObservationCount());
+        //The raw weighted mean is (0.01 * 10 + 0.4 * 10) / 20 = 0.205, doubled when read
+        //because the call aggregates more than one observation
+        assertBigDecimalEquals("Unexpected p-value for the top condition g", "0.41",
+                topCall.getAllDataTypePValue());
+        //Above a but not above e
+        assertCall("condition f", calls, condMap.get(DD_F), "10", "80");
+        //Below e: the propagation never moves downward
+        assertCall("condition b", calls, condMap.get(DD_B), "10", "80");
+        assertCall("condition c", calls, condMap.get(DD_C), "10", "80");
+    }
+
     //*************************************************************************
     // HELPERS
     //*************************************************************************
@@ -353,6 +465,32 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      */
     private static Entry<ExpressionSummary, SummaryQuality> absent(SummaryQuality quality) {
         return new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED, quality);
+    }
+
+    /**
+     * @return  The graph of {@link #shouldNotCountTwiceADescendantOverTwoChainedDiamonds()},
+     *          chaining two diamonds: {@code a} reaches {@code e} through {@code b} and
+     *          {@code c}, and {@code g} through {@code e} and {@code f}.
+     */
+    private static ConditionGraphCache doubleDiamondGraph() {
+        Map<Integer, int[]> directAncestors = new HashMap<>();
+        directAncestors.put(DD_A, new int[] {DD_B, DD_C, DD_D});
+        directAncestors.put(DD_B, new int[] {DD_E});
+        directAncestors.put(DD_C, new int[] {DD_E});
+        directAncestors.put(DD_D, new int[] {DD_F});
+        directAncestors.put(DD_E, new int[] {DD_G});
+        directAncestors.put(DD_F, new int[] {DD_G});
+        directAncestors.put(DD_G, new int[0]);
+        Map<Integer, int[]> directDescendants = new HashMap<>();
+        directDescendants.put(DD_B, new int[] {DD_A});
+        directDescendants.put(DD_C, new int[] {DD_A});
+        directDescendants.put(DD_D, new int[] {DD_A});
+        directDescendants.put(DD_E, new int[] {DD_B, DD_C});
+        directDescendants.put(DD_F, new int[] {DD_D});
+        directDescendants.put(DD_G, new int[] {DD_E, DD_F});
+        //The index of a condition is its position in the topological order, children first
+        return new ConditionGraphCache(directAncestors, directDescendants,
+                new int[] {DD_A, DD_B, DD_C, DD_D, DD_E, DD_F, DD_G});
     }
 
     private static Map<Integer, Condition2> mockConditionMap(int... condIds) {

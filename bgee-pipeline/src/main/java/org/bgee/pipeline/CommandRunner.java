@@ -12,6 +12,7 @@ import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.easybgee.BgeeToEasyBgee;
+import org.bgee.pipeline.topanat.GenerateTopAnatFiles;
 import org.bgee.pipeline.expression.GenoFishProject;
 import org.bgee.pipeline.expression.InsertPropagatedConditions;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
@@ -290,6 +291,11 @@ public class CommandRunner {
             GenerateBioSODAFile.main(newArgs);
             break;
         
+        //---------- Generate topAnat files -----------
+        case "GenerateTopAnatFiles":
+            GenerateTopAnatFiles.main(newArgs);
+            break;
+
         //---------- Generate EasyBgee database -----------
         case "GenerateEasyBgee":
             BgeeToEasyBgee.main(newArgs);

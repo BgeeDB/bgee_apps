@@ -3,6 +3,8 @@ package org.bgee.model.expressiondata.call;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.bgee.model.TestAncestor;
@@ -59,8 +61,13 @@ public class CallServiceUtilsTest extends TestAncestor {
     public void shouldNotRestrictWhenAllCondParamsRequested() {
         CallServiceUtils utils = new CallServiceUtils();
 
-        for (Set<ConditionParameter<?, ?>> combination: Set.of(
-                Set.copyOf(ConditionParameter.allOf()), Set.<ConditionParameter<?, ?>>of())) {
+        //Both sets are built with their target type spelled out: allOf() returns
+        //ConditionParameter<? extends NamedEntity<?>, ?>, which denotes the same types as
+        //ConditionParameter<?, ?> without being the same type argument, and inferring a common
+        //one inside a Set.of() is not accepted by every compiler.
+        Set<ConditionParameter<?, ?>> allCondParams = new HashSet<>(ConditionParameter.allOf());
+        Set<ConditionParameter<?, ?>> noCondParam = Set.of();
+        for (Set<ConditionParameter<?, ?>> combination: List.of(allCondParams, noCondParam)) {
             DAOConditionFilter2 daoFilter = utils.convertConditionFiltersToDAOConditionFilters(
                     null, null, null, Set.of(9606), combination).iterator().next();
             assertTrue("Nothing should be restricted for " + combination,

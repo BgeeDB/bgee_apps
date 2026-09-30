@@ -2431,6 +2431,16 @@ public class RequestParameters {
         return this.getFirstValue(this.getUrlParametersInstance().getParamDataQuality());
     }
     /**
+     * Convenient method to retrieve the value of the parameter returned by
+     * {@link URLParameters#getParamCallFileType()}.
+     *
+     * @return  A {@code String} that is the requested kind of generated call file, {@code null}
+     *          when the request does not specify one.
+     */
+    public String getCallFileType() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamCallFileType());
+    }
+    /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamDataType()}. Equivalent to calling 
      * {@link #getValues(URLParameters.Parameter)} for this parameter.

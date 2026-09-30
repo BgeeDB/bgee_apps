@@ -23,6 +23,8 @@ import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.topanat.TopAnatCallFileService;
+import org.bgee.model.topanat.TopAnatCallFileService.CallFileType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 
@@ -330,6 +332,22 @@ public class URLParameters {
                           .map(e -> e.getStringRepresentation())
                           .collect(Collectors.joining("|"))
             + ")", 
+            String.class);
+    /**
+     * A {@code Parameter<String>} that contains the kind of generated call file the expression
+     * calls must be read from. Corresponds to the URL parameter "call_file_type".
+     *
+     * @see TopAnatCallFileService.CallFileType
+     */
+    private static final Parameter<String> CALL_FILE_TYPE = new Parameter<String>("call_file_type",
+            false, false, null, true, DEFAULT_IS_SECURE,
+            EnumSet.allOf(CallFileType.class).stream()
+                .map(e -> e.getStringRepresentation().length())
+                .max(Comparator.naturalOrder()).get(),
+            "(?i:" + EnumSet.allOf(CallFileType.class).stream()
+                    .map(e -> e.getStringRepresentation())
+                    .collect(Collectors.joining("|"))
+            + ")",
             String.class);
     /**
      * A {@code Parameter<String>} that contains the data quality to be used 
@@ -814,6 +832,7 @@ public class URLParameters {
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DECORRELATION_TYPE,
+            CALL_FILE_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
             GENE_INFO, 
             //ID to identify a specific analysis
@@ -1056,6 +1075,13 @@ public class URLParameters {
      */
     public Parameter<String> getParamDataQuality() {
         return SUMMARY_QUALITY;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining the kind of generated call file the expression
+     *          calls must be read from. Corresponds to the URL parameter "call_file_type".
+     */
+    public Parameter<String> getParamCallFileType() {
+        return CALL_FILE_TYPE;
     }
     /**
      * @return  A {@code Parameter<String>} defining a data type.

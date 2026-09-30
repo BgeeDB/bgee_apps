@@ -27,7 +27,9 @@ import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
+import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.CsvMapWriter;
+import org.supercsv.io.ICsvListWriter;
 import org.supercsv.io.ICsvMapWriter;
 import org.supercsv.prefs.CsvPreference;
 import org.supercsv.quote.AlwaysQuoteMode;
@@ -40,6 +42,27 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
     protected CsvRPackageDisplay(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop,
             ViewFactory factory, Delimiter delimiter) throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory, delimiter);
+    }
+
+    @Override
+    public void displayCallsFromFile(List<String> columns, Stream<String[]> rows) {
+        try (final ICsvListWriter listWriter = new CsvListWriter(this.getOut(), this.csvPref)) {
+            String[] header = columns.toArray(String[]::new);
+            this.startDisplay();
+            listWriter.writeHeader(header);
+            rows.forEach(row -> {
+                try {
+                    listWriter.write(row);
+                } catch (IOException e) {
+                    throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
+                }
+            });
+            listWriter.flush();
+            this.endDisplay();
+        } catch (IOException e) {
+            log.catching(e);
+            throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
+        }
     }
 
     @Override

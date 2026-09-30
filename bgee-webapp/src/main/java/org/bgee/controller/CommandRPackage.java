@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
@@ -59,7 +61,8 @@ import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
-import org.bgee.model.topanat.TopAnatUtils;
+import org.bgee.model.topanat.TopAnatCallFileService;
+import org.bgee.model.topanat.TopAnatCallFileService.CallFileType;
 import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -86,6 +89,7 @@ public class CommandRPackage extends CommandParent {
 
     public final static String CALLS_GENE_ID_PARAM = "GENE_ID";
     public final static String CALLS_ANAT_ENTITY_ID_PARAM = "ANAT_ENTITY_ID";
+    public final static String CALLS_CELL_TYPE_ID_PARAM = "CELL_TYPE_ID";
     public final static String CALLS_DEV_STAGE_PARAM = "DEV_STAGE_ID";
     public final static String CALLS_DATA_QUALITY_PARAM = "DATA_QUALITY_ID";
 
@@ -111,7 +115,6 @@ public class CommandRPackage extends CommandParent {
     public final static String PROPAGATION_LEFTBOUND_PARAM = "LEFT_BOUND";
     public final static String PROPAGATION_RIGHTBOUND_PARAM = "RIGHT_BOUND";
 
-    private final ManageReadWriteLocks manageReadWriteLocks;
 
     public enum PropagationParam implements BgeeEnumField {
         DESCENDANTS("descendants", true, false), ANCESTORS("ancestors", false, true),
@@ -165,7 +168,6 @@ public class CommandRPackage extends CommandParent {
             BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
             JobService jobService, User user) {
         super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user, null, null);
-        this.manageReadWriteLocks = new ManageReadWriteLocks();
     }
 
     @Override
@@ -215,9 +217,18 @@ public class CommandRPackage extends CommandParent {
     
     /**
      * Performs the query and display the results when requesting {@code ExpressionCall}s.
+     * <p>
+     * The calls are read from the file generated for the requested species by
+     * {@code TopAnatCallFileService}, of the kind the request asks for, rather than propagated
+     * for the occasion: a whole species holds far more genes than a web request can propagate.
+     * The rows returned are the ones the requested combination of data types supports a call of
+     * the requested quality in, restricted to the requested developmental stages. They cover the
+     * whole species: restricting them to a set of genes is left to the consumer, which keeps
+     * the response a function of a handful of parameters, identical for every caller asking
+     * the same question.
      *
      * @throws InvalidRequestException  In case of invalid request parameter.
-     * @throws IOException              In case of issue when writing results.
+     * @throws IOException              In case of issue when reading the file or writing results.
      */
     private void processGetExpressionCalls() throws InvalidRequestException, IOException {
         log.traceEntry();
@@ -227,212 +238,141 @@ public class CommandRPackage extends CommandParent {
         //****************************************
         // Retrieve and filter request parameters
         //****************************************
-        //Data types and quality
-        final Set<DataType> dataTypes = this.checkAndGetDataTypes();
-        //XXX: why isn't the quality parameter used?
-//        final SummaryQuality dataQuality = this.checkAndGetSummaryQuality();
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
+        SummaryQuality quality = this.checkAndGetSummaryQuality();
+        CallFileType fileType = this.checkAndGetCallFileType();
+        List<Integer> speciesIds = this.requestParameters.getSpeciesList();
+        List<String> stageIds = this.requestParameters.getDevStage();
 
-        //parameters not needing processing
-        final List<Integer> speciesIds = this.requestParameters.getSpeciesList();
-        final List<String> stageIds   = this.requestParameters.getDevStage();
-        List<String> requestedAttrs = this.requestParameters.getValues(
-                this.requestParameters.getUrlParametersInstance().getParamAttributeList());
-        //XXX: why not using 'getAttributes' method?
-//        final List<CallService.Attribute> attrs = getAttributes(this.requestParameters, 
-//                CallService.Attribute.class);
-
-        //for now, we force to select one and only one species, to not return 
+        //for now, we force to select one and only one species, to not return
         //the complete expression table at once
         if (speciesIds == null || speciesIds.size() != 1 ||
                 speciesIds.stream().anyMatch(id -> id == null || id <= 0)) {
-            throw log.throwing(new InvalidRequestException("One and only one species ID must be provided"));
+            throw log.throwing(new InvalidRequestException(
+                    "One and only one species ID must be provided"));
         }
-        if (requestedAttrs == null){
-            requestedAttrs = new ArrayList<>();
-        }
-        if(requestedAttrs.isEmpty()) {
-            requestedAttrs.add(CALLS_GENE_ID_PARAM);
-            requestedAttrs.add(CALLS_ANAT_ENTITY_ID_PARAM);
-            requestedAttrs.add(CALLS_DATA_QUALITY_PARAM);
-            requestedAttrs.add(CALLS_DEV_STAGE_PARAM);
-        }
-        final Set<CallService.Attribute> attrs = convertRqAttrsToCallsAttrs(requestedAttrs);
         int speciesId = speciesIds.iterator().next();
-        
-        //****************************************
-        // Create Call filter objects
-        //****************************************
-        //CallDAOFilter: for now, we only allow to define one CallDAOFilter object.
-
-        //TODO: we need to make sure the logic is identical in TopAnatParams
-        Collection<ConditionFilter> conditionFilter = stageIds == null || stageIds.isEmpty()? 
-                null: Collections.singleton(new ConditionFilter(null, stageIds, null, null, null));
-        GeneFilter geneFilter = new GeneFilter(speciesId, this.requestParameters.getBackgroundList());
-        Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
-        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, this.checkAndGetSummaryQuality());
-        // retrieve calls for 
-        Map<EnumSet<CallService.Attribute>, Boolean> observedDataFilter = new HashMap<>();
-        observedDataFilter.put(EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID), true);
-        ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                Collections.singleton(geneFilter),
-                conditionFilter, dataTypes,
-                //for now, we always include substages when stages requested, and never include substructures
-                observedDataFilter);
-
-        SummaryCallType callType = SummaryCallType.ExpressionSummary.EXPRESSED;
 
         //****************************************
-        // Perform query and display results
+        // Subset the generated file and display the results
         //****************************************
-        // For some species topAnat was taking too much time to retrieve calls then resulting in an
-        // apache timeout. To avoid that we provide an hardcoded list of species and stages for which
-        // we retrieve calls from files on our server and not anymore generate calls files on the fly.
-        // TODO: remove all hardcoded parts of that logic once topAnat has been optimized.
-        // TODO: refactor topAnat codes from R and web and then implement the logic below for all species/stages
-        Set<Integer> speciesRetrievedFromFile = new HashSet<Integer>(Arrays.asList(7227, 9823, 9913, 9606, 10090));
-        Set<String> stagesRetrievedFromFile = new HashSet<String>(Arrays.asList(ConditionDAO.DEV_STAGE_ROOT_ID,
-                "UBERON:0000066", "UBERON:0000068", "UBERON:0000092"));
-        
-        Stream<ExpressionCall> callStream;
-        
-        // for specified species we retrieve gene to anatEntity association from a file.
-        // In topAnat R a user can retrieve calls for several stageIDs. Each combination of stageIds will result
-        // in a different file. In order not to create too many files for now, we decided to use a generated file
-        // only for a subset of stages AND only if one single stage is queried. It should cover a high proportion
-        // of analysis on the selected species as stageIds are not often specified per the users.
-        
-        if (speciesRetrievedFromFile.contains(speciesId) &&
-                (stageIds == null || stageIds.size() == 1 && stagesRetrievedFromFile.contains(stageIds.get(0))) &&
-                (dataTypes.containsAll(Set.of(DataType.values())) || dataTypes.size() == 1 && 
-                    dataTypes.contains(DataType.RNA_SEQ) || dataTypes.size() == 2 &&
-                    dataTypes.containsAll(Set.of(DataType.RNA_SEQ, DataType.SC_RNA_SEQ)))
-                ) {
-            
-            Path finalGeneToAnatEntitiesFile = Paths.get(this.prop.getTopAnatResultsWritingDirectory(),
-                    //Directory used to separate topAnat web files from topAnatR files. Only used for clarity.
-                    //TODO:  Do not use that directory anymore once topAnat has been refactored.
-                    "topAnat_R", 
-                    CommandRPackage.getGeneToAnatEntitiesFileName(false, speciesId,
-                            callType, stageIds == null || stageIds.isEmpty()? null : stageIds.get(0),
-                                    dataTypes, this.checkAndGetSummaryQuality()));
-            Path tmpFile = Paths.get(this.prop.getTopAnatResultsWritingDirectory(), 
-                    //Directory used to separate topAnat web files from topAnatR files. Only used for clarity.
-                    //TODO:  Do not use that directory anymore once topAnat has been refactored.
-                    "topAnat_R", 
-                    CommandRPackage.getGeneToAnatEntitiesFileName(true, speciesId,
-                            callType, stageIds == null || stageIds.isEmpty()? null : stageIds.get(0),
-                                    dataTypes, this.checkAndGetSummaryQuality()));//, 
-            try {
-                this.manageReadWriteLocks.acquireWriteLock(finalGeneToAnatEntitiesFile.toString());
-                this.manageReadWriteLocks.acquireWriteLock(tmpFile.toString());
-
-                //check, AFTER having acquired the locks, that the final file does not 
-                //already exist (maybe another thread generated the files before this one 
-                //acquired the lock)
-                if (!Files.exists(finalGeneToAnatEntitiesFile)) {
-                    log.info("Gene to AnatEntities association file not already generated.");
-
-                    this.writeToGeneToAnatEntitiesFile(tmpFile.toString(), this.serviceFactory.getCallService(),
-                            callFilter, attrs);
-                    //move tmp file if successful
-                    TopAnatUtils.move(tmpFile, finalGeneToAnatEntitiesFile, false);
-                }
-            } finally {
-                Files.deleteIfExists(tmpFile);
-                this.manageReadWriteLocks.releaseWriteLock(finalGeneToAnatEntitiesFile.toString());
-                this.manageReadWriteLocks.releaseWriteLock(tmpFile.toString());
-            }
-            // Now that the file is created we can read it
-            try {
-                this.manageReadWriteLocks.acquireReadLock(finalGeneToAnatEntitiesFile.toString());
-                callStream = Files.lines(finalGeneToAnatEntitiesFile)
-                        //do not consider header of files manually generated using SQL queries.
-                        //Could have been removed from the files but keep this filter as a sanity check
-                        //in case other files have to be generated and we forget to remove the header
-                        .filter(line -> ! line.equals("GENE_ID\tANAT_ENTITY_ID"))
-                        .map(l -> {
-                            String[] lineValues = l.split("\t");
-                            // create fake expressionCalls objects to be able to retrieve data from the file
-                            // once topAnat has been updated we will directly provide a Stream<String> to the
-                            // view
-                            return new ExpressionCall(new Gene(lineValues[0], new Species(speciesId),
-                                    new GeneBioType("fake")), new Condition(new AnatEntity(lineValues[1]),
-                                    null, null, null, null, null),null, null, null, null, null, null, null, null);
-                        });
-
-            } finally {
-                this.manageReadWriteLocks.releaseReadLock(finalGeneToAnatEntitiesFile.toString());
-            }
-            
-        } else {
-             callStream = this.serviceFactory.getCallService().loadExpressionCalls(
-                    callFilter,
-                    //Attributes requested; no ordering requested
-                    attrs, null);
+        Path callFile = TopAnatCallFileService.getCallFilePath(
+                this.prop.getTopAnatResultsWritingDirectory(), fileType, speciesId);
+        if (!Files.exists(callFile)) {
+            throw log.throwing(new InvalidRequestException("No "
+                    + fileType.getStringRepresentation() + " expression call file has been "
+                    + "generated for the species " + speciesId));
         }
-        display.displayCalls(requestedAttrs, callStream);
-        
+        List<String> columns = List.of(CALLS_GENE_ID_PARAM, CALLS_ANAT_ENTITY_ID_PARAM,
+                CALLS_CELL_TYPE_ID_PARAM);
+        //The stream is closed once the view has consumed it, the file holding a whole species
+        try (Stream<String> lines = Files.lines(callFile)) {
+            display.displayCallsFromFile(columns, this.subsetCallFile(callFile, lines, dataTypes,
+                    quality, stageIds));
+        }
+
         log.traceExit();
     }
 
-    //TODO: this function reproduce the logic of TopAnatAnalysis.getGeneToAnatEntitiesFileName(boolean, TopAnatParameter)
-    // Code refactoring has to be done while optimazing topAnat
-    // As topAnat R does not yet use celltypes we can not reuse files created for topAnat web. That is why we add a
-    // "_R" suffix at the end of the file name. It is ugly but it will be fixed for Bgee 15.2. All modifications to
-    // implement for Bgee 15.2 are listed in the Jira issue BA-744
-    private static String getGeneToAnatEntitiesFileName(boolean tmpFile, int speciesId, SummaryCallType callType,
-            String devStageId, Set<DataType> dataTypes, SummaryQuality summaryQuality){
-        log.traceEntry("{}, {}, {}, {}, {}, {}", tmpFile, speciesId, callType, devStageId, dataTypes, summaryQuality);
-        
-        String paramsEncoded = "";
-        //TODO: use some kind of encoding of the Strings for file name (see replacement for stage ID)
-        final StringBuilder sb = new StringBuilder();
-        sb.append(speciesId);
-        sb.append("_").append(callType.toString());
-        Optional.ofNullable(devStageId)
-            //replace column in IDs
-            .ifPresent(e -> sb.append("_").append(e.replace(":", "_")));
-        //use EnumSet for consistent ordering
-        Optional.ofNullable(dataTypes).map(e -> EnumSet.copyOf(e))
-        .orElse(EnumSet.allOf(DataType.class))
-        .stream()
-        .forEach(e -> sb.append("_").append(e.toString()));
-        sb.append("_").append(Optional.ofNullable(summaryQuality).orElse(SummaryQuality.SILVER)
-                .toString());
-        //on topAnat web a last parameter corresponding to the decorrelation type is used to generate
-        //the name of the file. As topAnat R does not allow to choose the decorrelation type we always
-        //add _NONE add the end of the filename
-        sb.append("_NONE");
-        paramsEncoded = sb.toString();
-        String fileName = TopAnatUtils.FILE_PREFIX + "GeneToAnatEntities_" 
-        //TODO: Do not forget to remove the "_R" suffix once updates for Bgee 15.2 are implemented
-            + paramsEncoded + "_R" + ".tsv";
-        if (tmpFile) {
-            fileName += TopAnatUtils.TMP_FILE_SUFFIX;
+    /**
+     * @return  The {@code CallFileType} the request asks the calls to be read from,
+     *          {@code CallFileType#OBSERVED} when it asks for none: it is the kind of file
+     *          matching what this action returned when it queried the calls itself, the
+     *          anatomical entities and cell types being the observed ones.
+     * @throws InvalidRequestException  If the requested value matches no {@code CallFileType}.
+     */
+    private CallFileType checkAndGetCallFileType() throws InvalidRequestException {
+        log.traceEntry();
+        String requested = this.requestParameters.getCallFileType();
+        if (StringUtils.isBlank(requested)) {
+            return log.traceExit(CallFileType.OBSERVED);
         }
-        return log.traceExit(fileName);
+        if (!BgeeEnum.isInEnum(CallFileType.class, requested)) {
+            throw log.throwing(new InvalidRequestException("Incorrect call file type provided: "
+                    + requested));
+        }
+        return log.traceExit(BgeeEnum.convert(CallFileType.class, requested));
     }
-    //TODO: this function partially reproduce the logic of TopAnatAnalysis.writeToGeneToAnatEntitiesFile(String)
-    // Code refactoring has to be done for Bgee 15.2
-    private void writeToGeneToAnatEntitiesFile(String geneToAnatEntitiesFile, CallService callService,
-            CallFilter<?, ?, ConditionFilter> callFilter, Set<CallService.Attribute> callServiceAttributes)
-            throws IOException {
-        log.traceEntry("{}", geneToAnatEntitiesFile);
 
-        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
-                geneToAnatEntitiesFile)))) {
-            callService.loadExpressionCalls(
-                    (ExpressionCallFilter) callFilter,
-                    callServiceAttributes,
-                    null
-                ).forEach(
-                    call -> out.println(
-                        call.getGene().getGeneId() + '\t' + call.getCondition().getAnatEntityId())
-                );
+    /**
+     * Subset a generated call file.
+     *
+     * @param callFile      The {@code Path} of the file, to read its header from.
+     * @param lines         A {@code Stream} of its lines, its header included.
+     * @param dataTypes     The {@code DataType}s requested: the quality is read in the column
+     *                      of that very combination, the quality of a combination not being
+     *                      derivable from the qualities of its data types taken separately.
+     * @param quality       The {@code SummaryQuality} requested. {@code GOLD} retains the GOLD
+     *                      rows only, {@code SILVER} retains the SILVER and the GOLD ones.
+     * @param stageIds      The IDs of the developmental stages to retain, every stage of the file
+     *                      when {@code null} or empty.
+     * @return              A {@code Stream} of {@code String[]}s holding the gene ID, anat. entity
+     *                      ID and cell type ID of each retained row, without duplicate.
+     * @throws IOException              If the header of the file cannot be read.
+     * @throws InvalidRequestException  If the file holds no column for the requested combination
+     *                                  of data types.
+     */
+    private Stream<String[]> subsetCallFile(Path callFile, Stream<String> lines,
+            EnumSet<DataType> dataTypes, SummaryQuality quality, Collection<String> stageIds)
+                    throws IOException, InvalidRequestException {
+        log.traceEntry("{}, {}, {}, {}, {}", callFile, lines, dataTypes, quality, stageIds);
+
+        //The columns are located by name rather than by position, so that the generated files
+        //can gain columns without breaking this query
+        String headerLine;
+        try (BufferedReader reader = Files.newBufferedReader(callFile)) {
+            headerLine = reader.readLine();
         }
-        log.traceExit();
+        if (headerLine == null) {
+            throw log.throwing(new IllegalStateException("Empty call file: " + callFile));
+        }
+        String[] header = headerLine.split(TopAnatCallFileService.COLUMN_SEPARATOR, -1);
+        Map<String, Integer> colIndexes = new HashMap<>();
+        for (int i = 0; i < header.length; i++) {
+            colIndexes.put(header[i], i);
+        }
+        final int geneCol = columnIndex(colIndexes, TopAnatCallFileService.GENE_ID_COLUMN, callFile);
+        final int stageCol = columnIndex(colIndexes, TopAnatCallFileService.STAGE_ID_COLUMN,
+                callFile);
+        final int anatCol = columnIndex(colIndexes, TopAnatCallFileService.ANAT_ENTITY_ID_COLUMN,
+                callFile);
+        final int cellTypeCol = columnIndex(colIndexes,
+                TopAnatCallFileService.CELL_TYPE_ID_COLUMN, callFile);
+        String qualityColumn = TopAnatCallFileService.combinationColumnName(dataTypes);
+        if (!colIndexes.containsKey(qualityColumn)) {
+            throw log.throwing(new InvalidRequestException("The expression calls of the data type "
+                    + "combination " + qualityColumn + " are not available"));
+        }
+        final int qualityCol = colIndexes.get(qualityColumn);
+
+        //A request for SILVER means "at least SILVER", as everywhere else in Bgee
+        final Set<String> acceptedQualities = SummaryQuality.GOLD.equals(quality)?
+                Set.of(SummaryQuality.GOLD.name()):
+                Set.of(SummaryQuality.GOLD.name(), SummaryQuality.SILVER.name());
+        final Set<String> requestedStages = stageIds == null? Set.of(): new HashSet<>(stageIds);
+        //A same gene, anat. entity and cell type is reported at each stage it holds a call at,
+        //so the triplets already returned are remembered. The stream is sequential, a plain
+        //HashSet is therefore enough.
+        final Set<String> returnedTriplets = new HashSet<>();
+
+        return log.traceExit(lines
+                .skip(1)
+                .map(l -> l.split(TopAnatCallFileService.COLUMN_SEPARATOR, -1))
+                .filter(v -> requestedStages.isEmpty() || requestedStages.contains(v[stageCol]))
+                .filter(v -> acceptedQualities.contains(v[qualityCol]))
+                .filter(v -> returnedTriplets.add(v[geneCol] + v[anatCol] + v[cellTypeCol]))
+                .map(v -> new String[] {v[geneCol], v[anatCol], v[cellTypeCol]}));
     }
-    
+
+    private static int columnIndex(Map<String, Integer> colIndexes, String column, Path callFile) {
+        Integer index = colIndexes.get(column);
+        if (index == null) {
+            throw log.throwing(new IllegalStateException("No column " + column + " in the call "
+                    + "file " + callFile));
+        }
+        return index;
+    }
+
     /**
      * Performs the query and display the results when requesting {@code AnatEntityTO}s.
      * 
@@ -698,30 +638,6 @@ public class CommandRPackage extends CommandParent {
         return log.traceExit(attrs);
     }
 
-    private static Set<CallService.Attribute> convertRqAttrsToCallsAttrs(List<String> rqAttrs){
-        log.traceEntry("{}", rqAttrs);
-        Set<CallService.Attribute> attrs = new HashSet<>();
-        for(String rqAttr : rqAttrs){
-            switch(rqAttr){
-                case CALLS_GENE_ID_PARAM :
-                    attrs.add(CallService.Attribute.GENE);
-                    break;
-                case CALLS_ANAT_ENTITY_ID_PARAM :
-                    attrs.add(CallService.Attribute.ANAT_ENTITY_ID);
-                    break;
-                case CALLS_DATA_QUALITY_PARAM :
-                    attrs.add(CallService.Attribute.DATA_QUALITY);
-                    break;
-                case CALLS_DEV_STAGE_PARAM :
-                    attrs.add(CallService.Attribute.DEV_STAGE_ID);
-                    break;
-                default :
-                    throw log.throwing(new UnsupportedOperationException(
-                            "Attribute parameter not supported: " + rqAttr));
-            }
-        }
-        return log.traceExit(attrs);
-    }
 
     private static List<String> convertPropagatedAttrs(CallService.Attribute condParam,
             List<String> attrs) {

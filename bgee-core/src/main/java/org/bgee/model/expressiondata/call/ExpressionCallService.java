@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterGeneSpeciesPart;
@@ -72,6 +73,27 @@ public class ExpressionCallService extends CallServiceParent {
     public ExpressionCallLoader getCallLoader(ExpressionCallProcessedFilter processedFilter) {
         log.traceEntry("{}", processedFilter);
         return log.traceExit(new ExpressionCallLoader(processedFilter, this.getServiceFactory()));
+    }
+
+    /**
+     * Same as {@link #getCallLoader(ExpressionCallProcessedFilter)}, but restricting the condition
+     * parameters the propagation may move along.
+     *
+     * @param propagationCondParams A {@code Set} of {@code ConditionParameter}s the propagation
+     *                              may move along, all of them when {@code null} or empty.
+     *                              They must be part of the combination requested in
+     *                              {@code processedFilter}. With only {@code DEV_STAGE}, the
+     *                              observations made in an anatomical entity are propagated to
+     *                              the ancestor stages of that very anatomical entity, and never
+     *                              to its ancestor anatomical entities: the call of a condition
+     *                              is then computed from the observations made in its own
+     *                              anatomical entity alone.
+     */
+    public ExpressionCallLoader getCallLoader(ExpressionCallProcessedFilter processedFilter,
+            Set<ConditionParameter<?, ?>> propagationCondParams) {
+        log.traceEntry("{}, {}", processedFilter, propagationCondParams);
+        return log.traceExit(new ExpressionCallLoader(processedFilter, this.getServiceFactory(),
+                propagationCondParams));
     }
 
     /**

@@ -1,0 +1,549 @@
+package org.bgee.model.topanat;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.commons.lang3.StringUtils;
+import org.bgee.model.CommonService;
+import org.bgee.model.ComposedEntity;
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.ExpressionCallLoader;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterInvariablePart;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
+import org.bgee.model.expressiondata.call.OTFExpressionCallFilterEngine;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
+
+/**
+ * Generates the files topAnat reads its expression calls from, two per species.
+ * <p>
+ * topAnat needs, for a whole species at once, which genes are expressed in which conditions —
+ * a query shape the on-the-fly propagation cannot answer inside a web request (it propagates
+ * gene by gene, and a species holds tens of thousands of genes). The calls are therefore
+ * propagated once and written to files, which the analyses then read.
+ * <p>
+ * Both files hold the same columns, and differ by the relations the observations are propagated
+ * along. With a stage {@code A} descendant of {@code B} descendant of {@code C}, and an anatomical
+ * entity {@code A'} descendant of {@code B'}:
+ * <ul>
+ * <li>the propagated file propagates the observations along every condition parameter, so an
+ * observation made in {@code A' A} contributes to the call of {@code B' A} as well;
+ * <li>the observed file only propagates them along the developmental stages: an observation made
+ * in {@code A' A} produces the rows {@code A' A}, {@code A' B} and {@code A' C}, and contributes
+ * to no row of {@code B'}. The call of {@code B' A} is computed from the observations made in
+ * {@code B'} alone, and those observations are propagated to {@code B' B} and {@code B' C}
+ * whether or not those hold observations of their own. Same behaviour for the cell types.
+ * </ul>
+ * The observed file is therefore not a subset of the propagated one: leaving the observations of
+ * the descendant anatomical entities out changes the p-values, and can turn a call the propagated
+ * file does not report into a present one — the p-values are aggregated as a weighted mean, which
+ * the p-values of a descendant can pull either way.
+ * <p>
+ * Only the conditions using a meta stage are reported, in both files.
+ * <p>
+ * One row per gene and per condition holding a present call of at least SILVER quality for
+ * at least one combination of data types, with one column per combination: topAnat lets the user
+ * select the data types to consider, and the quality of a combination cannot be derived from
+ * the qualities of the data types taken separately — the p-values are aggregated over the data
+ * types requested, so each combination is propagated on its own.
+ *
+ * @author  Julien Wollbrett
+ * @version Bgee 16
+ */
+public class TopAnatCallFileService extends CommonService {
+    private final static Logger log = LogManager.getLogger(TopAnatCallFileService.class.getName());
+
+    /**
+     * The directory, under {@code BgeeProperties#getTopAnatResultsWritingDirectory()}, holding
+     * the generated files, and the patterns of their names.
+     */
+    public final static String CALL_FILE_DIRECTORY = "topanat_calls";
+    /**
+     * The file whose observations are propagated along every condition parameter.
+     */
+    public final static String PROPAGATED_FILE_NAME_PATTERN = "topanat_calls_propagated_species_%d.tsv";
+    /**
+     * The file whose observations are only propagated along the developmental stages, so that
+     * the anatomical entities and cell types it reports are the observed ones.
+     */
+    public final static String OBSERVED_FILE_NAME_PATTERN = "topanat_calls_observed_species_%d.tsv";
+    /**
+     * The extension of the files being written. The final files are only created, by an atomic
+     * move, once they are complete: a file that exists is a file that can be read.
+     */
+    private final static String TMP_EXTENSION = ".tmp";
+
+    /**
+     * The value of a data type combination column when that combination supports no present call
+     * of at least SILVER quality in the condition. Not {@code ABSENT}, which would suggest
+     * an absent call: these files only report present calls.
+     */
+    public final static String NO_CALL_VALUE = "NA";
+    /**
+     * Separates the data types in the name of the column of a combination. Not an underscore,
+     * which the names of the data types themselves contain.
+     */
+    public final static String COMBINATION_NAME_SEPARATOR = "-";
+    /**
+     * The prefix of the IDs of the meta stages, the developmental stages shared among species.
+     * Only the conditions using one of them are reported, so that the files of different species
+     * remain comparable (same convention as {@code BgeeToEasyBgee}).
+     */
+    private final static String META_STAGE_ID_PREFIX = "UBERON:";
+    /**
+     * The number of genes propagated per batch. A batch shares one {@code ExpressionCallLoader},
+     * and therefore one retrieval of everything that does not depend on the genes.
+     */
+    private final static int GENE_BATCH_SIZE = 100;
+    /**
+     * The condition parameters the calls are propagated over: anatomical entity and cell type,
+     * and developmental stage. Sex and strain are aggregated.
+     */
+    private final static Set<ConditionParameter<?, ?>> COND_PARAMS = Collections.unmodifiableSet(
+            new LinkedHashSet<>(List.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                    ConditionParameter.DEV_STAGE)));
+    /**
+     * The only condition parameter the propagation of the observed file moves along: the
+     * observations are propagated to the ancestor stages of the anatomical entity and cell type
+     * they were made in, never to the ancestors of those.
+     */
+    private final static Set<ConditionParameter<?, ?>> STAGE_ONLY_PROPAGATION =
+            Set.of(ConditionParameter.DEV_STAGE);
+    /**
+     * Only present calls of at least SILVER quality are reported.
+     */
+    private final static Map<ExpressionSummary, SummaryQuality> CALL_TYPE_FILTER =
+            Map.of(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+
+    /**
+     * Provides one {@code ServiceFactory} per thread: the genes of a species are propagated
+     * by batches in parallel, and a {@code ServiceFactory} is not thread-safe.
+     */
+    private final Supplier<ServiceFactory> serviceFactorySupplier;
+
+    public TopAnatCallFileService(ServiceFactory serviceFactory,
+            Supplier<ServiceFactory> serviceFactorySupplier) {
+        super(serviceFactory);
+        if (serviceFactorySupplier == null) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A ServiceFactory supplier must be provided"));
+        }
+        this.serviceFactorySupplier = serviceFactorySupplier;
+    }
+
+    /**
+     * Generate the files of each species that does not have them yet. A species whose two files
+     * already exist is skipped, so that this can be called at every server start.
+     *
+     * @param speciesIds    The IDs of the species to generate the files of, all the species
+     *                      of the database when {@code null} or empty.
+     * @param rootDirectory The path to the directory holding {@link #CALL_FILE_DIRECTORY},
+     *                      where the files are written.
+     */
+    public void generateFilesIfMissing(Collection<Integer> speciesIds, String rootDirectory) {
+        log.traceEntry("{}, {}", speciesIds, rootDirectory);
+        this.generateFiles(speciesIds, rootDirectory, false);
+        log.traceExit();
+    }
+
+    /**
+     * Generate the files of each requested species. Both files of a species are produced by the
+     * same pass, so a species missing only one of them is processed again.
+     *
+     * @param speciesIds                The IDs of the species to generate the files of, all the
+     *                                  species of the database when {@code null} or empty.
+     * @param rootDirectory             The path to the directory holding
+     *                                  {@link #CALL_FILE_DIRECTORY}, where the files are written.
+     * @param overwriteExistingFiles    Whether the species whose files already exist must be
+     *                                  processed again, rather than skipped.
+     */
+    public void generateFiles(Collection<Integer> speciesIds, String rootDirectory,
+            boolean overwriteExistingFiles) {
+        log.traceEntry("{}, {}, {}", speciesIds, rootDirectory, overwriteExistingFiles);
+        if (StringUtils.isBlank(rootDirectory)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A directory to write the files into must be provided"));
+        }
+        //No species requested means every species of the database: the files of a species
+        //are independent of each other, this service simply generates them all.
+        Collection<Integer> requestedSpeciesIds = speciesIds != null && !speciesIds.isEmpty()?
+                speciesIds:
+                this.getServiceFactory().getSpeciesService().loadSpeciesByIds(null, false)
+                .stream().map(s -> s.getId()).collect(Collectors.toList());
+
+        Path directory = Paths.get(rootDirectory, CALL_FILE_DIRECTORY);
+        try {
+            Files.createDirectories(directory);
+        } catch (IOException e) {
+            throw log.throwing(new UncheckedIOException(
+                    "Could not create the directory " + directory, e));
+        }
+
+        for (Integer speciesId: requestedSpeciesIds) {
+            Path propagatedFile = directory.resolve(
+                    String.format(PROPAGATED_FILE_NAME_PATTERN, speciesId));
+            Path observedFile = directory.resolve(
+                    String.format(OBSERVED_FILE_NAME_PATTERN, speciesId));
+            if (!overwriteExistingFiles &&
+                    Files.exists(propagatedFile) && Files.exists(observedFile)) {
+                log.info("topAnat call files already generated for species {}", speciesId);
+                continue;
+            }
+            long startTime = System.currentTimeMillis();
+            log.info("Generating the topAnat call files of species {}...", speciesId);
+            this.generateFiles(speciesId, propagatedFile, observedFile);
+            log.info("Done generating the topAnat call files of species {} in {} ms",
+                    speciesId, System.currentTimeMillis() - startTime);
+        }
+        log.traceExit();
+    }
+
+    /**
+     * Generate the files of one species. The rows are written to temporary files that are moved
+     * to their final path once complete, so that an interrupted generation never leaves a partial
+     * file behind that the next start would consider done.
+     */
+    private void generateFiles(int speciesId, Path propagatedFile, Path observedFile) {
+        log.traceEntry("{}, {}, {}", speciesId, propagatedFile, observedFile);
+
+        List<String> geneIds = this.getServiceFactory().getGeneService()
+                .loadGenes(new GeneFilter(speciesId))
+                .map(Gene::getGeneId)
+                .collect(Collectors.toList());
+        if (geneIds.isEmpty()) {
+            log.warn("No gene for species {}, no topAnat call file generated", speciesId);
+            log.traceExit(); return;
+        }
+        List<EnumSet<DataType>> combinations = dataTypeCombinations();
+        //Everything that does not depend on the genes is computed once for the species
+        //and reused by every batch and every data type combination: the condition part holds
+        //all the conditions of the species and is by far the most expensive to build.
+        ExpressionCallProcessedFilter seedFilter = this.getServiceFactory()
+                .getExpressionCallService().processExpressionCallFilter(
+                        buildCallFilter(speciesId, geneIds.subList(0, 1), null));
+        ExpressionCallProcessedFilterConditionPart condPart = seedFilter.getConditionPart();
+        ExpressionCallProcessedFilterInvariablePart invariablePart = seedFilter.getInvariablePart();
+
+        Path propagatedTmpFile = tmpFile(propagatedFile);
+        Path observedTmpFile = tmpFile(observedFile);
+        AtomicInteger geneCount = new AtomicInteger(0);
+        AtomicInteger propagatedRowCount = new AtomicInteger(0);
+        AtomicInteger observedRowCount = new AtomicInteger(0);
+        try (Writer propagatedWriter = Files.newBufferedWriter(propagatedTmpFile,
+                    StandardCharsets.UTF_8);
+             Writer observedWriter = Files.newBufferedWriter(observedTmpFile,
+                    StandardCharsets.UTF_8)) {
+            String header = header(combinations) + System.lineSeparator();
+            propagatedWriter.write(header);
+            observedWriter.write(header);
+
+            AtomicInteger index = new AtomicInteger(0);
+            geneIds.stream()
+            .collect(Collectors.groupingBy(id -> index.getAndIncrement() / GENE_BATCH_SIZE))
+            .values().parallelStream().forEach(geneBatch -> {
+                ExpressionCallService callService = this.serviceFactorySupplier.get()
+                        .getExpressionCallService();
+                //The two files are two propagations of the same observations, one along every
+                //condition parameter, the other along the developmental stages only.
+                propagatedRowCount.addAndGet(this.writeGeneRows(
+                        this.propagateAllCombinations(callService, speciesId, geneBatch,
+                                combinations, condPart, invariablePart, null),
+                        combinations, seedFilter, propagatedWriter));
+                observedRowCount.addAndGet(this.writeGeneRows(
+                        this.propagateAllCombinations(callService, speciesId, geneBatch,
+                                combinations, condPart, invariablePart, STAGE_ONLY_PROPAGATION),
+                        combinations, seedFilter, observedWriter));
+
+                int count = geneCount.addAndGet(geneBatch.size());
+                log.debug("Species {}: {}/{} genes processed, {} propagated rows, "
+                        + "{} observed rows written", speciesId, count, geneIds.size(),
+                        propagatedRowCount.get(), observedRowCount.get());
+            });
+        } catch (IOException e) {
+            throw log.throwing(new UncheckedIOException(
+                    "Could not write " + propagatedTmpFile + " and " + observedTmpFile, e));
+        }
+
+        move(propagatedTmpFile, propagatedFile);
+        move(observedTmpFile, observedFile);
+        log.info("Species {}: {} genes processed, {} propagated rows, {} observed rows written",
+                speciesId, geneCount.get(), propagatedRowCount.get(), observedRowCount.get());
+        log.traceExit();
+    }
+
+    private static Path tmpFile(Path file) {
+        return file.resolveSibling(file.getFileName() + TMP_EXTENSION);
+    }
+    private static void move(Path tmpFile, Path file) {
+        try {
+            Files.move(tmpFile, file, StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw log.throwing(new UncheckedIOException(
+                    "Could not move " + tmpFile + " to " + file, e));
+        }
+    }
+
+    /**
+     * Propagate the calls of a batch of genes, once per combination of data types: the p-values
+     * are aggregated over the data types requested, so the call of a combination is not derivable
+     * from the calls of the data types taken separately.
+     *
+     * @param propagationCondParams The {@code ConditionParameter}s the propagation may move along,
+     *                              {@code null} to move along all of them.
+     */
+    private Map<EnumSet<DataType>, Map<Gene, List<OTFExpressionCall>>> propagateAllCombinations(
+            ExpressionCallService callService, int speciesId, Collection<String> geneIds,
+            List<EnumSet<DataType>> combinations,
+            ExpressionCallProcessedFilterConditionPart condPart,
+            ExpressionCallProcessedFilterInvariablePart invariablePart,
+            Set<ConditionParameter<?, ?>> propagationCondParams) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", callService, speciesId, geneIds, combinations,
+                condPart, invariablePart, propagationCondParams);
+        Map<EnumSet<DataType>, Map<Gene, List<OTFExpressionCall>>> callsByCombination =
+                new LinkedHashMap<>();
+        for (EnumSet<DataType> combination: combinations) {
+            callsByCombination.put(combination, this.propagate(callService, speciesId, geneIds,
+                    combination, condPart, invariablePart, propagationCondParams));
+        }
+        return log.traceExit(callsByCombination);
+    }
+
+    /**
+     * Propagate the calls of a batch of genes over one combination of data types, reusing the
+     * parts of the processed filter that do not depend on the genes.
+     */
+    private Map<Gene, List<OTFExpressionCall>> propagate(ExpressionCallService callService,
+            int speciesId, Collection<String> geneIds, EnumSet<DataType> dataTypes,
+            ExpressionCallProcessedFilterConditionPart condPart,
+            ExpressionCallProcessedFilterInvariablePart invariablePart,
+            Set<ConditionParameter<?, ?>> propagationCondParams) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", callService, speciesId, geneIds, dataTypes,
+                condPart, invariablePart, propagationCondParams);
+        ExpressionCallProcessedFilter processedFilter = callService.processExpressionCallFilter(
+                buildCallFilter(speciesId, geneIds, dataTypes), null, condPart, invariablePart);
+        ExpressionCallLoader loader = callService.getCallLoader(processedFilter,
+                propagationCondParams);
+        return log.traceExit(loader.loadDataOnTheFly());
+    }
+
+    /**
+     * @param dataTypes The {@code DataType}s to consider, {@code null} to consider them all.
+     * @return          The {@code ExpressionCallFilter2} the calls of the files are retrieved with.
+     */
+    private static ExpressionCallFilter2 buildCallFilter(int speciesId, Collection<String> geneIds,
+            EnumSet<DataType> dataTypes) {
+        log.traceEntry("{}, {}, {}", speciesId, geneIds, dataTypes);
+        return log.traceExit(new ExpressionCallFilter2(CALL_TYPE_FILTER,
+                new GeneFilter(speciesId, geneIds), null, dataTypes, COND_PARAMS,
+                //No filter on observed data: the calls propagated from sub-conditions are
+                //precisely what topAnat tests, in the ancestors of the conditions holding
+                //the observations.
+                null, null,
+                //No filtering of the calls redundant with a more precise one either: topAnat
+                //tests every condition of the ontology, including the ancestors.
+                false));
+    }
+
+    /**
+     * Write the rows of the genes of one batch into one file.
+     *
+     * @param callsByCombination    The calls propagated for each combination of data types.
+     * @param combinations          The combinations, in the order of the columns.
+     * @param processedFilter       The {@code ExpressionCallProcessedFilter} holding the p-value
+     *                              thresholds the qualities are inferred with.
+     * @return                      The number of rows written.
+     */
+    private int writeGeneRows(Map<EnumSet<DataType>, Map<Gene, List<OTFExpressionCall>>>
+            callsByCombination, List<EnumSet<DataType>> combinations,
+            ExpressionCallProcessedFilter processedFilter, Writer writer) {
+        log.traceEntry("{}, {}, {}, {}", callsByCombination, combinations, processedFilter, writer);
+
+        //The rows to write are the union over the combinations: a condition is reported as soon
+        //as one combination supports a present call in it, the columns of the other combinations
+        //then saying that they do not.
+        Map<Gene, Map<Condition2, Map<EnumSet<DataType>, SummaryQuality>>> rows = new HashMap<>();
+        for (Entry<EnumSet<DataType>, Map<Gene, List<OTFExpressionCall>>> combinationEntry:
+                callsByCombination.entrySet()) {
+            for (Entry<Gene, List<OTFExpressionCall>> geneEntry:
+                    combinationEntry.getValue().entrySet()) {
+                for (OTFExpressionCall call: geneEntry.getValue()) {
+                    if (!isMetaStageCall(call)) {
+                        continue;
+                    }
+                    Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
+                            OTFExpressionCallFilterEngine.inferSummaryCallTypeAndQuality(call,
+                                    processedFilter.getPresentHighThreshold(),
+                                    processedFilter.getPresentLowThreshold(),
+                                    processedFilter.getAbsentLowThreshold(),
+                                    processedFilter.getAbsentHighThreshold());
+                    //The loader already discarded everything but the present calls of at least
+                    //SILVER quality, this is only the GOLD/SILVER distinction.
+                    if (callTypeQuality == null ||
+                            !ExpressionSummary.EXPRESSED.equals(callTypeQuality.getKey())) {
+                        continue;
+                    }
+                    rows.computeIfAbsent(geneEntry.getKey(), k -> new HashMap<>())
+                        .computeIfAbsent(call.getCondition(), k -> new HashMap<>())
+                        .put(combinationEntry.getKey(), callTypeQuality.getValue());
+                }
+            }
+        }
+
+        List<String> lines = new ArrayList<>();
+        for (Entry<Gene, Map<Condition2, Map<EnumSet<DataType>, SummaryQuality>>> geneEntry:
+                rows.entrySet()) {
+            for (Entry<Condition2, Map<EnumSet<DataType>, SummaryQuality>> condEntry:
+                    geneEntry.getValue().entrySet()) {
+                lines.add(row(geneEntry.getKey(), condEntry.getKey(), condEntry.getValue(),
+                        combinations));
+            }
+        }
+        //Sorted so that the content of a file does not depend on the order the genes and
+        //conditions happened to be iterated in
+        Collections.sort(lines);
+        this.write(writer, lines);
+        return log.traceExit(lines.size());
+    }
+
+    /**
+     * Writing is synchronized: the gene batches are propagated in parallel, into the same files.
+     */
+    private synchronized void write(Writer writer, List<String> lines) {
+        if (lines.isEmpty()) {
+            return;
+        }
+        try {
+            writer.write(lines.stream().collect(Collectors.joining(System.lineSeparator(), "",
+                    System.lineSeparator())));
+        } catch (IOException e) {
+            throw log.throwing(new UncheckedIOException("Could not write the calls", e));
+        }
+    }
+
+    private static String header(List<EnumSet<DataType>> combinations) {
+        List<String> columns = new ArrayList<>(List.of("geneId", "stageId", "anatEntityId",
+                "cellTypeId"));
+        combinations.stream().map(TopAnatCallFileService::combinationColumnName)
+                .forEach(columns::add);
+        return String.join("\t", columns);
+    }
+
+    /**
+     * @param qualities The quality of the call of each combination of data types, a combination
+     *                  being absent from it when it supports no present call in that condition.
+     */
+    private static String row(Gene gene, Condition2 cond,
+            Map<EnumSet<DataType>, SummaryQuality> qualities,
+            List<EnumSet<DataType>> combinations) {
+        AnatEntity[] anatEntityCellType = anatEntityAndCellType(cond);
+        List<String> values = new ArrayList<>(List.of(
+                gene.getGeneId(),
+                cond.getConditionParameterId(ConditionParameter.DEV_STAGE),
+                anatEntityCellType[0].getId(),
+                anatEntityCellType[1] == null? NO_CALL_VALUE: anatEntityCellType[1].getId()));
+        for (EnumSet<DataType> combination: combinations) {
+            SummaryQuality quality = qualities.get(combination);
+            values.add(quality == null? NO_CALL_VALUE: quality.name());
+        }
+        return String.join("\t", values);
+    }
+
+    /**
+     * @return  The name of the column of a combination of data types, for instance
+     *          {@code IN_SITU-RNA_SEQ}. Built from the names of the {@code DataType}s in
+     *          their declaration order, so that it is stable. The separator is not the one used
+     *          inside the names of the data types themselves, so that a combination can always
+     *          be read back unambiguously.
+     */
+    public static String combinationColumnName(EnumSet<DataType> combination) {
+        return combination.stream().map(DataType::name)
+                .collect(Collectors.joining(COMBINATION_NAME_SEPARATOR));
+    }
+
+    /**
+     * @return  Every non-empty combination of {@code DataType}s, ordered by increasing number of
+     *          data types, each combination holding its data types in declaration order. These
+     *          are the columns of the generated files: topAnat lets the user select the data
+     *          types to consider, and the quality of a combination cannot be derived from the
+     *          qualities of its data types taken separately.
+     */
+    public static List<EnumSet<DataType>> dataTypeCombinations() {
+        List<EnumSet<DataType>> combinations =
+                new ArrayList<>(DataType.getAllPossibleDataTypeCombinations());
+        //The combinations are produced unordered, they are sorted so that the columns of
+        //the generated files are always the same, in the same order
+        combinations.sort((c1, c2) -> {
+            int compareSize = Integer.compare(c1.size(), c2.size());
+            return compareSize != 0? compareSize:
+                combinationColumnName(c1).compareTo(combinationColumnName(c2));
+        });
+        return Collections.unmodifiableList(combinations);
+    }
+
+    /**
+     * @return  {@code true} if the condition of {@code call} uses a meta stage, the developmental
+     *          stages shared among species being the only ones these files report.
+     */
+    private static boolean isMetaStageCall(OTFExpressionCall call) {
+        String stageId = call.getCondition()
+                .getConditionParameterId(ConditionParameter.DEV_STAGE);
+        return stageId != null && stageId.startsWith(META_STAGE_ID_PREFIX);
+    }
+
+    /**
+     * @return  An {@code AnatEntity[]} of two elements: the anatomical entity of {@code cond}
+     *          first, then its cell type, {@code null} when the condition targets no specific
+     *          cell type.
+     */
+    private static AnatEntity[] anatEntityAndCellType(Condition2 cond) {
+        ComposedEntity<AnatEntity> anatEntityCellType =
+                cond.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (anatEntityCellType == null || anatEntityCellType.isEmpty()) {
+            throw log.throwing(new IllegalStateException(
+                    "A condition must always have an anat. entity: " + cond));
+        }
+        if (anatEntityCellType.size() == 1) {
+            return new AnatEntity[] {anatEntityCellType.getEntity(0), null};
+        }
+        if (anatEntityCellType.size() == 2) {
+            //The cell type comes first in the composition, the anat. entity second
+            return new AnatEntity[] {anatEntityCellType.getEntity(1),
+                    anatEntityCellType.getEntity(0)};
+        }
+        throw log.throwing(new IllegalStateException("Unexpected number of entities composing "
+                + "the anat. entity and cell type: " + anatEntityCellType));
+    }
+}

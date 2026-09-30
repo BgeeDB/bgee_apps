@@ -28,6 +28,7 @@ import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.topanat.TopAnatCallFileService;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.expressiondata.call.ConditionGraphCacheService;
 import org.bgee.model.gene.GeneNotFoundException;
@@ -437,6 +438,19 @@ public class FrontController extends HttpServlet {
         log.info("Loading condition graph cache for {} species...", speciesIds.size());
         cacheManager.loadAllSpeciesGraphs(speciesIds);
         log.info("ConditionGraphCache successfully initialized.");
+
+        //Generated once the condition graph cache is loaded, as the propagation relies on it.
+        //This is long, but it runs in the initialization thread started by the context listener,
+        //so the server itself does not wait for it. A failure here must not be seen as a failure
+        //of the cache initialization above: only topAnat is affected.
+        try {
+            new TopAnatCallFileService(this.serviceFactoryProvider.get(),
+                    this.serviceFactoryProvider)
+            .generateFilesIfMissing(speciesIds, this.prop.getTopAnatResultsWritingDirectory());
+        } catch (Exception e) {
+            log.error("Could not generate the topAnat call files, topAnat analyses will not run");
+            log.catching(e);
+        }
 
         log.traceExit();
     }

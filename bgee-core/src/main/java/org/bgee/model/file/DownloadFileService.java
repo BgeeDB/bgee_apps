@@ -76,7 +76,7 @@ public class DownloadFileService extends CommonService {
         if (dataType == null) {
             throw log.throwing(new IllegalArgumentException("An DataType must be provided"));
         }
-        //We have no experiment download files for data types other than AFFYMETRIX, RNA_SEQ, SC_RNA_SEQ,
+        //We have no experiment download files for data types other than RNA_SEQ and SC_RNA_SEQ,
         //so we return an empty list.
         if (!dataType.equals(DataType.RNA_SEQ)
                 && !dataType.equals(DataType.SC_RNA_SEQ)) {

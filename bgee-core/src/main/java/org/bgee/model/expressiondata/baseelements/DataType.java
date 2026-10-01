@@ -14,24 +14,15 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 /**
  * An {@code enum} defining the expression data types used in Bgee:
  * <ul>
- * <li>{@code AFFYMETRIX}: microarray Affymetrix.
- * <li>{@code EST}: Expressed Sequence Tag.
  * <li>{@code IN_SITU}: <em>in situ</em> hybridization data.
- * <li>{@code RELAXED_IN_SITU}: use of <em>in situ</em> hybridization data 
- * to infer more information about absence of expression: the inference 
- * considers expression patterns described by <em>in situ</em> data as complete. 
- * It is indeed usual for authors of <em>in situ</em> hybridizations to report 
- * only localizations of expression, implicitly stating absence of expression 
- * in all other tissues. When <em>in situ</em> data are available for a gene, 
- * this data type considered that absence of expression is assumed in any organ existing 
- * at the developmental stage studied in the <em>in situ</em>, with no report of 
- * expression by any data type, in the organ itself, or any substructure. 
- * <li>{@code SC_RNA_SEQ}: Full length single cell RNA-Seq data.
+ * <li>{@code SC_RNA_SEQ}: single-cell RNA-Seq data, <strong>both full-length and
+ * droplet-based</strong>: the {@code expression} table holds the observations of the two
+ * technologies in distinct columns, and they are aggregated into this one data type.
  * <li>{@code RNA_SEQ}: RNA-Seq data.
  * </ul>
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Sept. 2015
+ * @version Bgee 16
  * @since Bgee 13
  */
 //TODO: why don't we have a "ALL" data type?? This would be much cleaner than having to provide "null" 

@@ -297,6 +297,86 @@ public class CallServiceUtils {
     }
 
     /**
+     * Exclude-seed IDs that should actually be applied for {@code filterIds}.
+     * <p>
+     * A seed is applied only when it lies in the descendant closure of an include ID
+     * that is not itself an exclude seed. That punches out other SUMMARY organs under
+     * the expanded term (central nervous system and brain under multicellular organism)
+     * and leaves ancestor buckets alone (multicellular organism is not a descendant of
+     * central nervous system, so expanding CNS does not discard the organism tree).
+     * Checking the other direction — whether the include ID is a descendant of the
+     * seed — treats a parent as a child and drops the seeds that should be applied.
+     *
+     * @param filterIds      A {@code FilterIds} whose exclude seeds are considered.
+     *                       Cannot be {@code null}.
+     * @param descendantIds  A {@code Function} returning descendant IDs of a term.
+     *                       A {@code null} return for a given ID is treated as no descendants.
+     *                       If {@code descendantIds} itself is {@code null}, all exclude
+     *                       seeds are returned unchanged.
+     * @return               A new {@code Set} of exclude seeds to apply. Never {@code null}.
+     */
+    public static Set<String> selectApplicableExcludeSeeds(FilterIds<String> filterIds,
+            Function<String, Set<String>> descendantIds) {
+        log.traceEntry("{}, {}", filterIds, descendantIds);
+        Set<String> excludeSeeds = new HashSet<>(filterIds.getExcludeTermsAndChildrenIds());
+        if (excludeSeeds.isEmpty() || descendantIds == null) {
+            return log.traceExit(excludeSeeds);
+        }
+        Set<String> protectedIncludeIds = new HashSet<>(filterIds.getIds());
+        protectedIncludeIds.removeAll(excludeSeeds);
+        if (protectedIncludeIds.isEmpty()) {
+            return log.traceExit(excludeSeeds);
+        }
+        Set<String> underProtectedIncludes = new HashSet<>();
+        for (String includeId : protectedIncludeIds) {
+            underProtectedIncludes.addAll(descendantIdsOrEmpty(descendantIds, includeId));
+        }
+        excludeSeeds.retainAll(underProtectedIncludes);
+        return log.traceExit(excludeSeeds);
+    }
+
+    /**
+     * Expands applicable exclude seeds of {@code filterIds} to those IDs plus their
+     * descendants, then removes {@link FilterIds#getNotToExcludeIds()}.
+     * Only exclude seeds that are descendants of a protected include term are applied; see
+     * {@link #selectApplicableExcludeSeeds(FilterIds, Function)}.
+     *
+     * @param filterIds      A {@code FilterIds} to expand. If {@code null} or with no
+     *                       exclude seeds, an empty {@code Set} is returned.
+     * @param descendantIds  A {@code Function} returning descendant IDs of a term,
+     *                       or {@code null} to exclude only the seed IDs themselves
+     *                       (no descendant expansion and no ancestor skip).
+     * @return               A new {@code Set} of IDs to subtract from the include set.
+     */
+    public static Set<String> expandApplicableExcludeIds(FilterIds<String> filterIds,
+            Function<String, Set<String>> descendantIds) {
+        log.traceEntry("{}, {}", filterIds, descendantIds);
+        if (filterIds == null || filterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
+            return log.traceExit(Set.of());
+        }
+        Set<String> seeds = descendantIds == null
+                ? new HashSet<>(filterIds.getExcludeTermsAndChildrenIds())
+                : selectApplicableExcludeSeeds(filterIds, descendantIds);
+        Set<String> idsToExclude = new HashSet<>(seeds);
+        if (descendantIds != null) {
+            for (String seed : seeds) {
+                idsToExclude.addAll(descendantIdsOrEmpty(descendantIds, seed));
+            }
+        }
+        idsToExclude.removeAll(filterIds.getNotToExcludeIds());
+        return log.traceExit(idsToExclude);
+    }
+
+    private static Set<String> descendantIdsOrEmpty(Function<String, Set<String>> descendantIds,
+            String id) {
+        if (descendantIds == null || id == null) {
+            return Set.of();
+        }
+        Set<String> descendants = descendantIds.apply(id);
+        return descendants == null ? Set.of() : descendants;
+    }
+
+    /**
      * @param condParamCombination  A {@code Collection} of {@code ConditionParameter}s that is
      *                              the condition parameter combination requested. The condition
      *                              parameters it does not contain are restricted to their root,
@@ -438,16 +518,10 @@ public class CallServiceUtils {
                         .collect(Collectors.toSet())
                         );
                 if (!anatEntityFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
-                    Set<String> anatEntityIdsToExclude = new HashSet<>();
-                    anatEntityIdsToExclude.addAll(anatEntityFilterIds.getExcludeTermsAndChildrenIds());
-                    anatEntityIdsToExclude.addAll(
-                            anatEntityFilterIds.getExcludeTermsAndChildrenIds().stream()
-                            .flatMap(id -> anatOntology.getDescendantIds(
-                                    id, false, Collections.singleton(filter.getSpeciesId()))
-                                    .stream())
-                            .collect(Collectors.toSet())
-                            );
-                    anatEntityIdsToExclude.removeAll(anatEntityFilterIds.getNotToExcludeIds());
+                    Set<String> anatEntityIdsToExclude = expandApplicableExcludeIds(
+                            anatEntityFilterIds,
+                            id -> anatOntology.getDescendantIds(id, false,
+                                    Collections.singleton(filter.getSpeciesId())));
                     if (anatEntityIds.removeAll(anatEntityIdsToExclude) && anatEntityIds.isEmpty()) {
                         throw log.throwing(new IllegalArgumentException(
                                 "No result should be retrieved because of anat. entity exclusion"));
@@ -464,17 +538,11 @@ public class CallServiceUtils {
                         .collect(Collectors.toSet())
                         );
                 if (!cellTypeFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
-                    Set<String> cellTypeIdsToExclude = new HashSet<>();
-                    cellTypeIdsToExclude.addAll(cellTypeFilterIds.getExcludeTermsAndChildrenIds());
-                    cellTypeIdsToExclude.addAll(
-                            cellTypeFilterIds.getExcludeTermsAndChildrenIds().stream()
-                            .flatMap(id -> anatOntology.getDescendantIds(
-                                    id, false, Collections.singleton(filter.getSpeciesId()))
-                                    .stream())
-                            .collect(Collectors.toSet())
-                            );
                     //we don't want to exclude the selected terms themselves
-                    cellTypeIdsToExclude.removeAll(cellTypeFilterIds.getNotToExcludeIds());
+                    Set<String> cellTypeIdsToExclude = expandApplicableExcludeIds(
+                            cellTypeFilterIds,
+                            id -> anatOntology.getDescendantIds(id, false,
+                                    Collections.singleton(filter.getSpeciesId())));
                     if (cellTypeIds.removeAll(cellTypeIdsToExclude) && cellTypeIds.isEmpty()) {
                         throw log.throwing(new IllegalArgumentException(
                                 "No result should be retrieved because of cell type exclusion"));
@@ -495,6 +563,16 @@ public class CallServiceUtils {
                                     .stream())
                             .collect(Collectors.toSet())
                     );
+                if (!devStageFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
+                    Set<String> devStageIdsToExclude = expandApplicableExcludeIds(
+                            devStageFilterIds,
+                            id -> stageOntology.getDescendantIds(id, false,
+                                    Collections.singleton(filter.getSpeciesId())));
+                    if (devStageIds.removeAll(devStageIdsToExclude) && devStageIds.isEmpty()) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No result should be retrieved because of dev. stage exclusion"));
+                    }
+                }
             }
 
             //For now we consider there is no composition for sexes and strains

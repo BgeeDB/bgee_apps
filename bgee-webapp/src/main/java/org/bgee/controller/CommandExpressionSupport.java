@@ -143,8 +143,8 @@ public abstract class CommandExpressionSupport extends CommandParent{
     protected final static long COMPUTE_TIME_PROCESSED_COND_PART_CACHE_MS = 1000L;
         private final static long COMPUTE_TIME_RESULT_CACHE_MS = 2000L;
 
-    private final static String ID_PARAM_SUMMARY_VALUE = "SUMMARY";
-    private final static Set<String> SUMMARY_ANAT_ENTITY_IDS = Set.of(
+    protected final static String ID_PARAM_SUMMARY_VALUE = "SUMMARY";
+    protected final static Set<String> SUMMARY_ANAT_ENTITY_IDS = Set.of(
             "UBERON:0001062",
             "UBERON:0000010", "UBERON:0000211", "UBERON:0000309", "UBERON:0000468",
             "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007",
@@ -152,11 +152,11 @@ public abstract class CommandExpressionSupport extends CommandParent{
             "UBERON:0001032", "UBERON:0001434", "UBERON:0002193", "UBERON:0002330",
             "UBERON:0002384", "UBERON:0002405", "UBERON:0002416", "UBERON:0015204");
     private final static String SUMMARY_ANAT_ENTITY_ROOT_ID = "UBERON:0001062";
-    private final static Set<String> SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS =
+    protected final static Set<String> SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS =
             Collections.unmodifiableSet(
                    SUMMARY_ANAT_ENTITY_IDS.stream().filter(id -> !id.equals(SUMMARY_ANAT_ENTITY_ROOT_ID))
                    .collect(Collectors.toSet()));
-    private final static Set<String> SUMMARY_CELL_TYPE_IDS = Set.of(ConditionDAO.CELL_TYPE_ROOT_ID);
+    protected final static Set<String> SUMMARY_CELL_TYPE_IDS = Set.of(ConditionDAO.CELL_TYPE_ROOT_ID);
 
     public CommandExpressionSupport(HttpServletResponse response, RequestParameters requestParameters,
             BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
@@ -309,6 +309,12 @@ public abstract class CommandExpressionSupport extends CommandParent{
         }
         List<String> discardAnatEntityIds = this.requestParameters.getDiscardAnatEntity() == null?
                 new ArrayList<>(): new ArrayList<>(this.requestParameters.getDiscardAnatEntity());
+        // discard=SUMMARY is all top-level organs except the anatomical root.
+        // When include is a concrete term T (ExpressionMatrix request 3), T is
+        // removed here. Expansion then applies only the remaining SUMMARY terms
+        // that are descendants of T. Ancestor buckets (e.g. multicellular organism
+        // when expanding CNS) are not descendants of T, so they are not discarded.
+        // See CallServiceUtils.selectApplicableExcludeSeeds.
         if (discardAnatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
             discardAnatEntityIds.addAll(SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS);
             discardAnatEntityIds.remove(ID_PARAM_SUMMARY_VALUE);

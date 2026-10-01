@@ -34,6 +34,8 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+//FIXME: imported only for the loadData stub kept for API compilation, remove with it
+import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.ConditionGraphCacheService.ConditionGraphCache;
 import org.bgee.model.gene.Gene;
@@ -188,7 +190,46 @@ public class ExpressionCallLoader extends CommonService {
     }
 
 
-    //right now 
+    /**
+     * FIXME: this method is a stub, present only so that the callers of the former paginated
+     * {@code loadData} still compile; it retrieves nothing and must not be used.
+     * <p>
+     * FIXME: the only remaining caller is
+     * {@code MultiSpeciesCallService.loadOrderedSimilarityExpressionCalls}, which has to be
+     * ported to {@link #loadDataOnTheFly()}. That port is not mechanical:
+     * {@code SimilarityExpressionCall2.computeSummaryCallType()} reads
+     * {@code ExpressionCall2.getSummaryCallType()}, while an {@code OTFExpressionCall} carries
+     * p-values and scores but no summary call type. Delete this method once that is done.
+     * <p>
+     * The signature and the argument checks mirror the removed method, so that a caller
+     * passing invalid arguments still fails the same way.
+     *
+     * @param offset    A {@code Long} that is the number of calls to skip. A {@code Long} because
+     *                  the number of potential results can be very large.
+     * @param limit     An {@code Integer} that is the maximum number of calls to return.
+     * @return          Never returns: always throws.
+     * @throws UnsupportedOperationException    In all cases, once the arguments are validated.
+     */
+    //FIXME: stub for API compilation only, see the Javadoc above.
+    public List<ExpressionCall2> loadData(Long offset, Integer limit) {
+        log.traceEntry("{}, {}", offset, limit);
+
+        if (offset != null && offset < 0) {
+            throw log.throwing(new IllegalArgumentException("offset cannot be less than 0"));
+        }
+        if (limit != null && limit <= 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "limit cannot be less than or equal to 0"));
+        }
+        if (limit != null && limit > LIMIT_MAX) {
+            throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
+                    + LIMIT_MAX));
+        }
+        throw log.throwing(new UnsupportedOperationException(
+                "ExpressionCallLoader.loadData is a stub kept only so that the API compiles. "
+                + "The expression calls are now propagated on the fly: use loadDataOnTheFly()."));
+    }
+
     public Map<Gene, List<OTFExpressionCall>> loadDataOnTheFly() {
       //If the DAOCallFilters are null (different from: not-null and empty)
         //it means there was no matching conds and thus no result for sure

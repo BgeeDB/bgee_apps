@@ -56,7 +56,7 @@ GET /bgee-webapp/?page=data&action=multispec_expr_calls&...
 | Parameter | Default | Description | Values |
 |-----------|---------|-------------|--------|
 | `data_qual` | `BRONZE` | Minimum expression quality threshold | `BRONZE`, `SILVER`, `GOLD` |
-| `data_type` | all types | Data type(s) to include | `AFFYMETRIX`, `EST`, `IN_SITU`, `RNA_SEQ`, `SC_RNA_SEQ` |
+| `data_type` | all types | Data type(s) to include | `IN_SITU`, `RNA_SEQ`, `SC_RNA_SEQ` |
 | `cond_param2` | all params | Condition parameter(s) to group by | `anat_entity`, `dev_stage`, `cell_type`, `sex`, `strain` |
 | `anat_entity_id` | — | Anatomical entity ID(s) to filter by | UBERON IDs, or `SUMMARY` for summary terms |
 | `cell_type_id` | — | Cell type ID(s) to filter by | CL IDs, or `SUMMARY` for summary terms |
@@ -143,7 +143,7 @@ in the query. Each node contains a `taxon` object, an optional `species` array
 ```json
 {
   "requestedConditionParameters": ["anat_entity", "dev_stage", ...],
-  "requestedDataTypes": ["AFFYMETRIX", "RNA_SEQ", ...],
+  "requestedDataTypes": ["RNA_SEQ", "SC_RNA_SEQ", ...],
   "expressionCalls": [ ... ]
 }
 ```
@@ -165,7 +165,7 @@ Each element in `expressionCalls`:
 | `multiSpeciesCondition.cellTypes` | Array | Cell types `[{ id, name }]` |
 | `multiSpeciesCondition.cellTypeTaxonScope` | Object | Same homology-scope semantics as `anatEntityTaxonScope` for the cell-type similarity; `null` when `cellTypes` is empty |
 | `expressionScore` | Object | `{ expressionScore, expressionScoreConfidence }` |
-| `dataTypesWithData` | Object | Boolean per data type: `{ AFFYMETRIX, EST, IN_SITU, RNA_SEQ, SC_RNA_SEQ }` |
+| `dataTypesWithData` | Object | Boolean per data type: `{ IN_SITU, RNA_SEQ, SC_RNA_SEQ }` |
 | `expressionState` | String | `"expressed"` or `"not_expressed"` |
 | `expressionQuality` | String | `"gold"`, `"silver"`, or `"bronze"` |
 
@@ -196,8 +196,7 @@ Each element in `expressionCalls`:
     "expressionScoreConfidence": "high"
   },
   "dataTypesWithData": {
-    "AFFYMETRIX": true, "EST": false, "IN_SITU": true,
-    "SC_RNA_SEQ": false, "RNA_SEQ": true
+    "IN_SITU": true, "SC_RNA_SEQ": false, "RNA_SEQ": true
   },
   "expressionState": "expressed",
   "expressionQuality": "gold"
@@ -337,14 +336,15 @@ derives the `expressionScore`, `expressionScoreConfidence`, `dataTypesWithData`,
 flowchart TD
     SC["SimilarityExpressionCall2"] --> GENE["Extract Gene"]
     SC --> MSC["Extract MultiSpeciesCondition<br/>(anatEntities, cellTypes)"]
-    SC --> CALLS["Get underlying ExpressionCall2 list"]
+    SC --> CALLS["Get underlying OTFExpressionCall list"]
 
     CALLS --> LCA["Compute species LCA<br/>from call species IDs"]
     CALLS --> SCORE["Find max expressionScore<br/>across all calls"]
-    CALLS --> DT["Collect DataTypes with data<br/>(from callData)"]
-    CALLS --> QUAL["Get first non-null<br/>SummaryQuality"]
+    CALLS --> DT["Collect DataTypes with data<br/>(union of supportingDataTypes)"]
+    CALLS --> QUAL["Infer SummaryQuality from<br/>the p-values, keep the best"]
 
-    DT --> CONF{"Has AFFYMETRIX,<br/>RNA_SEQ, or SC_RNA_SEQ,<br/>or score < 20000?"}
+    DT --> CONF{"Quality better than BRONZE<br/>AND has RNA_SEQ<br/>or SC_RNA_SEQ?"}
+    QUAL --> CONF
     CONF -->|Yes| HIGH["confidence = 'high'"]
     CONF -->|No| LOW["confidence = 'low'"]
 

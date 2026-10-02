@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 
 public class OTFExpressionCall {
@@ -167,6 +168,64 @@ public class OTFExpressionCall {
     }
     public PropagationState getDataPropagation() {
         return dataPropagation;
+    }
+
+    /**
+     * The expression score of this call, with two decimals, as it is displayed and returned by
+     * the API. Counterpart of {@link #getFormattedAllDatatypePValue()} for the score, and the
+     * single place formatting it: the responses of the gene page, of the data page and of the
+     * multispecies endpoint must not each round it their own way.
+     *
+     * @return  A {@code String} that is the formatted expression score, {@code null} if this
+     *          call has none.
+     */
+    public String getFormattedExpressionScore() {
+        log.traceEntry();
+        if (this.expressionScore == null) {
+            return log.traceExit((String) null);
+        }
+        //setScale rather than String.format: the result must not depend on the default Locale,
+        //and an expression score runs from 0 to 100, so no thousands separator can occur.
+        return log.traceExit(this.expressionScore.setScale(2, RoundingMode.HALF_UP)
+                .toPlainString());
+    }
+
+    /**
+     * Whether the expression score of a call is of high confidence: its summary quality must be
+     * better than {@code BRONZE}, and at least one of the data types supporting it must produce
+     * a quantitative score. This is the single definition of that rule, shared by every response
+     * exposing an {@code expressionScoreConfidence}.
+     *
+     * @param quality               The {@code SummaryQuality} inferred for the call, as returned
+     *                              by {@code OTFExpressionCallFilterEngine
+     *                              #inferSummaryCallTypeAndQuality(OTFExpressionCall, BigDecimal,
+     *                              BigDecimal, BigDecimal, BigDecimal)}. A {@code null} quality,
+     *                              meaning no summary call type applies, is not of high
+     *                              confidence.
+     * @param supportingDataTypes   The {@code DataType}s supporting the call. For a group of
+     *                              calls, such as the calls supporting a multi-species
+     *                              similarity, their union.
+     * @return                      A {@code boolean} that is {@code true} if the expression score
+     *                              is of high confidence.
+     */
+    public static boolean isHighConfidenceExpressionScore(SummaryQuality quality,
+            Set<DataType> supportingDataTypes) {
+        log.traceEntry("{}, {}", quality, supportingDataTypes);
+        return log.traceExit(quality != null && !SummaryQuality.BRONZE.equals(quality) &&
+                supportingDataTypes != null &&
+                (supportingDataTypes.contains(DataType.RNA_SEQ) ||
+                        supportingDataTypes.contains(DataType.SC_RNA_SEQ)));
+    }
+
+    /**
+     * @param quality   The {@code SummaryQuality} inferred for this call.
+     * @return          A {@code boolean} that is {@code true} if the expression score of this
+     *                  call is of high confidence.
+     * @see #isHighConfidenceExpressionScore(SummaryQuality, Set)
+     */
+    public boolean isHighConfidenceExpressionScore(SummaryQuality quality) {
+        log.traceEntry("{}", quality);
+        return log.traceExit(isHighConfidenceExpressionScore(quality, this.supportingDataTypes));
     }
 
     public String getFormattedAllDatatypePValue() {

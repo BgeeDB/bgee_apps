@@ -42,6 +42,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -443,7 +444,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                 assertNotNull(sec.getMultiSpeciesCondition());
                 assertNotNull(sec.getSummaryCallType());
                 assertNotNull(sec.getCalls());
-                for (org.bgee.model.expressiondata.call.Call.ExpressionCall2 call : sec.getCalls()) {
+                for (org.bgee.model.expressiondata.call.OTFExpressionCall call : sec.getCalls()) {
                     assertNotNull(call.getGene());
                     assertNotNull(call.getCondition());
                 }
@@ -529,7 +530,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                 assertNotNull(sec.getMultiSpeciesCondition());
                 assertNotNull(sec.getSummaryCallType());
                 assertNotNull(sec.getCalls());
-                for (org.bgee.model.expressiondata.call.Call.ExpressionCall2 call : sec.getCalls()) {
+                for (org.bgee.model.expressiondata.call.OTFExpressionCall call : sec.getCalls()) {
                     assertNotNull(call.getGene());
                     assertNotNull(call.getCondition());
                 }
@@ -579,15 +580,17 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
                 .thenReturn(new HashSet<>(Arrays.asList(aeSim1)));
 
-        org.bgee.model.expressiondata.call.Call.ExpressionCall2 mockCall1 =
-                mock(org.bgee.model.expressiondata.call.Call.ExpressionCall2.class);
+        org.bgee.model.expressiondata.call.OTFExpressionCall mockCall1 =
+                mock(org.bgee.model.expressiondata.call.OTFExpressionCall.class);
         org.bgee.model.expressiondata.call.Condition2 mockCond1 =
                 mock(org.bgee.model.expressiondata.call.Condition2.class);
         @SuppressWarnings("unchecked")
         org.bgee.model.ComposedEntity<AnatEntity> mockComposed = mock(org.bgee.model.ComposedEntity.class);
         when(mockCall1.getGene()).thenReturn(gene1);
         when(mockCall1.getCondition()).thenReturn(mockCond1);
-        when(mockCall1.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
+        //An OTFExpressionCall carries no summary call type: EXPRESSED GOLD is obtained
+        //with a p-value below the PRESENT HIGH threshold (0.01).
+        when(mockCall1.getAllDataTypePValue()).thenReturn(new BigDecimal("0.001"));
         when(mockCond1.getConditionParameterValue(
                 org.bgee.model.expressiondata.baseelements.ConditionParameter.ANAT_ENTITY_CELL_TYPE))
                 .thenReturn(mockComposed);
@@ -597,7 +600,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(mockComposed.getEntity(1)).thenReturn(anatEntity1a);
 
         when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Arrays.asList(mockCall1));
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(
+                Collections.singletonMap(gene1, Arrays.asList(mockCall1)));
 
         MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
         java.util.List<SimilarityExpressionCall2> results = service.loadSimilarityExpressionCalls2(
@@ -652,7 +656,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
                 ArgumentCaptor.forClass(ExpressionCallFilter2.class);
         when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(Collections.emptyMap());
 
         MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
         Collection<GeneFilter> geneFilters = Collections.singleton(geneFilter1);
@@ -723,7 +727,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
                 ArgumentCaptor.forClass(ExpressionCallFilter2.class);
         when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(Collections.emptyMap());
 
         MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
         Collection<GeneFilter> geneFilters = Collections.singleton(geneFilter1);
@@ -822,7 +826,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
                 ArgumentCaptor.forClass(ExpressionCallFilter2.class);
         when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(Collections.emptyMap());
 
         MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
         service.loadSimilarityExpressionCalls2(taxonId, Collections.singleton(geneFilter1),
@@ -968,7 +972,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
                 ArgumentCaptor.forClass(ExpressionCallFilter2.class);
         when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(Collections.emptyMap());
 
         MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
         service.loadSimilarityExpressionCalls2(taxonId,
@@ -1059,7 +1063,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
                 ArgumentCaptor.forClass(ExpressionCallFilter2.class);
         when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(Collections.emptyMap());
 
         MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
         service.loadSimilarityExpressionCalls2(taxonId,
@@ -1151,15 +1155,17 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ConditionFilter2 condFilter = new ConditionFilter2(speciesId1, condParamToFilter,
                 Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false);
 
-        org.bgee.model.expressiondata.call.Call.ExpressionCall2 mockCall =
-                mock(org.bgee.model.expressiondata.call.Call.ExpressionCall2.class);
+        org.bgee.model.expressiondata.call.OTFExpressionCall mockCall =
+                mock(org.bgee.model.expressiondata.call.OTFExpressionCall.class);
         org.bgee.model.expressiondata.call.Condition2 mockCond =
                 mock(org.bgee.model.expressiondata.call.Condition2.class);
         @SuppressWarnings("unchecked")
         org.bgee.model.ComposedEntity<AnatEntity> mockComposed = mock(org.bgee.model.ComposedEntity.class);
         when(mockCall.getGene()).thenReturn(gene1);
         when(mockCall.getCondition()).thenReturn(mockCond);
-        when(mockCall.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
+        //An OTFExpressionCall carries no summary call type: EXPRESSED GOLD is obtained
+        //with a p-value below the PRESENT HIGH threshold (0.01).
+        when(mockCall.getAllDataTypePValue()).thenReturn(new BigDecimal("0.001"));
         when(mockCond.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE))
                 .thenReturn(mockComposed);
         when(mockComposed.isEmpty()).thenReturn(false);
@@ -1167,7 +1173,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(mockComposed.getEntity(0)).thenReturn(transformedAe);
 
         when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Arrays.asList(mockCall));
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(
+                Collections.singletonMap(gene1, Arrays.asList(mockCall)));
 
         MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
         List<SimilarityExpressionCall2> results = service.loadSimilarityExpressionCalls2(taxonId,
@@ -1240,7 +1247,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                         Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false));
 
         when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(Collections.emptyMap());
 
         Set<GeneFilter> geneFilters = Set.of(
                 new GeneFilter(speciesId1, Collections.singleton("gene1a")),
@@ -1295,15 +1302,17 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
                 .thenReturn(new HashSet<>(Arrays.asList(organSim)));
 
-        org.bgee.model.expressiondata.call.Call.ExpressionCall2 mockCall1 =
-                mock(org.bgee.model.expressiondata.call.Call.ExpressionCall2.class);
+        org.bgee.model.expressiondata.call.OTFExpressionCall mockCall1 =
+                mock(org.bgee.model.expressiondata.call.OTFExpressionCall.class);
         org.bgee.model.expressiondata.call.Condition2 mockCond1 =
                 mock(org.bgee.model.expressiondata.call.Condition2.class);
         @SuppressWarnings("unchecked")
         org.bgee.model.ComposedEntity<AnatEntity> mockComposed = mock(org.bgee.model.ComposedEntity.class);
         when(mockCall1.getGene()).thenReturn(gene1);
         when(mockCall1.getCondition()).thenReturn(mockCond1);
-        when(mockCall1.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
+        //An OTFExpressionCall carries no summary call type: EXPRESSED GOLD is obtained
+        //with a p-value below the PRESENT HIGH threshold (0.01).
+        when(mockCall1.getAllDataTypePValue()).thenReturn(new BigDecimal("0.001"));
         when(mockCond1.getConditionParameterValue(
                 org.bgee.model.expressiondata.baseelements.ConditionParameter.ANAT_ENTITY_CELL_TYPE))
                 .thenReturn(mockComposed);
@@ -1313,7 +1322,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(mockComposed.getEntity(1)).thenReturn(organ);
 
         when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Arrays.asList(mockCall1));
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(
+                Collections.singletonMap(gene1, Arrays.asList(mockCall1)));
 
         FilterIds<String> anatFilter = new FilterIds<>(Set.of(organ.getId()), false);
         FilterIds<String> cellFilter = new FilterIds<>(
@@ -1396,15 +1406,17 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
                 .thenReturn(new HashSet<>(Arrays.asList(simParent, simChild, simNeuron)));
 
-        org.bgee.model.expressiondata.call.Call.ExpressionCall2 mockCall1 =
-                mock(org.bgee.model.expressiondata.call.Call.ExpressionCall2.class);
+        org.bgee.model.expressiondata.call.OTFExpressionCall mockCall1 =
+                mock(org.bgee.model.expressiondata.call.OTFExpressionCall.class);
         org.bgee.model.expressiondata.call.Condition2 mockCond1 =
                 mock(org.bgee.model.expressiondata.call.Condition2.class);
         @SuppressWarnings("unchecked")
         org.bgee.model.ComposedEntity<AnatEntity> mockComposed = mock(org.bgee.model.ComposedEntity.class);
         when(mockCall1.getGene()).thenReturn(gene1);
         when(mockCall1.getCondition()).thenReturn(mockCond1);
-        when(mockCall1.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
+        //An OTFExpressionCall carries no summary call type: EXPRESSED GOLD is obtained
+        //with a p-value below the PRESENT HIGH threshold (0.01).
+        when(mockCall1.getAllDataTypePValue()).thenReturn(new BigDecimal("0.001"));
         when(mockCond1.getConditionParameterValue(
                 org.bgee.model.expressiondata.baseelements.ConditionParameter.ANAT_ENTITY_CELL_TYPE))
                 .thenReturn(mockComposed);
@@ -1416,7 +1428,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
                 ArgumentCaptor.forClass(ExpressionCallFilter2.class);
         when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Arrays.asList(mockCall1));
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(
+                Collections.singletonMap(gene1, Arrays.asList(mockCall1)));
 
         FilterIds<String> anatFilter = new FilterIds<>(Set.of(parentId), true);
         FilterIds<String> cellFilter = new FilterIds<>(
@@ -1532,7 +1545,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
                 ArgumentCaptor.forClass(ExpressionCallFilter2.class);
         when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
-        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(Collections.emptyMap());
 
         MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
         service.loadSimilarityExpressionCalls2(taxonId,

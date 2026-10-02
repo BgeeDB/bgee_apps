@@ -1,12 +1,14 @@
 package org.bgee.model.expressiondata.call.multispecies;
 
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -48,10 +50,13 @@ public class SimilarityExpressionCall2Test {
         Species species = new Species(9606);
         Gene gene = new Gene("ENSG00000130208", species, new GeneBioType("protein_coding"));
         MultiSpeciesCondition msc = new MultiSpeciesCondition(null, null, null, null);
-        ExpressionCall2 expressedCall = mock(ExpressionCall2.class);
-        when(expressedCall.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
-        ExpressionCall2 notExpressedCall = mock(ExpressionCall2.class);
-        when(notExpressedCall.getSummaryCallType()).thenReturn(ExpressionSummary.NOT_EXPRESSED);
+        OTFExpressionCall expressedCall = mock(OTFExpressionCall.class);
+        //EXPRESSED GOLD: p-value below the PRESENT HIGH threshold (0.01)
+        when(expressedCall.getAllDataTypePValue()).thenReturn(new BigDecimal("0.001"));
+        OTFExpressionCall notExpressedCall = mock(OTFExpressionCall.class);
+        //Not expressed: p-value above the ABSENT LOW threshold (0.05), with observed data
+        when(notExpressedCall.getAllDataTypePValue()).thenReturn(new BigDecimal("0.9"));
+        when(notExpressedCall.getDataPropagation()).thenReturn(PropagationState.SELF);
 
         SimilarityExpressionCall2 sec = new SimilarityExpressionCall2(
                 gene, msc, Arrays.asList(expressedCall, notExpressedCall));
@@ -64,8 +69,10 @@ public class SimilarityExpressionCall2Test {
         Species species = new Species(9606);
         Gene gene = new Gene("ENSG00000130208", species, new GeneBioType("protein_coding"));
         MultiSpeciesCondition msc = new MultiSpeciesCondition(null, null, null, null);
-        ExpressionCall2 notExpressedCall = mock(ExpressionCall2.class);
-        when(notExpressedCall.getSummaryCallType()).thenReturn(ExpressionSummary.NOT_EXPRESSED);
+        OTFExpressionCall notExpressedCall = mock(OTFExpressionCall.class);
+        //Not expressed: p-value above the ABSENT LOW threshold (0.05), with observed data
+        when(notExpressedCall.getAllDataTypePValue()).thenReturn(new BigDecimal("0.9"));
+        when(notExpressedCall.getDataPropagation()).thenReturn(PropagationState.SELF);
 
         SimilarityExpressionCall2 sec = new SimilarityExpressionCall2(
                 gene, msc, Collections.singletonList(notExpressedCall));
@@ -78,9 +85,9 @@ public class SimilarityExpressionCall2Test {
         Species species = new Species(9606);
         Gene gene = new Gene("ENSG00000130208", species, new GeneBioType("protein_coding"));
         MultiSpeciesCondition msc = new MultiSpeciesCondition(null, null, null, null);
-        ExpressionCall2 call1 = mock(ExpressionCall2.class);
-        ExpressionCall2 call2 = mock(ExpressionCall2.class);
-        Set<ExpressionCall2> calls = new HashSet<>(Arrays.asList(call1, call2));
+        OTFExpressionCall call1 = mock(OTFExpressionCall.class);
+        OTFExpressionCall call2 = mock(OTFExpressionCall.class);
+        Set<OTFExpressionCall> calls = new HashSet<>(Arrays.asList(call1, call2));
 
         SimilarityExpressionCall2 sec = new SimilarityExpressionCall2(
                 gene, msc, calls, ExpressionSummary.NOT_EXPRESSED);
@@ -127,13 +134,13 @@ public class SimilarityExpressionCall2Test {
         Species species = new Species(9606);
         Gene gene = new Gene("ENSG00000130208", species, new GeneBioType("protein_coding"));
         MultiSpeciesCondition msc = new MultiSpeciesCondition(null, null, null, null);
-        ExpressionCall2 call = mock(ExpressionCall2.class);
+        OTFExpressionCall call = mock(OTFExpressionCall.class);
 
         SimilarityExpressionCall2 sec = new SimilarityExpressionCall2(
                 gene, msc, Collections.singletonList(call), ExpressionSummary.EXPRESSED);
 
         try {
-            sec.getCalls().add(mock(ExpressionCall2.class));
+            sec.getCalls().add(mock(OTFExpressionCall.class));
             throw new AssertionError("Expected UnsupportedOperationException when modifying calls");
         } catch (UnsupportedOperationException e) {
             // Expected

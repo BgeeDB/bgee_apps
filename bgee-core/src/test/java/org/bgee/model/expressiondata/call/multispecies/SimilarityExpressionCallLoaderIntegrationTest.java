@@ -115,16 +115,16 @@ public class SimilarityExpressionCallLoaderIntegrationTest extends TestAncestor 
      * instead of the default assertEquals message that renders both full sets.
      */
     private static void assertSupportingCallSetsEqual(int itemIndex, String itemKey,
-            Collection<org.bgee.model.expressiondata.call.Call.ExpressionCall2> memoCalls,
-            Collection<org.bgee.model.expressiondata.call.Call.ExpressionCall2> lazyCalls) {
-        Set<org.bgee.model.expressiondata.call.Call.ExpressionCall2> memoSet = new HashSet<>(memoCalls);
-        Set<org.bgee.model.expressiondata.call.Call.ExpressionCall2> lazySet = new HashSet<>(lazyCalls);
+            Collection<org.bgee.model.expressiondata.call.OTFExpressionCall> memoCalls,
+            Collection<org.bgee.model.expressiondata.call.OTFExpressionCall> lazyCalls) {
+        Set<org.bgee.model.expressiondata.call.OTFExpressionCall> memoSet = new HashSet<>(memoCalls);
+        Set<org.bgee.model.expressiondata.call.OTFExpressionCall> lazySet = new HashSet<>(lazyCalls);
         if (memoSet.equals(lazySet)) {
             return;
         }
-        Set<org.bgee.model.expressiondata.call.Call.ExpressionCall2> onlyMemo = new HashSet<>(memoSet);
+        Set<org.bgee.model.expressiondata.call.OTFExpressionCall> onlyMemo = new HashSet<>(memoSet);
         onlyMemo.removeAll(lazySet);
-        Set<org.bgee.model.expressiondata.call.Call.ExpressionCall2> onlyLazy = new HashSet<>(lazySet);
+        Set<org.bgee.model.expressiondata.call.OTFExpressionCall> onlyLazy = new HashSet<>(lazySet);
         onlyLazy.removeAll(memoSet);
         fail("Supporting call sets differ for item " + itemIndex + " (" + itemKey + "): "
                 + "memoized has " + memoSet.size() + " calls, lazy has " + lazySet.size()
@@ -133,7 +133,7 @@ public class SimilarityExpressionCallLoaderIntegrationTest extends TestAncestor 
                 + "; sample only-in-lazy: " + sample(onlyLazy));
     }
 
-    private static String sample(Set<org.bgee.model.expressiondata.call.Call.ExpressionCall2> calls) {
+    private static String sample(Set<org.bgee.model.expressiondata.call.OTFExpressionCall> calls) {
         return calls.stream().findFirst().map(c -> {
             String s = c.toString();
             return s.length() <= 2500 ? s : s.substring(0, 2500) + "... [truncated]";

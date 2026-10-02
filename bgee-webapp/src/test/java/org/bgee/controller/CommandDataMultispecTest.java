@@ -34,11 +34,8 @@ import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.model.SearchResult;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
-import org.bgee.model.expressiondata.call.CallData.ExpressionCallData2;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCallService;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall2;
@@ -384,16 +381,13 @@ public class CommandDataMultispecTest extends TestAncestor {
 
     private SimilarityExpressionCall2 buildSimilarityCall() {
         MultiSpeciesCondition condition = new MultiSpeciesCondition(null, null, null, null);
-        ExpressionCall2 supportingCall = mock(ExpressionCall2.class);
-        ExpressionLevelInfo levelInfo = new ExpressionLevelInfo(
-                BigDecimal.valueOf(5000), BigDecimal.valueOf(50), null, null, null);
-        ExpressionCallData2 callData = new ExpressionCallData2(
-                DataType.RNA_SEQ, Collections.emptyList(), Collections.emptyList(),
-                null, null, null, null);
-        when(supportingCall.getExpressionLevelInfo()).thenReturn(levelInfo);
-        when(supportingCall.getCallData()).thenReturn(Set.of(callData));
-        when(supportingCall.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
-        when(supportingCall.getSummaryQuality()).thenReturn(SummaryQuality.BRONZE);
+        OTFExpressionCall supportingCall = mock(OTFExpressionCall.class);
+        //An OTFExpressionCall exposes its score and its data types directly, and carries
+        //no summary call type: EXPRESSED GOLD comes from a p-value below PRESENT HIGH (0.01).
+        when(supportingCall.getExpressionScore()).thenReturn(BigDecimal.valueOf(50));
+        when(supportingCall.getSupportingDataTypes())
+                .thenReturn(EnumSet.of(DataType.RNA_SEQ));
+        when(supportingCall.getAllDataTypePValue()).thenReturn(new BigDecimal("0.001"));
         return new SimilarityExpressionCall2(
                 humanGene, condition, Collections.singletonList(supportingCall));
     }

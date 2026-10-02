@@ -80,10 +80,10 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             //20000, whatever its data types. The OTF propagation does not compute a rank, so
             //a call supported neither by bulk nor by single-cell RNA-Seq is now always
             //reported with a low confidence.
-            boolean highQualScore = callTypeQuality != null &&
-                    !SummaryQuality.BRONZE.equals(callTypeQuality.getValue()) &&
-                    (dataTypes.contains(DataType.RNA_SEQ) ||
-                            dataTypes.contains(DataType.SC_RNA_SEQ));
+            //Single definition of that rule, shared with the other responses
+            //exposing an expressionScoreConfidence.
+            boolean highQualScore = OTFExpressionCall.isHighConfidenceExpressionScore(
+                    callTypeQuality == null? null: callTypeQuality.getValue(), dataTypes);
 
             out.beginObject();
             out.name("condition");

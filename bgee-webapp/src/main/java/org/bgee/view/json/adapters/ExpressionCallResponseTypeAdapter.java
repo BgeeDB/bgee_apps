@@ -66,10 +66,10 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
                 //the calls were filtered with (see CommandData#processExprCallPage).
                 Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
                         value.getCallTypeQuality(call);
-                boolean highQualScore = callTypeQuality != null &&
-                        !SummaryQuality.BRONZE.equals(callTypeQuality.getValue()) &&
-                        (dataTypes.contains(DataType.RNA_SEQ) ||
-                                dataTypes.contains(DataType.SC_RNA_SEQ));
+                //Single definition of that rule, shared with the other responses
+                //exposing an expressionScoreConfidence.
+                boolean highQualScore = OTFExpressionCall.isHighConfidenceExpressionScore(
+                        callTypeQuality == null? null: callTypeQuality.getValue(), dataTypes);
                 out.beginObject();
 
                 out.name("gene");

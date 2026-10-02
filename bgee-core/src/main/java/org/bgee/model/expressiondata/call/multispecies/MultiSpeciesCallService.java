@@ -51,6 +51,7 @@ import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis.MultiGeneExprCounts;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
@@ -1147,7 +1148,7 @@ public class MultiSpeciesCallService extends CommonService {
                         new AnatCellTypeFilterIds(ctx.getUserAnatEntityIds(),
                                 ctx.getUserCellTypeIds(), ctx.isUnrestrictedCellTypes()),
                         ctx.getGlobalAnatEntityIds(), ctx.getGlobalCellTypeIds(), true);
-        List<ExpressionCall2> allCalls = loadExpressionCalls(ctx, condParamToFilter);
+        Map<Gene, List<OTFExpressionCall>> allCalls = loadExpressionCalls(ctx, condParamToFilter);
         List<SimilarityExpressionCall2> secs = buildSimilarityExpressionCallsFromExpressionCalls(
                 allCalls, ctx, fallbackAnatSimsById, fallbackCellSimsById);
 
@@ -1178,10 +1179,10 @@ public class MultiSpeciesCallService extends CommonService {
         return ordered;
     }
 
-    private List<ExpressionCall2> loadExpressionCalls(SimilarityExpressionCallPreparedFilter ctx,
+    private Map<Gene, List<OTFExpressionCall>> loadExpressionCalls(SimilarityExpressionCallPreparedFilter ctx,
             Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter) {
         ExpressionCallService exprCallService = this.getServiceFactory().getExpressionCallService();
-        List<ExpressionCall2> allCalls = new ArrayList<>();
+        Map<Gene,List<OTFExpressionCall>> allCalls = new HashMap<>();
         long allStartMs = System.currentTimeMillis();
         int loaders = 0;
         SimilarityExpressionCallFilter sourceFilter = ctx.getSourceFilter();
@@ -1209,56 +1210,47 @@ public class MultiSpeciesCallService extends CommonService {
             org.bgee.model.expressiondata.call.ExpressionCallLoader loader =
                     exprCallService.loadCallLoader(exprCallFilter);
             loaders++;
-            long offset = 0;
-            int pages = 0;
-            int speciesCallCount = 0;
-            List<ExpressionCall2> speciesCalls;
-            do {
-                speciesCalls = loader.loadData(offset,
-                        org.bgee.model.expressiondata.call.ExpressionCallLoader.LIMIT_MAX);
-                allCalls.addAll(speciesCalls);
-                speciesCallCount += speciesCalls.size();
-                offset += speciesCalls.size();
-                pages++;
-            } while (speciesCalls.size()
-                    == org.bgee.model.expressiondata.call.ExpressionCallLoader.LIMIT_MAX);
+            //The on-the-fly propagation is not paginated: one call returns every gene of
+            //this species with all its conditions, so there is no page to iterate over.
+            //The genes of two species are disjoint, so no key of allCalls is ever overwritten.
+            Map<Gene, List<OTFExpressionCall>> speciesCalls = loader.loadDataOnTheFly();
+            allCalls.putAll(speciesCalls);
+            int speciesCallCount = speciesCalls.values().stream().mapToInt(List::size).sum();
             long speciesMs = System.currentTimeMillis() - speciesStartMs;
             if (speciesMs >= 100) {
-                log.info("loadExpressionCalls speciesId={}: {} ms, {} pages, {} calls",
-                        gf.getSpeciesId(), speciesMs, pages, speciesCallCount);
+                log.info("loadExpressionCalls speciesId={}: {} ms, {} genes, {} calls",
+                        gf.getSpeciesId(), speciesMs, speciesCalls.size(), speciesCallCount);
             } else {
-                log.debug("loadExpressionCalls speciesId={}: {} ms, {} pages, {} calls",
-                        gf.getSpeciesId(), speciesMs, pages, speciesCallCount);
+                log.debug("loadExpressionCalls speciesId={}: {} ms, {} genes, {} calls",
+                        gf.getSpeciesId(), speciesMs, speciesCalls.size(), speciesCallCount);
             }
         }
         long allMs = System.currentTimeMillis() - allStartMs;
         if (allMs >= 100) {
-            log.info("loadExpressionCalls total: {} loaders, {} calls, {} ms",
+            log.info("loadExpressionCalls total: {} loaders, {} genes, {} ms",
                     loaders, allCalls.size(), allMs);
         } else {
-            log.debug("loadExpressionCalls total: {} loaders, {} calls, {} ms",
+            log.debug("loadExpressionCalls total: {} loaders, {} genes, {} ms",
                     loaders, allCalls.size(), allMs);
         }
         return allCalls;
     }
 
     private List<SimilarityExpressionCall2> buildSimilarityExpressionCallsFromExpressionCalls(
-            List<ExpressionCall2> allCalls, SimilarityExpressionCallPreparedFilter ctx,
+            Map<Gene, List<OTFExpressionCall>> allCalls, SimilarityExpressionCallPreparedFilter ctx,
             Map<String, AnatEntitySimilarity> fallbackAnatSimsById,
             Map<String, AnatEntitySimilarity> fallbackCellSimsById) {
-        allCalls.sort(Comparator.comparing(ExpressionCall2::getGene, Gene.COMPARATOR));
-        Stream<List<ExpressionCall2>> callsByGene = StreamSupport.stream(
-                new ElementGroupFromListSpliterator<>(allCalls.stream(),
-                        ExpressionCall2::getGene, Gene.COMPARATOR), false);
+        //The on-the-fly propagation already returns the calls grouped by gene, so the former
+        //sort plus ElementGroupFromListSpliterator over a flat List is no longer needed.
 
         Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntity =
                 ctx.getSimilaritiesByAnatEntity();
         Taxon requestedTaxon = ctx.getRequestedTaxon();
         Ontology<Taxon, Integer> taxonOntology = ctx.getTaxonOntology();
 
-        return callsByGene.flatMap(callList -> {
-            LinkedHashMap<MultiSpeciesCondition, List<ExpressionCall2>> callsPerSimilarity =
-                    callList.stream()
+        return allCalls.entrySet().stream().flatMap(geneEntry -> {
+            LinkedHashMap<MultiSpeciesCondition, List<OTFExpressionCall>> callsPerSimilarity =
+                    geneEntry.getValue().stream()
                             .flatMap(c -> {
                                 AnatEntityAndCellType anatAndCell =
                                         extractAnatEntityAndCellTypeFromCondition2(c.getCondition());
@@ -1295,7 +1287,7 @@ public class MultiSpeciesCallService extends CommonService {
                                     },
                                     LinkedHashMap::new));
 
-            Gene gene = callList.get(0).getGene();
+            Gene gene = geneEntry.getKey();
             return callsPerSimilarity.entrySet().stream()
                     .map(e -> new SimilarityExpressionCall2(gene, e.getKey(), e.getValue()));
         }).collect(Collectors.toList());

@@ -1,7 +1,6 @@
 package org.bgee.view.json.adapters;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -13,9 +12,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandData.MultispecExprCallResponse;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
-import org.bgee.model.expressiondata.call.CallData.ExpressionCallData2;
 import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall2;
 
 import com.google.gson.TypeAdapter;
@@ -70,36 +68,33 @@ public class MultispecExprCallResponseTypeAdapter extends TypeAdapter<MultispecE
 
     private void writeSimilarityExpressionCall(JsonWriter out, SimilarityExpressionCall2 call)
             throws IOException {
-        Optional<ExpressionLevelInfo> maxInfo = call.getCalls().stream()
-                .map(ExpressionCall2::getExpressionLevelInfo)
-                .filter(Objects::nonNull)
-                .filter(eli -> eli.getExpressionScore() != null)
-                .max(Comparator.comparing(ExpressionLevelInfo::getExpressionScore,
-                        Comparator.nullsFirst(BigDecimal::compareTo)));
-        String formattedScore = maxInfo.map(ExpressionLevelInfo::getFormattedExpressionScore)
+        //An OTFExpressionCall exposes its expression score directly, there is no
+        //ExpressionLevelInfo wrapper any more.
+        Optional<OTFExpressionCall> maxScoreCall = call.getCalls().stream()
+                .filter(c -> c.getExpressionScore() != null)
+                .max(Comparator.comparing(OTFExpressionCall::getExpressionScore));
+        //Formatted by OTFExpressionCall, the single place doing it.
+        String formattedScore = maxScoreCall
+                .map(OTFExpressionCall::getFormattedExpressionScore)
                 .orElse("NA");
         EnumSet<DataType> dataTypesWithData = call.getCalls().stream()
-                .flatMap(c -> c.getCallData().stream())
-                .map(ExpressionCallData2::getDataType)
+                .flatMap(c -> c.getSupportingDataTypes().stream())
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-        boolean highQual = !dataTypesWithData.isEmpty() && (
-                //FIXME: AFFYMETRIX was dropped from DataType along with the OTF propagation,
-                //so the high-quality heuristic now rests on the RNA-Seq data types alone.
-                dataTypesWithData.contains(DataType.RNA_SEQ)
-                        || dataTypesWithData.contains(DataType.SC_RNA_SEQ)
-                        || (maxInfo.isPresent() && maxInfo.get().getExpressionScore() != null
-                                && maxInfo.get().getExpressionScore()
-                                        .compareTo(BigDecimal.valueOf(20000)) < 0));
+        //Single definition of that rule, shared with the single-species responses. The former
+        //rule of this endpoint also accepted AFFYMETRIX, dropped from DataType, or a score
+        //below 20000, which was a rank threshold: an OTF expression score runs from 0 to 100
+        //with the opposite convention, so that clause would have made every call "high".
+        //The data types are the union over the calls supporting this similarity.
+        boolean highQual = OTFExpressionCall.isHighConfidenceExpressionScore(
+                call.getSummaryQuality(), dataTypesWithData);
         String confidence = highQual ? "high" : "low";
         String expressionState = call.getSummaryCallType() != null
                 ? call.getSummaryCallType().toString().toLowerCase() : "not_expressed";
-        String quality = call.getCalls().stream()
-                .map(ExpressionCall2::getSummaryQuality)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .map(q -> q.toString().toLowerCase())
-                .orElse("bronze");
+        //The quality is inferred from the p-values of the supporting calls by
+        //SimilarityExpressionCall2, an OTFExpressionCall carrying none of its own.
+        String quality = call.getSummaryQuality() != null
+                ? call.getSummaryQuality().toString().toLowerCase() : "bronze";
 
         out.beginObject();
 

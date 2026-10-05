@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -116,7 +117,7 @@ public class OTFExpressionCallFilterEngine {
         Predicate<OTFExpressionCall> p = call -> true;
 
         // =========================================================
-        // ANAT ENTITY (index 0 = anat entity)
+        // ANAT ENTITY
         // =========================================================
         {
             FilterIds<String> anat =
@@ -130,11 +131,16 @@ public class OTFExpressionCallFilterEngine {
 
                 p = p.and(call -> {
 
-                    String anatId = call.getCondition()
-                            .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
-                            //Here index 1 = anat. entity :-/ 
-                            .getEntity(1)
-                            .getId();
+                    //A condition with no cell type holds a single entity, so reading the
+                    //composition by index here used to throw a NullPointerException.
+                    AnatEntity anatEntity = call.getCondition().getAnatEntity();
+                    if (anatEntity == null) {
+                        //No anatomical entity to compare: the filter cannot accept the call
+                        log.trace("Call rejected, no anat. entity in condition {}",
+                                call.getCondition());
+                        return false;
+                    }
+                    String anatId = anatEntity.getId();
 
                     boolean allowedOk = true;
                     boolean excludedOk = true;
@@ -181,11 +187,14 @@ public class OTFExpressionCallFilterEngine {
 
                 p = p.and(call -> {
 
-                    String cellId = call.getCondition()
-                            .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
-                            //Here index 0 = anat. entity :-/ 
-                            .getEntity(0)
-                            .getId();
+                    //Same as above: a condition without cell type must not throw here.
+                    AnatEntity cellType = call.getCondition().getCellType();
+                    if (cellType == null) {
+                        log.trace("Call rejected, no cell type in condition {}",
+                                call.getCondition());
+                        return false;
+                    }
+                    String cellId = cellType.getId();
 
                     boolean allowedOk = true;
                     boolean excludedOk = true;

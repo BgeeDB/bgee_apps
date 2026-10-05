@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 
 public class OTFExpressionCall {
@@ -167,6 +168,32 @@ public class OTFExpressionCall {
     }
     public PropagationState getDataPropagation() {
         return dataPropagation;
+    }
+
+    /**
+     * Whether the expression score of a call is of high confidence: its summary quality must be
+     * better than {@code BRONZE}, whatever the data types supporting it. Bgee 15 also required
+     * a data type producing a quantitative score, or a mean rank better than 20,000, but its
+     * in situ ranks all stayed below 20,000: every call of the data types still used was
+     * of high confidence when better than {@code BRONZE}, as with this rule. This is the single
+     * definition of that rule, shared by every response exposing
+     * an {@code expressionScoreConfidence}.
+     *
+     * @param quality               The {@code SummaryQuality} inferred for the call, as returned
+     *                              by {@code OTFExpressionCallFilterEngine
+     *                              #inferSummaryCallTypeAndQuality(OTFExpressionCall, BigDecimal,
+     *                              BigDecimal, BigDecimal, BigDecimal)}. A {@code null} quality,
+     *                              meaning no summary call type applies, is not of high
+     *                              confidence.
+     * @param supportingDataTypes   The {@code DataType}s supporting the call. Not used by
+     *                              the current rule.
+     * @return                      A {@code boolean} that is {@code true} if the expression score
+     *                              is of high confidence.
+     */
+    public static boolean isHighConfidenceExpressionScore(SummaryQuality quality,
+            Set<DataType> supportingDataTypes) {
+        log.traceEntry("{}, {}", quality, supportingDataTypes);
+        return log.traceExit(quality != null && !SummaryQuality.BRONZE.equals(quality));
     }
 
     public String getFormattedAllDatatypePValue() {

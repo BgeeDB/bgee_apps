@@ -131,8 +131,9 @@ public class OTFExpressionCallFilterEngine {
 
                 p = p.and(call -> {
 
-                    //A condition with no cell type holds a single entity, so reading the
-                    //composition by index here used to throw a NullPointerException.
+                    //When the anat. entity and the cell type of a condition are the same term,
+                    //the composition holds a single entity: reading it by index here used to
+                    //throw a NullPointerException.
                     AnatEntity anatEntity = call.getCondition().getAnatEntity();
                     if (anatEntity == null) {
                         //No anatomical entity to compare: the filter cannot accept the call
@@ -187,7 +188,8 @@ public class OTFExpressionCallFilterEngine {
 
                 p = p.and(call -> {
 
-                    //Same as above: a condition without cell type must not throw here.
+                    //Read through the accessor as above, the single place reading
+                    //the composition.
                     AnatEntity cellType = call.getCondition().getCellType();
                     if (cellType == null) {
                         log.trace("Call rejected, no cell type in condition {}",

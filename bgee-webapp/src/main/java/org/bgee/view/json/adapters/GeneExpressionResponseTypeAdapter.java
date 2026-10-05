@@ -76,10 +76,6 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             //the calls were filtered with (see CommandGene#loadExpression).
             Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
                     value.getCallTypeQuality(call);
-            //XXX: this condition used to also accept a call whose mean rank was better than
-            //20000, whatever its data types. The OTF propagation does not compute a rank, so
-            //a call supported neither by bulk nor by single-cell RNA-Seq is now always
-            //reported with a low confidence.
             //Single definition of that rule, shared with the other responses
             //exposing an expressionScoreConfidence.
             boolean highQualScore = OTFExpressionCall.isHighConfidenceExpressionScore(

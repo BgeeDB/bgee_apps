@@ -192,9 +192,12 @@ public class OTFExpressionCall {
 
     /**
      * Whether the expression score of a call is of high confidence: its summary quality must be
-     * better than {@code BRONZE}, and at least one of the data types supporting it must produce
-     * a quantitative score. This is the single definition of that rule, shared by every response
-     * exposing an {@code expressionScoreConfidence}.
+     * better than {@code BRONZE}, whatever the data types supporting it. Bgee 15 also required
+     * a data type producing a quantitative score, or a mean rank better than 20,000, but its
+     * in situ ranks all stayed below 20,000: every call of the data types still used was
+     * of high confidence when better than {@code BRONZE}, as with this rule. This is the single
+     * definition of that rule, shared by every response exposing
+     * an {@code expressionScoreConfidence}.
      *
      * @param quality               The {@code SummaryQuality} inferred for the call, as returned
      *                              by {@code OTFExpressionCallFilterEngine
@@ -204,17 +207,14 @@ public class OTFExpressionCall {
      *                              confidence.
      * @param supportingDataTypes   The {@code DataType}s supporting the call. For a group of
      *                              calls, such as the calls supporting a multi-species
-     *                              similarity, their union.
+     *                              similarity, their union. Not used by the current rule.
      * @return                      A {@code boolean} that is {@code true} if the expression score
      *                              is of high confidence.
      */
     public static boolean isHighConfidenceExpressionScore(SummaryQuality quality,
             Set<DataType> supportingDataTypes) {
         log.traceEntry("{}, {}", quality, supportingDataTypes);
-        return log.traceExit(quality != null && !SummaryQuality.BRONZE.equals(quality) &&
-                supportingDataTypes != null &&
-                (supportingDataTypes.contains(DataType.RNA_SEQ) ||
-                        supportingDataTypes.contains(DataType.SC_RNA_SEQ)));
+        return log.traceExit(quality != null && !SummaryQuality.BRONZE.equals(quality));
     }
 
     /**

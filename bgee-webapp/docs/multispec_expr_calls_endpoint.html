@@ -5652,8 +5652,7 @@ z-index: 1000;
     CALLS --&gt; DT[&quot;Collect DataTypes with data&lt;br/&gt;(union of supportingDataTypes)&quot;]
     CALLS --&gt; QUAL[&quot;Infer SummaryQuality from&lt;br/&gt;the p-values, keep the best&quot;]
 
-    DT --&gt; CONF{&quot;Quality better than BRONZE&lt;br/&gt;AND has RNA_SEQ&lt;br/&gt;or SC_RNA_SEQ?&quot;}
-    QUAL --&gt; CONF
+    QUAL --&gt; CONF{&quot;Quality better than BRONZE?&quot;}
     CONF --&gt;|Yes| HIGH[&quot;confidence = &#39;high&#39;&quot;]
     CONF --&gt;|No| LOW[&quot;confidence = &#39;low&#39;&quot;]
 

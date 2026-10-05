@@ -1190,10 +1190,14 @@ public class MultiSpeciesCallService extends CommonService {
         boolean excludeNonInformative = sourceFilter.isExcludeNonInformative();
         for (GeneFilter gf : ctx.getOrderedGeneFilters()) {
             long speciesStartMs = System.currentTimeMillis();
+            //No observed-condition constraint here. condObservedCellType is 1 only when
+            //a raw annotation names that cell type, so requiring it drops every organ-level
+            //call stored on the cell-type root. Whether a call was observed in its own
+            //condition is decided after propagation, from the request's observed_data.
             ConditionFilter2 speciesCondFilter = new ConditionFilter2(
                     gf.getSpeciesId(), condParamToFilter,
                     Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
-                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
+                    null,
                     excludeNonInformative);
             ExpressionCallFilter2 exprCallFilter = new ExpressionCallFilter2(
                     ctx.getSummaryCallTypeQualityFilter(), gf,

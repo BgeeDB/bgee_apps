@@ -619,6 +619,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
     /**
      * {@code observed_data} is applied as a call-level filter on anatomical entity and cell type.
      * Omitting it leaves the expression-call query unfiltered on observation.
+     * The condition query itself must not require {@code condObservedCellType}: organ-level
+     * calls are stored on the cell-type root, which is not marked observed.
      */
     @Test
     public void shouldApplyObservedDataToExpressionCallFilter() {
@@ -668,6 +670,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         assertEquals(Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
                 observed.getCallObservedDataCondParams());
         assertEquals(Boolean.TRUE, observed.getCallObservedDataFilter());
+        assertTrue(observed.getConditionFilters().stream()
+                .allMatch(f -> f.getObservedCondForParams().isEmpty()));
 
         service.loadSimilarityCallLoader(new SimilarityExpressionCallFilter(
                 taxonId, geneFilters, null, false, SummaryQuality.BRONZE, Boolean.FALSE))
@@ -676,6 +680,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         assertEquals(Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
                 propagatedOnly.getCallObservedDataCondParams());
         assertEquals(Boolean.FALSE, propagatedOnly.getCallObservedDataFilter());
+        assertTrue(propagatedOnly.getConditionFilters().stream()
+                .allMatch(f -> f.getObservedCondForParams().isEmpty()));
 
         service.loadSimilarityCallLoader(new SimilarityExpressionCallFilter(
                 taxonId, geneFilters, null, false, SummaryQuality.BRONZE))
@@ -683,6 +689,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ExpressionCallFilter2 unrestricted = exprFilterCaptor.getValue();
         assertTrue(unrestricted.getCallObservedDataCondParams().isEmpty());
         assertEquals(null, unrestricted.getCallObservedDataFilter());
+        assertTrue(unrestricted.getConditionFilters().stream()
+                .allMatch(f -> f.getObservedCondForParams().isEmpty()));
         assertFalse(observed.equals(propagatedOnly));
         assertFalse(observed.equals(unrestricted));
     }

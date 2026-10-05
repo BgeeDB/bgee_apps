@@ -809,4 +809,97 @@ public class CallServiceUtils {
                                             "Species not found: " + cTO.getSpeciesId())));
                         })));
     }
+
+    /**
+     * Anatomical entity and cell type of one
+     * {@link ConditionParameter#ANAT_ENTITY_CELL_TYPE} value.
+     * Neither member is {@code null}: a missing one is the root of that parameter.
+     */
+    public static final class AnatEntityAndCellType {
+        private final AnatEntity anatEntity;
+        private final AnatEntity cellType;
+
+        public AnatEntityAndCellType(AnatEntity anatEntity, AnatEntity cellType) {
+            if (anatEntity == null || cellType == null) {
+                throw new IllegalArgumentException(
+                        "The anatomical entity and the cell type must both be provided");
+            }
+            this.anatEntity = anatEntity;
+            this.cellType = cellType;
+        }
+        /**
+         * @return  The anatomical entity. The anatomical-entity root when the composed
+         *          value carried none.
+         */
+        public AnatEntity getAnatEntity() {
+            return anatEntity;
+        }
+        /**
+         * @return  The cell type. The cell-type root when the composed value carried none.
+         */
+        public AnatEntity getCellType() {
+            return cellType;
+        }
+    }
+
+    /**
+     * Splits an {@code ANAT_ENTITY_CELL_TYPE} value into its anatomical entity and its cell type.
+     * <p>
+     * When both are present, index 0 is the cell type and index 1 is the anatomical entity:
+     * the order used above when the composed value is built, and the opposite of
+     * {@code ComposedFilterIds}. A single member is an anatomical entity unless
+     * {@link AnatEntity#getIsCellType()} is {@code true}, or that flag is unset and the ID is
+     * {@link ConditionDAO#CELL_TYPE_ROOT_ID}. The missing member is then
+     * {@link ConditionDAO#ANAT_ENTITY_ROOT_ID} or {@link ConditionDAO#CELL_TYPE_ROOT_ID}.
+     * A {@code null} or empty value is both roots.
+     *
+     * @param composed  The composed anatomical entity and cell type, or {@code null}.
+     * @return          The anatomical entity and the cell type.
+     */
+    public static AnatEntityAndCellType resolveAnatEntityAndCellType(
+            ComposedEntity<AnatEntity> composed) {
+        log.traceEntry("{}", composed);
+        if (composed == null || composed.isEmpty()) {
+            return log.traceExit(new AnatEntityAndCellType(
+                    new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID),
+                    new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID)));
+        }
+        AnatEntity anatEntity;
+        AnatEntity cellType;
+        if (composed.size() > 1) {
+            cellType = composed.getEntity(0);
+            anatEntity = composed.getEntity(1);
+        } else {
+            AnatEntity single = composed.getEntity(0);
+            if (isCellType(single)) {
+                cellType = single;
+                anatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+            } else {
+                anatEntity = single != null ? single : new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+                cellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+            }
+        }
+        if (anatEntity == null) {
+            anatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+        }
+        if (cellType == null) {
+            cellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+        }
+        return log.traceExit(new AnatEntityAndCellType(anatEntity, cellType));
+    }
+
+    /**
+     * {@code true} when {@code anatEntity} is a cell type. An entity whose
+     * {@link AnatEntity#getIsCellType()} flag is unset is a cell type only when its ID
+     * is {@link ConditionDAO#CELL_TYPE_ROOT_ID}.
+     */
+    private static boolean isCellType(AnatEntity anatEntity) {
+        if (anatEntity == null) {
+            return false;
+        }
+        if (anatEntity.getIsCellType() != null) {
+            return anatEntity.getIsCellType();
+        }
+        return ConditionDAO.CELL_TYPE_ROOT_ID.equals(anatEntity.getId());
+    }
 }

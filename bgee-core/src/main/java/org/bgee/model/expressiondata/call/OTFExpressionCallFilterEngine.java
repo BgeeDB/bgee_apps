@@ -130,11 +130,7 @@ public class OTFExpressionCallFilterEngine {
 
                 p = p.and(call -> {
 
-                    String anatId = call.getCondition()
-                            .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
-                            //Here index 1 = anat. entity :-/ 
-                            .getEntity(1)
-                            .getId();
+                    String anatId = anatEntityAndCellType(call).getAnatEntity().getId();
 
                     boolean allowedOk = true;
                     boolean excludedOk = true;
@@ -181,11 +177,7 @@ public class OTFExpressionCallFilterEngine {
 
                 p = p.and(call -> {
 
-                    String cellId = call.getCondition()
-                            .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
-                            //Here index 0 = anat. entity :-/ 
-                            .getEntity(0)
-                            .getId();
+                    String cellId = anatEntityAndCellType(call).getCellType().getId();
 
                     boolean allowedOk = true;
                     boolean excludedOk = true;
@@ -266,6 +258,17 @@ public class OTFExpressionCallFilterEngine {
         }
 
         return p;
+    }
+
+    /**
+     * Anatomical entity and cell type of {@code call}. A composed value with a single member,
+     * or with none, is resolved by {@link CallServiceUtils#resolveAnatEntityAndCellType}:
+     * the missing member is the root of that parameter, so a call stored with only an
+     * anatomical entity is filtered as being in the cell-type root.
+     */
+    private static CallServiceUtils.AnatEntityAndCellType anatEntityAndCellType(OTFExpressionCall call) {
+        return CallServiceUtils.resolveAnatEntityAndCellType(call.getCondition()
+                .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE));
     }
 
 }

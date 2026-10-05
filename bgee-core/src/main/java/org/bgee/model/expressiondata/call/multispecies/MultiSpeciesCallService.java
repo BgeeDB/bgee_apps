@@ -1256,10 +1256,10 @@ public class MultiSpeciesCallService extends CommonService {
             LinkedHashMap<MultiSpeciesCondition, List<OTFExpressionCall>> callsPerSimilarity =
                     geneEntry.getValue().stream()
                             .flatMap(c -> {
-                                AnatEntityAndCellType anatAndCell =
+                                CallServiceUtils.AnatEntityAndCellType anatAndCell =
                                         extractAnatEntityAndCellTypeFromCondition2(c.getCondition());
-                                AnatEntity anatEntity = anatAndCell.anatEntity;
-                                AnatEntity cellType = anatAndCell.cellType;
+                                AnatEntity anatEntity = anatAndCell.getAnatEntity();
+                                AnatEntity cellType = anatAndCell.getCellType();
                                 Set<AnatEntitySimilarity> anatSims = similaritiesByAnatEntity
                                         .getOrDefault(anatEntity, Collections.emptySet());
                                 if (anatSims.isEmpty()) {
@@ -1377,16 +1377,6 @@ public class MultiSpeciesCallService extends CommonService {
             this.anatEntityIdsToReject = anatEntityIdsToReject;
             this.cellTypeIds = cellTypeIds;
             this.unrestrictedCellTypes = unrestrictedCellTypes;
-        }
-    }
-
-    private static final class AnatEntityAndCellType {
-        private final AnatEntity anatEntity;
-        private final AnatEntity cellType;
-
-        private AnatEntityAndCellType(AnatEntity anatEntity, AnatEntity cellType) {
-            this.anatEntity = anatEntity;
-            this.cellType = cellType;
         }
     }
 
@@ -1620,46 +1610,14 @@ public class MultiSpeciesCallService extends CommonService {
 
     /**
      * Extracts anatomical entity and cell type from a {@code Condition2} for
-     * {@link ConditionParameter#ANAT_ENTITY_CELL_TYPE}, using {@link AnatEntity#getIsCellType()}
-     * when available. {@code ComposedEntity} order is cell type at index 0 and anatomical entity
-     * at index 1 when both are present (opposite of {@code ComposedFilterIds} order).
+     * {@link ConditionParameter#ANAT_ENTITY_CELL_TYPE}. A missing condition, or a composed
+     * value with one member or none, is resolved by
+     * {@link CallServiceUtils#resolveAnatEntityAndCellType}.
      */
-    private static AnatEntityAndCellType extractAnatEntityAndCellTypeFromCondition2(
+    private static CallServiceUtils.AnatEntityAndCellType extractAnatEntityAndCellTypeFromCondition2(
             org.bgee.model.expressiondata.call.Condition2 condition) {
-        if (condition == null) {
-            return new AnatEntityAndCellType(
-                    new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID),
-                    new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID));
-        }
-        org.bgee.model.ComposedEntity<AnatEntity> composed = condition.getConditionParameterValue(
-                ConditionParameter.ANAT_ENTITY_CELL_TYPE);
-        if (composed == null || composed.isEmpty()) {
-            return new AnatEntityAndCellType(
-                    new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID),
-                    new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID));
-        }
-        AnatEntity anatEntity;
-        AnatEntity cellType;
-        if (composed.size() > 1) {
-            cellType = composed.getEntity(0);
-            anatEntity = composed.getEntity(1);
-        } else {
-            AnatEntity single = composed.getEntity(0);
-            if (single != null && isCellTypeAnatEntity(single)) {
-                cellType = single;
-                anatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
-            } else {
-                anatEntity = single != null ? single : new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
-                cellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
-            }
-        }
-        if (anatEntity == null) {
-            anatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
-        }
-        if (cellType == null) {
-            cellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
-        }
-        return new AnatEntityAndCellType(anatEntity, cellType);
+        return CallServiceUtils.resolveAnatEntityAndCellType(condition == null ? null :
+                condition.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE));
     }
 
     private static AnatEntitySimilarity createFallbackAnatEntitySimilarity(AnatEntity entity,

@@ -32,7 +32,7 @@ import org.junit.Test;
 
 /**
  * Unit tests for {@link ExpressionCallLoader#propagateCalls(Map, ConditionGraphCache, Set)}
- * and for {@link ExpressionCallLoader#identifyRedundantCalls(Set, Map, ConditionGraphCache)},
+ * and for {@link ExpressionCallLoader#identifyRedundantCalls(Map, Map, ConditionGraphCache)},
  * run over small synthetic condition graphs.
  * <p>
  * The condition graph is a DAG, not a tree: a same condition can be reached from an ancestor
@@ -159,66 +159,85 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     }
 
     /**
-     * A present call is redundant when a more precise condition carries a present call of
-     * a quality at least as good: over the chain {@code L1 -> A -> R}, the two ancestors of
-     * {@code L1} are discarded, and {@code L1} itself is kept.
+     * A present call is redundant when a more precise condition carries a present call at least
+     * as expressed: over the chain {@code L1 -> A -> R}, with the expression decreasing from
+     * {@code L1} to {@code R}, the two ancestors of {@code L1} are discarded. A condition more
+     * expressed than all its sub-conditions is kept, and the most precise call is kept in case
+     * of equality.
      */
     @Test
     public void shouldIdentifyRedundantPresentCalls() {
         ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
                 Map.of(GENE_ID, mock(Gene.class)));
+        Map<Integer, Entry<ExpressionSummary, SummaryQuality>> allPresent = Map.of(
+                L1, present(SummaryQuality.GOLD), A, present(SummaryQuality.GOLD),
+                R, present(SummaryQuality.GOLD));
 
-        assertEquals("The ancestors of L1, carrying the same present call, should be redundant",
+        assertEquals("The ancestors of L1, less expressed than L1, should be redundant",
                 Set.of(A, R),
-                loader.identifyRedundantCalls(Set.of(L1, A, R),
-                        Map.of(L1, present(SummaryQuality.GOLD),
-                                A, present(SummaryQuality.GOLD),
-                                R, present(SummaryQuality.GOLD)),
-                        chainGraph()));
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("90"), A, scored("80"), R, scored("70")),
+                        allPresent, chainGraph()));
+        assertEquals("A, more expressed than L1, should be kept, and R, less expressed than A, "
+                + "redundant", Set.of(R),
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("70"), A, scored("90"), R, scored("80")),
+                        allPresent, chainGraph()));
+        assertEquals("A, as expressed as L1, should be redundant: the most precise call is kept",
+                Set.of(A, R),
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("80"), A, scored("80"), R, scored("70")),
+                        allPresent, chainGraph()));
     }
 
     /**
-     * An absent call is redundant under the very same rule, which discards the less precise
-     * condition: the absence reported in {@code L1} is the most precise one, so the absent calls
-     * of {@code A} and {@code R} are discarded. This mirrors what the rank-based
-     * {@code ExpressionCall#identifyRedundantCalls(List, ConditionGraph)} does for
-     * the precomputed absent calls, which are ordered by decreasing rank before being filtered.
+     * An absent call is redundant when a more precise condition carries an absent call at most
+     * as expressed, as in Bgee 15, where the absent calls were ordered by decreasing rank: over
+     * the chain {@code L1 -> A -> R}, with the expression increasing from {@code L1} to
+     * {@code R}, the absence reported in {@code L1} is the strongest one, and the absent calls
+     * of {@code A} and {@code R} are discarded.
      */
     @Test
     public void shouldIdentifyRedundantAbsentCalls() {
         ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
                 Map.of(GENE_ID, mock(Gene.class)));
+        Map<Integer, Entry<ExpressionSummary, SummaryQuality>> allAbsent = Map.of(
+                L1, absent(SummaryQuality.SILVER), A, absent(SummaryQuality.SILVER),
+                R, absent(SummaryQuality.SILVER));
 
-        assertEquals("The ancestors of L1, carrying the same absent call, should be redundant",
+        assertEquals("The ancestors of L1, more expressed than L1, should be redundant",
                 Set.of(A, R),
-                loader.identifyRedundantCalls(Set.of(L1, A, R),
-                        Map.of(L1, absent(SummaryQuality.SILVER),
-                                A, absent(SummaryQuality.SILVER),
-                                R, absent(SummaryQuality.SILVER)),
-                        chainGraph()));
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("10"), A, scored("20"), R, scored("30")),
+                        allAbsent, chainGraph()));
+        assertEquals("A, less expressed than L1, should be kept, and R, more expressed than A, "
+                + "redundant", Set.of(R),
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("30"), A, scored("10"), R, scored("20")),
+                        allAbsent, chainGraph()));
     }
 
     /**
-     * A call is never discarded in favour of a less confident one, and calls of different summary
-     * call types never make each other redundant: over the chain {@code L1 -> A -> R}, a BRONZE
-     * call in {@code L1} leaves the GOLD call of {@code A} in place, and the present call
-     * of {@code R} is not made redundant by the absent calls below it.
+     * A call is never discarded in favour of a weaker one, and calls of different summary call
+     * types never make each other redundant: over the chain {@code L1 -> A -> R}, a present call
+     * in {@code L1} less expressed than the present call of {@code A} leaves it in place, whatever
+     * their qualities, and a present call is not made redundant by an absent call below it.
      */
     @Test
     public void shouldNotDiscardACallInFavourOfAWeakerOrDifferentOne() {
         ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
                 Map.of(GENE_ID, mock(Gene.class)));
 
-        assertEquals("A GOLD call must not be discarded in favour of a BRONZE descendant",
-                Collections.emptySet(),
-                loader.identifyRedundantCalls(Set.of(L1, A),
-                        Map.of(L1, absent(SummaryQuality.BRONZE),
-                                A, absent(SummaryQuality.GOLD)),
+        assertEquals("A present call must not be discarded in favour of a less expressed "
+                + "descendant, even of a better quality", Collections.emptySet(),
+                loader.identifyRedundantCalls(Map.of(L1, scored("60"), A, scored("90")),
+                        Map.of(L1, present(SummaryQuality.GOLD),
+                                A, present(SummaryQuality.SILVER)),
                         chainGraph()));
 
         assertEquals("An absent call must not make a present call redundant, nor the other way round",
                 Collections.emptySet(),
-                loader.identifyRedundantCalls(Set.of(L1, A),
+                loader.identifyRedundantCalls(Map.of(L1, scored("90"), A, scored("90")),
                         Map.of(L1, absent(SummaryQuality.GOLD),
                                 A, present(SummaryQuality.GOLD)),
                         chainGraph()));
@@ -228,8 +247,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      * A condition that carries no candidate call - discarded by the condition filters or by
      * the requested summary call type - still relays the calls of its own sub-conditions, so that
      * the chain {@code L1 -> A -> R} collapses onto {@code L1} even when {@code A} is not
-     * a candidate. Were the relay missing, {@code R} would be kept while the very same call
-     * is displayed for {@code L1}.
+     * a candidate. Were the relay missing, {@code R} would be kept while a call at least as
+     * expressed is displayed for {@code L1}.
      */
     @Test
     public void shouldRelayThroughAConditionCarryingNoCandidateCall() {
@@ -238,7 +257,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
 
         assertEquals("R should be redundant with L1, through the non-candidate A",
                 Set.of(R),
-                loader.identifyRedundantCalls(Set.of(L1, A, R),
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("90"), A, scored("85"), R, scored("80")),
                         Map.of(L1, present(SummaryQuality.GOLD),
                                 R, present(SummaryQuality.GOLD)),
                         chainGraph()));
@@ -577,6 +597,15 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      */
     private static Entry<ExpressionSummary, SummaryQuality> absent(SummaryQuality quality) {
         return new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED, quality);
+    }
+
+    /**
+     * @return  A call carrying only an expression score, the value its redundancy with the calls
+     *          of the other conditions is assessed from.
+     */
+    private static OTFExpressionCall scored(String expressionScore) {
+        return new OTFExpressionCall(null, null, null, null, null, null, null, 1, null, null,
+                BigDecimal.ONE, new BigDecimal(expressionScore), null, null, PropagationState.SELF);
     }
 
     /**

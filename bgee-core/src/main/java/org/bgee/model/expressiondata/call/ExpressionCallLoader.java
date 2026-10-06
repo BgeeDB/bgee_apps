@@ -369,7 +369,7 @@ public class ExpressionCallLoader extends CommonService {
 
             if (filterRedundantCalls) {
                 Set<Integer> redundantCondIds = identifyRedundantCalls(
-                        geneEntry.getValue().keySet(), keptCallTypeQualities, condGraphCache,
+                        geneEntry.getValue(), keptCallTypeQualities, condGraphCache,
                         propagationGroup);
                 log.debug("Discarding {} redundant call(s) out of {} for gene {}",
                         redundantCondIds.size(), keptCalls.size(), geneEntry.getKey().getGeneId());
@@ -440,15 +440,12 @@ public class ExpressionCallLoader extends CommonService {
     /**
      * Identify the calls that are redundant with a more precise call: a call is redundant when
      * one of the conditions more precise than its own carries a call of the same
-     * {@code ExpressionSummary} with a {@code SummaryQuality} at least as good.
-     * <p>
-     * The rule applies to present and to absent calls alike, and always discards the less precise
-     * call. It follows the same logic used for filtering redundant calls before the OTF propagation.
-     * For a present call the more precise call is the one
-     * the expression was propagated from, for an absent call it is the one carrying the most
-     * convincing absence. A call is never discarded in favour of a less confident one, so that
-     * the surviving call always is the strongest statement available about the most precise
-     * condition.
+     * {@code ExpressionSummary} at least as strong, that is, with an expression score at least
+     * as high for a present call, at most as high for an absent call. This is the rule of Bgee 15,
+     * applied to the expression score instead of the rank: a condition is kept above its
+     * sub-conditions only when its call is a stronger statement than all of theirs, for instance
+     * when a gene is more expressed in an organ than in any of its parts. In case of equality,
+     * the most precise call is kept.
      * <p>
      * Only the calls of {@code condIdToCallTypeQuality} are candidates, and only they make
      * another call redundant: a call already discarded by the condition filters or by
@@ -457,9 +454,10 @@ public class ExpressionCallLoader extends CommonService {
      * of its own sub-conditions, so that a chain of conditions collapses whatever the calls
      * it holds in between.
      *
-     * @param propagatedCondIds         A {@code Set} of {@code Integer}s that are the IDs of all
-     *                                  the global conditions a call was propagated to for one
-     *                                  gene, candidates or not.
+     * @param propagatedCalls           A {@code Map} where keys are {@code Integer}s that are
+     *                                  the IDs of all the global conditions a call was propagated
+     *                                  to for one gene, candidates or not, the associated value
+     *                                  being that call.
      * @param condIdToCallTypeQuality   The summary call type and quality of the candidates,
      *                                  by global condition ID.
      * @param condGraphCache            The {@code ConditionGraphCache} holding the relations
@@ -470,10 +468,10 @@ public class ExpressionCallLoader extends CommonService {
      */
     //Package-private rather than private to allow unit testing over synthetic condition graphs
     //(see ExpressionCallLoaderPropagationTest).
-    Set<Integer> identifyRedundantCalls(Set<Integer> propagatedCondIds,
+    Set<Integer> identifyRedundantCalls(Map<Integer, OTFExpressionCall> propagatedCalls,
             Map<Integer, Entry<ExpressionSummary, SummaryQuality>> condIdToCallTypeQuality,
             ConditionGraphCache condGraphCache) {
-        return this.identifyRedundantCalls(propagatedCondIds, condIdToCallTypeQuality,
+        return this.identifyRedundantCalls(propagatedCalls, condIdToCallTypeQuality,
                 condGraphCache, null);
     }
     /**
@@ -483,53 +481,53 @@ public class ExpressionCallLoader extends CommonService {
      *                          with a more precise one of its own group: two groups reached
      *                          separately hold calls computed from distinct observations.
      */
-    Set<Integer> identifyRedundantCalls(Set<Integer> propagatedCondIds,
+    Set<Integer> identifyRedundantCalls(Map<Integer, OTFExpressionCall> propagatedCalls,
             Map<Integer, Entry<ExpressionSummary, SummaryQuality>> condIdToCallTypeQuality,
             ConditionGraphCache condGraphCache, int[] propagationGroup) {
-        log.traceEntry("{}, {}, {}, {}", propagatedCondIds, condIdToCallTypeQuality,
+        log.traceEntry("{}, {}, {}, {}", propagatedCalls, condIdToCallTypeQuality,
                 condGraphCache, propagationGroup);
 
         //The conditions are visited children before parents, so that a condition already knows
-        //the best quality of each call type carried by its sub-conditions when it is visited:
+        //the strongest call of each call type carried by its sub-conditions when it is visited:
         //the index of a condition is its position in the topological order of the graph.
-        List<Integer> condIdsToVisit = new ArrayList<>(propagatedCondIds);
+        List<Integer> condIdsToVisit = new ArrayList<>(propagatedCalls.keySet());
         condIdsToVisit.sort(Comparator.comparingInt(condGraphCache::getIndex));
 
-        //The best quality of a candidate present call, respectively absent call, found in
-        //the sub-conditions of a condition. An entry is created when a descendant contributes
-        //to a condition, and removed when that condition is visited: the maps only ever hold
-        //the conditions not visited yet that have a candidate below them.
-        Map<Integer, SummaryQuality> bestPresentQualBelow = new HashMap<>();
-        Map<Integer, SummaryQuality> bestAbsentQualBelow = new HashMap<>();
+        //The highest expression score of a candidate present call, respectively the lowest
+        //of a candidate absent call, found in the sub-conditions of a condition. An entry is
+        //created when a descendant contributes to a condition, and removed when that condition
+        //is visited: the maps only ever hold the conditions not visited yet that have
+        //a candidate below them.
+        Map<Integer, BigDecimal> highestPresentScoreBelow = new HashMap<>();
+        Map<Integer, BigDecimal> lowestAbsentScoreBelow = new HashMap<>();
         Set<Integer> redundantCondIds = new HashSet<>();
 
         for (int condId: condIdsToVisit) {
-            SummaryQuality presentQualBelow = bestPresentQualBelow.remove(condId);
-            SummaryQuality absentQualBelow = bestAbsentQualBelow.remove(condId);
+            BigDecimal presentScoreBelow = highestPresentScoreBelow.remove(condId);
+            BigDecimal absentScoreBelow = lowestAbsentScoreBelow.remove(condId);
             Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
                     condIdToCallTypeQuality.get(condId);
             boolean present = callTypeQuality != null &&
                     ExpressionSummary.EXPRESSED.equals(callTypeQuality.getKey());
-            SummaryQuality ownQual = callTypeQuality == null? null: callTypeQuality.getValue();
+            BigDecimal ownScore = callTypeQuality == null? null:
+                    propagatedCalls.get(condId).getExpressionScore();
 
-            if (ownQual != null) {
-                SummaryQuality qualBelow = present? presentQualBelow: absentQualBelow;
-                //(the SummaryQuality enum is declared from the lowest to the highest quality,
-                //so that its compareTo can be used)
-                if (qualBelow != null && qualBelow.compareTo(ownQual) >= 0) {
-                    redundantCondIds.add(condId);
-                }
+            //An equal score makes the less precise call redundant: the most precise one is kept
+            if (ownScore != null && (present?
+                    presentScoreBelow != null && presentScoreBelow.compareTo(ownScore) >= 0:
+                    absentScoreBelow != null && absentScoreBelow.compareTo(ownScore) <= 0)) {
+                redundantCondIds.add(condId);
             }
 
-            //What this condition contributes to its parents: the best qualities carried by its
+            //What this condition contributes to its parents: the strongest calls carried by its
             //sub-conditions, and its own call if it is a candidate, redundant or not. Passing up
             //the call of a redundant condition changes nothing, since it is redundant with
-            //a call at least as good that is passed up as well.
-            SummaryQuality presentQualUp = present?
-                    bestQuality(presentQualBelow, ownQual): presentQualBelow;
-            SummaryQuality absentQualUp = present?
-                    absentQualBelow: bestQuality(absentQualBelow, ownQual);
-            if (presentQualUp == null && absentQualUp == null) {
+            //a call at least as strong that is passed up as well.
+            BigDecimal presentScoreUp = present?
+                    higherScore(presentScoreBelow, ownScore): presentScoreBelow;
+            BigDecimal absentScoreUp = present?
+                    absentScoreBelow: lowerScore(absentScoreBelow, ownScore);
+            if (presentScoreUp == null && absentScoreUp == null) {
                 continue;
             }
             int[] parentCondIds = condGraphCache.getGlobalCondToDirectAncestors().get(condId);
@@ -540,7 +538,7 @@ public class ExpressionCallLoader extends CommonService {
                 //A parent the propagation did not reach is outside the requested conditions,
                 //and so is everything only reachable through it: it can neither be a candidate
                 //nor relay this condition to a propagated ancestor.
-                if (!propagatedCondIds.contains(parentCondId)) {
+                if (!propagatedCalls.containsKey(parentCondId)) {
                     continue;
                 }
                 if (propagationGroup != null &&
@@ -548,13 +546,13 @@ public class ExpressionCallLoader extends CommonService {
                         propagationGroup[condGraphCache.getIndex(condId)]) {
                     continue;
                 }
-                if (presentQualUp != null) {
-                    bestPresentQualBelow.merge(parentCondId, presentQualUp,
-                            ExpressionCallLoader::bestQuality);
+                if (presentScoreUp != null) {
+                    highestPresentScoreBelow.merge(parentCondId, presentScoreUp,
+                            ExpressionCallLoader::higherScore);
                 }
-                if (absentQualUp != null) {
-                    bestAbsentQualBelow.merge(parentCondId, absentQualUp,
-                            ExpressionCallLoader::bestQuality);
+                if (absentScoreUp != null) {
+                    lowestAbsentScoreBelow.merge(parentCondId, absentScoreUp,
+                            ExpressionCallLoader::lowerScore);
                 }
             }
         }
@@ -562,17 +560,30 @@ public class ExpressionCallLoader extends CommonService {
         return log.traceExit(redundantCondIds);
     }
     /**
-     * @return  The best of the two {@code SummaryQuality}s, {@code null}-tolerant:
-     *          a {@code null} stands for the absence of quality, and loses against any quality.
+     * @return  The higher of the two expression scores, {@code null}-tolerant: a {@code null}
+     *          stands for the absence of score, and loses against any score.
      */
-    private static SummaryQuality bestQuality(SummaryQuality qual1, SummaryQuality qual2) {
-        if (qual1 == null) {
-            return qual2;
+    private static BigDecimal higherScore(BigDecimal score1, BigDecimal score2) {
+        if (score1 == null) {
+            return score2;
         }
-        if (qual2 == null) {
-            return qual1;
+        if (score2 == null) {
+            return score1;
         }
-        return qual1.compareTo(qual2) >= 0? qual1: qual2;
+        return score1.compareTo(score2) >= 0? score1: score2;
+    }
+    /**
+     * @return  The lower of the two expression scores, {@code null}-tolerant: a {@code null}
+     *          stands for the absence of score, and loses against any score.
+     */
+    private static BigDecimal lowerScore(BigDecimal score1, BigDecimal score2) {
+        if (score1 == null) {
+            return score2;
+        }
+        if (score2 == null) {
+            return score1;
+        }
+        return score1.compareTo(score2) <= 0? score1: score2;
     }
 
     /**
@@ -581,7 +592,7 @@ public class ExpressionCallLoader extends CommonService {
      *          the associated value being the {@code OTFExpressionCall} propagated to that
      *          condition. Whether a call is redundant with a more precise one is not assessed
      *          here, it needs the summary call types: see {@link #identifyRedundantCalls(
-     *          Set, Map, ConditionGraphCache)}.
+     *          Map, Map, ConditionGraphCache)}.
      */
     //Package-private rather than private to allow unit testing of the propagation
     //over synthetic condition graphs (see ExpressionCallLoaderPropagationTest).

@@ -1072,18 +1072,18 @@ public class ExpressionCallLoader extends CommonService {
                 continue;
             }
             bestDescendantAllDataTypePValue = getBestDescendantValue(bestDescendantAllDataTypePValue,
-                    childCall.getAllDataTypePValue(), childCall.getBestDirectDescendantAllDataTypePValue());
+                    childCall.getAllDataTypePValue(), childCall.getBestDescendantAllDataTypePValue());
             bestDescendantTrustedDataTypePValue = getBestDescendantValue(bestDescendantTrustedDataTypePValue,
-                    childCall.getTrustedDataTypePValue(), childCall.getBestDirectDescendantTrustedDataTypePValue());
+                    childCall.getTrustedDataTypePValue(), childCall.getBestDescendantTrustedDataTypePValue());
             if (bestDescendantExpressionScore == null ||
                     childCall.getExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
                 bestDescendantExpressionScore = childCall.getExpressionScore();
                 bestDescendantExpressionScoreWeight = childCall.getExpressionScoreWeight();
             }
-            if (childCall.getBestDirectDescendantExpressionScore() != null &&
-                    childCall.getBestDirectDescendantExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
-                bestDescendantExpressionScore = childCall.getBestDirectDescendantExpressionScore();
-                bestDescendantExpressionScoreWeight = childCall.getBestDirectDescendantExpressionScoreWeight();
+            if (childCall.getBestDescendantExpressionScore() != null &&
+                    childCall.getBestDescendantExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
+                bestDescendantExpressionScore = childCall.getBestDescendantExpressionScore();
+                bestDescendantExpressionScoreWeight = childCall.getBestDescendantExpressionScoreWeight();
             }
         }
 

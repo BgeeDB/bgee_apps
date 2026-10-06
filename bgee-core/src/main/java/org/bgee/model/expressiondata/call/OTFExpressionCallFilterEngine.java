@@ -54,8 +54,8 @@ public class OTFExpressionCallFilterEngine {
             return log.traceExit((Entry<ExpressionSummary, SummaryQuality>) null);
         }
         BigDecimal trustedPValue = call.getTrustedDataTypePValue();
-        BigDecimal bestDescAllPValue = call.getBestDirectDescendantAllDataTypePValue();
-        BigDecimal bestDescTrustedPValue = call.getBestDirectDescendantTrustedDataTypePValue();
+        BigDecimal bestDescAllPValue = call.getBestDescendantAllDataTypePValue();
+        BigDecimal bestDescTrustedPValue = call.getBestDescendantTrustedDataTypePValue();
 
         //The order of the comparisons is important
         if (allPValue.compareTo(presentHighThreshold) <= 0) {

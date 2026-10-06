@@ -53,21 +53,21 @@ public class OTFExpressionCall {
      * a single p-value must not: this count is what tells the two apart.
      */
     private final int observationCount;
-    private final BigDecimal bestDirectDescendantAllDataTypePValue;
-    private final BigDecimal bestDirectDescendantTrustedDataTypePValue;
+    private final BigDecimal bestDescendantAllDataTypePValue;
+    private final BigDecimal bestDescendantTrustedDataTypePValue;
     private final BigDecimal expressionScoreWeight;
     private final BigDecimal expressionScore;
-    private final BigDecimal bestDirectDescendantExpressionScoreWeight;
-    private final BigDecimal bestDirectDescendantExpressionScore;
+    private final BigDecimal bestDescendantExpressionScoreWeight;
+    private final BigDecimal bestDescendantExpressionScore;
     private final PropagationState dataPropagation;
 
     public OTFExpressionCall(Gene gene, Condition2 condition, EnumSet<DataType> supportingDataTypes,
             BigDecimal allDataTypePValueRawMean, BigDecimal allDataTypePValueWeight,
             BigDecimal trustedDataTypePValueRawMean, BigDecimal trustedDataTypePValueWeight,
             int observationCount,
-            BigDecimal bestDirectDescendantAllDataTypePValue, BigDecimal bestDirectDescendantTrustedDataTypePValue,
+            BigDecimal bestDescendantAllDataTypePValue, BigDecimal bestDescendantTrustedDataTypePValue,
             BigDecimal expressionScoreWeight, BigDecimal expressionScore,
-            BigDecimal bestDirectDescendantExpressionScoreWeight, BigDecimal bestDirectDescendantExpressionScore,
+            BigDecimal bestDescendantExpressionScoreWeight, BigDecimal bestDescendantExpressionScore,
             PropagationState dataPropagation) {
         this.gene = gene;
         this.condition = condition;
@@ -77,12 +77,12 @@ public class OTFExpressionCall {
         this.trustedDataTypePValueRawMean = trustedDataTypePValueRawMean;
         this.trustedDataTypePValueWeight = trustedDataTypePValueWeight;
         this.observationCount = observationCount;
-        this.bestDirectDescendantAllDataTypePValue = bestDirectDescendantAllDataTypePValue;
-        this.bestDirectDescendantTrustedDataTypePValue = bestDirectDescendantTrustedDataTypePValue;
+        this.bestDescendantAllDataTypePValue = bestDescendantAllDataTypePValue;
+        this.bestDescendantTrustedDataTypePValue = bestDescendantTrustedDataTypePValue;
         this.expressionScoreWeight = expressionScoreWeight;
         this.expressionScore = expressionScore;
-        this.bestDirectDescendantExpressionScoreWeight = bestDirectDescendantExpressionScoreWeight;
-        this.bestDirectDescendantExpressionScore = bestDirectDescendantExpressionScore;
+        this.bestDescendantExpressionScoreWeight = bestDescendantExpressionScoreWeight;
+        this.bestDescendantExpressionScore = bestDescendantExpressionScore;
         this.dataPropagation = dataPropagation;
     }
 
@@ -148,11 +148,11 @@ public class OTFExpressionCall {
         BigDecimal doubled = rawMean.multiply(new BigDecimal("2"));
         return doubled.compareTo(BigDecimal.ONE) > 0? BigDecimal.ONE: doubled;
     }
-    public BigDecimal getBestDirectDescendantAllDataTypePValue() {
-        return bestDirectDescendantAllDataTypePValue;
+    public BigDecimal getBestDescendantAllDataTypePValue() {
+        return bestDescendantAllDataTypePValue;
     }
-    public BigDecimal getBestDirectDescendantTrustedDataTypePValue() {
-        return bestDirectDescendantTrustedDataTypePValue;
+    public BigDecimal getBestDescendantTrustedDataTypePValue() {
+        return bestDescendantTrustedDataTypePValue;
     }
     public BigDecimal getExpressionScoreWeight() {
         return expressionScoreWeight;
@@ -160,11 +160,11 @@ public class OTFExpressionCall {
     public BigDecimal getExpressionScore() {
         return expressionScore;
     }
-    public BigDecimal getBestDirectDescendantExpressionScoreWeight() {
-        return bestDirectDescendantExpressionScoreWeight;
+    public BigDecimal getBestDescendantExpressionScoreWeight() {
+        return bestDescendantExpressionScoreWeight;
     }
-    public BigDecimal getBestDirectDescendantExpressionScore() {
-        return bestDirectDescendantExpressionScore;
+    public BigDecimal getBestDescendantExpressionScore() {
+        return bestDescendantExpressionScore;
     }
     public PropagationState getDataPropagation() {
         return dataPropagation;
@@ -254,9 +254,9 @@ public class OTFExpressionCall {
 
     @Override
     public int hashCode() {
-        return Objects.hash(allDataTypePValueRawMean, allDataTypePValueWeight, observationCount, bestDirectDescendantAllDataTypePValue,
-                bestDirectDescendantExpressionScore, bestDirectDescendantExpressionScoreWeight,
-                bestDirectDescendantTrustedDataTypePValue, condition, dataPropagation, expressionScore,
+        return Objects.hash(allDataTypePValueRawMean, allDataTypePValueWeight, observationCount, bestDescendantAllDataTypePValue,
+                bestDescendantExpressionScore, bestDescendantExpressionScoreWeight,
+                bestDescendantTrustedDataTypePValue, condition, dataPropagation, expressionScore,
                 expressionScoreWeight, gene, supportingDataTypes, trustedDataTypePValueRawMean, trustedDataTypePValueWeight);
     }
     @Override
@@ -271,10 +271,10 @@ public class OTFExpressionCall {
         return Objects.equals(allDataTypePValueRawMean, other.allDataTypePValueRawMean)
                 && Objects.equals(allDataTypePValueWeight, other.allDataTypePValueWeight)
                 && observationCount == other.observationCount
-                && Objects.equals(bestDirectDescendantAllDataTypePValue, other.bestDirectDescendantAllDataTypePValue)
-                && Objects.equals(bestDirectDescendantExpressionScore, other.bestDirectDescendantExpressionScore)
-                && Objects.equals(bestDirectDescendantExpressionScoreWeight, other.bestDirectDescendantExpressionScoreWeight)
-                && Objects.equals(bestDirectDescendantTrustedDataTypePValue, other.bestDirectDescendantTrustedDataTypePValue)
+                && Objects.equals(bestDescendantAllDataTypePValue, other.bestDescendantAllDataTypePValue)
+                && Objects.equals(bestDescendantExpressionScore, other.bestDescendantExpressionScore)
+                && Objects.equals(bestDescendantExpressionScoreWeight, other.bestDescendantExpressionScoreWeight)
+                && Objects.equals(bestDescendantTrustedDataTypePValue, other.bestDescendantTrustedDataTypePValue)
                 && Objects.equals(condition, other.condition) && Objects.equals(dataPropagation, other.dataPropagation)
                 && Objects.equals(expressionScore, other.expressionScore)
                 && Objects.equals(expressionScoreWeight, other.expressionScoreWeight)
@@ -295,12 +295,12 @@ public class OTFExpressionCall {
                .append(", observationCount=").append(observationCount)
                .append(", trustedDataTypePValueRawMean=").append(trustedDataTypePValueRawMean)
                .append(", trustedDataTypePValueWeight=").append(trustedDataTypePValueWeight)
-               .append(", bestDirectDescendantAllDataTypePValue=").append(bestDirectDescendantAllDataTypePValue)
-               .append(", bestDirectDescendantTrustedDataTypePValue=").append(bestDirectDescendantTrustedDataTypePValue)
+               .append(", bestDescendantAllDataTypePValue=").append(bestDescendantAllDataTypePValue)
+               .append(", bestDescendantTrustedDataTypePValue=").append(bestDescendantTrustedDataTypePValue)
                .append(", expressionScoreWeight=").append(expressionScoreWeight)
                .append(", expressionScore=").append(expressionScore)
-               .append(", bestDirectDescendantExpressionScoreWeight=").append(bestDirectDescendantExpressionScoreWeight)
-               .append(", bestDirectDescendantExpressionScore=").append(bestDirectDescendantExpressionScore)
+               .append(", bestDescendantExpressionScoreWeight=").append(bestDescendantExpressionScoreWeight)
+               .append(", bestDescendantExpressionScore=").append(bestDescendantExpressionScore)
                .append(", dataPropagation=").append(dataPropagation)
                .append("]");
         return builder.toString();

@@ -493,7 +493,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
 
             // Build condition filter matching loadMultispecConditionFilter for anat_entity_id=SUMMARY, cell_type_id=SUMMARY
             Set<String> summaryAnatIds = Set.of(
-                    "UBERON:0001062", "UBERON:0000010", "UBERON:0000211", "UBERON:0000309", "UBERON:0000468",
+                    "UBERON:0001062", "UBERON:0000010", "UBERON:0000211", "UBERON:0000309",
                     "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007", "UBERON:0001008",
                     "UBERON:0001009", "UBERON:0001015", "UBERON:0001017", "UBERON:0001032", "UBERON:0001434",
                     "UBERON:0002193", "UBERON:0002330", "UBERON:0002384", "UBERON:0002405", "UBERON:0002416",

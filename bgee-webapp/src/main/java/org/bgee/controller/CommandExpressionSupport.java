@@ -146,7 +146,7 @@ public abstract class CommandExpressionSupport extends CommandParent{
     protected final static String ID_PARAM_SUMMARY_VALUE = "SUMMARY";
     protected final static Set<String> SUMMARY_ANAT_ENTITY_IDS = Set.of(
             "UBERON:0001062",
-            "UBERON:0000010", "UBERON:0000211", "UBERON:0000309", "UBERON:0000468",
+            "UBERON:0000010", "UBERON:0000211", "UBERON:0000309",
             "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007",
             "UBERON:0001008", "UBERON:0004535", "UBERON:0001015", "UBERON:0001017",
             "UBERON:0001032", "UBERON:0001434", "UBERON:0002193", "UBERON:0002330",

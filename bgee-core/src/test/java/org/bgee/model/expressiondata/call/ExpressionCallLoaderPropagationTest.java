@@ -510,7 +510,7 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
                     + "for absent calls, call: " + call, call.getTrustedDataTypePValue());
             assertNull("Single-cell data must not produce a best descendant p-value over the data "
                     + "types trusted for absent calls, call: " + call,
-                    call.getBestDirectDescendantTrustedDataTypePValue());
+                    call.getBestDescendantTrustedDataTypePValue());
         }
 
         //Same propagation with bulk RNA-Seq, which is trusted for absent calls

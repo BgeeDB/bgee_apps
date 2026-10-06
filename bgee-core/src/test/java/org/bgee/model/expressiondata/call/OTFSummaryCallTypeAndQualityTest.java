@@ -200,8 +200,8 @@ public class OTFSummaryCallTypeAndQualityTest extends TestAncestor {
                 return true;
             }
             return SummaryQuality.BRONZE.equals(quality)
-                    && call.getBestDirectDescendantAllDataTypePValue() != null
-                    && call.getBestDirectDescendantAllDataTypePValue().compareTo(PRESENT_LOW) <= 0;
+                    && call.getBestDescendantAllDataTypePValue() != null
+                    && call.getBestDescendantAllDataTypePValue().compareTo(PRESENT_LOW) <= 0;
         }
         BigDecimal absentThreshold = SummaryQuality.GOLD.equals(quality)? ABSENT_HIGH: ABSENT_LOW;
         if (allPValue.compareTo(absentThreshold) <= 0) {
@@ -210,8 +210,8 @@ public class OTFSummaryCallTypeAndQualityTest extends TestAncestor {
         if (!Boolean.TRUE.equals(call.getDataPropagation().isIncludingObservedData())) {
             return false;
         }
-        if (call.getBestDirectDescendantAllDataTypePValue() != null &&
-                call.getBestDirectDescendantAllDataTypePValue().compareTo(PRESENT_LOW) <= 0) {
+        if (call.getBestDescendantAllDataTypePValue() != null &&
+                call.getBestDescendantAllDataTypePValue().compareTo(PRESENT_LOW) <= 0) {
             return false;
         }
         if (SummaryQuality.BRONZE.equals(quality)) {
@@ -221,7 +221,7 @@ public class OTFSummaryCallTypeAndQualityTest extends TestAncestor {
         if (trustedPValue == null || trustedPValue.compareTo(absentThreshold) <= 0) {
             return false;
         }
-        return call.getBestDirectDescendantTrustedDataTypePValue() == null ||
-                call.getBestDirectDescendantTrustedDataTypePValue().compareTo(PRESENT_LOW) > 0;
+        return call.getBestDescendantTrustedDataTypePValue() == null ||
+                call.getBestDescendantTrustedDataTypePValue().compareTo(PRESENT_LOW) > 0;
     }
 }

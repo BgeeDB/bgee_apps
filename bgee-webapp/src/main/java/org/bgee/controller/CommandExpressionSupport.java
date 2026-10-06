@@ -45,17 +45,34 @@ public abstract class CommandExpressionSupport extends CommandParent{
 
     private final static Logger log = LogManager.getLogger(CommandExpressionSupport.class.getName());
     
+        /**
+         * Key of the cache of the processed condition parts. A processed condition part holds
+         * the conditions the on-the-fly propagation runs over, which depend on the species and
+         * on the combination of condition parameters of the {@code ExpressionCallFilter2}, not
+         * only on its condition filters: a request with no condition value over all
+         * the condition parameters has no condition filter at all.
+         */
         public static class ExprCallCondPartProcessingCacheKey {
                 private final Set<ConditionFilter2> condFilters;
-                public ExprCallCondPartProcessingCacheKey(Set<ConditionFilter2> condFilters) {
-                        this.condFilters = condFilters;
+                private final Set<Integer> speciesIds;
+                private final Set<ConditionParameter<?, ?>> condParamCombination;
+                public ExprCallCondPartProcessingCacheKey(ExpressionCallFilter2 filter) {
+                        this.condFilters = filter.getConditionFilters();
+                        this.speciesIds = filter.getSpeciesIdsConsidered();
+                        this.condParamCombination = filter.getCondParamCombination();
                 }
                 public Set<ConditionFilter2> getCondFilters() {
                         return condFilters;
                 }
+                public Set<Integer> getSpeciesIds() {
+                        return speciesIds;
+                }
+                public Set<ConditionParameter<?, ?>> getCondParamCombination() {
+                        return condParamCombination;
+                }
                 @Override
                 public int hashCode() {
-                        return Objects.hash(condFilters);
+                        return Objects.hash(condFilters, speciesIds, condParamCombination);
                 }
                 @Override
                 public boolean equals(Object obj) {
@@ -66,13 +83,17 @@ public abstract class CommandExpressionSupport extends CommandParent{
                         if (getClass() != obj.getClass())
                                 return false;
                         ExprCallCondPartProcessingCacheKey other = (ExprCallCondPartProcessingCacheKey) obj;
-                        return Objects.equals(condFilters, other.condFilters);
+                        return Objects.equals(condFilters, other.condFilters)
+                                        && Objects.equals(speciesIds, other.speciesIds)
+                                        && Objects.equals(condParamCombination, other.condParamCombination);
                 }
                 @Override
                 public String toString() {
                         StringBuilder builder = new StringBuilder();
                         builder.append("ExprCallCondPartProcessingCacheKey [condFilters=")
                                    .append(condFilters)
+                                   .append(", speciesIds=").append(speciesIds)
+                                   .append(", condParamCombination=").append(condParamCombination)
                                    .append("]");
                         return builder.toString();
                 }
@@ -196,7 +217,7 @@ public abstract class CommandExpressionSupport extends CommandParent{
         // Of course filterIds has to be kept as part of the caching key.
        ExpressionCallProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
                EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF,
-               new ExprCallCondPartProcessingCacheKey(filter.getConditionFilters()),
+               new ExprCallCondPartProcessingCacheKey(filter),
                () -> callService.processExpressionCallFilter(filter),
                pf -> pf.getConditionPart(),
                condPart -> callService.processExpressionCallFilter(filter,

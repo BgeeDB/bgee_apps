@@ -94,6 +94,10 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             } else {
                 out.value("low");
             }
+            //The best expression score over all the descendant conditions. Null, and therefore
+            //not written, when no descendant condition has a call.
+            out.name("bestDescendantExpressionScore")
+                    .value(call.getBestDescendantExpressionScore());
             out.endObject();
 
             String fdr = call.getFormattedAllDatatypePValue();

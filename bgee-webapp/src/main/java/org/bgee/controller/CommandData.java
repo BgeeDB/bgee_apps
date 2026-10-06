@@ -822,9 +822,13 @@ public class CommandData extends CommandParent {
     private final static String EXPERIMENT_PAGE_ACTION = "experiment";
 
     private final static String ID_PARAM_SUMMARY_VALUE = "SUMMARY";
+    // Top-level organs shown for anat_entity_id=SUMMARY. Multicellular organism
+    // (UBERON:0000468) is a parent of these organs, so it is not a peer in this list.
+    // The complement (terms in none of these subtrees) is requested by expanding
+    // BGEE:0000000 with discard_anat_entity_and_children_id=SUMMARY.
     private final static Set<String> SUMMARY_ANAT_ENTITY_IDS = Set.of(
             "UBERON:0001062",
-            "UBERON:0000010", "UBERON:0000211", "UBERON:0000309", "UBERON:0000468",
+            "UBERON:0000010", "UBERON:0000211", "UBERON:0000309",
             "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007",
             "UBERON:0001008", "UBERON:0004535", "UBERON:0001015", "UBERON:0001017",
             "UBERON:0001032", "UBERON:0001434", "UBERON:0002193", "UBERON:0002330",
@@ -1368,11 +1372,11 @@ public class CommandData extends CommandParent {
         List<String> discardAnatEntityIds = this.requestParameters.getDiscardAnatEntity() == null
                 ? new ArrayList<>()
                 : new ArrayList<>(this.requestParameters.getDiscardAnatEntity());
-        // discard=SUMMARY is all top-level organs except the anatomical root.
-        // When include is a concrete term T (ExpressionMatrix request 3), T is
-        // removed here. Expansion then applies only the remaining SUMMARY terms
-        // that are descendants of T. Ancestor buckets (e.g. multicellular organism
-        // when expanding CNS) are not descendants of T, so they are not discarded.
+        // discard=SUMMARY is the top-level organs except the anatomical root.
+        // Multicellular organism is not in that set: it is their parent, and
+        // expanding BGEE:0000000 with this discard is the "others" complement.
+        // When include is a concrete term T, T is removed here. Expansion then
+        // applies only the remaining SUMMARY terms that are descendants of T.
         // See CallServiceUtils.selectApplicableExcludeSeeds.
         if (discardAnatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
             discardAnatEntityIds.addAll(SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS);
@@ -1960,11 +1964,11 @@ public class CommandData extends CommandParent {
         }
         List<String> discardAnatEntityIds = this.requestParameters.getDiscardAnatEntity() == null?
                 new ArrayList<>(): new ArrayList<>(this.requestParameters.getDiscardAnatEntity());
-        // discard=SUMMARY is all top-level organs except the anatomical root.
-        // When include is a concrete term T (ExpressionMatrix request 3), T is
-        // removed here. Expansion then applies only the remaining SUMMARY terms
-        // that are descendants of T. Ancestor buckets (e.g. multicellular organism
-        // when expanding CNS) are not descendants of T, so they are not discarded.
+        // discard=SUMMARY is the top-level organs except the anatomical root.
+        // Multicellular organism is not in that set: it is their parent, and
+        // expanding BGEE:0000000 with this discard is the "others" complement.
+        // When include is a concrete term T, T is removed here. Expansion then
+        // applies only the remaining SUMMARY terms that are descendants of T.
         // See CallServiceUtils.selectApplicableExcludeSeeds.
         if (discardAnatEntityIds.contains(ID_PARAM_SUMMARY_VALUE)) {
             discardAnatEntityIds.addAll(SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS);

@@ -365,10 +365,11 @@ public class ExpressionCallService extends CallServiceParent {
         //FIXME: creation of daoCondFilters does not require to use the ontologies.
         //       Everything is available in the database to create a DAO that would return values
         //       of condition parameters with there descendants. It would be way way faster.
-        Set<DAOConditionFilter2> daoCondFilters =
-                this.utils.convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
+        CallServiceUtils.ConvertedConditionFilters convertedCondFilters =
+                this.utils.convertConditionFilters(filter.getConditionFilters(),
                         this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered(),
                         filter.getCondParamCombination());
+        Set<DAOConditionFilter2> daoCondFilters = convertedCondFilters.getDAOConditionFilters();
         log.debug("convertConditionFiltersToDAOConditionFilters() completed in {} ms ({} DAO filters)",
                 System.currentTimeMillis() - t0, daoCondFilters.size());
         t0 = System.currentTimeMillis();
@@ -382,9 +383,16 @@ public class ExpressionCallService extends CallServiceParent {
                             this.sexService, this.strainService);
         log.debug("loadGlobalConditionMap() completed in {} ms ({} conditions)",
                 System.currentTimeMillis() - t0, requestedCondMap.size());
+        //The conditions excluded by the condition filters are part of requestedCondMap,
+        //for their observations to be propagated to their ancestors: their own calls are
+        //discarded after the propagation.
+        Set<Integer> excludedCondIds = requestedCondMap.entrySet().stream()
+                .filter(e -> convertedCondFilters.isExcluded(e.getValue()))
+                .map(e -> e.getKey())
+                .collect(Collectors.toSet());
         return log.traceExit(new ExpressionCallProcessedFilterConditionPart(
                 filter.getConditionFilters(),
-                requestedCondMap));
+                requestedCondMap, excludedCondIds));
     }
 
 }

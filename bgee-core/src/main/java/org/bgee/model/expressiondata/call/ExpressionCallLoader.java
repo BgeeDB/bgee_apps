@@ -88,6 +88,12 @@ public class ExpressionCallLoader extends CommonService {
      */
     private final Map<Integer, Gene> geneMap;
     /**
+     * The IDs of the conditions of {@link #conditionMap} excluded by the condition filters:
+     * they are propagated like the other conditions, so that the calls of their ancestors are
+     * the same as without exclusion, and only their own calls are discarded.
+     */
+    private final Set<Integer> excludedConditionIds;
+    /**
      * The condition parameters the propagation is allowed to move along, empty when it may move
      * along all of them.
      * <p>
@@ -137,6 +143,7 @@ public class ExpressionCallLoader extends CommonService {
             Collections.unmodifiableMap(requestedCondMap);
         this.geneMap = requestedGeneMap == null? Map.of():
             Collections.unmodifiableMap(requestedGeneMap);
+        this.excludedConditionIds = this.processedFilter.getExcludedConditionIds();
         this.propagationCondParams = propagationCondParams == null? Set.of():
             Collections.unmodifiableSet(new HashSet<>(propagationCondParams));
         if (!this.propagationCondParams.isEmpty() &&
@@ -342,6 +349,9 @@ public class ExpressionCallLoader extends CommonService {
                     filterRedundantCalls? new HashMap<>(): null;
 
             for (Entry<Integer, OTFExpressionCall> callEntry: geneEntry.getValue().entrySet()) {
+                if (this.excludedConditionIds.contains(callEntry.getKey())) {
+                    continue;
+                }
                 OTFExpressionCall call = callEntry.getValue();
                 if (!condFilter.test(call)) {
                     continue;

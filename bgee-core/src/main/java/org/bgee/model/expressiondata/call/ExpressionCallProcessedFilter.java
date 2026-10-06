@@ -2,6 +2,8 @@ package org.bgee.model.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -69,14 +71,31 @@ DAOCallFilter, Condition2, ConditionFilter2> {
     }
     public static class ExpressionCallProcessedFilterConditionPart
     extends ProcessedFilterConditionPart<ConditionFilter2, Condition2> {
+        /**
+         * @see #getExcludedConditionIds()
+         */
+        private final Set<Integer> excludedConditionIds;
+
         ExpressionCallProcessedFilterConditionPart(Collection<ConditionFilter2> conditionFilters,
-                Map<Integer, Condition2> requestedConditionMap) {
+                Map<Integer, Condition2> requestedConditionMap, Set<Integer> excludedConditionIds) {
             super(conditionFilters, requestedConditionMap);
+            this.excludedConditionIds = Collections.unmodifiableSet(excludedConditionIds == null?
+                    new HashSet<>(): new HashSet<>(excludedConditionIds));
         }
 
         @Override
         protected Map<Integer, Condition2> getRequestedConditionMap() {
             return super.getRequestedConditionMap();
+        }
+        /**
+         * @return  An unmodifiable {@code Set} of {@code Integer}s that are the IDs of
+         *          the conditions of {@link #getRequestedConditionMap()} excluded by
+         *          the condition filters: they are retrieved for their observations to be
+         *          propagated to their ancestors, and their calls are discarded after
+         *          the propagation.
+         */
+        protected Set<Integer> getExcludedConditionIds() {
+            return excludedConditionIds;
         }
     }
     public static class ExpressionCallProcessedFilterInvariablePart extends ProcessedFilterInvariablePart {
@@ -172,6 +191,15 @@ DAOCallFilter, Condition2, ConditionFilter2> {
     @Override
     protected Map<Integer, Condition2> getRequestedConditionMap() {
         return super.getRequestedConditionMap();
+    }
+    /**
+     * @return  An unmodifiable {@code Set} of {@code Integer}s that are the IDs of the conditions
+     *          excluded by the condition filters, empty if there is no condition part.
+     * @see ExpressionCallProcessedFilterConditionPart#getExcludedConditionIds()
+     */
+    protected Set<Integer> getExcludedConditionIds() {
+        return this.getConditionPart() == null? Set.of():
+            this.getConditionPart().getExcludedConditionIds();
     }
     @Override
     protected Map<Integer, Species> getSpeciesMap() {

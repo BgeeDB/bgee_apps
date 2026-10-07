@@ -100,7 +100,7 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
                 new DownloadFileTO(2, "file name 2", "file desc 2", "path/file2/xx", 2L,
                         CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 11, null),
                 new DownloadFileTO(3, "file name 3", "file desc 3", "path/file3", 10L,
-                        CategoryEnum.AFFY_ANNOT, 22, null));
+                        CategoryEnum.RNASEQ_ANNOT, 22, null));
         try {
             MySQLDownloadFileDAO dao = new MySQLDownloadFileDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 
@@ -140,7 +140,7 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
                 stmt.setString(3, "file desc 3");
                 stmt.setString(4, "path/file3");
                 stmt.setLong(5, 10L);
-                stmt.setEnumDAOField(6, CategoryEnum.AFFY_ANNOT);
+                stmt.setEnumDAOField(6, CategoryEnum.RNASEQ_ANNOT);
                 stmt.setInt(7, 22);
                 assertTrue("DownloadFileTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());

@@ -530,6 +530,8 @@ public class SearchMatchResultService extends CommonService {
                 species,
                 geneBioTypeMap.get(((Long) match.attrValues.get(attrIndexMap.get("genebiotypeid")))
                         .intValue()),
+                //the gene length is not indexed in Sphinx
+                null,
                 ((Long) match.attrValues.get(attrIndexMap.get("genemappedtogeneidcount"))).intValue(), null);
 
         // If the gene name, id or description match there is no term

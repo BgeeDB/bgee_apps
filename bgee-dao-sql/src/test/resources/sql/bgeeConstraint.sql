@@ -154,12 +154,6 @@ add primary key (summarySimilarityAnnotationId, negated, ECOId, CIOId, reference
 -- ****************************************************
 -- GENE AND TRANSCRIPT INFO
 -- ****************************************************
-/*!40000 ALTER TABLE `OMAHierarchicalGroup` DISABLE KEYS */;
-alter table OMAHierarchicalGroup
-add primary key (OMANodeId),
-add unique (OMANodeLeftBound),
-add unique (OMANodeRightBound);
-/*!40000 ALTER TABLE `OMAHierarchicalGroup` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `geneOntologyTerm` DISABLE KEYS */;
 alter table geneOntologyTerm
@@ -237,8 +231,8 @@ add unique(transcriptId, bgeeGeneId);
 -- for this design of PK and UNIQUE indexes
 alter table cond
 modify conditionId mediumint unsigned not null auto_increment,
-add primary key(anatEntityId, stageId, speciesId, sex, sexInferred, strain),
-add unique(conditionId);
+add primary key(conditionId),
+add unique(anatEntityId, cellTypeId, stageId, speciesId, sex, sexInferred, strain);
 /*!40000 ALTER TABLE `cond` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `remapCond` DISABLE KEYS */;
@@ -246,20 +240,28 @@ alter table remapCond
 add primary key(incorrectConditionId, remappedConditionId);
 /*!40000 ALTER TABLE `remapCond` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `remapExpression` DISABLE KEYS */;
+alter table remapExpression
+add primary key(incorrectExpressionId, remappedExpressionId);
+/*!40000 ALTER TABLE `remapExpression` ENABLE KEYS */;
+
 /*!40000 ALTER TABLE `globalCond` DISABLE KEYS */;
 alter table globalCond
 modify globalConditionId mediumint unsigned not null auto_increment primary key,
 -- not a primary key as for table cond, because some field can be null
-add unique(anatEntityId, stageId, speciesId, sex, strain);
+add unique(anatEntityId, cellTypeId, stageId, speciesId, sex, strain);
 /*!40000 ALTER TABLE `globalCond` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `globalCondToCond` DISABLE KEYS */;
-alter table globalCondToCond
+/*!40000 ALTER TABLE `globalCondRelation` DISABLE KEYS */;
+alter table globalCondRelation
+add primary key (sourceGlobalConditionId, targetGlobalConditionId);
+/*!40000 ALTER TABLE `globalCondRelation` ENABLE KEYS */;
+
+/*!40000 ALTER TABLE `condToSelfGlobalCond` DISABLE KEYS */;
+alter table condToSelfGlobalCond
 -- we set up this primary key using conditionRelationOrigin to benefit from the clustered index
-add primary key (globalConditionId, conditionId, conditionRelationOrigin),
--- but actually the unique constraint is on globalConditionId and conditionId
-add unique(globalConditionId, conditionId);
-/*!40000 ALTER TABLE `globalCondToCond` ENABLE KEYS */;
+add primary key (conditionId, subsetMask, globalConditionId);
+/*!40000 ALTER TABLE `condToSelfGlobalCond` ENABLE KEYS */;
 
 -- ****************************************************
 -- EXPRESSION DATA
@@ -269,114 +271,10 @@ add unique(globalConditionId, conditionId);
 -- for this design of PK and UNIQUE indexes
 alter table expression
 modify expressionId int unsigned not null auto_increment,
-add primary key(bgeeGeneId, conditionId),
+-- we added the primary key in this order to be able to parallelize insertion per conditionId
+add primary key(conditionId, bgeeGeneId),
 add unique(expressionId);
 /*!40000 ALTER TABLE `expression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalExpression` DISABLE KEYS */;
--- See https://stackoverflow.com/a/42822691/1768736 for motivation
--- for this design of PK and UNIQUE indexes
-alter table globalExpression
-modify globalExpressionId int unsigned not null auto_increment,
-add primary key(bgeeGeneId, globalConditionId),
-add unique(globalExpressionId);
-/*!40000 ALTER TABLE `globalExpression` ENABLE KEYS */;
-
--- ****************************************************
--- DIFFERENTIAL EXPRESSION DATA
--- ****************************************************
-/*!40000 ALTER TABLE `differentialExpression` DISABLE KEYS */;
--- See https://stackoverflow.com/a/42822691/1768736 for motivation
--- for this design of PK and UNIQUE indexes
-alter table differentialExpression
-modify differentialExpressionId int unsigned not null auto_increment,
--- TODO: manage maxNumberOfConditions
-add primary key(bgeeGeneId, conditionId, comparisonFactor),
-add unique(differentialExpressionId);
-/*!40000 ALTER TABLE `differentialExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `differentialExpressionAnalysis` DISABLE KEYS */;
-alter table differentialExpressionAnalysis
-modify deaId smallint unsigned not null auto_increment primary key;
-/*!40000 ALTER TABLE `differentialExpressionAnalysis` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `deaSampleGroup` DISABLE KEYS */;
-alter table deaSampleGroup
-modify deaSampleGroupId mediumint unsigned not null auto_increment primary key;
-/*!40000 ALTER TABLE `deaSampleGroup` ENABLE KEYS */;
-
--- ****************************************************
--- RAW EST DATA
--- ****************************************************
-/*!40000 ALTER TABLE `estLibrary` DISABLE KEYS */;
-alter table estLibrary
-add primary key (estLibraryId);
-/*!40000 ALTER TABLE `estLibrary` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `estLibraryToKeyword` DISABLE KEYS */;
-alter table estLibraryToKeyword
-add primary key (estLibraryId, keywordId);
-/*!40000 ALTER TABLE `estLibraryToKeyword` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `expressedSequenceTag` DISABLE KEYS */;
-alter table expressedSequenceTag
-add primary key (estId);
-/*!40000 ALTER TABLE `expressedSequenceTag` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `estLibraryExpression` DISABLE KEYS */;
-alter table estLibraryExpression
-add primary key (expressionId, estLibraryId);
-/*!40000 ALTER TABLE `estLibraryExpression` ENABLE KEYS */;
-
---  ****************************************************
---  RAW AFFYMETRIX DATA
---  ****************************************************
-/*!40000 ALTER TABLE `microarrayExperiment` DISABLE KEYS */;
-alter table microarrayExperiment
-add primary key (microarrayExperimentId);
-/*!40000 ALTER TABLE `microarrayExperiment` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `microarrayExperimentToKeyword` DISABLE KEYS */;
-alter table microarrayExperimentToKeyword
-add primary key (microarrayExperimentId, keywordId);
-/*!40000 ALTER TABLE `microarrayExperimentToKeyword` ENABLE KEYS */;
-
--- chipTypes in this table don't represent affymetrix chips only
--- (could for instance represent cDNA chip)
-/*!40000 ALTER TABLE `chipType` DISABLE KEYS */;
-alter table chipType
-add unique(chipTypeName),
-add unique(cdfName),
-add primary key (chipTypeId);
-/*!40000 ALTER TABLE `chipType` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `affymetrixChip` DISABLE KEYS */;
-alter table affymetrixChip
-modify bgeeAffymetrixChipId smallint unsigned not null auto_increment primary key,
-add unique (affymetrixChipId, microarrayExperimentId);
-/*!40000 ALTER TABLE `affymetrixChip` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `affymetrixProbeset` DISABLE KEYS */;
-alter table affymetrixProbeset
-add primary key (affymetrixProbesetId, bgeeAffymetrixChipId);
-/*!40000 ALTER TABLE `affymetrixProbeset` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `microarrayExperimentExpression` DISABLE KEYS */;
-alter table microarrayExperimentExpression
-add primary key (expressionId, microarrayExperimentId);
-/*!40000 ALTER TABLE `microarrayExperimentExpression` ENABLE KEYS */;
-
--- ****** for diff expression ********
-
-/*!40000 ALTER TABLE `deaSampleGroupToAffymetrixChip` DISABLE KEYS */;
-alter table deaSampleGroupToAffymetrixChip
-add primary key (bgeeAffymetrixChipId, deaSampleGroupId);
-/*!40000 ALTER TABLE `deaSampleGroupToAffymetrixChip` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `deaAffymetrixProbesetSummary` DISABLE KEYS */;
-alter table deaAffymetrixProbesetSummary
-add primary key (deaAffymetrixProbesetSummaryId, deaSampleGroupId);
-/*!40000 ALTER TABLE `deaAffymetrixProbesetSummary` ENABLE KEYS */;
 
 --  ****************************************************
 --  RAW IN SITU DATA
@@ -409,6 +307,7 @@ add primary key (expressionId, inSituExperimentId);
 --  ****************************************************
 --  RAW RNA-SEQ DATA
 --  ****************************************************
+
 /*!40000 ALTER TABLE `rnaSeqExperiment` DISABLE KEYS */;
 alter table rnaSeqExperiment
 add primary key (rnaSeqExperimentId);
@@ -419,52 +318,56 @@ alter table rnaSeqExperimentToKeyword
 add primary key (rnaSeqExperimentId, keywordId);
 /*!40000 ALTER TABLE `rnaSeqExperimentToKeyword` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `rnaSeqPlatform` DISABLE KEYS */;
-alter table rnaSeqPlatform
-add primary key (rnaSeqPlatformId);
-/*!40000 ALTER TABLE `rnaSeqPlatform` ENABLE KEYS */;
-
 /*!40000 ALTER TABLE `rnaSeqLibrary` DISABLE KEYS */;
 alter table rnaSeqLibrary
 add primary key (rnaSeqLibraryId);
 /*!40000 ALTER TABLE `rnaSeqLibrary` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `rnaSeqRun` DISABLE KEYS */;
-alter table rnaSeqRun
-add primary key (rnaSeqRunId);
-/*!40000 ALTER TABLE `rnaSeqRun` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `rnaSeqLibraryDiscarded` DISABLE KEYS */;
 alter table rnaSeqLibraryDiscarded
 add primary key (rnaSeqLibraryId);
 /*!40000 ALTER TABLE `rnaSeqLibraryDiscarded` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `rnaSeqResult` DISABLE KEYS */;
-alter table rnaSeqResult
-add primary key (bgeeGeneId, rnaSeqLibraryId);
-/*!40000 ALTER TABLE `rnaSeqResult` ENABLE KEYS */;
+/*!40000 ALTER TABLE `rnaSeqRun` DISABLE KEYS */;
+alter table rnaSeqRun
+add primary key (rnaSeqRunId);
+/*!40000 ALTER TABLE `rnaSeqRun` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `rnaSeqTranscriptResult` DISABLE KEYS */;
-alter table rnaSeqTranscriptResult
-add primary key (bgeeTranscriptId, rnaSeqLibraryId);
-/*!40000 ALTER TABLE `rnaSeqTranscriptResult` ENABLE KEYS */;
+/*!40000 ALTER TABLE `rnaSeqLibraryAnnotatedSample` DISABLE KEYS */;
+alter table rnaSeqLibraryAnnotatedSample
+modify rnaSeqLibraryAnnotatedSampleId mediumint unsigned not null auto_increment primary key,
+add unique (rnaSeqLibraryId, conditionId, cellTypeAuthorAnnotation);
+/*!40000 ALTER TABLE `rnaSeqLibraryAnnotatedSample` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `rnaSeqExperimentExpression` DISABLE KEYS */;
-alter table rnaSeqExperimentExpression
-add primary key (expressionId, rnaSeqExperimentId);
-/*!40000 ALTER TABLE `rnaSeqExperimentExpression` ENABLE KEYS */;
+/*!40000 ALTER TABLE `rnaSeqLibraryAnnotatedSampleGeneResult` DISABLE KEYS */;
+alter table rnaSeqLibraryAnnotatedSampleGeneResult
+add primary key (rnaSeqLibraryAnnotatedSampleId, bgeeGeneId);
+/*!40000 ALTER TABLE `rnaSeqLibraryAnnotatedSampleGeneResult` ENABLE KEYS */;
 
--- ****** for diff expression ********
+/*!40000 ALTER TABLE `rnaSeqLibraryIndividualSample` DISABLE KEYS */;
+alter table rnaSeqLibraryIndividualSample
+modify rnaSeqLibraryIndividualSampleId int unsigned not null auto_increment primary key;
+/*!40000 ALTER TABLE `rnaSeqLibraryIndividualSample` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `deaSampleGroupToRnaSeqLibrary` DISABLE KEYS */;
-alter table deaSampleGroupToRnaSeqLibrary
-add primary key (rnaSeqLibraryId, deaSampleGroupId);
-/*!40000 ALTER TABLE `deaSampleGroupToRnaSeqLibrary` ENABLE KEYS */;
+/*!40000 ALTER TABLE `rnaSeqLibraryIndividualSampleGeneResult` DISABLE KEYS */;
+alter table rnaSeqLibraryIndividualSampleGeneResult
+add primary key (rnaSeqLibraryIndividualSampleId, bgeeGeneId);
+/*!40000 ALTER TABLE `rnaSeqLibraryIndividualSampleGeneResult` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `deaRNASeqSummary` DISABLE KEYS */;
-alter table deaRNASeqSummary
-add primary key (geneSummaryId, deaSampleGroupId);
-/*!40000 ALTER TABLE `deaRNASeqSummary` ENABLE KEYS */;
+/*!40000 ALTER TABLE `rnaSeqPopulationCapture` DISABLE KEYS */;
+alter table rnaSeqPopulationCapture
+add primary key (rnaSeqPopulationCaptureId);
+/*!40000 ALTER TABLE `rnaSeqPopulationCapture` ENABLE KEYS */;
+
+/*!40000 ALTER TABLE `rnaSeqPopulationCaptureToBiotypeExcludedAbsentCalls` DISABLE KEYS */;
+alter table rnaSeqPopulationCaptureToBiotypeExcludedAbsentCalls
+add primary key (rnaSeqPopulationCaptureId, geneBioTypeId);
+/*!40000 ALTER TABLE `rnaSeqPopulationCaptureToBiotypeExcludedAbsentCalls` ENABLE KEYS */;
+
+/*!40000 ALTER TABLE `rnaSeqPopulationCaptureSpeciesMaxRank` DISABLE KEYS */;
+alter table rnaSeqPopulationCaptureSpeciesMaxRank
+add primary key (speciesId, rnaSeqPopulationCaptureId, rnaSeqTechnologyIsSingleCell, sampleMultiplexing);
+/*!40000 ALTER TABLE `rnaSeqPopulationCaptureSpeciesMaxRank` ENABLE KEYS */;
 
 -- *****************************************
 -- DOWNLOAD FILES

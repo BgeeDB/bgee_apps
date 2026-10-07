@@ -30,11 +30,11 @@ import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOPropagationState;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -48,6 +48,64 @@ import org.bgee.model.species.Species;
 
 public class CallServiceUtils {
     private final static Logger log = LogManager.getLogger(CallServiceUtils.class.getName());
+
+    /**
+     * {@code DAOConditionFilter2}s converted from {@code ConditionFilter2}s, together with
+     * the values of condition parameters these filters exclude with their descendants,
+     * by species ID. The conditions holding an excluded value are still retrieved through
+     * the {@code DAOConditionFilter2}s: their observations are propagated to their ancestors,
+     * so that excluding a sub-condition does not change the calls of its ancestors, and only
+     * their own calls are discarded, after the propagation.
+     */
+    public static class ConvertedConditionFilters {
+        private final Set<DAOConditionFilter2> daoConditionFilters;
+        private final Map<Integer, Set<String>> excludedAnatEntityIds;
+        private final Map<Integer, Set<String>> excludedCellTypeIds;
+        private final Map<Integer, Set<String>> excludedDevStageIds;
+
+        ConvertedConditionFilters(Set<DAOConditionFilter2> daoConditionFilters,
+                Map<Integer, Set<String>> excludedAnatEntityIds,
+                Map<Integer, Set<String>> excludedCellTypeIds,
+                Map<Integer, Set<String>> excludedDevStageIds) {
+            this.daoConditionFilters = Collections.unmodifiableSet(new HashSet<>(daoConditionFilters));
+            //HashMaps, as a filter with no species ID stores its excluded values under a null key
+            this.excludedAnatEntityIds = excludedAnatEntityIds == null? new HashMap<>():
+                new HashMap<>(excludedAnatEntityIds);
+            this.excludedCellTypeIds = excludedCellTypeIds == null? new HashMap<>():
+                new HashMap<>(excludedCellTypeIds);
+            this.excludedDevStageIds = excludedDevStageIds == null? new HashMap<>():
+                new HashMap<>(excludedDevStageIds);
+        }
+
+        public Set<DAOConditionFilter2> getDAOConditionFilters() {
+            return daoConditionFilters;
+        }
+        /**
+         * @param condition A {@code Condition2} retrieved through the {@code DAOConditionFilter2}s.
+         * @return          {@code true} if {@code condition} holds a value excluded for its species,
+         *                  so that its call must be discarded after the propagation.
+         */
+        public boolean isExcluded(Condition2 condition) {
+            AnatEntity anatEntity = condition.getAnatEntity();
+            AnatEntity cellType = condition.getCellType();
+            return anatEntity != null && isExcluded(this.excludedAnatEntityIds,
+                        condition.getSpeciesId(), anatEntity.getId()) ||
+                    cellType != null && isExcluded(this.excludedCellTypeIds,
+                        condition.getSpeciesId(), cellType.getId()) ||
+                    isExcluded(this.excludedDevStageIds, condition.getSpeciesId(),
+                        condition.getConditionParameterId(ConditionParameter.DEV_STAGE));
+        }
+        private static boolean isExcluded(Map<Integer, Set<String>> excludedIdsBySpeciesId,
+                Integer speciesId, String id) {
+            if (id == null) {
+                return false;
+            }
+            Set<String> excludedIds = excludedIdsBySpeciesId.get(speciesId);
+            Set<String> excludedIdsAnySpecies = excludedIdsBySpeciesId.get(null);
+            return excludedIds != null && excludedIds.contains(id) ||
+                    excludedIdsAnySpecies != null && excludedIdsAnySpecies.contains(id);
+        }
+    }
 
 
     public EnumSet<DAODataType> convertDataTypeToDAODataType(Collection<DataType> dts)
@@ -296,12 +354,60 @@ public class CallServiceUtils {
             this.convertDataTypeToDAODataType(dataTypesToConsider));
     }
 
+    /**
+     * @param condParamCombination  A {@code Collection} of {@code ConditionParameter}s that is
+     *                              the condition parameter combination requested. The condition
+     *                              parameters it does not contain are restricted to their root,
+     *                              as the conditions of the other combinations hold no data for
+     *                              this query. When no {@code ConditionFilter2} is provided, it
+     *                              is the only information restricting the conditions retrieved,
+     *                              besides the species.
+     */
     public Set<DAOConditionFilter2> convertConditionFiltersToDAOConditionFilters(
             Collection<ConditionFilter2> condFilters, OntologyService ontService,
-            AnatEntityService anatEntityService, Set<Integer> consideredSpeciesIds) {
-        log.traceEntry("{}, {}, {}, {}", condFilters, ontService, anatEntityService, consideredSpeciesIds);
+            AnatEntityService anatEntityService, Set<Integer> consideredSpeciesIds,
+            Collection<ConditionParameter<?, ?>> condParamCombination) {
+        log.traceEntry("{}, {}, {}, {}, {}", condFilters, ontService, anatEntityService,
+                consideredSpeciesIds, condParamCombination);
+        return log.traceExit(this.convertConditionFilters(condFilters, ontService,
+                anatEntityService, consideredSpeciesIds, condParamCombination)
+                .getDAOConditionFilters());
+    }
+    /**
+     * Same as {@link #convertConditionFiltersToDAOConditionFilters(Collection, OntologyService,
+     * AnatEntityService, Set, Collection)}, also returning the values of condition parameters
+     * excluded with their descendants by {@code condFilters}: the {@code DAOConditionFilter2}s
+     * still retrieve the conditions holding these values, see {@link ConvertedConditionFilters}.
+     */
+    public ConvertedConditionFilters convertConditionFilters(
+            Collection<ConditionFilter2> condFilters, OntologyService ontService,
+            AnatEntityService anatEntityService, Set<Integer> consideredSpeciesIds,
+            Collection<ConditionParameter<?, ?>> condParamCombination) {
+        log.traceEntry("{}, {}, {}, {}, {}", condFilters, ontService, anatEntityService,
+                consideredSpeciesIds, condParamCombination);
         if (condFilters == null || condFilters.isEmpty()) {
-            return log.traceExit(new HashSet<>());
+            if(consideredSpeciesIds == null || consideredSpeciesIds.isEmpty()) {
+                return log.traceExit(new ConvertedConditionFilters(new HashSet<>(),
+                        null, null, null));
+            }
+            //Restrict to the requested condition parameter combination, exactly as it is done
+            //below when ConditionFilter2s are provided.
+            Set<ConditionParameter<?, ?>> condParamComb =
+                    condParamCombination == null || condParamCombination.isEmpty()?
+                    ConditionParameter.allOf(): new HashSet<>(condParamCombination);
+            return log.traceExit(new ConvertedConditionFilters(Set.of(new DAOConditionFilter2(
+                    consideredSpeciesIds,
+                    condParamComb.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)? null:
+                        Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID),
+                    condParamComb.contains(ConditionParameter.DEV_STAGE)? null:
+                        Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID),
+                    condParamComb.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)? null:
+                        Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID),
+                    condParamComb.contains(ConditionParameter.SEX)? null:
+                        Collections.singleton(ConditionDAO.SEX_ROOT_ID),
+                    condParamComb.contains(ConditionParameter.STRAIN)? null:
+                        Collections.singleton(ConditionDAO.STRAIN_ROOT_ID),
+                    null, null)), null, null, null));
         }
     
         //First, in order to load appropriately the ontologies,
@@ -318,12 +424,17 @@ public class CallServiceUtils {
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(0);
             FilterIds<String> cellTypeFilterIds = filter.getComposedFilterIds(
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(1);
-            if (anatEntityFilterIds != null && anatEntityFilterIds.isIncludeChildTerms()) {
+            //XXX: we used to consider isIncludeChildTerms == true detect terms to retrieve for anat. enttiy,
+            //     Cell type and dev. stage.
+            //     Since Bgee 16.0 we generate the calls on the fly. All descendant condition of a requested
+            //     one have to be processed. Then we always need to retrieve all child terms of a requested term.
+            //     The subseting of condition is done later once the propagation has been done.
+            if (anatEntityFilterIds != null) {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(anatEntityFilterIds.getIds());
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(anatEntityFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithAnatCellChildrenRequested.add(filter.getSpeciesId());
             }
-            if (cellTypeFilterIds != null && cellTypeFilterIds.isIncludeChildTerms()) {
+            if (cellTypeFilterIds != null) {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(cellTypeFilterIds.getIds());
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(cellTypeFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithAnatCellChildrenRequested.add(filter.getSpeciesId());
@@ -332,7 +443,7 @@ public class CallServiceUtils {
             assert !filter.getComposedFilterIds(ConditionParameter.DEV_STAGE).isComposed();
             FilterIds<String> devStageFilterIds = filter.getComposedFilterIds(
                     ConditionParameter.DEV_STAGE).getFilterIds(0);
-            if (devStageFilterIds != null && devStageFilterIds.isIncludeChildTerms()) {
+            if (devStageFilterIds != null) {
                 devStageIdsWithChildrenRequested.addAll(devStageFilterIds.getIds());
                 devStageIdsWithChildrenRequested.addAll(devStageFilterIds.getExcludeTermsAndChildrenIds());
                 speciesIdsWithDevStageChildrenRequested.add(filter.getSpeciesId());
@@ -340,16 +451,28 @@ public class CallServiceUtils {
         }
 
         //Now we load the ontologies if needed
+        long t0 = System.currentTimeMillis();
         MultiSpeciesOntology<AnatEntity, String> anatOntology = anatEntityAndCellTypeIdsWithChildrenRequested.isEmpty()?
                 null: ontService.getAnatEntityOntology(
                         speciesIdsWithAnatCellChildrenRequested, anatEntityAndCellTypeIdsWithChildrenRequested,
                         EnumSet.of(RelationType.ISA_PARTOF), false, true);
+        log.debug("getAnatEntityOntology() completed in {} ms (requested {} terms in {} species)",
+                System.currentTimeMillis() - t0,
+                anatEntityAndCellTypeIdsWithChildrenRequested.size(),
+                speciesIdsWithAnatCellChildrenRequested.size());
+        t0 = System.currentTimeMillis();
         MultiSpeciesOntology<DevStage, String> stageOntology = devStageIdsWithChildrenRequested.isEmpty()?
                 null: ontService.getDevStageOntology(
                         speciesIdsWithDevStageChildrenRequested, devStageIdsWithChildrenRequested, false, true);
+        log.debug("getDevStageOntology() completed in {} ms (requested {} terms in {} species)",
+                System.currentTimeMillis() - t0,
+                devStageIdsWithChildrenRequested.size(),
+                speciesIdsWithDevStageChildrenRequested.size());
         //There is no ontology for RawDataSex and RawDataStrain (String), really it's simply one root
         //with all other terms at the first level.
 
+        t0 = System.currentTimeMillis();
+        t0 = System.currentTimeMillis();
         Map<Integer, Set<String>> nonInformativePerSpeciesId = condFilters.stream()
                 .filter(f -> f.isExcludeNonInformative())
                 .map(f -> f.getSpeciesId()).distinct()
@@ -363,10 +486,20 @@ public class CallServiceUtils {
                               .filter(aeid -> !aeid.equals(ConditionDAO.ANAT_ENTITY_ROOT_ID) &&
                                       !aeid.equals(ConditionDAO.CELL_TYPE_ROOT_ID))
                               .collect(Collectors.toSet())));
+        log.debug("loadNonInformativeAnatEntities() completed in {} ms ({} species with exclusion)",
+                System.currentTimeMillis() - t0, nonInformativePerSpeciesId.size());
 
         //Now we have everything we need to create the DAO filters
+        t0 = System.currentTimeMillis();
         Set<DAOConditionFilter2> daoCondFilters = new HashSet<>();
+        //The excluded values, with their descendants, by species ID. The conditions holding them
+        //are still retrieved through the DAO filters, for their observations to be propagated
+        //to their ancestors: only their own calls are discarded after the propagation.
+        Map<Integer, Set<String>> excludedAnatEntityIds = new HashMap<>();
+        Map<Integer, Set<String>> excludedCellTypeIds = new HashMap<>();
+        Map<Integer, Set<String>> excludedDevStageIds = new HashMap<>();
         for (ConditionFilter2 filter: condFilters) {
+            Set<ConditionParameter<?, ?>> condParamComb = filter.getCondParamCombination();
             Set<String> anatEntityIds = new HashSet<>();
             Set<String> devStageIds = new HashSet<>();
             Set<String> cellTypeIds = new HashSet<>();
@@ -380,15 +513,13 @@ public class CallServiceUtils {
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(1);
             if (anatEntityFilterIds != null) {
                 anatEntityIds.addAll(anatEntityFilterIds.getIds());
-                if (anatEntityFilterIds.isIncludeChildTerms()) {
-                    anatEntityIds.addAll(
-                            anatEntityFilterIds.getIds().stream()
-                            .flatMap(id -> anatOntology.getDescendantIds(
-                                    id, false, Collections.singleton(filter.getSpeciesId()))
-                                    .stream())
-                            .collect(Collectors.toSet())
-                    );
-                }
+                anatEntityIds.addAll(
+                        anatEntityFilterIds.getIds().stream()
+                        .flatMap(id -> anatOntology.getDescendantIds(
+                                id, false, Collections.singleton(filter.getSpeciesId()))
+                                .stream())
+                        .collect(Collectors.toSet())
+                        );
                 if (!anatEntityFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
                     Set<String> anatEntityIdsToExclude = new HashSet<>();
                     anatEntityIdsToExclude.addAll(anatEntityFilterIds.getExcludeTermsAndChildrenIds());
@@ -398,25 +529,29 @@ public class CallServiceUtils {
                                     id, false, Collections.singleton(filter.getSpeciesId()))
                                     .stream())
                             .collect(Collectors.toSet())
-                    );
+                            );
                     anatEntityIdsToExclude.removeAll(anatEntityFilterIds.getNotToExcludeIds());
-                    if (anatEntityIds.removeAll(anatEntityIdsToExclude) && anatEntityIds.isEmpty()) {
+                    Set<String> remainingAnatEntityIds = new HashSet<>(anatEntityIds);
+                    if (remainingAnatEntityIds.removeAll(anatEntityIdsToExclude) &&
+                            remainingAnatEntityIds.isEmpty()) {
                         throw log.throwing(new IllegalArgumentException(
                                 "No result should be retrieved because of anat. entity exclusion"));
+                    }
+                    if (condParamComb.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
+                        excludedAnatEntityIds.computeIfAbsent(filter.getSpeciesId(),
+                                k -> new HashSet<>()).addAll(anatEntityIdsToExclude);
                     }
                 }
             }
             if (cellTypeFilterIds != null) {
                 cellTypeIds.addAll(cellTypeFilterIds.getIds());
-                if (cellTypeFilterIds.isIncludeChildTerms()) {
-                    cellTypeIds.addAll(
-                            cellTypeFilterIds.getIds().stream()
-                            .flatMap(id -> anatOntology.getDescendantIds(
-                                    id, false, Collections.singleton(filter.getSpeciesId()))
-                                    .stream())
-                            .collect(Collectors.toSet())
-                    );
-                }
+                cellTypeIds.addAll(
+                        cellTypeFilterIds.getIds().stream()
+                        .flatMap(id -> anatOntology.getDescendantIds(
+                                id, false, Collections.singleton(filter.getSpeciesId()))
+                                .stream())
+                        .collect(Collectors.toSet())
+                        );
                 if (!cellTypeFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
                     Set<String> cellTypeIdsToExclude = new HashSet<>();
                     cellTypeIdsToExclude.addAll(cellTypeFilterIds.getExcludeTermsAndChildrenIds());
@@ -426,12 +561,18 @@ public class CallServiceUtils {
                                     id, false, Collections.singleton(filter.getSpeciesId()))
                                     .stream())
                             .collect(Collectors.toSet())
-                    );
+                            );
                     //we don't want to exclude the selected terms themselves
                     cellTypeIdsToExclude.removeAll(cellTypeFilterIds.getNotToExcludeIds());
-                    if (cellTypeIds.removeAll(cellTypeIdsToExclude) && cellTypeIds.isEmpty()) {
+                    Set<String> remainingCellTypeIds = new HashSet<>(cellTypeIds);
+                    if (remainingCellTypeIds.removeAll(cellTypeIdsToExclude) &&
+                            remainingCellTypeIds.isEmpty()) {
                         throw log.throwing(new IllegalArgumentException(
                                 "No result should be retrieved because of cell type exclusion"));
+                    }
+                    if (condParamComb.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
+                        excludedCellTypeIds.computeIfAbsent(filter.getSpeciesId(),
+                                k -> new HashSet<>()).addAll(cellTypeIdsToExclude);
                     }
                 }
             }
@@ -442,7 +583,6 @@ public class CallServiceUtils {
                     ConditionParameter.DEV_STAGE).getFilterIds(0);
             if (devStageFilterIds != null) {
                 devStageIds.addAll(devStageFilterIds.getIds());
-                if (devStageFilterIds.isIncludeChildTerms()) {
                     devStageIds.addAll(
                             devStageFilterIds.getIds().stream()
                             .flatMap(id -> stageOntology.getDescendantIds(
@@ -450,30 +590,11 @@ public class CallServiceUtils {
                                     .stream())
                             .collect(Collectors.toSet())
                     );
-                }
-                if (!devStageFilterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
-                    Set<String> devStageIdsToExclude = new HashSet<>();
-                    devStageIdsToExclude.addAll(devStageFilterIds.getExcludeTermsAndChildrenIds());
-                    devStageIdsToExclude.addAll(
-                            devStageFilterIds.getExcludeTermsAndChildrenIds().stream()
-                            .flatMap(id -> stageOntology.getDescendantIds(
-                                    id, false, Collections.singleton(filter.getSpeciesId()))
-                                    .stream())
-                            .collect(Collectors.toSet())
-                    );
-                    //we don't want to exclude the selected terms themselves
-                    devStageIdsToExclude.removeAll(devStageFilterIds.getNotToExcludeIds());
-                    if (devStageIds.removeAll(devStageIdsToExclude) && devStageIds.isEmpty()) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "No result should be retrieved because of dev. stage exclusion"));
-                    }
-                }
             }
 
             //For now we consider there is no composition for sexes and strains
             assert !filter.getComposedFilterIds(ConditionParameter.SEX).isComposed();
             assert !filter.getComposedFilterIds(ConditionParameter.STRAIN).isComposed();
-            Set<ConditionParameter<?, ?>> condParamComb = filter.getCondParamCombination();
             DAOConditionFilter2 daoCondFilter = new DAOConditionFilter2(
                     //consideredSpeciesIds might itself be null, but it could have
                     //the species IDs requested in GeneFilters, to query conditions
@@ -504,12 +625,14 @@ public class CallServiceUtils {
                     filter, condParamComb, daoCondFilter);
             daoCondFilters.add(daoCondFilter);
         }
+        log.debug("DAOConditionFilter2 construction loop completed in {} ms ({} filters built)",
+                System.currentTimeMillis() - t0, daoCondFilters.size());
     
         //Now we filter the daoCondFilters: if one of them target a species with no additional parameters,
         //then we discard any other filter targeting the same species
         Map<Set<Integer>, List<DAOConditionFilter2>> filtersPerSpecies = daoCondFilters.stream()
                 .collect(Collectors.groupingBy(f -> f.getSpeciesIds()));
-        return log.traceExit(
+        return log.traceExit(new ConvertedConditionFilters(
             filtersPerSpecies.values().stream().flatMap(l -> {
                 DAOConditionFilter2 noFilter = l.stream()
                             .filter(f -> f.areAllFiltersExceptSpeciesEmpty())
@@ -518,8 +641,8 @@ public class CallServiceUtils {
                         return Stream.of(noFilter);
                     }
                     return l.stream();
-            }).collect(Collectors.toSet())
-        );
+            }).collect(Collectors.toSet()),
+            excludedAnatEntityIds, excludedCellTypeIds, excludedDevStageIds));
     }
 
     public CallObservedDataDAOFilter2 convertCallObservedDataToDAO(ExpressionCallFilter2 filter) {

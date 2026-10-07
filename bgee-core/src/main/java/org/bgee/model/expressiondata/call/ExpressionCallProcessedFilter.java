@@ -3,13 +3,12 @@ package org.bgee.model.expressiondata.call;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.expressiondata.ProcessedFilter;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.gene.Gene;
@@ -72,30 +71,40 @@ DAOCallFilter, Condition2, ConditionFilter2> {
     }
     public static class ExpressionCallProcessedFilterConditionPart
     extends ProcessedFilterConditionPart<ConditionFilter2, Condition2> {
+        /**
+         * @see #getExcludedConditionIds()
+         */
+        private final Set<Integer> excludedConditionIds;
+
         ExpressionCallProcessedFilterConditionPart(Collection<ConditionFilter2> conditionFilters,
-                Map<Integer, Condition2> requestedConditionMap) {
+                Map<Integer, Condition2> requestedConditionMap, Set<Integer> excludedConditionIds) {
             super(conditionFilters, requestedConditionMap);
+            this.excludedConditionIds = Collections.unmodifiableSet(excludedConditionIds == null?
+                    new HashSet<>(): new HashSet<>(excludedConditionIds));
         }
 
         @Override
         protected Map<Integer, Condition2> getRequestedConditionMap() {
             return super.getRequestedConditionMap();
         }
+        /**
+         * @return  An unmodifiable {@code Set} of {@code Integer}s that are the IDs of
+         *          the conditions of {@link #getRequestedConditionMap()} excluded by
+         *          the condition filters: they are retrieved for their observations to be
+         *          propagated to their ancestors, and their calls are discarded after
+         *          the propagation.
+         */
+        protected Set<Integer> getExcludedConditionIds() {
+            return excludedConditionIds;
+        }
     }
     public static class ExpressionCallProcessedFilterInvariablePart extends ProcessedFilterInvariablePart {
 
-        private final Map<Integer, ConditionRankInfoTO> maxRankPerSpecies;
-
         ExpressionCallProcessedFilterInvariablePart(Map<Integer, GeneBioType> geneBioTypeMap,
-                Map<Integer, Source> sourceMap, Map<Integer, ConditionRankInfoTO> maxRankPerSpecies) {
+                Map<Integer, Source> sourceMap) {
             super(geneBioTypeMap, sourceMap);
-            this.maxRankPerSpecies = Collections.unmodifiableMap(maxRankPerSpecies == null?
-                    new HashMap<>(): new HashMap<>(maxRankPerSpecies));
         }
 
-        protected Map<Integer, ConditionRankInfoTO> getMaxRankPerSpecies() {
-            return maxRankPerSpecies;
-        }
         @Override
         protected Map<Integer, GeneBioType> getGeneBioTypeMap() {
             return super.getGeneBioTypeMap();
@@ -106,30 +115,10 @@ DAOCallFilter, Condition2, ConditionFilter2> {
         }
 
         @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = super.hashCode();
-            result = prime * result + Objects.hash(maxRankPerSpecies);
-            return result;
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (!super.equals(obj))
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ExpressionCallProcessedFilterInvariablePart other = (ExpressionCallProcessedFilterInvariablePart) obj;
-            return Objects.equals(maxRankPerSpecies, other.maxRankPerSpecies);
-        }
-
-        @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("ExpressionCallProcessedFilterInvariablePart [")
-                   .append("maxRankPerSpecies=").append(maxRankPerSpecies)
-                   .append(", getGeneBioTypeMap()=").append(getGeneBioTypeMap())
+                   .append("getGeneBioTypeMap()=").append(getGeneBioTypeMap())
                    .append(", getSourceMap()=").append(getSourceMap())
                    .append("]");
             return builder.toString();
@@ -203,6 +192,15 @@ DAOCallFilter, Condition2, ConditionFilter2> {
     protected Map<Integer, Condition2> getRequestedConditionMap() {
         return super.getRequestedConditionMap();
     }
+    /**
+     * @return  An unmodifiable {@code Set} of {@code Integer}s that are the IDs of the conditions
+     *          excluded by the condition filters, empty if there is no condition part.
+     * @see ExpressionCallProcessedFilterConditionPart#getExcludedConditionIds()
+     */
+    protected Set<Integer> getExcludedConditionIds() {
+        return this.getConditionPart() == null? Set.of():
+            this.getConditionPart().getExcludedConditionIds();
+    }
     @Override
     protected Map<Integer, Species> getSpeciesMap() {
         return super.getSpeciesMap();
@@ -214,9 +212,6 @@ DAOCallFilter, Condition2, ConditionFilter2> {
     @Override
     protected Map<Integer, Source> getSourceMap() {
         return super.getSourceMap();
-    }
-    protected Map<Integer, ConditionRankInfoTO> getMaxRankPerSpecies() {
-        return this.getInvariablePart().getMaxRankPerSpecies();
     }
     protected boolean isUseGlobalRank() {
         return useGlobalRank;

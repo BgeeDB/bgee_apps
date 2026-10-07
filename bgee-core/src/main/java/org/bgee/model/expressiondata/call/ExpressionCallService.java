@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
 import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterGeneSpeciesPart;
@@ -73,6 +73,27 @@ public class ExpressionCallService extends CallServiceParent {
     public ExpressionCallLoader getCallLoader(ExpressionCallProcessedFilter processedFilter) {
         log.traceEntry("{}", processedFilter);
         return log.traceExit(new ExpressionCallLoader(processedFilter, this.getServiceFactory()));
+    }
+
+    /**
+     * Same as {@link #getCallLoader(ExpressionCallProcessedFilter)}, but restricting the condition
+     * parameters the propagation may move along.
+     *
+     * @param propagationCondParams A {@code Set} of {@code ConditionParameter}s the propagation
+     *                              may move along, all of them when {@code null} or empty.
+     *                              They must be part of the combination requested in
+     *                              {@code processedFilter}. With only {@code DEV_STAGE}, the
+     *                              observations made in an anatomical entity are propagated to
+     *                              the ancestor stages of that very anatomical entity, and never
+     *                              to its ancestor anatomical entities: the call of a condition
+     *                              is then computed from the observations made in its own
+     *                              anatomical entity alone.
+     */
+    public ExpressionCallLoader getCallLoader(ExpressionCallProcessedFilter processedFilter,
+            Set<ConditionParameter<?, ?>> propagationCondParams) {
+        log.traceEntry("{}, {}", processedFilter, propagationCondParams);
+        return log.traceExit(new ExpressionCallLoader(processedFilter, this.getServiceFactory(),
+                propagationCondParams));
     }
 
     /**
@@ -160,8 +181,11 @@ public class ExpressionCallService extends CallServiceParent {
             throw log.throwing(new IllegalArgumentException("The ExpressionCallProcessedFilterConditionPart "
                     + "does not correspond to the ExpressionCallFilter2"));
         }
+        long startTimeInvariable = System.currentTimeMillis();
         final ExpressionCallProcessedFilterInvariablePart procInvariablePart = invariablePart != null?
                 invariablePart: loadIfNecessaryAndGetInvariablePart();
+        log.debug("loadIfNecessaryAndGetInvariablePart() completed in {} ms",
+                System.currentTimeMillis() - startTimeInvariable);
         final ExpressionCallProcessedFilterGeneSpeciesPart procGeneSpeciesPart =
                 geneSpeciesPart != null?
                     geneSpeciesPart:
@@ -170,6 +194,9 @@ public class ExpressionCallService extends CallServiceParent {
                         loadGeneSpeciesPart(filter, procInvariablePart.getGeneBioTypeMap()));
 
         //It's OK that the filter is null or empty if we want to retrieve any raw data
+        //TODO: In which context do we allow null or empty filter?
+        //      Filter should never be null and at least one gene/species should be provided
+        //      => should be removed as OTF propagation does not work in that context
         if (filter == null || filter.isEmptyFilter()) {
             return log.traceExit(new ExpressionCallProcessedFilter(filter,
                     //Important to provide a HashSet here, a null value means
@@ -189,8 +216,12 @@ public class ExpressionCallService extends CallServiceParent {
 
         //At this point, the filter cannot be null and we can use the method loadConditionPart
         assert filter != null;
+        long startTimeCondPart = System.currentTimeMillis();
         final ExpressionCallProcessedFilterConditionPart procConditionPart = conditionPart != null?
                 conditionPart: loadConditionPart(filter, procGeneSpeciesPart.getSpeciesMap());
+        log.debug("loadConditionPart() completed in {} ms, {} conditions found",
+                System.currentTimeMillis() - startTimeCondPart,
+                procConditionPart.getRequestedConditionMap().size());
 
 
         //At this point, there should always be at least a GeneFilter, it is mandatory
@@ -277,6 +308,7 @@ public class ExpressionCallService extends CallServiceParent {
                 ABSENT_HIGH_GREATER_THAN));
     }
 
+    //XXX As of Bgee 16.0 the max rank is not required anymore.
     private ExpressionCallProcessedFilterInvariablePart loadIfNecessaryAndGetInvariablePart() {
         //We don't fear a race condition here, because this information is cheap to compute
         //and does not change, so no problem to retrieve and set it multiple times.
@@ -286,18 +318,12 @@ public class ExpressionCallService extends CallServiceParent {
             //Sources to be used by the RawDataLoader
             Map<Integer, Source> sourceMap = this.getServiceFactory().getSourceService()
                     .loadSourcesByIds(null);
-            //Retrieve max rank for the requested species if EXPRESSION_SCORE requested
-            //(the max rank is required to convert mean ranks into expression scores)
-            //TODO: in a future version with Attributes, to retrieve only if necessary
-            Map<Integer, ConditionRankInfoTO> maxRankPerSpecies = conditionDAO
-                    .getMaxRanks(null,
-                            //We always request the max rank over all data types,
-                            //independently of the data types requested in the query,
-                            //because ranks are all normalized based on the max rank over all data types
-                            null);
+            //No max rank is needed any more: expression scores are computed by the pipeline
+            //and stored in the database, the propagation does not convert ranks into scores.
             PROCESSED_FILTER_INVARIABLE_PART =
-                    new ExpressionCallProcessedFilterInvariablePart(geneBioTypeMap, sourceMap,
-                            maxRankPerSpecies);
+                    new ExpressionCallProcessedFilterInvariablePart(geneBioTypeMap, sourceMap);
+        } else {
+            log.debug("loadIfNecessaryAndGetInvariablePart: cache hit, reusing invariable part");
         }
         return log.traceExit(PROCESSED_FILTER_INVARIABLE_PART);
     }
@@ -335,9 +361,19 @@ public class ExpressionCallService extends CallServiceParent {
 
         //Now, we load specific conditions that can be queried. Again, we need to retrieve
         //all of them to configure the DAOCallFilter, even if there is a large number.
-        Set<DAOConditionFilter2> daoCondFilters =
-                this.utils.convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
-                        this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered());
+        long t0 = System.currentTimeMillis();
+        //FIXME: creation of daoCondFilters does not require to use the ontologies.
+        //       Everything is available in the database to create a DAO that would return values
+        //       of condition parameters with there descendants. It would be way way faster.
+        CallServiceUtils.ConvertedConditionFilters convertedCondFilters =
+                this.utils.convertConditionFilters(filter.getConditionFilters(),
+                        this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered(),
+                        filter.getCondParamCombination());
+        Set<DAOConditionFilter2> daoCondFilters = convertedCondFilters.getDAOConditionFilters();
+        log.debug("convertConditionFiltersToDAOConditionFilters() completed in {} ms ({} DAO filters)",
+                System.currentTimeMillis() - t0, daoCondFilters.size());
+        t0 = System.currentTimeMillis();
+        //TODO: check that we really want to allow empty daoCondFilters
         Map<Integer, Condition2> requestedCondMap = daoCondFilters.isEmpty()?
                 new HashMap<>():
                     this.utils.loadGlobalConditionMap(speciesMap.values(),
@@ -345,8 +381,18 @@ public class ExpressionCallService extends CallServiceParent {
                             this.utils.convertCondParamsToDAOCondAttributes(filter.getCondParamCombination()),
                             this.conditionDAO, this.anatEntityService, this.devStageService,
                             this.sexService, this.strainService);
+        log.debug("loadGlobalConditionMap() completed in {} ms ({} conditions)",
+                System.currentTimeMillis() - t0, requestedCondMap.size());
+        //The conditions excluded by the condition filters are part of requestedCondMap,
+        //for their observations to be propagated to their ancestors: their own calls are
+        //discarded after the propagation.
+        Set<Integer> excludedCondIds = requestedCondMap.entrySet().stream()
+                .filter(e -> convertedCondFilters.isExcluded(e.getValue()))
+                .map(e -> e.getKey())
+                .collect(Collectors.toSet());
         return log.traceExit(new ExpressionCallProcessedFilterConditionPart(
                 filter.getConditionFilters(),
-                requestedCondMap));
+                requestedCondMap, excludedCondIds));
     }
+
 }

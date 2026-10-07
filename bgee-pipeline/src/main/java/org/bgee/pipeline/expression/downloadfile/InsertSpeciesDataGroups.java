@@ -600,8 +600,6 @@ import org.bgee.pipeline.MySQLDAOUser;
 //                case DIFF_EXPR_DEV_COMPLETE:
 //                case DIFF_EXPR_DEV_SIMPLE:
 //                case ORTHOLOG:
-//                case AFFY_ANNOT:
-//                case AFFY_DATA:
 //                case RNASEQ_ANNOT:
 //                case RNASEQ_DATA:
 //                    return log.traceExit(DownloadFileTO.CategoryEnum.convertToCategoryEnum(

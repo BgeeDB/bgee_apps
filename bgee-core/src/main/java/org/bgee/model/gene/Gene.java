@@ -75,6 +75,11 @@ public class Gene {
      * The {@code GeneBioType} of this {@code Gene}.
      */
     private final GeneBioType geneBioType;
+
+    /**
+     * @see #getGeneLength()
+     */
+    private final Integer geneLength;
     
 	/**
 	 * @see #getGeneMappedToSameGeneIdCount()
@@ -98,7 +103,7 @@ public class Gene {
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String geneId, Species species, GeneBioType geneBioType) throws IllegalArgumentException {
-        this(geneId, null, null, null, null, species, geneBioType, 1, null);
+        this(geneId, null, null, null, null, species, geneBioType, null, 1, null);
     }
     /**
      * Constructor providing the {@code geneId}, the name, the description,
@@ -120,6 +125,9 @@ public class Gene {
      * @param species                               A {@code Species} representing the species
      *                                              this gene belongs to.
      * @param geneBioType                           The {@code GeneBioType} of this {@code Gene}.
+     * @param geneLength                            An {@code Integer} that is the median of the lengths
+     *                                              of the isoforms of this gene.
+     *                                              See {@link #getGeneLength()}
      * @param geneMappedToSameGeneIdCount           An {@code Integer} that is the number of genes
      *                                              in the Bgee database with the same gene ID.
      *                                              See {@link #getGeneMappedToSameGeneIdCount()}
@@ -130,7 +138,7 @@ public class Gene {
      */
     public Gene(String geneId, String name, String description, Collection<String> synonyms,
             Collection<GeneXRef> xRefs, Species species, GeneBioType geneBioType,
-            int geneMappedToSameGeneIdCount, String expressionSummary)
+            Integer geneLength, int geneMappedToSameGeneIdCount, String expressionSummary)
         throws IllegalArgumentException {
         if (StringUtils.isBlank(geneId)) {
             throw log.throwing(new IllegalArgumentException("The gene ID must be provided."));
@@ -154,6 +162,7 @@ public class Gene {
                 new HashSet<>(): new HashSet<>(xRefs));
         this.species = species;
         this.geneBioType = geneBioType;
+        this.geneLength = geneLength;
         this.geneMappedToSameGeneIdCount = geneMappedToSameGeneIdCount;
         this.expressionSummary = expressionSummary;
     }
@@ -203,6 +212,14 @@ public class Gene {
      */
     public GeneBioType getGeneBioType() {
         return this.geneBioType;
+    }
+    /**
+     * @return  An {@code Integer} that is the median of the lengths of the isoforms of this gene,
+     *          an isoform length being the summed length of its exons. {@code null} for species
+     *          inserted from a non-Ensembl source.
+     */
+    public Integer getGeneLength() {
+        return this.geneLength;
     }
     /**
      * @return  An {@code Integer} that is the number of genes in the Bgee database
@@ -268,6 +285,7 @@ public class Gene {
     public String toString() {
         return "Gene [geneId=" + geneId + ", name=" + name + ", description=" + description + ", synonyms=" + synonyms
                 + ", xRefs=" + xRefs + ", species=" + species + ", geneBioType=" + geneBioType
+                + ", geneLength=" + geneLength
                 + ", geneMappedToSameGeneIdCount=" + geneMappedToSameGeneIdCount + ", expressionSummary="
                 + expressionSummary + "]";
     }

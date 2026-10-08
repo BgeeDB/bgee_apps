@@ -207,13 +207,8 @@ public class ExpressionCallLoader extends CommonService {
                 this.utils.convertCondParamsToDAOCondParams(
                         this.processedFilter.getSourceFilter().getCondParamCombination());
 
-        EnumSet<DataType> queriedDataTypes = this.processedFilter.getSourceFilter().getDataTypeFilters();
-        EnumSet<DAODataType> queriedDaoDataTypes = queriedDataTypes
-                .stream()
-                .map(dt -> convertDataTypeToDAODataType(dt)).collect(() -> 
-                        EnumSet.noneOf(DAODataType.class),
-                        EnumSet::add,
-                        EnumSet::addAll);
+        EnumSet<DAODataType> queriedDaoDataTypes = this.utils.convertDataTypeToDAODataType(
+                this.processedFilter.getSourceFilter().getDataTypeFilters());
 
         //FIXME: at this point we assume a single species per request (validated by processExprCallPage)
         int speciesId = this.processedFilter.getGeneSpeciesPart()

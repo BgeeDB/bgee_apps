@@ -22,12 +22,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.DAOObservedExpressionFilter;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpressionTO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.RawConditionToSelfGlobalConditionTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -57,7 +53,6 @@ public class ExpressionCallLoader extends CommonService {
 
 
     private final GeneDAO geneDAO;
-    private final ConditionDAO condDAO;
     private final CallServiceUtils utils;
     /**
      * @see #getProcessedFilter()
@@ -138,7 +133,6 @@ public class ExpressionCallLoader extends CommonService {
         }
         this.utils = utils;
         this.geneDAO = this.getDaoManager().getGeneDAO();
-        this.condDAO = this.getDaoManager().getConditionDAO();
         this.processedFilter = processedFilter;
         //A filter requesting no species targets all of them, as they can all be queried
         Set<Integer> speciesIds = this.processedFilter.getSpeciesMap().keySet();
@@ -215,56 +209,31 @@ public class ExpressionCallLoader extends CommonService {
             return log.traceExit(new HashMap<>());
         }
 
-        EnumSet<ConditionDAO.ConditionParameter> daoCondParams =
-                this.utils.convertCondParamsToDAOCondParams(
-                        this.processedFilter.getSourceFilter().getCondParamCombination());
-
-        EnumSet<DAODataType> queriedDaoDataTypes = this.utils.convertDataTypeToDAODataType(
-                this.processedFilter.getSourceFilter().getDataTypeFilters());
-
         long startTimeCondGraph = System.currentTimeMillis();
         ConditionGraphCache condGraphCache = new ConditionGraphCacheService(this.getServiceFactory())
                 .getOrLoadGraph(this.speciesId);
         log.debug("Condition graph retrieved for species {} in {} ms",
                 this.speciesId, System.currentTimeMillis() - startTimeCondGraph);
 
-        //2. retrieve rawconditionIds from the globalCond and the condition parameters.
-        //   If conditionMap is empty (no condition filter provided), use all global conditions
-        //   from the graph so that observed expressions are not missed.
         //   Snapshot filter-matching condition IDs before any ancestor expansion so that
         //   propagateCalls() can stop propagating upward at the filter boundary.
         final Set<Integer> filterConditionIds = conditionMap.isEmpty()?
                 Collections.emptySet(): new HashSet<>(conditionMap.keySet());
-        Set<Integer> globalCondIdsToQuery = conditionMap.isEmpty()?
-                condGraphCache.getGlobalCondToDirectAncestors().keySet():
-                conditionMap.keySet();
-        long startTimeRawConds = System.currentTimeMillis();
-        List<RawConditionToSelfGlobalConditionTO> rawCondToSeflGlobalCondTOs = this.condDAO
-        .getRawConditionToSelfGlobalConditionFromGlobalConditionIds(globalCondIdsToQuery,
-                daoCondParams).getAllTOs();
-        Map<Integer, Integer> rawCondIdToGlobalCondIds = rawCondToSeflGlobalCondTOs.stream()
-                .collect(Collectors.toMap(
-                        RawConditionToSelfGlobalConditionTO::getRawConditionId,
-                        RawConditionToSelfGlobalConditionTO::getGlobalConditionId));
-        log.debug("Raw condition IDs retrieved ({} entries) in {} ms",
-                rawCondIdToGlobalCondIds.size(), System.currentTimeMillis() - startTimeRawConds);
-
+        //The raw conditions the observations were made in, mapped to the requested conditions
+        //they are aggregated into, retrieved with the conditions of the processed filter
+        Map<Integer, Integer> rawCondIdToGlobalCondIds =
+                this.processedFilter.getRawConditionToGlobalConditionIds();
         if (rawCondIdToGlobalCondIds.isEmpty()) {
             log.debug("No raw conditions matched the requested global conditions; returning empty result");
             return log.traceExit(new HashMap<>());
         }
 
-        //3. retrieve the rawExpressionCalls filtering on rawConditionIds and datatypes
+        //3. retrieve the observations of the requested genes in these raw conditions
         ObservedExpressionDAO obsExprDAO = this.getDaoManager().getObservedExpressionDAO();
-        // generate the filter from all info we already have
-        //XXX: Could be created directly when instantiating the ExpressionCallLoader, Didn't want to touch the Loader while testing the new approach
-        DAOObservedExpressionFilter obsExprFilter = new DAOObservedExpressionFilter(this.geneMap.keySet(),
-                queriedDaoDataTypes, rawCondIdToGlobalCondIds.keySet());
-
         // first key -> bgeeGeneId, 2nd key globalConditionId
         long startTimeObsExpr = System.currentTimeMillis();
-        List<ObservedExpressionTO> observedExpressionTOs =
-            obsExprDAO.getObservedExpression(obsExprFilter, null).stream().toList();
+        List<ObservedExpressionTO> observedExpressionTOs = obsExprDAO.getObservedExpression(
+                this.processedFilter.getDAOObservedExpressionFilter(), null).stream().toList();
         Set<Integer> unmatchedRawCondIds = observedExpressionTOs.stream()
             .map(ObservedExpressionTO::getConditionId)
             .filter(id -> !rawCondIdToGlobalCondIds.containsKey(id))

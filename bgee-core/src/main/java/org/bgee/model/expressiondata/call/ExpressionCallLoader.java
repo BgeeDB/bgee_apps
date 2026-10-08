@@ -215,10 +215,12 @@ public class ExpressionCallLoader extends CommonService {
         log.debug("Condition graph retrieved for species {} in {} ms",
                 this.speciesId, System.currentTimeMillis() - startTimeCondGraph);
 
-        //   Snapshot filter-matching condition IDs before any ancestor expansion so that
-        //   propagateCalls() can stop propagating upward at the filter boundary.
-        final Set<Integer> filterConditionIds = conditionMap.isEmpty()?
-                Collections.emptySet(): new HashSet<>(conditionMap.keySet());
+        //The conditions identified by the processed filter: the requested conditions with all
+        //their descendants, or all the conditions of the requested combination when none is
+        //requested. The propagation only contributes an observation to the ancestors among them:
+        //when only "brain" is requested, nothing is computed for "nervous system" or for any
+        //other ancestor of "brain".
+        Set<Integer> filterConditionIds = this.conditionMap.keySet();
         //The raw conditions the observations were made in, mapped to the requested conditions
         //they are aggregated into, retrieved with the conditions of the processed filter
         Map<Integer, Integer> rawCondIdToGlobalCondIds =
@@ -256,9 +258,6 @@ public class ExpressionCallLoader extends CommonService {
                 geneToGlobalCondIdToRawExpressionCall.size(), System.currentTimeMillis() - startTimeObsExpr);
 
         //5. use the topological order and the map<condId, Set<directParentCondId>> to propagate the calls.
-        //   filterConditionIds restricts score computation to the queried conditions;
-        //   propagation stops at the filter boundary so no wasteful scores are computed
-        //   for ancestor conditions (e.g. "nervous system" when only "brain" was requested).
         long startTimePropagation = System.currentTimeMillis();
         //Null unless the propagation is restricted to some condition parameters, in which case
         //it tells which conditions may be propagated into which

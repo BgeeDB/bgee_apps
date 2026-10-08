@@ -104,6 +104,11 @@ public class ExpressionCallLoader extends CommonService {
      * from the observations made in its own anatomical entity alone.
      */
     private final Set<ConditionParameter<?, ?>> propagationCondParams;
+    /**
+     * The ID of the species the calls are propagated in: the propagation runs over the condition
+     * graph of a single species, so the processed filter must target exactly one.
+     */
+    private final int speciesId;
 
     ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter, ServiceFactory serviceFactory) {
         this(processedFilter, serviceFactory, new CallServiceUtils(), null);
@@ -135,6 +140,13 @@ public class ExpressionCallLoader extends CommonService {
         this.geneDAO = this.getDaoManager().getGeneDAO();
         this.condDAO = this.getDaoManager().getConditionDAO();
         this.processedFilter = processedFilter;
+        //A filter requesting no species targets all of them, as they can all be queried
+        Set<Integer> speciesIds = this.processedFilter.getSpeciesMap().keySet();
+        if (speciesIds.size() != 1) {
+            throw log.throwing(new IllegalArgumentException("The on-the-fly propagation requires "
+                    + "a filter targeting exactly one species, targeted species: " + speciesIds));
+        }
+        this.speciesId = speciesIds.iterator().next();
         //The conditions and genes identified by the processed filter are never updated by this
         //Loader, so they are exposed as unmodifiable views rather than copied.
         Map<Integer, Condition2> requestedCondMap = this.processedFilter.getRequestedConditionMap();
@@ -210,14 +222,11 @@ public class ExpressionCallLoader extends CommonService {
         EnumSet<DAODataType> queriedDaoDataTypes = this.utils.convertDataTypeToDAODataType(
                 this.processedFilter.getSourceFilter().getDataTypeFilters());
 
-        //FIXME: at this point we assume a single species per request (validated by processExprCallPage)
-        int speciesId = this.processedFilter.getGeneSpeciesPart()
-                .getSpeciesMap().keySet().iterator().next();
         long startTimeCondGraph = System.currentTimeMillis();
         ConditionGraphCache condGraphCache = new ConditionGraphCacheService(this.getServiceFactory())
-                .getOrLoadGraph(speciesId);
+                .getOrLoadGraph(this.speciesId);
         log.debug("Condition graph retrieved for species {} in {} ms",
-                speciesId, System.currentTimeMillis() - startTimeCondGraph);
+                this.speciesId, System.currentTimeMillis() - startTimeCondGraph);
 
         //2. retrieve rawconditionIds from the globalCond and the condition parameters.
         //   If conditionMap is empty (no condition filter provided), use all global conditions

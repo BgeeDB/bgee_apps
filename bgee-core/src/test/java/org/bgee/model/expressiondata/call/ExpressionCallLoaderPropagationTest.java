@@ -28,6 +28,7 @@ import org.bgee.model.expressiondata.call.ConditionGraphCacheService.ConditionGr
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.species.Species;
 import org.junit.Test;
 
 /**
@@ -556,6 +557,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         ExpressionCallProcessedFilter processedFilter = mock(ExpressionCallProcessedFilter.class);
         when(processedFilter.getRequestedConditionMap()).thenReturn(condMap);
         when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
+        //The loader propagates over the condition graph of a single species
+        when(processedFilter.getSpeciesMap()).thenReturn(Map.of(1, new Species(1)));
 
         return new ExpressionCallLoader(processedFilter, serviceFactory,
                 mock(CallServiceUtils.class));
@@ -574,6 +577,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         ExpressionCallProcessedFilter processedFilter = mock(ExpressionCallProcessedFilter.class);
         when(processedFilter.getRequestedConditionMap()).thenReturn(condMap);
         when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
+        //The loader propagates over the condition graph of a single species
+        when(processedFilter.getSpeciesMap()).thenReturn(Map.of(1, new Species(1)));
         //A real filter rather than a mock: the propagation reads the requested combination from it
         //to know which condition parameters it may not move along
         when(processedFilter.getSourceFilter()).thenReturn(new ExpressionCallFilter2(null,

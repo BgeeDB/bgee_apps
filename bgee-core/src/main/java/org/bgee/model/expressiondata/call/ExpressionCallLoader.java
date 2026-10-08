@@ -280,10 +280,6 @@ public class ExpressionCallLoader extends CommonService {
         boolean filterRedundantCalls = this.processedFilter.getSourceFilter()
                 .isRedundantAncestorCallsFilter();
         boolean specificCallTypeRequested = this.isSpecificSummaryCallTypeRequested();
-        //The summary call type and quality of a call are inferred once and reused: both
-        //the filtering on the requested call type and the identification of the redundant calls
-        //need them. They are not inferred at all when neither does.
-        boolean callTypeQualityNeeded = filterRedundantCalls || specificCallTypeRequested;
         //Whether calls observed in the condition itself, or on the contrary calls only propagated
         //from sub-conditions, were requested ({@code null} when both are wanted). The propagation
         //state of a call already answers that question, for the requested combination of condition
@@ -316,49 +312,10 @@ public class ExpressionCallLoader extends CommonService {
         Map<Gene, List<OTFExpressionCall>> sortedCalls = new HashMap<>();
         for (Entry<Gene, Map<Integer, OTFExpressionCall>> geneEntry:
                 propagatedExpressionCalls.entrySet()) {
-            Map<Integer, OTFExpressionCall> keptCalls = new HashMap<>();
-            Map<Integer, Entry<ExpressionSummary, SummaryQuality>> keptCallTypeQualities =
-                    filterRedundantCalls? new HashMap<>(): null;
-
-            for (Entry<Integer, OTFExpressionCall> callEntry: geneEntry.getValue().entrySet()) {
-                if (this.excludedConditionIds.contains(callEntry.getKey())) {
-                    continue;
-                }
-                OTFExpressionCall call = callEntry.getValue();
-                if (!condFilter.test(call)) {
-                    continue;
-                }
-                //A call includes observed data when the gene was observed in the condition itself,
-                //whatever the observations made in its sub-conditions.
-                if (requestedObservedData != null && !requestedObservedData.equals(
-                        call.getDataPropagation().isIncludingObservedData())) {
-                    continue;
-                }
-                Entry<ExpressionSummary, SummaryQuality> callTypeQuality = !callTypeQualityNeeded?
-                        null: this.inferSummaryCallTypeAndQuality(call);
-                //A call to which no summary call type applies is only discarded when a specific
-                //call type was requested: with no such request it is returned as before,
-                //and the response simply carries no expression state for it.
-                if (specificCallTypeRequested &&
-                        !this.matchesRequestedSummaryCallType(callTypeQuality)) {
-                    continue;
-                }
-                keptCalls.put(callEntry.getKey(), call);
-                if (keptCallTypeQualities != null && callTypeQuality != null) {
-                    keptCallTypeQualities.put(callEntry.getKey(), callTypeQuality);
-                }
-            }
-
-            if (filterRedundantCalls) {
-                Set<Integer> redundantCondIds = identifyRedundantCalls(
-                        geneEntry.getValue(), keptCallTypeQualities, condGraphCache,
-                        propagationGroup);
-                log.debug("Discarding {} redundant call(s) out of {} for gene {}",
-                        redundantCondIds.size(), keptCalls.size(), geneEntry.getKey().getGeneId());
-                keptCalls.keySet().removeAll(redundantCondIds);
-            }
-
-            sortedCalls.put(geneEntry.getKey(), keptCalls.values().stream()
+            sortedCalls.put(geneEntry.getKey(), this.filterPropagatedCalls(geneEntry.getKey(),
+                    geneEntry.getValue(), condFilter, requestedObservedData,
+                    specificCallTypeRequested, filterRedundantCalls, condGraphCache,
+                    propagationGroup).stream()
                     .sorted(callComparator)
                     .toList());
         }
@@ -366,6 +323,90 @@ public class ExpressionCallLoader extends CommonService {
                 System.currentTimeMillis() - startTimeFiltering);
 
         return log.traceExit(sortedCalls);
+    }
+
+    /**
+     * Filters the calls propagated for one gene: the calls of the excluded conditions, of
+     * the conditions retrieved only for the propagation, and those not matching the requested
+     * observed data or summary call type are discarded, then, if requested, the calls redundant
+     * with a more precise one.
+     *
+     * @param gene                      The {@code Gene} the calls were propagated for.
+     * @param propagatedCalls           A {@code Map} where keys are {@code Integer}s that are
+     *                                  the IDs of all the global conditions the calls of
+     *                                  {@code gene} were propagated to, the associated value
+     *                                  being that call.
+     * @param condFilter                The {@code Predicate} accepting the calls of
+     *                                  the conditions requested by the condition filters.
+     * @param requestedObservedData     A {@code Boolean} that is {@code true} to keep only
+     *                                  the calls observed in their condition itself, {@code false}
+     *                                  to keep only the calls propagated from sub-conditions,
+     *                                  {@code null} to keep both.
+     * @param specificCallTypeRequested A {@code boolean} that is {@code true} to keep only
+     *                                  the calls matching the requested summary call types.
+     * @param filterRedundantCalls      A {@code boolean} that is {@code true} to discard the calls
+     *                                  redundant with a more precise one.
+     * @param condGraphCache            The {@code ConditionGraphCache} the calls were propagated
+     *                                  over.
+     * @param propagationGroup          The groups of conditions the propagation moved within,
+     *                                  as returned by {@link #propagationGroups(ConditionGraphCache)}.
+     * @return                          A {@code Collection} of the {@code OTFExpressionCall}s
+     *                                  kept, in no particular order.
+     */
+    private Collection<OTFExpressionCall> filterPropagatedCalls(Gene gene,
+            Map<Integer, OTFExpressionCall> propagatedCalls,
+            Predicate<OTFExpressionCall> condFilter, Boolean requestedObservedData,
+            boolean specificCallTypeRequested, boolean filterRedundantCalls,
+            ConditionGraphCache condGraphCache, int[] propagationGroup) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", gene, propagatedCalls, condFilter,
+                requestedObservedData, specificCallTypeRequested, filterRedundantCalls,
+                condGraphCache, propagationGroup);
+
+        //The summary call type and quality of a call are inferred once and reused: both
+        //the filtering on the requested call type and the identification of the redundant calls
+        //need them. They are not inferred at all when neither does.
+        boolean callTypeQualityNeeded = filterRedundantCalls || specificCallTypeRequested;
+        Map<Integer, OTFExpressionCall> keptCalls = new HashMap<>();
+        Map<Integer, Entry<ExpressionSummary, SummaryQuality>> keptCallTypeQualities =
+                filterRedundantCalls? new HashMap<>(): null;
+
+        for (Entry<Integer, OTFExpressionCall> callEntry: propagatedCalls.entrySet()) {
+            if (this.excludedConditionIds.contains(callEntry.getKey())) {
+                continue;
+            }
+            OTFExpressionCall call = callEntry.getValue();
+            if (!condFilter.test(call)) {
+                continue;
+            }
+            //A call includes observed data when the gene was observed in the condition itself,
+            //whatever the observations made in its sub-conditions.
+            if (requestedObservedData != null && !requestedObservedData.equals(
+                    call.getDataPropagation().isIncludingObservedData())) {
+                continue;
+            }
+            Entry<ExpressionSummary, SummaryQuality> callTypeQuality = !callTypeQualityNeeded?
+                    null: this.inferSummaryCallTypeAndQuality(call);
+            //A call to which no summary call type applies is only discarded when a specific
+            //call type was requested: with no such request it is returned as before,
+            //and the response simply carries no expression state for it.
+            if (specificCallTypeRequested &&
+                    !this.matchesRequestedSummaryCallType(callTypeQuality)) {
+                continue;
+            }
+            keptCalls.put(callEntry.getKey(), call);
+            if (keptCallTypeQualities != null && callTypeQuality != null) {
+                keptCallTypeQualities.put(callEntry.getKey(), callTypeQuality);
+            }
+        }
+
+        if (filterRedundantCalls) {
+            Set<Integer> redundantCondIds = identifyRedundantCalls(
+                    propagatedCalls, keptCallTypeQualities, condGraphCache, propagationGroup);
+            log.debug("Discarding {} redundant call(s) out of {} for gene {}",
+                    redundantCondIds.size(), keptCalls.size(), gene.getGeneId());
+            keptCalls.keySet().removeAll(redundantCondIds);
+        }
+        return log.traceExit(keptCalls.values());
     }
 
     /**

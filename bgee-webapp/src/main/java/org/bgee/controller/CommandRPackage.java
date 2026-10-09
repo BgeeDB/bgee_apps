@@ -269,17 +269,20 @@ public class CommandRPackage extends CommandParent {
     }
 
     /**
-     * @return  The {@code CallFileType} the request asks the calls to be read from,
-     *          {@code CallFileType#OBSERVED} when it asks for none: it is the kind of file
-     *          matching what this action returned when it queried the calls itself, the
-     *          anatomical entities and cell types being the observed ones.
-     * @throws InvalidRequestException  If the requested value matches no {@code CallFileType}.
+     * @return  The {@code CallFileType} the request asks the calls to be read from. It must be
+     *          requested explicitly: the two kinds of file do not answer the same question, and
+     *          a client relying on a default could test another one than it intends.
+     * @throws InvalidRequestException  If no call file type is requested, or if the requested
+     *                                  value matches no {@code CallFileType}.
      */
     private CallFileType checkAndGetCallFileType() throws InvalidRequestException {
         log.traceEntry();
         String requested = this.requestParameters.getCallFileType();
         if (StringUtils.isBlank(requested)) {
-            return log.traceExit(CallFileType.OBSERVED);
+            throw log.throwing(new InvalidRequestException("A call file type must be provided, "
+                    + "one of: " + EnumSet.allOf(CallFileType.class).stream()
+                            .map(CallFileType::getStringRepresentation)
+                            .collect(Collectors.joining(", "))));
         }
         if (!BgeeEnum.isInEnum(CallFileType.class, requested)) {
             throw log.throwing(new InvalidRequestException("Incorrect call file type provided: "

@@ -184,19 +184,26 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
                 "G2\tUBERON:0000104\tUBERON:0000955\tCL:0000540\tSILVER\tGOLD",
                 "G3\tUBERON:0000092\tUBERON:0002107\tGO:0005575\tNA\tSILVER"));
 
-        //A gene holding calls in a condition at several stages is returned once
-        assertEquals("Incorrect calls of at least SILVER quality", List.of(
-                List.of("G1", "UBERON:0000955", "GO:0005575"),
-                List.of("G2", "UBERON:0000955", "CL:0000540")),
-                subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.SILVER,
-                        null));
+        //No stage requested: the calls of the root of the stages, G3 only holding a call
+        //at another stage
+        assertEquals("Incorrect calls of at least SILVER quality with no stage requested",
+                List.of(List.of("G1", "UBERON:0000955", "GO:0005575"),
+                        List.of("G2", "UBERON:0000955", "CL:0000540")),
+                subsetCalls(callFile, EnumSet.of(DataType.IN_SITU, DataType.RNA_SEQ),
+                        SummaryQuality.SILVER, null));
         assertEquals("Incorrect calls of GOLD quality", List.of(
                 List.of("G1", "UBERON:0000955", "GO:0005575")),
                 subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.GOLD, null));
-        assertEquals("Incorrect calls of a combination of data types at one stage", List.of(
+        assertEquals("Incorrect calls at one stage", List.of(
                 List.of("G3", "UBERON:0002107", "GO:0005575")),
                 subsetCalls(callFile, EnumSet.of(DataType.IN_SITU, DataType.RNA_SEQ),
                         SummaryQuality.SILVER, List.of("UBERON:0000092")));
+        //A gene holding calls in a condition at several of the requested stages is returned once
+        assertEquals("Incorrect calls at several stages", List.of(
+                List.of("G1", "UBERON:0000955", "GO:0005575"),
+                List.of("G2", "UBERON:0000955", "CL:0000540")),
+                subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.SILVER,
+                        List.of("UBERON:0000104", "UBERON:0000092")));
 
         assertThrows("A combination of data types missing from the file should be rejected",
                 IllegalStateException.class, () -> subsetCalls(callFile,

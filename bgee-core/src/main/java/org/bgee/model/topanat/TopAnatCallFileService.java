@@ -302,8 +302,8 @@ public class TopAnatCallFileService extends CommonService {
      *                      rows only, any other quality the SILVER and GOLD ones, the files
      *                      holding no BRONZE call.
      * @param stageIds      A {@code Collection} of {@code String}s that are the IDs of
-     *                      the developmental stages to retain, every stage of the file when
-     *                      {@code null} or empty.
+     *                      the developmental stages to retain. When {@code null} or empty,
+     *                      the root of the stages, whose calls aggregate every stage.
      * @return              A {@code Stream} of {@code String[]}s holding the gene ID, the anat.
      *                      entity ID and the cell type ID of each retained row, without duplicate.
      *                      The file is read lazily, so the {@code Stream} must be closed, and
@@ -346,7 +346,10 @@ public class TopAnatCallFileService extends CommonService {
         final Set<String> acceptedQualities = SummaryQuality.GOLD.equals(quality)?
                 Set.of(SummaryQuality.GOLD.name()):
                 Set.of(SummaryQuality.GOLD.name(), SummaryQuality.SILVER.name());
-        final Set<String> requestedStages = stageIds == null? Set.of(): new HashSet<>(stageIds);
+        //No stage requested means every stage aggregated, as in topAnat v1, rather than the union
+        //of the calls of each stage: the calls of the root of the stages
+        final Set<String> requestedStages = stageIds == null || stageIds.isEmpty()?
+                Set.of(ConditionDAO.DEV_STAGE_ROOT_ID): new HashSet<>(stageIds);
         //A same gene, anat. entity and cell type is reported at each stage it holds a call at,
         //so the triplets already returned are remembered. The stream is sequential, a plain
         //HashSet is therefore enough.
@@ -356,7 +359,7 @@ public class TopAnatCallFileService extends CommonService {
         return log.traceExit(Files.lines(callFile, StandardCharsets.UTF_8)
                 .skip(1)
                 .map(l -> l.split(COLUMN_SEPARATOR, -1))
-                .filter(v -> requestedStages.isEmpty() || requestedStages.contains(v[stageCol]))
+                .filter(v -> requestedStages.contains(v[stageCol]))
                 .filter(v -> acceptedQualities.contains(v[qualityCol]))
                 .filter(v -> returnedTriplets.add(v[geneCol] + COLUMN_SEPARATOR + v[anatCol]
                         + COLUMN_SEPARATOR + v[cellTypeCol]))

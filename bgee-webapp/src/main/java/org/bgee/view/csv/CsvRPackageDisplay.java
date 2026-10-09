@@ -44,7 +44,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
     }
 
     @Override
-    public void displayCallsFromFile(List<String> columns, Stream<String[]> rows) {
+    public void displayRowsFromFile(List<String> columns, Stream<String[]> rows) {
         try (final ICsvListWriter listWriter = new CsvListWriter(this.getOut(), this.csvPref)) {
             String[] header = columns.toArray(String[]::new);
             this.startDisplay();

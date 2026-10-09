@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -328,18 +329,7 @@ public class TopAnatCallFileService extends CommonService {
 
         //The columns are located by name rather than by position, so that the generated files
         //can gain columns without breaking this reading
-        String headerLine;
-        try (BufferedReader reader = Files.newBufferedReader(callFile, StandardCharsets.UTF_8)) {
-            headerLine = reader.readLine();
-        }
-        if (headerLine == null) {
-            throw log.throwing(new IllegalStateException("Empty call file: " + callFile));
-        }
-        String[] header = headerLine.split(COLUMN_SEPARATOR, -1);
-        Map<String, Integer> colIndexes = new HashMap<>();
-        for (int i = 0; i < header.length; i++) {
-            colIndexes.put(header[i], i);
-        }
+        Map<String, Integer> colIndexes = columnIndexes(callFile);
         final int geneCol = columnIndex(colIndexes, GENE_ID_COLUMN, callFile);
         final int stageCol = columnIndex(colIndexes, STAGE_ID_COLUMN, callFile);
         final int conditionCol = columnIndex(colIndexes, CONDITION_ID_COLUMN, callFile);
@@ -368,12 +358,62 @@ public class TopAnatCallFileService extends CommonService {
                 .filter(v -> returnedPairs.add(v[geneCol] + COLUMN_SEPARATOR + v[conditionCol]))
                 .map(v -> new String[] {v[geneCol], v[conditionCol]}));
     }
-    private static int columnIndex(Map<String, Integer> colIndexes, String column,
-            Path callFile) {
+    /**
+     * Read some columns of a generated file, for instance the conditions, or the relations
+     * between them.
+     *
+     * @param file      The {@code Path} of the file to read.
+     * @param columns   A {@code List} of {@code String}s that are the names of the columns
+     *                  to read.
+     * @return          A {@code Stream} of {@code String[]}s holding, for each row of the file,
+     *                  the values of {@code columns}, in that order. The file is read lazily,
+     *                  so the {@code Stream} must be closed.
+     * @throws IOException              If the file cannot be read.
+     * @throws IllegalArgumentException If {@code file} or {@code columns} is not provided.
+     * @throws IllegalStateException    If the file lacks one of {@code columns}.
+     */
+    public static Stream<String[]> readColumns(Path file, List<String> columns)
+            throws IOException {
+        log.traceEntry("{}, {}", file, columns);
+        if (file == null || columns == null || columns.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A file and the columns to read must be provided"));
+        }
+        //Located by name, as the columns of the call files
+        Map<String, Integer> colIndexes = columnIndexes(file);
+        final int[] indexes = columns.stream()
+                .mapToInt(column -> columnIndex(colIndexes, column, file))
+                .toArray();
+        //Closing the returned stream closes the file
+        return log.traceExit(Files.lines(file, StandardCharsets.UTF_8)
+                .skip(1)
+                .map(l -> l.split(COLUMN_SEPARATOR, -1))
+                .map(v -> Arrays.stream(indexes).mapToObj(i -> v[i]).toArray(String[]::new)));
+    }
+    /**
+     * @return  A {@code Map} where keys are the names of the columns of {@code file}, read from
+     *          its header, the associated value being their index.
+     */
+    private static Map<String, Integer> columnIndexes(Path file) throws IOException {
+        String headerLine;
+        try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            headerLine = reader.readLine();
+        }
+        if (headerLine == null) {
+            throw log.throwing(new IllegalStateException("Empty file: " + file));
+        }
+        String[] header = headerLine.split(COLUMN_SEPARATOR, -1);
+        Map<String, Integer> colIndexes = new HashMap<>();
+        for (int i = 0; i < header.length; i++) {
+            colIndexes.put(header[i], i);
+        }
+        return colIndexes;
+    }
+    private static int columnIndex(Map<String, Integer> colIndexes, String column, Path file) {
         Integer index = colIndexes.get(column);
         if (index == null) {
             throw log.throwing(new IllegalStateException("No column " + column
-                    + " in the call file " + callFile));
+                    + " in the file " + file));
         }
         return index;
     }

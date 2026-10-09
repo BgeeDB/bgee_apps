@@ -6,14 +6,11 @@ import java.util.stream.Stream;
 
 import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyElement;
 import org.bgee.model.species.Species;
 
 public interface RPackageDisplay{
-	
-	void displayCalls(List<String> attrs, Stream<ExpressionCall> callsStream);
 
     /**
      * Display the rows read from a generated expression call file.

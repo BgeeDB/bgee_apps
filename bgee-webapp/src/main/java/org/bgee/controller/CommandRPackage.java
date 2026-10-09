@@ -85,10 +85,7 @@ public class CommandRPackage extends CommandParent {
     public final static String AE_DESCRIPTION_PARAM = "DESCRIPTION";
 
     public final static String CALLS_GENE_ID_PARAM = "GENE_ID";
-    public final static String CALLS_ANAT_ENTITY_ID_PARAM = "ANAT_ENTITY_ID";
     public final static String CALLS_CONDITION_ID_PARAM = "CONDITION_ID";
-    public final static String CALLS_DEV_STAGE_PARAM = "DEV_STAGE_ID";
-    public final static String CALLS_DATA_QUALITY_PARAM = "DATA_QUALITY_ID";
 
     public final static String RELATIONS_SOURCE_PARAM = "SOURCE_ID";
     public final static String RELATIONS_TARGET_PARAM = "TARGET_ID";

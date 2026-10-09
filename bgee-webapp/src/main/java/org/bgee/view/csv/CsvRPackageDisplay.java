@@ -19,7 +19,6 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyElement;
@@ -58,51 +57,6 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
                 }
             });
             listWriter.flush();
-            this.endDisplay();
-        } catch (IOException e) {
-            log.catching(e);
-            throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
-        }
-    }
-
-    @Override
-    public void displayCalls(List<String> attrs, Stream<ExpressionCall> callsStream) {
-        try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
-            String[] header = attrs.stream().map(attr -> attr.toString()).toArray(String[]::new);
-            this.startDisplay();
-            mapWriter.writeHeader(header);
-            callsStream.forEach( call -> {
-                int columnNumber = 0;
-                final Map<String, Object> speMap = new HashMap<String, Object>();
-                while (columnNumber < attrs.size()) {
-                    switch (attrs.get(columnNumber)) {
-                    case CommandRPackage.CALLS_GENE_ID_PARAM:
-                        speMap.put(header[columnNumber], call.getGene().getGeneId());
-                        columnNumber++;
-                        break;
-                    case CommandRPackage.CALLS_ANAT_ENTITY_ID_PARAM:
-                        speMap.put(header[columnNumber], call.getCondition().getAnatEntityId());
-                        columnNumber++;
-                        break;
-                    case CommandRPackage.CALLS_DEV_STAGE_PARAM:
-                        speMap.put(header[columnNumber], call.getCondition().getDevStageId());
-                        columnNumber++;
-                        break;
-                    case CommandRPackage.CALLS_DATA_QUALITY_PARAM:
-                        speMap.put(header[columnNumber], call.getSummaryQuality());
-                        columnNumber++;
-                        break;
-                    default:
-                        throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));
-                    }
-                }
-                try {
-                    mapWriter.write(speMap, header);
-                } catch (IOException e) {
-                    throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
-                }
-            });
-            mapWriter.flush();
             this.endDisplay();
         } catch (IOException e) {
             log.catching(e);

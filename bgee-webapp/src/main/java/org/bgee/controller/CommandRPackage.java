@@ -2,7 +2,6 @@ package org.bgee.controller;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -13,10 +12,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -266,9 +263,9 @@ public class CommandRPackage extends CommandParent {
         List<String> columns = List.of(CALLS_GENE_ID_PARAM, CALLS_ANAT_ENTITY_ID_PARAM,
                 CALLS_CELL_TYPE_ID_PARAM);
         //The stream is closed once the view has consumed it, the file holding a whole species
-        try (Stream<String> lines = Files.lines(callFile)) {
-            display.displayCallsFromFile(columns, this.subsetCallFile(callFile, lines, dataTypes,
-                    quality, stageIds));
+        try (Stream<String[]> calls = TopAnatCallFileService.subsetCalls(callFile, dataTypes,
+                quality, stageIds)) {
+            display.displayCallsFromFile(columns, calls);
         }
 
         log.traceExit();
@@ -292,85 +289,6 @@ public class CommandRPackage extends CommandParent {
                     + requested));
         }
         return log.traceExit(BgeeEnum.convert(CallFileType.class, requested));
-    }
-
-    /**
-     * Subset a generated call file.
-     *
-     * @param callFile      The {@code Path} of the file, to read its header from.
-     * @param lines         A {@code Stream} of its lines, its header included.
-     * @param dataTypes     The {@code DataType}s requested: the quality is read in the column
-     *                      of that very combination, the quality of a combination not being
-     *                      derivable from the qualities of its data types taken separately.
-     * @param quality       The {@code SummaryQuality} requested. {@code GOLD} retains the GOLD
-     *                      rows only, {@code SILVER} retains the SILVER and the GOLD ones.
-     * @param stageIds      The IDs of the developmental stages to retain, every stage of the file
-     *                      when {@code null} or empty.
-     * @return              A {@code Stream} of {@code String[]}s holding the gene ID, anat. entity
-     *                      ID and cell type ID of each retained row, without duplicate.
-     * @throws IOException              If the header of the file cannot be read.
-     * @throws InvalidRequestException  If the file holds no column for the requested combination
-     *                                  of data types.
-     */
-    private Stream<String[]> subsetCallFile(Path callFile, Stream<String> lines,
-            EnumSet<DataType> dataTypes, SummaryQuality quality, Collection<String> stageIds)
-                    throws IOException, InvalidRequestException {
-        log.traceEntry("{}, {}, {}, {}, {}", callFile, lines, dataTypes, quality, stageIds);
-
-        //The columns are located by name rather than by position, so that the generated files
-        //can gain columns without breaking this query
-        String headerLine;
-        try (BufferedReader reader = Files.newBufferedReader(callFile)) {
-            headerLine = reader.readLine();
-        }
-        if (headerLine == null) {
-            throw log.throwing(new IllegalStateException("Empty call file: " + callFile));
-        }
-        String[] header = headerLine.split(TopAnatCallFileService.COLUMN_SEPARATOR, -1);
-        Map<String, Integer> colIndexes = new HashMap<>();
-        for (int i = 0; i < header.length; i++) {
-            colIndexes.put(header[i], i);
-        }
-        final int geneCol = columnIndex(colIndexes, TopAnatCallFileService.GENE_ID_COLUMN, callFile);
-        final int stageCol = columnIndex(colIndexes, TopAnatCallFileService.STAGE_ID_COLUMN,
-                callFile);
-        final int anatCol = columnIndex(colIndexes, TopAnatCallFileService.ANAT_ENTITY_ID_COLUMN,
-                callFile);
-        final int cellTypeCol = columnIndex(colIndexes,
-                TopAnatCallFileService.CELL_TYPE_ID_COLUMN, callFile);
-        String qualityColumn = TopAnatCallFileService.combinationColumnName(dataTypes);
-        if (!colIndexes.containsKey(qualityColumn)) {
-            throw log.throwing(new InvalidRequestException("The expression calls of the data type "
-                    + "combination " + qualityColumn + " are not available"));
-        }
-        final int qualityCol = colIndexes.get(qualityColumn);
-
-        //A request for SILVER means "at least SILVER", as everywhere else in Bgee
-        final Set<String> acceptedQualities = SummaryQuality.GOLD.equals(quality)?
-                Set.of(SummaryQuality.GOLD.name()):
-                Set.of(SummaryQuality.GOLD.name(), SummaryQuality.SILVER.name());
-        final Set<String> requestedStages = stageIds == null? Set.of(): new HashSet<>(stageIds);
-        //A same gene, anat. entity and cell type is reported at each stage it holds a call at,
-        //so the triplets already returned are remembered. The stream is sequential, a plain
-        //HashSet is therefore enough.
-        final Set<String> returnedTriplets = new HashSet<>();
-
-        return log.traceExit(lines
-                .skip(1)
-                .map(l -> l.split(TopAnatCallFileService.COLUMN_SEPARATOR, -1))
-                .filter(v -> requestedStages.isEmpty() || requestedStages.contains(v[stageCol]))
-                .filter(v -> acceptedQualities.contains(v[qualityCol]))
-                .filter(v -> returnedTriplets.add(v[geneCol] + v[anatCol] + v[cellTypeCol]))
-                .map(v -> new String[] {v[geneCol], v[anatCol], v[cellTypeCol]}));
-    }
-
-    private static int columnIndex(Map<String, Integer> colIndexes, String column, Path callFile) {
-        Integer index = colIndexes.get(column);
-        if (index == null) {
-            throw log.throwing(new IllegalStateException("No column " + column + " in the call "
-                    + "file " + callFile));
-        }
-        return index;
     }
 
     /**

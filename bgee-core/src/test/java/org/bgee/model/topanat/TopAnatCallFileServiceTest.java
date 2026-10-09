@@ -3,11 +3,16 @@ package org.bgee.model.topanat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.bgee.model.ComposedEntity;
 import org.bgee.model.TestAncestor;
@@ -15,14 +20,18 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.Condition2;
 import org.bgee.model.species.Species;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Unit tests for {@link TopAnatCallFileService}, of the columns of the generated files: topAnat
  * reads them by name, so a change of their number, their name or their order breaks it. And of
- * the content of the files describing the conditions, on a small graph.
+ * the content of the files describing the conditions, on a small graph, and of the reading of
+ * the call files, on a small file.
  *
  * @author  Julien Wollbrett
  * @version Bgee 16
@@ -155,5 +164,49 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
                         Map.of(1, condition(ROOT, CELL_TYPE_ROOT),
                                 2, condition(BRAIN, CELL_TYPE_ROOT)),
                         Map.of(1, new int[0], 2, new int[0])));
+    }
+
+    @Rule
+    public TemporaryFolder tmpFolder = new TemporaryFolder();
+
+    /**
+     * Test {@link TopAnatCallFileService#subsetCalls(Path, EnumSet, SummaryQuality,
+     * java.util.Collection)}.
+     */
+    @Test
+    public void shouldSubsetCalls() throws IOException {
+        //Only two combination columns: the columns are located by name
+        Path callFile = this.tmpFolder.newFile("calls.tsv").toPath();
+        Files.write(callFile, List.of(
+                "geneId\tstageId\tanatEntityId\tcellTypeId\tRNA_SEQ\tIN_SITU-RNA_SEQ",
+                "G1\tUBERON:0000104\tUBERON:0000955\tGO:0005575\tGOLD\tSILVER",
+                "G1\tUBERON:0000092\tUBERON:0000955\tGO:0005575\tSILVER\tNA",
+                "G2\tUBERON:0000104\tUBERON:0000955\tCL:0000540\tSILVER\tGOLD",
+                "G3\tUBERON:0000092\tUBERON:0002107\tGO:0005575\tNA\tSILVER"));
+
+        //A gene holding calls in a condition at several stages is returned once
+        assertEquals("Incorrect calls of at least SILVER quality", List.of(
+                List.of("G1", "UBERON:0000955", "GO:0005575"),
+                List.of("G2", "UBERON:0000955", "CL:0000540")),
+                subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.SILVER,
+                        null));
+        assertEquals("Incorrect calls of GOLD quality", List.of(
+                List.of("G1", "UBERON:0000955", "GO:0005575")),
+                subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.GOLD, null));
+        assertEquals("Incorrect calls of a combination of data types at one stage", List.of(
+                List.of("G3", "UBERON:0002107", "GO:0005575")),
+                subsetCalls(callFile, EnumSet.of(DataType.IN_SITU, DataType.RNA_SEQ),
+                        SummaryQuality.SILVER, List.of("UBERON:0000092")));
+
+        assertThrows("A combination of data types missing from the file should be rejected",
+                IllegalStateException.class, () -> subsetCalls(callFile,
+                        EnumSet.of(DataType.IN_SITU), SummaryQuality.SILVER, null));
+    }
+    private static List<List<String>> subsetCalls(Path callFile, EnumSet<DataType> dataTypes,
+            SummaryQuality quality, List<String> stageIds) throws IOException {
+        try (Stream<String[]> calls = TopAnatCallFileService.subsetCalls(callFile, dataTypes,
+                quality, stageIds)) {
+            return calls.map(Arrays::asList).collect(Collectors.toList());
+        }
     }
 }

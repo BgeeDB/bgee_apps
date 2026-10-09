@@ -919,9 +919,10 @@ public class TopAnatAnalysis extends CommonService {
             final StringBuilder sb = new StringBuilder();
             sb.append(this.params.getSpeciesId());
             sb.append("_").append(this.params.getCallType().toString());
-            Optional.ofNullable(this.params.getDevStageId())
-                //replace column in IDs
-                .ifPresent(e -> sb.append("_").append(e.replace(":", "_")));
+            //No stage requested means the root of the stages: it is named as such, so that
+            //both requests share the same file. Colons replaced in IDs.
+            sb.append("_").append((StringUtils.isBlank(this.params.getDevStageId())?
+                    ConditionDAO.DEV_STAGE_ROOT_ID: this.params.getDevStageId()).replace(":", "_"));
             //use EnumSet for consistent ordering
             Optional.ofNullable(this.params.getDataTypes()).map(e -> EnumSet.copyOf(e))
             .orElse(EnumSet.allOf(DataType.class))

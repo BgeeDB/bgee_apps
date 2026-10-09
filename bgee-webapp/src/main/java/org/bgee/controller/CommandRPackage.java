@@ -35,8 +35,6 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.ManageReadWriteLocks;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
@@ -83,10 +81,6 @@ public class CommandRPackage extends CommandParent {
     //XXX move them to RequestParameters ????
     //XXX: yes, why not? Some already exist I guess
 
-    public final static String AE_ID_PARAM = "ID";
-    public final static String AE_NAME_PARAM = "NAME";
-    public final static String AE_DESCRIPTION_PARAM = "DESCRIPTION";
-
     public final static String CALLS_GENE_ID_PARAM = "GENE_ID";
     public final static String CALLS_CONDITION_ID_PARAM = "CONDITION_ID";
 
@@ -99,8 +93,6 @@ public class CommandRPackage extends CommandParent {
 
     public final static String RELATIONS_SOURCE_PARAM = "SOURCE_ID";
     public final static String RELATIONS_TARGET_PARAM = "TARGET_ID";
-    public final static String RELATION_TYPE_PARAM = "RELATION_TYPE";
-    public final static String RELATION_STATUS_PARAM = "RELATION_STATUS";
 
     public final static String SPECIES_ID_PARAM = "ID";
     public final static String SPECIES_GENUS_PARAM = "GENUS";
@@ -560,29 +552,6 @@ public class CommandRPackage extends CommandParent {
         display.displayPropagation(requestedAttrs, propagatedEntityIds);
     }
 
-    private static Set<AnatEntityService.Attribute> convertRqAttrsToAEAttrs(List<String> rqAttrs){
-        log.traceEntry("{}", rqAttrs);
-        Set<AnatEntityService.Attribute> attrs = new HashSet<>();
-        for(String rqAttr : rqAttrs){
-            switch(rqAttr){
-                case AE_ID_PARAM :
-                    attrs.add(AnatEntityService.Attribute.ID);
-                    break;
-                case AE_NAME_PARAM :
-                    attrs.add(AnatEntityService.Attribute.NAME);
-                    break;
-                case AE_DESCRIPTION_PARAM :
-                    attrs.add(AnatEntityService.Attribute.DESCRIPTION);
-                    break;
-                default :
-                    throw log.throwing(new UnsupportedOperationException(
-                            "Attribute parameter not supported: " + rqAttr));
-            } 
-        }
-        return log.traceExit(attrs);
-    }
-
-
     private static List<String> convertPropagatedAttrs(CallService.Attribute condParam,
             List<String> attrs) {
         log.traceEntry("{}, {}", condParam, attrs);
@@ -607,19 +576,6 @@ public class CommandRPackage extends CommandParent {
             }
         }
         return log.traceExit(requestedAttrs);
-    }
-
-    private static void checkRelationAttrs(List<String> rqAttrs){
-        log.traceEntry("{}", rqAttrs);
-        for(String rqAttr : rqAttrs){
-            if (!rqAttr.equals(CommandRPackage.RELATIONS_SOURCE_PARAM)
-                    && !rqAttr.equals(CommandRPackage.RELATIONS_TARGET_PARAM)
-                    && !rqAttr.equals(CommandRPackage.RELATION_TYPE_PARAM)
-                    && !rqAttr.equals(CommandRPackage.RELATION_STATUS_PARAM)){
-                throw log.throwing(new UnsupportedOperationException(
-                        "Attribute parameter not supported: " + rqAttr));
-            }
-        }
     }
 
     private static void checkSpeciesAttrs(List<String> rqAttrs){

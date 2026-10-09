@@ -124,17 +124,17 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
     @Test
     public void shouldGetConditionLines() {
         assertEquals("Incorrect lines of the condition file", List.of(
-                "BGEE:0000000\tanatomical entity",
-                "CL:0000540-BGEE:0000000\tneuron in anatomical entity",
-                "CL:0000540-UBERON:0000955\tneuron in brain",
-                "UBERON:0000955\tbrain"),
+                "BGEE:0000000\tanatomical entity\tBGEE:0000000\tGO:0005575",
+                "CL:0000540-BGEE:0000000\tneuron in anatomical entity\tBGEE:0000000\tCL:0000540",
+                "CL:0000540-UBERON:0000955\tneuron in brain\tUBERON:0000955\tCL:0000540",
+                "UBERON:0000955\tbrain\tUBERON:0000955\tGO:0005575"),
                 TopAnatCallFileService.conditionLines(conditions().values()));
 
         //A cell type that is the anat. entity itself is held as a single entity by the condition,
         //it must not be confused with the anat. entity alone
         assertEquals("Incorrect lines of a cell type that is the anat. entity itself", List.of(
-                "CL:0000000\tcell",
-                "CL:0000000-CL:0000000\tcell in cell"),
+                "CL:0000000\tcell\tCL:0000000\tGO:0005575",
+                "CL:0000000-CL:0000000\tcell in cell\tCL:0000000\tCL:0000000"),
                 TopAnatCallFileService.conditionLines(
                         List.of(condition(CELL, CELL_TYPE_ROOT), condition(CELL, CELL))));
 
@@ -178,30 +178,28 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
         //Only two combination columns: the columns are located by name
         Path callFile = this.tmpFolder.newFile("calls.tsv").toPath();
         Files.write(callFile, List.of(
-                "geneId\tstageId\tanatEntityId\tcellTypeId\tRNA_SEQ\tIN_SITU-RNA_SEQ",
-                "G1\tUBERON:0000104\tUBERON:0000955\tGO:0005575\tGOLD\tSILVER",
-                "G1\tUBERON:0000092\tUBERON:0000955\tGO:0005575\tSILVER\tNA",
-                "G2\tUBERON:0000104\tUBERON:0000955\tCL:0000540\tSILVER\tGOLD",
-                "G3\tUBERON:0000092\tUBERON:0002107\tGO:0005575\tNA\tSILVER"));
+                "geneId\tstageId\tconditionId\tRNA_SEQ\tIN_SITU-RNA_SEQ",
+                "G1\tUBERON:0000104\tUBERON:0000955\tGOLD\tSILVER",
+                "G1\tUBERON:0000092\tUBERON:0000955\tSILVER\tNA",
+                "G2\tUBERON:0000104\tCL:0000540-UBERON:0000955\tSILVER\tGOLD",
+                "G3\tUBERON:0000092\tUBERON:0002107\tNA\tSILVER"));
 
         //No stage requested: the calls of the root of the stages, G3 only holding a call
         //at another stage
         assertEquals("Incorrect calls of at least SILVER quality with no stage requested",
-                List.of(List.of("G1", "UBERON:0000955", "GO:0005575"),
-                        List.of("G2", "UBERON:0000955", "CL:0000540")),
+                List.of(List.of("G1", "UBERON:0000955"),
+                        List.of("G2", "CL:0000540-UBERON:0000955")),
                 subsetCalls(callFile, EnumSet.of(DataType.IN_SITU, DataType.RNA_SEQ),
                         SummaryQuality.SILVER, null));
-        assertEquals("Incorrect calls of GOLD quality", List.of(
-                List.of("G1", "UBERON:0000955", "GO:0005575")),
+        assertEquals("Incorrect calls of GOLD quality", List.of(List.of("G1", "UBERON:0000955")),
                 subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.GOLD, null));
-        assertEquals("Incorrect calls at one stage", List.of(
-                List.of("G3", "UBERON:0002107", "GO:0005575")),
+        assertEquals("Incorrect calls at one stage", List.of(List.of("G3", "UBERON:0002107")),
                 subsetCalls(callFile, EnumSet.of(DataType.IN_SITU, DataType.RNA_SEQ),
                         SummaryQuality.SILVER, List.of("UBERON:0000092")));
         //A gene holding calls in a condition at several of the requested stages is returned once
         assertEquals("Incorrect calls at several stages", List.of(
-                List.of("G1", "UBERON:0000955", "GO:0005575"),
-                List.of("G2", "UBERON:0000955", "CL:0000540")),
+                List.of("G1", "UBERON:0000955"),
+                List.of("G2", "CL:0000540-UBERON:0000955")),
                 subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.SILVER,
                         List.of("UBERON:0000104", "UBERON:0000092")));
 

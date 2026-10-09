@@ -86,7 +86,7 @@ public class CommandRPackage extends CommandParent {
 
     public final static String CALLS_GENE_ID_PARAM = "GENE_ID";
     public final static String CALLS_ANAT_ENTITY_ID_PARAM = "ANAT_ENTITY_ID";
-    public final static String CALLS_CELL_TYPE_ID_PARAM = "CELL_TYPE_ID";
+    public final static String CALLS_CONDITION_ID_PARAM = "CONDITION_ID";
     public final static String CALLS_DEV_STAGE_PARAM = "DEV_STAGE_ID";
     public final static String CALLS_DATA_QUALITY_PARAM = "DATA_QUALITY_ID";
 
@@ -219,10 +219,11 @@ public class CommandRPackage extends CommandParent {
      * {@code TopAnatCallFileService}, of the kind the request asks for, rather than propagated
      * for the occasion: a whole species holds far more genes than a web request can propagate.
      * The rows returned are the ones the requested combination of data types supports a call of
-     * the requested quality in, restricted to the requested developmental stages. They cover the
-     * whole species: restricting them to a set of genes is left to the consumer, which keeps
-     * the response a function of a handful of parameters, identical for every caller asking
-     * the same question.
+     * the requested quality in, restricted to the requested developmental stages, or to the root
+     * of the stages when none is requested (see {@code TopAnatCallFileService#subsetCalls}): a gene
+     * ID and the ID of a condition of the condition files. They cover the whole species:
+     * restricting them to a set of genes is left to the consumer, which keeps the response
+     * a function of a handful of parameters, identical for every caller asking the same question.
      *
      * @throws InvalidRequestException  In case of invalid request parameter.
      * @throws IOException              In case of issue when reading the file or writing results.
@@ -260,8 +261,7 @@ public class CommandRPackage extends CommandParent {
                     + fileType.getStringRepresentation() + " expression call file has been "
                     + "generated for the species " + speciesId));
         }
-        List<String> columns = List.of(CALLS_GENE_ID_PARAM, CALLS_ANAT_ENTITY_ID_PARAM,
-                CALLS_CELL_TYPE_ID_PARAM);
+        List<String> columns = List.of(CALLS_GENE_ID_PARAM, CALLS_CONDITION_ID_PARAM);
         //The stream is closed once the view has consumed it, the file holding a whole species
         try (Stream<String[]> calls = TopAnatCallFileService.subsetCalls(callFile, dataTypes,
                 quality, stageIds)) {

@@ -214,10 +214,7 @@ public class OTFExpressionCall {
             throw log.throwing(new IllegalStateException("No formatter could be defined "
                     + "for " + pValue));
         }
-        //In Bgee 16 we limited the precision to 30 digits
-        return log.traceExit((pValue.compareTo(new BigDecimal("0")) != 0 &&
-                pValue.compareTo(new BigDecimal("1E-30")) <= 0 ? "<= ": "")
-                + formatter.format(pValue).toLowerCase(Locale.US));
+        return log.traceExit(formatter.format(pValue).toLowerCase(Locale.US));
     }
 
     @Override

@@ -1,18 +1,37 @@
 package org.bgee.model.topanat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.bgee.model.ComposedEntity;
 import org.bgee.model.TestAncestor;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.species.Species;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Unit tests for {@link TopAnatCallFileService}, of the columns of the generated files: topAnat
- * reads them by name, so a change of their number, their name or their order breaks it.
+ * reads them by name, so a change of their number, their name or their order breaks it. And of
+ * the content of the files describing the conditions, on a small graph, and of the reading of
+ * the call files, on a small file.
  *
  * @author  Julien Wollbrett
  * @version Bgee 16
@@ -59,5 +78,140 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
                 TopAnatCallFileService.dataTypeCombinations().stream()
                         .map(TopAnatCallFileService::combinationColumnName)
                         .collect(Collectors.toSet()).size());
+    }
+
+    private final static AnatEntity ROOT = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID,
+            "anatomical entity", null);
+    private final static AnatEntity BRAIN = new AnatEntity("UBERON:0000955", "brain", null);
+    private final static AnatEntity CELL_TYPE_ROOT = new AnatEntity(
+            ConditionDAO.CELL_TYPE_ROOT_ID, "cellular_component", null);
+    private final static AnatEntity NEURON = new AnatEntity("CL:0000540", "neuron", null);
+    private final static AnatEntity CELL = new AnatEntity("CL:0000000", "cell", null);
+
+    /**
+     * @return  A condition of topAnat built as the conditions loaded from the database:
+     *          the cell type first, then the anat. entity.
+     */
+    private static Condition2 condition(AnatEntity anatEntity, AnatEntity cellType) {
+        LinkedHashSet<AnatEntity> entities = new LinkedHashSet<>();
+        if (cellType != null) {
+            entities.add(cellType);
+        }
+        entities.add(anatEntity);
+        return new Condition2(Map.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                new ComposedEntity<>(entities, AnatEntity.class)), new Species(1));
+    }
+    /**
+     * @return  The conditions of a small graph, by internal ID: the root, the brain, the neurons,
+     *          and the neurons of the brain.
+     */
+    private static Map<Integer, Condition2> conditions() {
+        return Map.of(1, condition(ROOT, CELL_TYPE_ROOT), 2, condition(BRAIN, CELL_TYPE_ROOT),
+                3, condition(ROOT, NEURON), 4, condition(BRAIN, NEURON));
+    }
+    /**
+     * @return  The direct ancestors of the conditions of {@link #conditions()}, plus those of
+     *          a condition of another combination of condition parameters.
+     */
+    private static Map<Integer, int[]> directAncestors() {
+        return Map.of(1, new int[0], 2, new int[] {1}, 3, new int[] {1}, 4, new int[] {2, 3},
+                5, new int[] {4});
+    }
+
+    /**
+     * Test {@link TopAnatCallFileService#conditionLines(java.util.Collection)}.
+     */
+    @Test
+    public void shouldGetConditionLines() {
+        assertEquals("Incorrect lines of the condition file", List.of(
+                "BGEE:0000000\tanatomical entity\tBGEE:0000000\tGO:0005575",
+                "CL:0000540-BGEE:0000000\tneuron in anatomical entity\tBGEE:0000000\tCL:0000540",
+                "CL:0000540-UBERON:0000955\tneuron in brain\tUBERON:0000955\tCL:0000540",
+                "UBERON:0000955\tbrain\tUBERON:0000955\tGO:0005575"),
+                TopAnatCallFileService.conditionLines(conditions().values()));
+
+        //A cell type that is the anat. entity itself is held as a single entity by the condition,
+        //it must not be confused with the anat. entity alone
+        assertEquals("Incorrect lines of a cell type that is the anat. entity itself", List.of(
+                "CL:0000000\tcell\tCL:0000000\tGO:0005575",
+                "CL:0000000-CL:0000000\tcell in cell\tCL:0000000\tCL:0000000"),
+                TopAnatCallFileService.conditionLines(
+                        List.of(condition(CELL, CELL_TYPE_ROOT), condition(CELL, CELL))));
+
+        assertThrows("Two conditions with the same ID should be rejected",
+                IllegalStateException.class, () -> TopAnatCallFileService.conditionLines(List.of(
+                        condition(BRAIN, CELL_TYPE_ROOT), condition(BRAIN, CELL_TYPE_ROOT))));
+    }
+
+    /**
+     * Test {@link TopAnatCallFileService#relationLines(Map, Map)}.
+     */
+    @Test
+    public void shouldGetRelationLines() {
+        //The ancestors of the condition of another combination are ignored
+        assertEquals("Incorrect lines of the relation file", List.of(
+                "CL:0000540-BGEE:0000000\tBGEE:0000000",
+                "CL:0000540-UBERON:0000955\tCL:0000540-BGEE:0000000",
+                "CL:0000540-UBERON:0000955\tUBERON:0000955",
+                "UBERON:0000955\tBGEE:0000000"),
+                TopAnatCallFileService.relationLines(conditions(), directAncestors()));
+
+        assertThrows("A parent that is not one of the conditions should be rejected",
+                IllegalStateException.class, () -> TopAnatCallFileService.relationLines(
+                        Map.of(2, condition(BRAIN, CELL_TYPE_ROOT)), directAncestors()));
+        assertThrows("Conditions with several roots should be rejected",
+                IllegalStateException.class, () -> TopAnatCallFileService.relationLines(
+                        Map.of(1, condition(ROOT, CELL_TYPE_ROOT),
+                                2, condition(BRAIN, CELL_TYPE_ROOT)),
+                        Map.of(1, new int[0], 2, new int[0])));
+    }
+
+    @Rule
+    public TemporaryFolder tmpFolder = new TemporaryFolder();
+
+    /**
+     * Test {@link TopAnatCallFileService#subsetCalls(Path, EnumSet, SummaryQuality,
+     * java.util.Collection)}.
+     */
+    @Test
+    public void shouldSubsetCalls() throws IOException {
+        //Only two combination columns: the columns are located by name
+        Path callFile = this.tmpFolder.newFile("calls.tsv").toPath();
+        Files.write(callFile, List.of(
+                "geneId\tstageId\tconditionId\tRNA_SEQ\tIN_SITU-RNA_SEQ",
+                "G1\tUBERON:0000104\tUBERON:0000955\tGOLD\tSILVER",
+                "G1\tUBERON:0000092\tUBERON:0000955\tSILVER\tNA",
+                "G2\tUBERON:0000104\tCL:0000540-UBERON:0000955\tSILVER\tGOLD",
+                "G3\tUBERON:0000092\tUBERON:0002107\tNA\tSILVER"));
+
+        //No stage requested: the calls of the root of the stages, G3 only holding a call
+        //at another stage
+        assertEquals("Incorrect calls of at least SILVER quality with no stage requested",
+                List.of(List.of("G1", "UBERON:0000955"),
+                        List.of("G2", "CL:0000540-UBERON:0000955")),
+                subsetCalls(callFile, EnumSet.of(DataType.IN_SITU, DataType.RNA_SEQ),
+                        SummaryQuality.SILVER, null));
+        assertEquals("Incorrect calls of GOLD quality", List.of(List.of("G1", "UBERON:0000955")),
+                subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.GOLD, null));
+        assertEquals("Incorrect calls at one stage", List.of(List.of("G3", "UBERON:0002107")),
+                subsetCalls(callFile, EnumSet.of(DataType.IN_SITU, DataType.RNA_SEQ),
+                        SummaryQuality.SILVER, List.of("UBERON:0000092")));
+        //A gene holding calls in a condition at several of the requested stages is returned once
+        assertEquals("Incorrect calls at several stages", List.of(
+                List.of("G1", "UBERON:0000955"),
+                List.of("G2", "CL:0000540-UBERON:0000955")),
+                subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.SILVER,
+                        List.of("UBERON:0000104", "UBERON:0000092")));
+
+        assertThrows("A combination of data types missing from the file should be rejected",
+                IllegalStateException.class, () -> subsetCalls(callFile,
+                        EnumSet.of(DataType.IN_SITU), SummaryQuality.SILVER, null));
+    }
+    private static List<List<String>> subsetCalls(Path callFile, EnumSet<DataType> dataTypes,
+            SummaryQuality quality, List<String> stageIds) throws IOException {
+        try (Stream<String[]> calls = TopAnatCallFileService.subsetCalls(callFile, dataTypes,
+                quality, stageIds)) {
+            return calls.map(Arrays::asList).collect(Collectors.toList());
+        }
     }
 }

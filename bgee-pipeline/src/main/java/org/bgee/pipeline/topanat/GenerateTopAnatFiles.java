@@ -9,9 +9,10 @@ import org.bgee.model.topanat.TopAnatCallFileService;
 import org.bgee.pipeline.CommandRunner;
 
 /**
- * Generates the files topAnat reads its expression calls from, two per species: the calls are
- * propagated once by {@code TopAnatCallFileService} and written to files, the analyses then
- * reading them rather than propagating the calls of a whole species inside a web request.
+ * Generates the files topAnat reads its expression calls and its conditions from, four per
+ * species: the calls are propagated once by {@code TopAnatCallFileService} and written to files,
+ * the analyses then reading them rather than propagating the calls of a whole species inside
+ * a web request.
  * <p>
  * The web application generates the missing files at start-up as well. This entry point exists
  * to produce them from the pipeline, once, when a release is being prepared.

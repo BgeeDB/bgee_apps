@@ -2,7 +2,6 @@ package org.bgee.controller;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -13,12 +12,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,8 +35,6 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.ManageReadWriteLocks;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
@@ -83,20 +81,18 @@ public class CommandRPackage extends CommandParent {
     //XXX move them to RequestParameters ????
     //XXX: yes, why not? Some already exist I guess
 
-    public final static String AE_ID_PARAM = "ID";
-    public final static String AE_NAME_PARAM = "NAME";
-    public final static String AE_DESCRIPTION_PARAM = "DESCRIPTION";
-
     public final static String CALLS_GENE_ID_PARAM = "GENE_ID";
-    public final static String CALLS_ANAT_ENTITY_ID_PARAM = "ANAT_ENTITY_ID";
-    public final static String CALLS_CELL_TYPE_ID_PARAM = "CELL_TYPE_ID";
-    public final static String CALLS_DEV_STAGE_PARAM = "DEV_STAGE_ID";
-    public final static String CALLS_DATA_QUALITY_PARAM = "DATA_QUALITY_ID";
+    public final static String CALLS_CONDITION_ID_PARAM = "CONDITION_ID";
+
+    //The ID and the name of a condition keep the names they had when topAnat only tested
+    //anatomical entities
+    public final static String CONDITIONS_ID_PARAM = "ID";
+    public final static String CONDITIONS_NAME_PARAM = "NAME";
+    public final static String CONDITIONS_ANAT_ENTITY_ID_PARAM = "ANAT_ENTITY_ID";
+    public final static String CONDITIONS_CELL_TYPE_ID_PARAM = "CELL_TYPE_ID";
 
     public final static String RELATIONS_SOURCE_PARAM = "SOURCE_ID";
     public final static String RELATIONS_TARGET_PARAM = "TARGET_ID";
-    public final static String RELATION_TYPE_PARAM = "RELATION_TYPE";
-    public final static String RELATION_STATUS_PARAM = "RELATION_STATUS";
 
     public final static String SPECIES_ID_PARAM = "ID";
     public final static String SPECIES_GENUS_PARAM = "GENUS";
@@ -146,6 +142,34 @@ public class CommandRPackage extends CommandParent {
             log.traceEntry("{}", representation);
             return log.traceExit(BgeeEnum.convert(PropagationParam.class, representation));
         }
+    }
+
+    /**
+     * The attributes the conditions of topAnat can be displayed with, in their default order,
+     * associated with the column of the condition file holding them.
+     */
+    private final static Map<String, String> CONDITION_COLUMNS;
+    /**
+     * The attributes the relations between the conditions of topAnat can be displayed with,
+     * in their default order, associated with the column of the relation file holding them.
+     */
+    private final static Map<String, String> CONDITION_RELATION_COLUMNS;
+    static {
+        Map<String, String> conditionColumns = new LinkedHashMap<>();
+        conditionColumns.put(CONDITIONS_ID_PARAM, TopAnatCallFileService.CONDITION_ID_COLUMN);
+        conditionColumns.put(CONDITIONS_NAME_PARAM, TopAnatCallFileService.CONDITION_NAME_COLUMN);
+        conditionColumns.put(CONDITIONS_ANAT_ENTITY_ID_PARAM,
+                TopAnatCallFileService.ANAT_ENTITY_ID_COLUMN);
+        conditionColumns.put(CONDITIONS_CELL_TYPE_ID_PARAM,
+                TopAnatCallFileService.CELL_TYPE_ID_COLUMN);
+        CONDITION_COLUMNS = Collections.unmodifiableMap(conditionColumns);
+
+        Map<String, String> relationColumns = new LinkedHashMap<>();
+        relationColumns.put(RELATIONS_SOURCE_PARAM,
+                TopAnatCallFileService.SOURCE_CONDITION_ID_COLUMN);
+        relationColumns.put(RELATIONS_TARGET_PARAM,
+                TopAnatCallFileService.TARGET_CONDITION_ID_COLUMN);
+        CONDITION_RELATION_COLUMNS = Collections.unmodifiableMap(relationColumns);
     }
 
 
@@ -222,10 +246,11 @@ public class CommandRPackage extends CommandParent {
      * {@code TopAnatCallFileService}, of the kind the request asks for, rather than propagated
      * for the occasion: a whole species holds far more genes than a web request can propagate.
      * The rows returned are the ones the requested combination of data types supports a call of
-     * the requested quality in, restricted to the requested developmental stages. They cover the
-     * whole species: restricting them to a set of genes is left to the consumer, which keeps
-     * the response a function of a handful of parameters, identical for every caller asking
-     * the same question.
+     * the requested quality in, restricted to the requested developmental stages, or to the root
+     * of the stages when none is requested (see {@code TopAnatCallFileService#subsetCalls}): a gene
+     * ID and the ID of a condition of the condition files. They cover the whole species:
+     * restricting them to a set of genes is left to the consumer, which keeps the response
+     * a function of a handful of parameters, identical for every caller asking the same question.
      *
      * @throws InvalidRequestException  In case of invalid request parameter.
      * @throws IOException              In case of issue when reading the file or writing results.
@@ -263,29 +288,31 @@ public class CommandRPackage extends CommandParent {
                     + fileType.getStringRepresentation() + " expression call file has been "
                     + "generated for the species " + speciesId));
         }
-        List<String> columns = List.of(CALLS_GENE_ID_PARAM, CALLS_ANAT_ENTITY_ID_PARAM,
-                CALLS_CELL_TYPE_ID_PARAM);
+        List<String> columns = List.of(CALLS_GENE_ID_PARAM, CALLS_CONDITION_ID_PARAM);
         //The stream is closed once the view has consumed it, the file holding a whole species
-        try (Stream<String> lines = Files.lines(callFile)) {
-            display.displayCallsFromFile(columns, this.subsetCallFile(callFile, lines, dataTypes,
-                    quality, stageIds));
+        try (Stream<String[]> calls = TopAnatCallFileService.subsetCalls(callFile, dataTypes,
+                quality, stageIds)) {
+            display.displayRowsFromFile(columns, calls);
         }
 
         log.traceExit();
     }
 
     /**
-     * @return  The {@code CallFileType} the request asks the calls to be read from,
-     *          {@code CallFileType#OBSERVED} when it asks for none: it is the kind of file
-     *          matching what this action returned when it queried the calls itself, the
-     *          anatomical entities and cell types being the observed ones.
-     * @throws InvalidRequestException  If the requested value matches no {@code CallFileType}.
+     * @return  The {@code CallFileType} the request asks the calls to be read from. It must be
+     *          requested explicitly: the two kinds of file do not answer the same question, and
+     *          a client relying on a default could test another one than it intends.
+     * @throws InvalidRequestException  If no call file type is requested, or if the requested
+     *                                  value matches no {@code CallFileType}.
      */
     private CallFileType checkAndGetCallFileType() throws InvalidRequestException {
         log.traceEntry();
         String requested = this.requestParameters.getCallFileType();
         if (StringUtils.isBlank(requested)) {
-            return log.traceExit(CallFileType.OBSERVED);
+            throw log.throwing(new InvalidRequestException("A call file type must be provided, "
+                    + "one of: " + EnumSet.allOf(CallFileType.class).stream()
+                            .map(CallFileType::getStringRepresentation)
+                            .collect(Collectors.joining(", "))));
         }
         if (!BgeeEnum.isInEnum(CallFileType.class, requested)) {
             throw log.throwing(new InvalidRequestException("Incorrect call file type provided: "
@@ -295,180 +322,89 @@ public class CommandRPackage extends CommandParent {
     }
 
     /**
-     * Subset a generated call file.
+     * Display the conditions of topAnat for the requested species, read from the condition file
+     * generated by {@code TopAnatCallFileService}: their IDs, which the expression calls refer to,
+     * their names, and their anatomical entities and cell types. The action keeps the name it had
+     * when topAnat only tested anatomical entities.
      *
-     * @param callFile      The {@code Path} of the file, to read its header from.
-     * @param lines         A {@code Stream} of its lines, its header included.
-     * @param dataTypes     The {@code DataType}s requested: the quality is read in the column
-     *                      of that very combination, the quality of a combination not being
-     *                      derivable from the qualities of its data types taken separately.
-     * @param quality       The {@code SummaryQuality} requested. {@code GOLD} retains the GOLD
-     *                      rows only, {@code SILVER} retains the SILVER and the GOLD ones.
-     * @param stageIds      The IDs of the developmental stages to retain, every stage of the file
-     *                      when {@code null} or empty.
-     * @return              A {@code Stream} of {@code String[]}s holding the gene ID, anat. entity
-     *                      ID and cell type ID of each retained row, without duplicate.
-     * @throws IOException              If the header of the file cannot be read.
-     * @throws InvalidRequestException  If the file holds no column for the requested combination
-     *                                  of data types.
-     */
-    private Stream<String[]> subsetCallFile(Path callFile, Stream<String> lines,
-            EnumSet<DataType> dataTypes, SummaryQuality quality, Collection<String> stageIds)
-                    throws IOException, InvalidRequestException {
-        log.traceEntry("{}, {}, {}, {}, {}", callFile, lines, dataTypes, quality, stageIds);
-
-        //The columns are located by name rather than by position, so that the generated files
-        //can gain columns without breaking this query
-        String headerLine;
-        try (BufferedReader reader = Files.newBufferedReader(callFile)) {
-            headerLine = reader.readLine();
-        }
-        if (headerLine == null) {
-            throw log.throwing(new IllegalStateException("Empty call file: " + callFile));
-        }
-        String[] header = headerLine.split(TopAnatCallFileService.COLUMN_SEPARATOR, -1);
-        Map<String, Integer> colIndexes = new HashMap<>();
-        for (int i = 0; i < header.length; i++) {
-            colIndexes.put(header[i], i);
-        }
-        final int geneCol = columnIndex(colIndexes, TopAnatCallFileService.GENE_ID_COLUMN, callFile);
-        final int stageCol = columnIndex(colIndexes, TopAnatCallFileService.STAGE_ID_COLUMN,
-                callFile);
-        final int anatCol = columnIndex(colIndexes, TopAnatCallFileService.ANAT_ENTITY_ID_COLUMN,
-                callFile);
-        final int cellTypeCol = columnIndex(colIndexes,
-                TopAnatCallFileService.CELL_TYPE_ID_COLUMN, callFile);
-        String qualityColumn = TopAnatCallFileService.combinationColumnName(dataTypes);
-        if (!colIndexes.containsKey(qualityColumn)) {
-            throw log.throwing(new InvalidRequestException("The expression calls of the data type "
-                    + "combination " + qualityColumn + " are not available"));
-        }
-        final int qualityCol = colIndexes.get(qualityColumn);
-
-        //A request for SILVER means "at least SILVER", as everywhere else in Bgee
-        final Set<String> acceptedQualities = SummaryQuality.GOLD.equals(quality)?
-                Set.of(SummaryQuality.GOLD.name()):
-                Set.of(SummaryQuality.GOLD.name(), SummaryQuality.SILVER.name());
-        final Set<String> requestedStages = stageIds == null? Set.of(): new HashSet<>(stageIds);
-        //A same gene, anat. entity and cell type is reported at each stage it holds a call at,
-        //so the triplets already returned are remembered. The stream is sequential, a plain
-        //HashSet is therefore enough.
-        final Set<String> returnedTriplets = new HashSet<>();
-
-        return log.traceExit(lines
-                .skip(1)
-                .map(l -> l.split(TopAnatCallFileService.COLUMN_SEPARATOR, -1))
-                .filter(v -> requestedStages.isEmpty() || requestedStages.contains(v[stageCol]))
-                .filter(v -> acceptedQualities.contains(v[qualityCol]))
-                .filter(v -> returnedTriplets.add(v[geneCol] + v[anatCol] + v[cellTypeCol]))
-                .map(v -> new String[] {v[geneCol], v[anatCol], v[cellTypeCol]}));
-    }
-
-    private static int columnIndex(Map<String, Integer> colIndexes, String column, Path callFile) {
-        Integer index = colIndexes.get(column);
-        if (index == null) {
-            throw log.throwing(new IllegalStateException("No column " + column + " in the call "
-                    + "file " + callFile));
-        }
-        return index;
-    }
-
-    /**
-     * Performs the query and display the results when requesting {@code AnatEntityTO}s.
-     * 
      * @throws InvalidRequestException  In case of invalid request parameter.
-     * @throws IOException              In case of issue when writing results. 
+     * @throws IOException              In case of issue when reading the file or writing results.
      */
-    //TODO: once topAnat has been refactored then generate/read those files from our server
     private void processGetAnatEntities() throws InvalidRequestException, IOException {
         log.traceEntry();
-        
-        AnatEntityService aeService = this.serviceFactory.getAnatEntityService();
-        RPackageDisplay display = this.viewFactory.getRPackageDisplay();
-
-        //****************************************
-        // Retrieve and filter request parameters
-        //****************************************
-        final List<Integer> speciesIds = this.requestParameters.getSpeciesList();
-        //XXX: why not using 'getAttributes' method?
-        List<String> requestedAttrs = this.requestParameters.getValues(
-                this.requestParameters.getUrlParametersInstance().getParamAttributeList());
-        
-        //for now, we force to select one and only one species, to not return 
-        //the complete expression table at once
-        if (speciesIds == null || speciesIds.size() != 1) {
-            throw log.throwing(new InvalidRequestException("One and only one species ID must be provided"));
-        }
-        //if null or empty add all parameter values
-        if (requestedAttrs == null){
-            requestedAttrs = new ArrayList<>();
-        }
-        if(requestedAttrs.isEmpty()) {
-            requestedAttrs.add(AE_ID_PARAM);
-            requestedAttrs.add(AE_NAME_PARAM);
-            requestedAttrs.add(AE_DESCRIPTION_PARAM);
-        }
-        final Set<AnatEntityService.Attribute> attrs = convertRqAttrsToAEAttrs(requestedAttrs);
-        //****************************************
-        // Perform query and display results
-        //****************************************
-        Stream<AnatEntity> ae = aeService.loadAnatEntities(speciesIds, true, null, attrs);
-//        AnatEntityTOResultSet rs = daoManager.getAnatEntityDAO().getAnatEntities(
-//                speciesIds, true, null, attrs);
-        
-        display.displayAnatEntities(requestedAttrs, ae);
-        
+        this.displayGeneratedFile(TopAnatCallFileService::getConditionFilePath, "condition",
+                CONDITION_COLUMNS);
         log.traceExit();
     }
-    
+
     /**
-     * Performs the query and display the results when requesting {@code RelationTO}s 
-     * for anatomical entities.
-     * 
+     * Display the relations between the conditions of topAnat for the requested species, read
+     * from the relation file generated by {@code TopAnatCallFileService}: the ID of a condition,
+     * then the ID of one of its direct parents. The action keeps the name it had when topAnat
+     * only tested anatomical entities.
+     *
      * @throws InvalidRequestException  In case of invalid request parameter.
-     * @throws IOException              In case of issue when writing results. 
+     * @throws IOException              In case of issue when reading the file or writing results.
      */
-    //TODO: test
-    //TODO: once topAnat has been refactored then generate/read those files from our server
     private void processGetAnatEntityRelations() throws InvalidRequestException, IOException {
         log.traceEntry();
-        RPackageDisplay display = this.viewFactory.getRPackageDisplay();
-        OntologyService ontologyService = this.serviceFactory.getOntologyService();
+        this.displayGeneratedFile(TopAnatCallFileService::getConditionRelationFilePath,
+                "condition relation", CONDITION_RELATION_COLUMNS);
+        log.traceExit();
+    }
 
-        //****************************************
-        // Retrieve and filter request parameters
-        //****************************************
-        final List<Integer> speciesIds = this.requestParameters.getSpeciesList();
+    /**
+     * Display some columns of a file generated by {@code TopAnatCallFileService} for
+     * the requested species: those of the attributes requested, all of them when none is.
+     *
+     * @param filePath          A {@code BiFunction} returning the {@code Path} of the file
+     *                          from the directory holding the generated files and the ID
+     *                          of the species.
+     * @param fileDescription   A {@code String} describing the file, for the error messages.
+     * @param attributeColumns  A {@code Map} where keys are the attributes that can be displayed,
+     *                          in their default order, the associated value being the column
+     *                          of the file holding them.
+     * @throws InvalidRequestException  If not exactly one species is requested, if an attribute
+     *                                  requested cannot be displayed, or if the file of
+     *                                  the species has not been generated.
+     * @throws IOException              In case of issue when reading the file or writing results.
+     */
+    private void displayGeneratedFile(BiFunction<String, Integer, Path> filePath,
+            String fileDescription, Map<String, String> attributeColumns)
+                    throws InvalidRequestException, IOException {
+        log.traceEntry("{}, {}, {}", filePath, fileDescription, attributeColumns);
 
-        //XXX: why not using 'getAttributes' method?
+        List<Integer> speciesIds = this.requestParameters.getSpeciesList();
+        if (speciesIds == null || speciesIds.size() != 1 ||
+                speciesIds.stream().anyMatch(id -> id == null || id <= 0)) {
+            throw log.throwing(new InvalidRequestException(
+                    "One and only one species ID must be provided"));
+        }
+        int speciesId = speciesIds.iterator().next();
+
         List<String> requestedAttrs = this.requestParameters.getValues(
                 this.requestParameters.getUrlParametersInstance().getParamAttributeList());
-        if (requestedAttrs == null){
-            requestedAttrs = new ArrayList<>();
+        List<String> attrs = requestedAttrs == null || requestedAttrs.isEmpty()?
+                new ArrayList<>(attributeColumns.keySet()): requestedAttrs;
+        List<String> unavailableAttrs = attrs.stream()
+                .filter(attr -> !attributeColumns.containsKey(attr))
+                .collect(Collectors.toList());
+        if (!unavailableAttrs.isEmpty()) {
+            throw log.throwing(new InvalidRequestException("Attributes not available: "
+                    + unavailableAttrs + ", available attributes: " + attributeColumns.keySet()));
         }
-        if(requestedAttrs.isEmpty()){
-            requestedAttrs.add(RELATIONS_SOURCE_PARAM);
-            requestedAttrs.add(RELATIONS_TARGET_PARAM);
-            requestedAttrs.add(RELATION_TYPE_PARAM);
-            requestedAttrs.add(RELATION_STATUS_PARAM);
+
+        Path file = filePath.apply(this.prop.getTopAnatResultsWritingDirectory(), speciesId);
+        if (!Files.exists(file)) {
+            throw log.throwing(new InvalidRequestException("No " + fileDescription
+                    + " file has been generated for the species " + speciesId));
         }
-        
-        //check value of parameters
-        checkRelationAttrs(requestedAttrs);
-        
-        //for now, we force to select one and only one species, to not return 
-        //the complete expression table at once
-        if (speciesIds == null || speciesIds.size() != 1) {
-            throw log.throwing(new InvalidRequestException("One and only one species ID must be provided"));
+        //The stream is closed once the view has consumed it
+        try (Stream<String[]> rows = TopAnatCallFileService.readColumns(file,
+                attrs.stream().map(attributeColumns::get).collect(Collectors.toList()))) {
+            this.viewFactory.getRPackageDisplay().displayRowsFromFile(attrs, rows);
         }
-        Integer speciesId = speciesIds.iterator().next();
-        //****************************************
-        // Perform query and display results
-        //****************************************
-        Ontology<AnatEntity, String> anatEntityOnt = ontologyService.getAnatEntityOntology(speciesIds, null)
-                .getAsSingleSpeciesOntology(speciesId);
-        display.displayAERelations(requestedAttrs, anatEntityOnt);
-        
+
         log.traceExit();
     }
     
@@ -616,29 +552,6 @@ public class CommandRPackage extends CommandParent {
         display.displayPropagation(requestedAttrs, propagatedEntityIds);
     }
 
-    private static Set<AnatEntityService.Attribute> convertRqAttrsToAEAttrs(List<String> rqAttrs){
-        log.traceEntry("{}", rqAttrs);
-        Set<AnatEntityService.Attribute> attrs = new HashSet<>();
-        for(String rqAttr : rqAttrs){
-            switch(rqAttr){
-                case AE_ID_PARAM :
-                    attrs.add(AnatEntityService.Attribute.ID);
-                    break;
-                case AE_NAME_PARAM :
-                    attrs.add(AnatEntityService.Attribute.NAME);
-                    break;
-                case AE_DESCRIPTION_PARAM :
-                    attrs.add(AnatEntityService.Attribute.DESCRIPTION);
-                    break;
-                default :
-                    throw log.throwing(new UnsupportedOperationException(
-                            "Attribute parameter not supported: " + rqAttr));
-            } 
-        }
-        return log.traceExit(attrs);
-    }
-
-
     private static List<String> convertPropagatedAttrs(CallService.Attribute condParam,
             List<String> attrs) {
         log.traceEntry("{}, {}", condParam, attrs);
@@ -663,19 +576,6 @@ public class CommandRPackage extends CommandParent {
             }
         }
         return log.traceExit(requestedAttrs);
-    }
-
-    private static void checkRelationAttrs(List<String> rqAttrs){
-        log.traceEntry("{}", rqAttrs);
-        for(String rqAttr : rqAttrs){
-            if (!rqAttr.equals(CommandRPackage.RELATIONS_SOURCE_PARAM)
-                    && !rqAttr.equals(CommandRPackage.RELATIONS_TARGET_PARAM)
-                    && !rqAttr.equals(CommandRPackage.RELATION_TYPE_PARAM)
-                    && !rqAttr.equals(CommandRPackage.RELATION_STATUS_PARAM)){
-                throw log.throwing(new UnsupportedOperationException(
-                        "Attribute parameter not supported: " + rqAttr));
-            }
-        }
     }
 
     private static void checkSpeciesAttrs(List<String> rqAttrs){

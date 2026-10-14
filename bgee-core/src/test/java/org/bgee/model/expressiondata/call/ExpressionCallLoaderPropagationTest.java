@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
@@ -320,11 +321,11 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      * The walk reaches {@code g} through {@code f} before coming back to {@code e}, so the
      * relation {@code e -> g} is met when {@code g} has already been contributed to, and the
      * relation {@code b -> e} when {@code e} has. Every condition must still hold the single
-     * observation exactly once: a weight of 10, a score of 80, and an observation count of 1,
-     * which is what keeps the p-value uncalibrated at 0.01.
+     * observation exactly once: a weight of 10, a score of 80, an observation count of 1,
+     * and the p-value of 0.01 of that observation.
      * <p>
      * Counting the observation once per path would give {@code e} a weight of 20 and {@code g}
-     * a weight of 30, and their observation counts of 2 and 3 would double their p-value.
+     * a weight of 30, and observation counts of 2 and 3.
      */
     @Test
     public void shouldNotCountTwiceADescendantOverTwoChainedDiamonds() {
@@ -361,7 +362,9 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      * The walk started from {@code a} marks {@code g} as already reached, but that marking only
      * holds for that walk: the stamp is incremented for each observed condition, so the walk
      * started from {@code e} does reach {@code g}, which therefore holds both observations —
-     * a weight of 20 and a score of (80 * 10 + 20 * 10) / 20 = 50.
+     * a weight of 20 and a score of (80 * 10 + 20 * 10) / 20 = 50. Their p-value is
+     * the weighted harmonic mean of the self p-values of {@code a} and {@code e}, those of
+     * their single observation: 20 / (10 / 0.01 + 10 / 0.4) = 20 / 1025.
      * <p>
      * What every walk pushes is the aggregate of the observations of its own condition, never
      * an accumulated total: the walk from {@code e} carries the observation of {@code e} alone,
@@ -395,15 +398,69 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         OTFExpressionCall topCall = callForCondition("top condition g", calls, condMap.get(DD_G));
         assertEquals("The two observations should be counted once each in the top condition g",
                 2, topCall.getObservationCount());
-        //The raw weighted mean is (0.01 * 10 + 0.4 * 10) / 20 = 0.205, doubled when read
-        //because the call aggregates more than one observation
-        assertBigDecimalEquals("Unexpected p-value for the top condition g", "0.41",
-                topCall.getAllDataTypePValue());
+        //Not doubled: a self p-value is doubled when it averages several observations,
+        //the harmonic mean combining the self p-values is not
+        assertBigDecimalEquals("Unexpected p-value for the top condition g",
+                quotient("20", "1025"), topCall.getAllDataTypePValue());
+        assertBigDecimalEquals("Unexpected p-value for the intermediate condition e",
+                quotient("20", "1025"), callForCondition("intermediate condition e", calls,
+                        condMap.get(DD_E)).getAllDataTypePValue());
         //Above a but not above e
         assertCall("condition f", calls, condMap.get(DD_F), "10", "80");
         //Below e: the propagation never moves downward
         assertCall("condition b", calls, condMap.get(DD_B), "10", "80");
         assertCall("condition c", calls, condMap.get(DD_C), "10", "80");
+    }
+
+    /**
+     * The p-value of a call is the weighted harmonic mean of the self p-values of its condition
+     * and of all its sub-conditions, each counted once. Over the graph of
+     * {@link #shouldNotCountTwiceADescendantReachedThroughSeveralPaths()}:
+     * <ul>
+     * <li>{@code L1} holds a bulk RNA-Seq observation (p-value 0.01, weight 10) and a single-cell
+     * one (p-value 0.03, weight 10). Its self p-value over all data types is their mean 0.02,
+     * doubled to 0.04 because it averages two observations, of weight 20. Its self p-value over
+     * the data types trusted for absent calls is the one of its bulk observation alone, 0.01,
+     * not doubled, of weight 10.
+     * <li>{@code L2} holds two bulk RNA-Seq observations of mean 0.8 and weight 20: doubled,
+     * its self p-value is capped at 1.
+     * </ul>
+     * {@code B} and {@code R} combine both: 40 / (20 / 0.04 + 20 / 1) = 40 / 520 over all
+     * data types, 30 / (10 / 0.01 + 20 / 1) = 30 / 1020 over the trusted ones. Counting
+     * {@code L1} twice in {@code R} would give 60 / 1020 over all data types.
+     */
+    @Test
+    public void shouldCombineTheSelfPValuesWithAHarmonicMean() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, L2, A, B, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(
+                GENE_ID, Map.of(
+                        L1, Set.of(bulkAndSingleCellObservation(L1, "0.01", "10", "0.03", "10")),
+                        L2, Set.of(bulkObservation(L2, "0.8", "50", "20", 2))));
+
+        Map<Integer, OTFExpressionCall> callsByCondId = loader.propagateCalls(observations,
+                diamondGraph(), Collections.emptySet()).get(gene);
+
+        //A only holds the observations of L1
+        for (int condId: new int[] {L1, A}) {
+            assertBigDecimalEquals("The self p-value of L1 averages two observations, "
+                    + "it must be doubled, condition " + condId, "0.04",
+                    callsByCondId.get(condId).getAllDataTypePValue());
+            assertBigDecimalEquals("The trusted self p-value of L1 comes from a single "
+                    + "observation, it must not be doubled, condition " + condId, "0.01",
+                    callsByCondId.get(condId).getTrustedDataTypePValue());
+        }
+        assertBigDecimalEquals("The doubled self p-value of L2 must be capped at 1", "1",
+                callsByCondId.get(L2).getAllDataTypePValue());
+        //R holds the very same observations as B, L1 being reachable through two paths
+        for (int condId: new int[] {B, R}) {
+            assertBigDecimalEquals("Unexpected p-value for the condition " + condId,
+                    quotient("40", "520"), callsByCondId.get(condId).getAllDataTypePValue());
+            assertBigDecimalEquals("Unexpected trusted p-value for the condition " + condId,
+                    quotient("30", "1020"), callsByCondId.get(condId).getTrustedDataTypePValue());
+        }
     }
 
     /**
@@ -702,11 +759,42 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      */
     private static ObservedExpressionTO bulkObservation(int condId, String pValue, String score,
             String weight) {
+        return bulkObservation(condId, pValue, score, weight, 1);
+    }
+    /**
+     * @return  An {@code ObservedExpressionTO} holding the bulk RNA-Seq observations of
+     *          {@code numberObs} samples, all other data types being absent from the condition.
+     */
+    private static ObservedExpressionTO bulkObservation(int condId, String pValue, String score,
+            String weight, int numberObs) {
         return new ObservedExpressionTO(null, condId, GENE_ID,
-                new BigDecimal(score), new BigDecimal(pValue), new BigDecimal(weight), 1,
+                new BigDecimal(score), new BigDecimal(pValue), new BigDecimal(weight), numberObs,
                 null, null, null, null,
                 null, null, null, null,
                 null, null, null, null);
+    }
+    /**
+     * @return  An {@code ObservedExpressionTO} holding one bulk RNA-Seq observation and one
+     *          droplet-based single-cell RNA-Seq observation, both of score 50, all other
+     *          data types being absent from the condition.
+     */
+    private static ObservedExpressionTO bulkAndSingleCellObservation(int condId,
+            String bulkPValue, String bulkWeight, String singleCellPValue,
+            String singleCellWeight) {
+        return new ObservedExpressionTO(null, condId, GENE_ID,
+                new BigDecimal("50"), new BigDecimal(bulkPValue), new BigDecimal(bulkWeight), 1,
+                null, null, null, null,
+                new BigDecimal("50"), new BigDecimal(singleCellPValue),
+                new BigDecimal(singleCellWeight), 1,
+                null, null, null, null);
+    }
+    /**
+     * @return  The quotient of {@code dividend} by {@code divisor}, at the precision of
+     *          the propagation, as a {@code String}.
+     */
+    private static String quotient(String dividend, String divisor) {
+        return new BigDecimal(dividend).divide(new BigDecimal(divisor), MathContext.DECIMAL128)
+                .toPlainString();
     }
 
     /**

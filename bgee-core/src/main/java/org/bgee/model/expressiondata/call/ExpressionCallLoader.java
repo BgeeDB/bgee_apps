@@ -731,11 +731,18 @@ public class ExpressionCallLoader extends CommonService {
      * an ancestor with a handful of additions, rather than iterating the observations and
      * multiplying again for each of the ancestors reached.
      * <p>
-     * Weights are stored as {@code bigint} and scores as {@code decimal(9,2)}, so summing
+     * The p-values of the condition are reduced to its self p-value: their weighted arithmetic
+     * mean, doubled when it averages several observations, since the mean of several p-values
+     * is not a p-value while twice that mean is one, whatever the dependence between them.
+     * The propagation combines the self p-values of a condition and of all its sub-conditions
+     * with a weighted harmonic mean: a condition therefore contributes its weight, and its weight
+     * divided by its self p-value.
+     * <p>
+     * Weights are stored as {@code bigint} and scores as {@code decimal(5,2)}, so summing
      * the weights as {@code long}, and the scores as their unscaled value at scale 2, is exact:
      * the quantities aggregated over thousands of conditions are the very same as the ones
-     * a {@code BigDecimal} accumulation would produce. Only the p-values, stored as
-     * {@code decimal(31,30)}, need {@code BigDecimal} to be summed without any loss.
+     * a {@code BigDecimal} accumulation would produce. The p-values, stored as
+     * {@code decimal(16,15)}, are summed as {@code BigDecimal}.
      */
     private static final class ObservedCondAggregate {
         /**
@@ -754,6 +761,7 @@ public class ExpressionCallLoader extends CommonService {
             long scoreByWeightSumUnscaled = 0;
             long weightSum = 0;
             int observationCount = 0;
+            int trustedObservationCount = 0;
             int dataTypeMask = 0;
 
             for (ObservedExpressionTO obs: observations) {
@@ -815,6 +823,7 @@ public class ExpressionCallLoader extends CommonService {
                     if (dataType.isTrustedForAbsentCalls()) {
                         trustedPValueByWeightSum = trustedPValueByWeightSum.add(pValueByWeight);
                         trustedPValueWeightSum = Math.addExact(trustedPValueWeightSum, weightValue);
+                        trustedObservationCount += numberObs;
                     }
                     scoreByWeightSumUnscaled = Math.addExact(scoreByWeightSumUnscaled,
                             scoreByWeightUnscaled);
@@ -823,13 +832,56 @@ public class ExpressionCallLoader extends CommonService {
                     dataTypeMask |= 1 << dataType.ordinal();
                 }
             }
-            return new ObservedCondAggregate(pValueByWeightSum, trustedPValueByWeightSum,
+            return new ObservedCondAggregate(
+                    weightBySelfPValue(pValueByWeightSum, pValueWeightSum, observationCount,
+                            observations),
+                    weightBySelfPValue(trustedPValueByWeightSum, trustedPValueWeightSum,
+                            trustedObservationCount, observations),
                     pValueWeightSum, trustedPValueWeightSum, scoreByWeightSumUnscaled, weightSum,
                     observationCount, dataTypeMask);
         }
+        /**
+         * Compute the self p-value of a condition, the weighted arithmetic mean of the p-values
+         * observed in it, x2 when it averages several observations (capped at 1), and return
+         * the term the condition contributes to the weighted harmonic means of the propagation:
+         * its weight divided by its self p-value.
+         *
+         * @param pValueByWeightSum A {@code BigDecimal} that is the sum of the p-values observed
+         *                          in a condition, multiplied by their weight.
+         * @param weightSum         A {@code long} that is the sum of their weights.
+         * @param observationCount  An {@code int} that is the number of observations they were
+         *                          computed from.
+         * @param observations      The observations, to identify them in case of error.
+         * @return                  A {@code BigDecimal} that is the weight of the condition divided
+         *                          by its self p-value, 0 if no p-value was observed.
+         */
+        private static BigDecimal weightBySelfPValue(BigDecimal pValueByWeightSum, long weightSum,
+                int observationCount, Collection<ObservedExpressionTO> observations) {
+            if (weightSum == 0) {
+                return BigDecimal.ZERO;
+            }
+            BigDecimal weight = BigDecimal.valueOf(weightSum);
+            //Weighted arithmetic mean of the p-values of the condition
+            BigDecimal selfPValue = pValueByWeightSum.divide(weight, MathContext.DECIMAL128);
+            //x2 when it averages several observations: the mean of several p-values is not
+            //a p-value, while twice that mean is one, whatever the dependence between them
+            if (observationCount > 1) {
+                selfPValue = selfPValue.multiply(TWO).min(BigDecimal.ONE);
+            }
+            //A single self p-value of 0 would make the p-value of every ancestor 0. The p-values
+            //of the expression table are floored, a 0 means a table filled without the floor.
+            if (selfPValue.signum() == 0) {
+                ObservedExpressionTO obs = observations.iterator().next();
+                throw log.throwing(new IllegalStateException("Self p-value of 0 for the gene "
+                        + obs.getBgeeGeneId() + " in the condition " + obs.getConditionId()
+                        + ", the p-values of the expression table must be floored"));
+            }
+            return weight.divide(selfPValue, MathContext.DECIMAL128);
+        }
+        private static final BigDecimal TWO = BigDecimal.valueOf(2);
 
-        private final BigDecimal pValueByWeightSum;
-        private final BigDecimal trustedPValueByWeightSum;
+        private final BigDecimal weightByPValue;
+        private final BigDecimal trustedWeightByPValue;
         private final long pValueWeightSum;
         private final long trustedPValueWeightSum;
         private final long scoreByWeightSumUnscaled;
@@ -837,12 +889,12 @@ public class ExpressionCallLoader extends CommonService {
         private final int observationCount;
         private final int dataTypeMask;
 
-        private ObservedCondAggregate(BigDecimal pValueByWeightSum,
-                BigDecimal trustedPValueByWeightSum, long pValueWeightSum,
+        private ObservedCondAggregate(BigDecimal weightByPValue,
+                BigDecimal trustedWeightByPValue, long pValueWeightSum,
                 long trustedPValueWeightSum, long scoreByWeightSumUnscaled, long weightSum,
                 int observationCount, int dataTypeMask) {
-            this.pValueByWeightSum = pValueByWeightSum;
-            this.trustedPValueByWeightSum = trustedPValueByWeightSum;
+            this.weightByPValue = weightByPValue;
+            this.trustedWeightByPValue = trustedWeightByPValue;
             this.pValueWeightSum = pValueWeightSum;
             this.trustedPValueWeightSum = trustedPValueWeightSum;
             this.scoreByWeightSumUnscaled = scoreByWeightSumUnscaled;
@@ -876,8 +928,8 @@ public class ExpressionCallLoader extends CommonService {
         private static final byte SELF_OBSERVATION = 1;
         private static final byte DESCENDANT_OBSERVATION = 2;
 
-        private final BigDecimal[] pValueByWeightSum;
-        private final BigDecimal[] trustedPValueByWeightSum;
+        private final BigDecimal[] weightByPValueSum;
+        private final BigDecimal[] trustedWeightByPValueSum;
         private final long[] pValueWeightSum;
         private final long[] trustedPValueWeightSum;
         private final long[] scoreByWeightSumUnscaled;
@@ -914,8 +966,8 @@ public class ExpressionCallLoader extends CommonService {
         private final int[] stack;
 
         private PropagationBuffers(int condCount) {
-            this.pValueByWeightSum = new BigDecimal[condCount];
-            this.trustedPValueByWeightSum = new BigDecimal[condCount];
+            this.weightByPValueSum = new BigDecimal[condCount];
+            this.trustedWeightByPValueSum = new BigDecimal[condCount];
             this.pValueWeightSum = new long[condCount];
             this.trustedPValueWeightSum = new long[condCount];
             this.scoreByWeightSumUnscaled = new long[condCount];
@@ -957,8 +1009,8 @@ public class ExpressionCallLoader extends CommonService {
             }
             this.geneStamp[index] = this.currentGeneStamp;
             this.touched[this.touchedCount++] = index;
-            this.pValueByWeightSum[index] = BigDecimal.ZERO;
-            this.trustedPValueByWeightSum[index] = BigDecimal.ZERO;
+            this.weightByPValueSum[index] = BigDecimal.ZERO;
+            this.trustedWeightByPValueSum[index] = BigDecimal.ZERO;
             this.pValueWeightSum[index] = 0;
             this.trustedPValueWeightSum[index] = 0;
             this.scoreByWeightSumUnscaled[index] = 0;
@@ -1026,10 +1078,10 @@ public class ExpressionCallLoader extends CommonService {
                 //Nothing was observed, only the propagation state is contributed
                 return;
             }
-            this.pValueByWeightSum[index] = this.pValueByWeightSum[index]
-                    .add(aggregate.pValueByWeightSum);
-            this.trustedPValueByWeightSum[index] = this.trustedPValueByWeightSum[index]
-                    .add(aggregate.trustedPValueByWeightSum);
+            this.weightByPValueSum[index] = this.weightByPValueSum[index]
+                    .add(aggregate.weightByPValue);
+            this.trustedWeightByPValueSum[index] = this.trustedWeightByPValueSum[index]
+                    .add(aggregate.trustedWeightByPValue);
             this.pValueWeightSum[index] = Math.addExact(this.pValueWeightSum[index],
                     aggregate.pValueWeightSum);
             this.trustedPValueWeightSum[index] = Math.addExact(this.trustedPValueWeightSum[index],
@@ -1124,10 +1176,10 @@ public class ExpressionCallLoader extends CommonService {
         long weightSum = buf.weightSum[index];
         BigDecimal allDataTypePValueWeight = BigDecimal.valueOf(buf.pValueWeightSum[index]);
         BigDecimal trustedDataTypePValueWeight = BigDecimal.valueOf(buf.trustedPValueWeightSum[index]);
-        BigDecimal ultimateAllDataTypePValue = weightedMean(buf.pValueByWeightSum[index],
-                allDataTypePValueWeight);
-        BigDecimal ultimateTrustedDataTypePValue = weightedMean(buf.trustedPValueByWeightSum[index],
-                trustedDataTypePValueWeight);
+        BigDecimal ultimateAllDataTypePValue = harmonicMean(allDataTypePValueWeight,
+                buf.weightByPValueSum[index]);
+        BigDecimal ultimateTrustedDataTypePValue = harmonicMean(trustedDataTypePValueWeight,
+                buf.trustedWeightByPValueSum[index]);
         if (weightSum == 0) {
             log.warn("weightSum is zero for gene {} in condition {} - all observation counts are null/0. Defaulting score to 0.", gene, cond);
         }
@@ -1174,18 +1226,19 @@ public class ExpressionCallLoader extends CommonService {
 
 
     /**
-     * @param valueByWeightSum  A {@code BigDecimal} that is the sum of the values multiplied
-     *                          by their weight.
      * @param weightSum         A {@code BigDecimal} that is the sum of the weights.
-     * @return                  A {@code BigDecimal} that is the weighted mean, or {@code null}
-     *                          if {@code weightSum} is zero, meaning that nothing contributed.
+     * @param weightByValueSum  A {@code BigDecimal} that is the sum of the weights divided by
+     *                          their value.
+     * @return                  A {@code BigDecimal} that is the weighted harmonic mean, or
+     *                          {@code null} if {@code weightSum} is zero, meaning that nothing
+     *                          contributed.
      */
-    protected BigDecimal weightedMean(BigDecimal valueByWeightSum, BigDecimal weightSum) {
-        log.traceEntry("{}, {}", valueByWeightSum, weightSum);
+    protected BigDecimal harmonicMean(BigDecimal weightSum, BigDecimal weightByValueSum) {
+        log.traceEntry("{}, {}", weightSum, weightByValueSum);
         if (weightSum == null || BigDecimal.ZERO.compareTo(weightSum) == 0) {
             return log.traceExit((BigDecimal) null);
         }
-        return log.traceExit(valueByWeightSum.divide(weightSum, MathContext.DECIMAL128));
+        return log.traceExit(weightSum.divide(weightByValueSum, MathContext.DECIMAL128));
     }
 
 

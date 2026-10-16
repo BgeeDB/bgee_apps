@@ -822,18 +822,32 @@ public class TopAnatService extends CommonService {
             .collect(Collectors.groupingBy(id -> index.getAndIncrement() / GENE_BATCH_SIZE))
             .values();
             Consumer<List<String>> propagateBatch = geneBatch -> {
-                ExpressionCallService callService = this.serviceFactorySupplier.get()
-                        .getExpressionCallService();
-                //The two files are two propagations of the same observations, one along every
-                //condition parameter, the other along the developmental stages only.
-                propagatedRowCount.addAndGet(this.writeGeneRows(
-                        this.propagateAllCombinations(callService, speciesId, geneBatch,
-                                combinations, condPart, invariablePart, null),
-                        combinations, seedFilter, conditionIds, propagatedWriter));
-                observedRowCount.addAndGet(this.writeGeneRows(
-                        this.propagateAllCombinations(callService, speciesId, geneBatch,
-                                combinations, condPart, invariablePart, STAGE_ONLY_PROPAGATION),
-                        combinations, seedFilter, conditionIds, observedWriter));
+                ServiceFactory batchServiceFactory = this.serviceFactorySupplier.get();
+                try {
+                    ExpressionCallService callService =
+                            batchServiceFactory.getExpressionCallService();
+                    //The two files are two propagations of the same observations, one along
+                    //every condition parameter, the other along the developmental stages only.
+                    propagatedRowCount.addAndGet(this.writeGeneRows(
+                            this.propagateAllCombinations(callService, speciesId, geneBatch,
+                                    combinations, condPart, invariablePart, null),
+                            combinations, seedFilter, conditionIds, propagatedWriter));
+                    observedRowCount.addAndGet(this.writeGeneRows(
+                            this.propagateAllCombinations(callService, speciesId, geneBatch,
+                                    combinations, condPart, invariablePart,
+                                    STAGE_ONLY_PROPAGATION),
+                            combinations, seedFilter, conditionIds, observedWriter));
+                } finally {
+                    //A DAOManager belongs to a thread: the one of a thread of the pool would stay
+                    //open with its connection once the pool is shut down, and every species
+                    //would leak as many connections as threads. Closed after each batch, the next
+                    //batch run by that thread reopening one. In the calling thread, it is
+                    //the DAOManager of this service, which must stay open.
+                    if (batchServiceFactory.getDAOManager() !=
+                            this.getServiceFactory().getDAOManager()) {
+                        batchServiceFactory.close();
+                    }
+                }
 
                 int count = geneCount.addAndGet(geneBatch.size());
                 log.debug("Species {}: {}/{} genes processed, {} propagated rows, "

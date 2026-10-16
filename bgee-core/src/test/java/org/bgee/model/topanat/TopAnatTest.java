@@ -50,14 +50,14 @@ import org.junit.Test;
 
 
 /**
- * Unit tests for {@link TopAnatController}.
+ * Unit tests for {@link TopAnatService}.
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @version Bgee 14, May 2017
  * @since   Bgee 13
  */
-//TODO Mathieu: You should have one TopAnatControllerTest (test launching of analyses on mock objects, 
+//TODO Mathieu: You should have one TopAnatServiceTest (test launching of analyses on mock objects, 
 //of areAnalysesDone, etc), one TopAnatAnalysisTest (with a mock TopAnatRManager creating files 
 //for TopAnatAnalysis to move them, etc), one TopAnatPAramsTest (test the generation of the hash 
 //and of the CallFilters, ...), one TopAnatResultsTest (checking the parsing of a result file), 
@@ -72,7 +72,9 @@ public class TopAnatTest extends TestAncestor {
         return log;
     } 
 
-    private TopAnatController topAnatController;
+    private TopAnatService topAnatService;
+
+    private List<TopAnatParams> allTopAnatParams;
 
     private BgeeProperties props;
 
@@ -178,7 +180,7 @@ public class TopAnatTest extends TestAncestor {
 
         // Supplier for TopAnatAnalysis
         PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager,
-        TopAnatController, TopAnatAnalysis> 
+        TopAnatService, TopAnatAnalysis> 
         topAnatAnalysisSupplier;
         topAnatAnalysisSupplier = (p1, p2, p3, p4, p5) -> 
         new TopAnatAnalysis(
@@ -186,13 +188,12 @@ public class TopAnatTest extends TestAncestor {
                 BgeeProperties.getBgeeProperties(),
                 mockServiceFactory,
                 topAnatRManager,
-                this.topAnatController);
+                this.topAnatService);
 
-        // The TopAnatController that will be tested
-        this.topAnatController = new TopAnatController(Arrays.asList(
-                topAnatParams),
-                BgeeProperties.getBgeeProperties(),
-                mockServiceFactory,
+        // The TopAnatService that will be tested
+        when(mockServiceFactory.getBgeeProperties()).thenReturn(BgeeProperties.getBgeeProperties());
+        this.allTopAnatParams = Arrays.asList(topAnatParams);
+        this.topAnatService = new TopAnatService(mockServiceFactory, null,
                 topAnatAnalysisSupplier);
     }
 
@@ -203,7 +204,7 @@ public class TopAnatTest extends TestAncestor {
     //@Test
     public void testFiles() throws IOException{
 
-        this.topAnatController.proceedToTopAnatAnalyses().forEach(System.out::println);
+        this.topAnatService.proceedToTopAnatAnalyses(this.allTopAnatParams, null).forEach(System.out::println);
 
         // Check that all files have been written
         assertTrue(Files.exists(Paths.get(
@@ -264,9 +265,9 @@ public class TopAnatTest extends TestAncestor {
      */
     //@Test
     public void testAreAnalysesDone(){
-        assertFalse(this.topAnatController.areAnalysesDone());
-        this.topAnatController.proceedToTopAnatAnalyses().forEach(System.out::println);
-        assertTrue(this.topAnatController.areAnalysesDone());  
+        assertFalse(this.topAnatService.areAnalysesDone(this.allTopAnatParams));
+        this.topAnatService.proceedToTopAnatAnalyses(this.allTopAnatParams, null).forEach(System.out::println);
+        assertTrue(this.topAnatService.areAnalysesDone(this.allTopAnatParams));  
     }
 
     /**
@@ -276,7 +277,7 @@ public class TopAnatTest extends TestAncestor {
     //@Test
     public void testParseResult() throws IOException{
         // Run the analysis to ensure that all needed files are created
-        this.topAnatController.proceedToTopAnatAnalyses().forEach(System.out::println);
+        this.topAnatService.proceedToTopAnatAnalyses(this.allTopAnatParams, null).forEach(System.out::println);
         // Delete the result file and replace it with a new one
         new File(this.props.getTopAnatResultsWritingDirectory()
                 +"topAnat_"+this.hashKey+".tsv").delete();  
@@ -291,7 +292,7 @@ public class TopAnatTest extends TestAncestor {
         // And assess that the results correspond to the fake file just written.
         // It also proves that the new analysis did not replace an existing one
         List<TopAnatResultRow> results = 
-                this.topAnatController.proceedToTopAnatAnalyses().findFirst().get().getRows();
+                this.topAnatService.proceedToTopAnatAnalyses(this.allTopAnatParams, null).findFirst().get().getRows();
         log.debug("Results retrieved: {}", results);
         TopAnatResultRow first  = results.get(0);
         TopAnatResultRow second  = results.get(1);

@@ -39,7 +39,7 @@ public class TopAnatRealTest extends TestAncestor {
         
         DAOManager manager = DAOManager.getDAOManager(setProps);
         BgeeProperties props = BgeeProperties.getBgeeProperties(setProps);
-        ServiceFactory serviceFactory = new ServiceFactory(manager);
+        ServiceFactory serviceFactory = new ServiceFactory(props, manager);
         
         TopAnatParams params = new TopAnatParams.Builder(Arrays.asList(
                 "ENSXETG00000014994", 
@@ -68,9 +68,8 @@ public class TopAnatRealTest extends TestAncestor {
         
         JobService jobService = new JobService(props);
         try {
-            TopAnatController controller = new TopAnatController(Arrays.asList(params), 
-                    props, serviceFactory, jobService.registerNewJob());
-            controller.proceedToTopAnatAnalyses().flatMap(e -> {
+            new TopAnatService(serviceFactory).proceedToTopAnatAnalyses(Arrays.asList(params),
+                    jobService.registerNewJob()).flatMap(e -> {
                 try {
                     return e.getRows().stream();
                 } catch (Throwable exc) {

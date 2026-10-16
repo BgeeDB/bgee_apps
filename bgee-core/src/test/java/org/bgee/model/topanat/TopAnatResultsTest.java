@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
+import org.bgee.model.ManageReadWriteLocks;
 import org.bgee.model.TestAncestor;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,14 +56,15 @@ public class TopAnatResultsTest extends TestAncestor {
         this.props = BgeeProperties.getBgeeProperties();
         
         TopAnatParams mockTopAnatParams = mock(TopAnatParams.class);
-        TopAnatController mockTopAnatController = mock(TopAnatController.class);
-        when(mockTopAnatController.getBgeeProperties()).thenReturn(this.props);
+        TopAnatService mockTopAnatService = mock(TopAnatService.class);
+        when(mockTopAnatService.getBgeeProperties()).thenReturn(this.props);
+        when(mockTopAnatService.getReadWriteLocks()).thenReturn(new ManageReadWriteLocks());
         
         this.topAnatResults = new TopAnatResults(mockTopAnatParams,
                 "topanat/results",
                 "test.tsv",
                 "","","","","","","","",
-                mockTopAnatController);
+                mockTopAnatService);
         
     }
 

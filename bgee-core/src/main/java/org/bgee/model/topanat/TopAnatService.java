@@ -21,6 +21,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -34,12 +36,15 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
+import org.bgee.model.BgeeProperties;
 import org.bgee.model.CommonService;
 import org.bgee.model.ComposedEntity;
+import org.bgee.model.ManageReadWriteLocks;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
@@ -61,16 +66,19 @@ import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.Expressi
 import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.expressiondata.call.OTFExpressionCallFilterEngine;
+import org.bgee.model.function.PentaFunction;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.job.Job;
 import org.bgee.model.species.Species;
 
 /**
- * Provides what the topAnat analyses read: the files holding their expression calls and their
- * conditions, four per species, generated once, and the genes of the backgrounds offered for
- * an analysis, read from the database at each request (see
- * {@link #loadBackgroundGeneIds(int, Background)}): a list of genes is a simple read, unlike
- * the calls of a whole species.
+ * Runs the topAnat analyses, one {@link TopAnatAnalysis} for each provided {@link TopAnatParams},
+ * returning {@link TopAnatResults} (see {@link #proceedToTopAnatAnalyses(List, Job)}), and
+ * provides what they read: the files holding their expression calls and their conditions, four
+ * per species, generated once, and the genes of the backgrounds offered for an analysis, read
+ * from the database at each request (see {@link #loadBackgroundGeneIds(int, Background)}):
+ * a list of genes is a simple read, unlike the calls of a whole species.
  * <p>
  * topAnat needs, for a whole species at once, which genes are expressed in which conditions —
  * a query shape the on-the-fly propagation cannot answer inside a web request (it propagates
@@ -112,6 +120,8 @@ import org.bgee.model.species.Species;
  * translate the relations.
  *
  * @author  Julien Wollbrett
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
  * @version Bgee 16
  */
 public class TopAnatService extends CommonService {
@@ -283,27 +293,67 @@ public class TopAnatService extends CommonService {
      * when this service does not generate the files.
      */
     private final Supplier<ServiceFactory> serviceFactorySupplier;
+    /**
+     * A {@code PentaFunction} allowing to obtain new {@code TopAnatAnalysis} instances.
+     */
+    private final PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager,
+            TopAnatService, TopAnatAnalysis> topAnatAnalysisSupplier;
+    /**
+     * A {@code ManageReadWriteLocks} instance to manage the read/write locks of the files
+     * of the analyses.
+     */
+    private final ManageReadWriteLocks readWriteLocks;
 
     /**
-     * Constructor for the uses that do not generate the files, such as providing the genes
-     * of a background: {@link #generateFiles(Collection, String, boolean, int)} then throws
-     * an {@code IllegalStateException}.
+     * Constructor for the uses that do not generate the files, such as running analyses or
+     * providing the genes of a background: {@link #generateFiles(Collection, String, boolean, int)}
+     * then throws an {@code IllegalStateException}.
      *
      * @param serviceFactory    The {@code ServiceFactory} to obtain {@code Service}s
-     *                          and {@code DAOManager} from.
+     *                          and {@code DAOManager} from, and the {@code BgeeProperties}
+     *                          of the analyses.
      */
     public TopAnatService(ServiceFactory serviceFactory) {
-        super(serviceFactory);
-        this.serviceFactorySupplier = null;
+        this(serviceFactory, null, TopAnatAnalysis::new);
     }
+    /**
+     * Constructor for the generation of the files.
+     *
+     * @param serviceFactory            The {@code ServiceFactory} to obtain {@code Service}s
+     *                                  and {@code DAOManager} from.
+     * @param serviceFactorySupplier    A {@code Supplier} of {@code ServiceFactory}s, one for
+     *                                  each thread propagating genes.
+     */
     public TopAnatService(ServiceFactory serviceFactory,
             Supplier<ServiceFactory> serviceFactorySupplier) {
-        super(serviceFactory);
+        this(serviceFactory, serviceFactorySupplier, TopAnatAnalysis::new);
         if (serviceFactorySupplier == null) {
             throw log.throwing(new IllegalArgumentException(
                     "A ServiceFactory supplier must be provided"));
         }
+    }
+    /**
+     * @param serviceFactory            The {@code ServiceFactory} to obtain {@code Service}s
+     *                                  and {@code DAOManager} from, and the
+     *                                  {@code BgeeProperties} of the analyses.
+     * @param serviceFactorySupplier    A {@code Supplier} of {@code ServiceFactory}s, one for
+     *                                  each thread propagating genes, {@code null} if this
+     *                                  service does not generate the files.
+     * @param topAnatAnalysisSupplier   A {@code PentaFunction} allowing to obtain new
+     *                                  {@code TopAnatAnalysis} instances.
+     */
+    public TopAnatService(ServiceFactory serviceFactory,
+            Supplier<ServiceFactory> serviceFactorySupplier,
+            PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager,
+            TopAnatService, TopAnatAnalysis> topAnatAnalysisSupplier) {
+        super(serviceFactory);
+        if (topAnatAnalysisSupplier == null) {
+            throw log.throwing(new IllegalArgumentException("A supplier of TopAnatAnalysis "
+                    + "must be provided"));
+        }
         this.serviceFactorySupplier = serviceFactorySupplier;
+        this.topAnatAnalysisSupplier = topAnatAnalysisSupplier;
+        this.readWriteLocks = new ManageReadWriteLocks();
     }
 
     /**
@@ -527,6 +577,109 @@ public class TopAnatService extends CommonService {
         }
         return log.traceExit(genes.map(GeneTO::getGeneId).distinct().sorted()
                 .collect(Collectors.toList()));
+    }
+
+    /**
+     * Proceed to the analyses and return their results.
+     *
+     * @param topAnatParams A {@code List} of {@code TopAnatParams} that will produce one
+     *                      {@code TopAnatAnalysis} each.
+     * @param job           A {@code Job} allowing to track advancement of the analyses,
+     *                      {@code null} if they are not run by a job.
+     * @return              A {@code Stream} of {@code TopAnatResults}, one per analysis,
+     *                      the analyses being run as the {@code Stream} is consumed.
+     * @throws IllegalArgumentException If {@code topAnatParams} is {@code null} or empty,
+     *                                  or contains {@code null}.
+     */
+    public Stream<TopAnatResults> proceedToTopAnatAnalyses(List<TopAnatParams> topAnatParams,
+            Job job) throws IllegalArgumentException {
+        log.traceEntry("{}, {}", topAnatParams, job);
+        List<TopAnatParams> clonedParams = checkTopAnatParams(topAnatParams);
+        Optional<Job> trackedJob = Optional.ofNullable(job);
+
+        // Create TopAnatAnalysis for each TopAnatParams
+        //TODO: TopAnatAnalysis should be provided with the Job instance to be able to use 
+        //'checkInterrupted'
+
+        return log.traceExit(clonedParams.stream()
+                .map(params -> this.getTopAnatAnalysis(params))
+                .map(analysis -> {
+                    try {
+                        //if task in job not yet started (first analysis), start it.
+                        if (trackedJob.map(t -> !t.isStarted()).orElse(false)) {
+                            trackedJob.ifPresent(t -> t.startJob());
+                        } else {
+                            //otherwise, check if job was interrupted and move to next subtask
+                            trackedJob.ifPresent(t -> {
+                                try {
+                                    t.checkInterrupted();
+                                    t.nextTask();
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+                        }
+
+                        TopAnatResults results = analysis.proceedToAnalysis();
+                        
+                        //end job if last analysis
+                        if (trackedJob.map(t -> t.getCurrentTaskIndex()).orElse(-1) == 
+                                (clonedParams.size() - 1)) {
+                            trackedJob.ifPresent(t -> t.completeWithSuccess());
+                        }
+
+                        return results;
+                    } catch (Throwable e) {
+                        //catch and throw this error in DEBUG level because we don't want 
+                        //to log those as errors when we requested a Thread interruption
+                        log.catching(Level.DEBUG, e);
+                        trackedJob.ifPresent(t -> t.complete());
+                        throw log.throwing(Level.DEBUG, new RuntimeException(e));
+                    }
+                }));
+    }
+
+    /**
+     * @param topAnatParams A {@code List} of {@code TopAnatParams} that will produce one
+     *                      {@code TopAnatAnalysis} each.
+     * @return              A {@code boolean} that tells whether all analyses are done.
+     * @throws IllegalArgumentException If {@code topAnatParams} is {@code null} or empty,
+     *                                  or contains {@code null}.
+     */
+    public boolean areAnalysesDone(List<TopAnatParams> topAnatParams)
+            throws IllegalArgumentException {
+        log.traceEntry("{}", topAnatParams);
+        return log.traceExit(checkTopAnatParams(topAnatParams).stream()
+                .map(params -> this.getTopAnatAnalysis(params))
+                .allMatch(a -> a.isAnalysisDone()));
+    }
+
+    /**
+     * @return  A {@code BgeeProperties} instance to provide all properties values
+     *          of the analyses, the one of the {@code ServiceFactory} of this service.
+     */
+    public BgeeProperties getBgeeProperties() {
+        return this.getServiceFactory().getBgeeProperties();
+    }
+    /**
+     * @return A {@code ManageReadWriteLocks} instance to provide all read/write lock info
+     */
+    public ManageReadWriteLocks getReadWriteLocks() {
+        return this.readWriteLocks;
+    }
+
+    private TopAnatAnalysis getTopAnatAnalysis(TopAnatParams params) {
+        BgeeProperties props = this.getBgeeProperties();
+        return this.topAnatAnalysisSupplier.apply(params, props, this.getServiceFactory(),
+                new TopAnatRManager(props, params), this);
+    }
+    private static List<TopAnatParams> checkTopAnatParams(List<TopAnatParams> topAnatParams) {
+        if (topAnatParams == null || topAnatParams.isEmpty() || 
+                topAnatParams.stream().anyMatch(Objects::isNull)) {
+            throw log.throwing(new IllegalArgumentException("At least one TopAnatParams "
+                    + "must be provided, and none should be null"));
+        }
+        return Collections.unmodifiableList(new ArrayList<>(topAnatParams));
     }
 
     /**
@@ -1127,5 +1280,13 @@ public class TopAnatService extends CommonService {
         }
         throw log.throwing(new IllegalStateException("Unexpected number of entities composing "
                 + "the anat. entity and cell type: " + anatEntityCellType));
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("TopAnatService [readWriteLocks=").append(this.readWriteLocks)
+        .append(", serviceFactory=").append(this.getServiceFactory()).append("]");
+        return builder.toString();
     }
 }

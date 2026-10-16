@@ -20,6 +20,7 @@ import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
+import org.bgee.model.ManageReadWriteLocks;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.file.SpeciesDownloadFile.Category;
@@ -27,9 +28,9 @@ import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.file.SpeciesDownloadFile;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
-import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatResults;
+import org.bgee.model.topanat.TopAnatService;
 import org.junit.Test;
 
 /**
@@ -243,12 +244,13 @@ public class JsonHelperTest extends TestAncestor {
                 this.getClass().getResource("/").getFile());
         when(props.getBgeeRootDirectory()).thenReturn("/");
         when(props.getUrlMaxLength()).thenReturn(1000);
-        TopAnatController controller = mock(TopAnatController.class);
-        when(controller.getBgeeProperties()).thenReturn(props);
+        TopAnatService topAnatService = mock(TopAnatService.class);
+        when(topAnatService.getBgeeProperties()).thenReturn(props);
+        when(topAnatService.getReadWriteLocks()).thenReturn(new ManageReadWriteLocks());
         
         TopAnatResults results = new TopAnatResults(params, "view", "topAnatResults.tsv", 
                 null, null, null, null, null, null, null, "result_hash.zip", 
-                controller);
+                topAnatService);
         
         JsonHelper helper = new JsonHelper(props, new RequestParameters(props));
         String json = helper.toJson(results);

@@ -3,7 +3,11 @@ package org.bgee.controller;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +26,8 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.Deflater;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -86,6 +93,19 @@ public class CommandRPackage extends CommandParent {
     public final static String CALLS_CONDITION_ID_PARAM = "CONDITION_ID";
 
     public final static String BACKGROUND_GENE_ID_PARAM = "GENE_ID";
+
+    /**
+     * The end of a compressed response: a gzip member holding the 5 blank lines that end every
+     * response of this API (see {@code CsvParentDisplay#endDisplay()}), written as is after
+     * the member of the rows. The members of a gzip file being decompressed in sequence,
+     * a client decompressing the response finds these blank lines as in an uncompressed one,
+     * while BgeeDB recognizes a complete response by these last bytes, without decompressing it.
+     * They are the output of {@code printf '\n\n\n\n\n' | gzip -1 -n}.
+     */
+    final static byte[] COMPRESSED_RESPONSE_END = {0x1f, (byte) 0x8b, 0x08, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x04, 0x03, (byte) 0xe3, (byte) 0xe2, 0x02, 0x02, 0x00, (byte) 0x9a,
+            (byte) 0x8b, (byte) 0x82, (byte) 0xf4, 0x05, 0x00, 0x00, 0x00};
+    private final static int COMPRESSED_RESPONSE_BUFFER_SIZE = 1 << 16;
 
     //The ID and the name of a condition keep the names they had when topAnat only tested
     //anatomical entities
@@ -253,19 +273,23 @@ public class CommandRPackage extends CommandParent {
      * {@code TopAnatService}, of the kind the request asks for, rather than propagated
      * for the occasion: a whole species holds far more genes than a web request can propagate.
      * The rows returned are the ones the requested combination of data types supports a call of
-     * the requested quality in, restricted to the requested developmental stages, or to the root
-     * of the stages when none is requested (see {@code TopAnatService#subsetCalls}): a gene
+     * the requested quality in, restricted to the requested developmental stage, a single one,
+     * or to the root of the stages when none is requested (see
+     * {@code TopAnatService#subsetCalls}): a gene
      * ID and the ID of a condition of the condition files. They cover the whole species:
      * restricting them to a set of genes is left to the consumer, which keeps the response
      * a function of a handful of parameters, identical for every caller asking the same question.
+     * <p>
+     * The response is a gzip file whatever the requested display type: for the species with
+     * the most calls, it holds tens of millions of rows. It is written into the output stream of
+     * the response rather than through a view, a view acquiring the writer of the response,
+     * after which its output stream can no longer be used.
      *
      * @throws InvalidRequestException  In case of invalid request parameter.
      * @throws IOException              In case of issue when reading the file or writing results.
      */
     private void processGetExpressionCalls() throws InvalidRequestException, IOException {
         log.traceEntry();
-
-        RPackageDisplay display = this.viewFactory.getRPackageDisplay();
 
         //****************************************
         // Retrieve and filter request parameters
@@ -276,25 +300,72 @@ public class CommandRPackage extends CommandParent {
         //for now, we force to select one and only one species, to not return
         //the complete expression table at once
         int speciesId = this.checkAndGetSpeciesId();
-        List<String> stageIds = this.requestParameters.getDevStage();
+        String stageId = this.checkAndGetStageId();
 
         //****************************************
         // Subset the generated file and display the results
         //****************************************
         Path callFile = TopAnatService.getCallFilePath(
                 this.prop.getTopAnatResultsWritingDirectory(), fileType, speciesId);
-        if (!Files.exists(callFile)) {
+        if (!Files.exists(callFile) || !Files.exists(TopAnatService.getCallIndexFilePath(
+                this.prop.getTopAnatResultsWritingDirectory(), fileType, speciesId))) {
             throw log.throwing(new InvalidRequestException("No "
                     + fileType.getStringRepresentation() + " expression call file has been "
                     + "generated for the species " + speciesId));
         }
         List<String> columns = List.of(CALLS_GENE_ID_PARAM, CALLS_CONDITION_ID_PARAM);
-        //The stream is closed once the view has consumed it, the file holding a whole species
+        //The stream is closed once written, the file holding a whole species
         try (Stream<String[]> calls = TopAnatService.subsetCalls(callFile, dataTypes,
-                quality, stageIds)) {
-            display.displayRows(columns, calls);
+                quality, stageId)) {
+            this.writeCompressedRows(columns, calls);
         }
 
+        log.traceExit();
+    }
+
+    /**
+     * Write rows as a gzip file into the output stream of the response: a gzip member holding
+     * the names of the columns and the rows, tab-separated, then
+     * {@link #COMPRESSED_RESPONSE_END}. A failure while writing therefore leaves a response
+     * without its end, which BgeeDB tells apart from a complete one.
+     *
+     * @param columns   A {@code List} of {@code String}s that are the names of the columns.
+     * @param rows      A {@code Stream} of {@code String[]}s that are the rows. They hold IDs,
+     *                  which contain neither tabs nor line breaks.
+     * @throws IOException  If the response cannot be written.
+     */
+    private void writeCompressedRows(List<String> columns, Stream<String[]> rows)
+            throws IOException {
+        log.traceEntry("{}, {}", columns, rows);
+        this.response.setContentType("application/gzip");
+        OutputStream out = this.response.getOutputStream();
+        //The fastest compression: the response is compressed at each request, and a stronger
+        //compression makes it barely smaller for several times the time
+        GZIPOutputStream gzip = new GZIPOutputStream(out, COMPRESSED_RESPONSE_BUFFER_SIZE) {
+            {
+                this.def.setLevel(Deflater.BEST_SPEED);
+            }
+        };
+        Writer writer = new BufferedWriter(new OutputStreamWriter(gzip, StandardCharsets.UTF_8),
+                COMPRESSED_RESPONSE_BUFFER_SIZE);
+        writer.write(String.join("\t", columns));
+        writer.write('\n');
+        Iterator<String[]> iterator = rows.iterator();
+        while (iterator.hasNext()) {
+            String[] row = iterator.next();
+            for (int i = 0; i < row.length; i++) {
+                if (i > 0) {
+                    writer.write('\t');
+                }
+                writer.write(row[i]);
+            }
+            writer.write('\n');
+        }
+        writer.flush();
+        //The member of the rows is finished, not closed, for the end to follow it
+        gzip.finish();
+        out.write(COMPRESSED_RESPONSE_END);
+        out.flush();
         log.traceExit();
     }
 
@@ -341,6 +412,26 @@ public class CommandRPackage extends CommandParent {
                     + requested));
         }
         return log.traceExit(BgeeEnum.convert(Background.class, requested));
+    }
+
+    /**
+     * @return  A {@code String} that is the ID of the developmental stage the request asks
+     *          the calls of, {@code null} if none is requested, meaning the root of the stages.
+     *          A single stage can be requested: a stage aggregates the calls of its substages,
+     *          and the union of several stages would require to remember every returned row.
+     * @throws InvalidRequestException  If several stages are requested.
+     */
+    private String checkAndGetStageId() throws InvalidRequestException {
+        log.traceEntry();
+        List<String> stageIds = this.requestParameters.getDevStage();
+        if (stageIds == null || stageIds.isEmpty()) {
+            return log.traceExit((String) null);
+        }
+        if (stageIds.size() > 1) {
+            throw log.throwing(new InvalidRequestException(
+                    "Only one developmental stage can be requested"));
+        }
+        return log.traceExit(stageIds.get(0));
     }
 
     /**

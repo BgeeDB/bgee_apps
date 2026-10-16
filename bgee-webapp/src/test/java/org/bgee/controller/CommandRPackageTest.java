@@ -1,16 +1,24 @@
 package org.bgee.controller;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,7 +26,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
@@ -35,6 +46,7 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
+import org.bgee.model.topanat.TopAnatCallFileTestUtils;
 import org.bgee.model.topanat.TopAnatService;
 import org.bgee.model.topanat.TopAnatService.Background;
 import org.bgee.model.topanat.TopAnatService.CallFileType;
@@ -68,6 +80,11 @@ public class CommandRPackageTest extends TestAncestor {
     public TemporaryFolder tmpFolder = new TemporaryFolder();
 
     private BgeeProperties props;
+    /**
+     * The response of the requests, and what was written into its output stream by the last one.
+     */
+    private HttpServletResponse response;
+    private ByteArrayOutputStream responseBytes;
     private ServiceFactory serviceFactory;
     private ViewFactory viewFactory;
     private JobService jobService;
@@ -81,16 +98,22 @@ public class CommandRPackageTest extends TestAncestor {
     @Before
     public void setUp() throws Exception {
         String root = this.tmpFolder.getRoot().getPath();
-        //Only the column of the combination of all data types, the one requested when none is
-        write(TopAnatService.getCallFilePath(root, CallFileType.PROPAGATED, SPECIES_ID),
-                "geneId\tstageId\tconditionId\tIN_SITU-SC_RNA_SEQ-RNA_SEQ",
-                "G1\tUBERON:0000104\tUBERON:0000955\tGOLD",
-                "G1\tUBERON:0000104\tBGEE:0000000\tSILVER",
-                "G2\tUBERON:0000104\tCL:0000540-UBERON:0000955\tSILVER",
-                "G2\tUBERON:0000092\tUBERON:0000955\tSILVER");
-        write(TopAnatService.getCallFilePath(root, CallFileType.OBSERVED, SPECIES_ID),
-                "geneId\tstageId\tconditionId\tIN_SITU-SC_RNA_SEQ-RNA_SEQ",
-                "G1\tUBERON:0000104\tUBERON:0000955\tGOLD");
+        //Only the combination of all data types, the one requested when none is. The conditions
+        //are referred to by their index in the order of their IDs: BGEE:0000000,
+        //CL:0000540-UBERON:0000955, then UBERON:0000955.
+        List<String> combinations = List.of("IN_SITU-SC_RNA_SEQ-RNA_SEQ");
+        List<String> conditionIds = List.of("BGEE:0000000", "CL:0000540-UBERON:0000955",
+                "UBERON:0000955");
+        TopAnatCallFileTestUtils.writeCallFile(
+                TopAnatService.getCallFilePath(root, CallFileType.PROPAGATED, SPECIES_ID),
+                combinations, conditionIds, List.of(
+                        new String[] {"UBERON:0000104", "G1", "2:G,0:S"},
+                        new String[] {"UBERON:0000104", "G2", "1:S"},
+                        new String[] {"UBERON:0000092", "G2", "2:S"}));
+        TopAnatCallFileTestUtils.writeCallFile(
+                TopAnatService.getCallFilePath(root, CallFileType.OBSERVED, SPECIES_ID),
+                combinations, conditionIds, List.<String[]>of(
+                        new String[] {"UBERON:0000104", "G1", "2:G"}));
         write(TopAnatService.getConditionFilePath(root, SPECIES_ID),
                 "conditionId\tconditionName\tanatEntityId\tcellTypeId",
                 "BGEE:0000000\tanatomical entity\tBGEE:0000000\tGO:0005575",
@@ -139,6 +162,24 @@ public class CommandRPackageTest extends TestAncestor {
         this.serviceFactory = mock(ServiceFactory.class);
         when(this.serviceFactory.getDAOManager()).thenReturn(daoManager);
 
+        this.responseBytes = new ByteArrayOutputStream();
+        this.response = mock(HttpServletResponse.class);
+        ServletOutputStream outputStream = new ServletOutputStream() {
+            @Override
+            public void write(int b) {
+                CommandRPackageTest.this.responseBytes.write(b);
+            }
+            @Override
+            public boolean isReady() {
+                return true;
+            }
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+                //Written synchronously
+            }
+        };
+        when(this.response.getOutputStream()).thenReturn(outputStream);
+
         this.jobService = mock(JobService.class);
         when(this.jobService.registerNewJob(any())).thenReturn(mock(Job.class));
         this.user = mock(User.class);
@@ -175,7 +216,8 @@ public class CommandRPackageTest extends TestAncestor {
         return params;
     }
     private void process(RequestParameters params) throws Exception {
-        new CommandRPackage(mock(HttpServletResponse.class), params, this.props,
+        this.responseBytes.reset();
+        new CommandRPackage(this.response, params, this.props,
                 this.viewFactory, this.serviceFactory, this.jobService, this.user)
         .processRequest();
     }
@@ -195,15 +237,12 @@ public class CommandRPackageTest extends TestAncestor {
                 propagatedParams.getUrlParametersInstance().getParamCallFileType(),
                 CallFileType.PROPAGATED.getStringRepresentation());
         this.process(propagatedParams);
-        assertEquals("Incorrect columns of the expression calls",
-                List.of(CommandRPackage.CALLS_GENE_ID_PARAM,
-                        CommandRPackage.CALLS_CONDITION_ID_PARAM),
-                this.displayedColumns);
+        verify(this.response).setContentType("application/gzip");
         assertEquals("Incorrect expression calls of the propagated file", List.of(
                 List.of("G1", "UBERON:0000955"),
                 List.of("G1", "BGEE:0000000"),
                 List.of("G2", "CL:0000540-UBERON:0000955")),
-                this.displayedRows);
+                this.compressedRows());
 
         RequestParameters params = params("get_expression_calls");
         params.addValue(params.getUrlParametersInstance().getParamCallFileType(),
@@ -211,7 +250,48 @@ public class CommandRPackageTest extends TestAncestor {
         params.addValue(params.getUrlParametersInstance().getParamDataQuality(), "GOLD");
         this.process(params);
         assertEquals("Incorrect expression calls of the observed file",
-                List.of(List.of("G1", "UBERON:0000955")), this.displayedRows);
+                List.of(List.of("G1", "UBERON:0000955")), this.compressedRows());
+
+        //One stage requested: the calls of that stage only
+        RequestParameters stageParams = params("get_expression_calls");
+        stageParams.addValue(stageParams.getUrlParametersInstance().getParamCallFileType(),
+                CallFileType.PROPAGATED.getStringRepresentation());
+        stageParams.addValue(stageParams.getUrlParametersInstance().getParamDevStage(),
+                "UBERON:0000092");
+        this.process(stageParams);
+        assertEquals("Incorrect expression calls at one stage",
+                List.of(List.of("G2", "UBERON:0000955")), this.compressedRows());
+        //A single stage can be requested
+        stageParams.addValue(stageParams.getUrlParametersInstance().getParamDevStage(),
+                "UBERON:0000104");
+        assertThrows("A request for several stages should be rejected",
+                InvalidRequestException.class, () -> this.process(stageParams));
+    }
+
+    /**
+     * @return  The rows of the last compressed response, after checking its columns and its end:
+     *          the 5 blank lines ending every response, in the gzip member BgeeDB recognizes.
+     */
+    private List<List<String>> compressedRows() throws IOException {
+        byte[] bytes = this.responseBytes.toByteArray();
+        assertArrayEquals("The response should end with the gzip member of the blank lines",
+                CommandRPackage.COMPRESSED_RESPONSE_END, Arrays.copyOfRange(bytes,
+                        bytes.length - CommandRPackage.COMPRESSED_RESPONSE_END.length,
+                        bytes.length));
+        //Decompressed whole, the members in sequence
+        List<String> lines;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                new GZIPInputStream(new ByteArrayInputStream(bytes)), StandardCharsets.UTF_8))) {
+            lines = reader.lines().collect(Collectors.toList());
+        }
+        assertEquals("Incorrect columns of the expression calls",
+                CommandRPackage.CALLS_GENE_ID_PARAM + "\t"
+                + CommandRPackage.CALLS_CONDITION_ID_PARAM, lines.get(0));
+        assertEquals("The response should end with 5 blank lines", Collections.nCopies(5, ""),
+                lines.subList(lines.size() - 5, lines.size()));
+        return lines.subList(1, lines.size() - 5).stream()
+                .map(line -> Arrays.asList(line.split("\t")))
+                .collect(Collectors.toList());
     }
 
     /**

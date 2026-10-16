@@ -9,13 +9,17 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -26,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ComposedEntity;
@@ -209,19 +214,97 @@ public class TopAnatServiceTest extends TestAncestor {
     public TemporaryFolder tmpFolder = new TemporaryFolder();
 
     /**
-     * Test {@link TopAnatService#subsetCalls(Path, EnumSet, SummaryQuality,
-     * java.util.Collection)}.
+     * The conditions of the call file of the tests, in the order of their indexes.
+     */
+    private final static List<String> CALL_FILE_CONDITIONS = List.of("CL:0000540-UBERON:0000955",
+            "UBERON:0000955", "UBERON:0002107");
+    /**
+     * @return  The {@code Path} of a small call file. Only two combinations of data types:
+     *          they are located by name.
+     */
+    private Path callFile() {
+        Path callFile = this.tmpFolder.getRoot().toPath().resolve("calls.tsv.gz");
+        TopAnatCallFile.CallFileWriter writer = new TopAnatCallFile.CallFileWriter(callFile,
+                List.of("RNA_SEQ", "IN_SITU-RNA_SEQ"), CALL_FILE_CONDITIONS);
+        writer.write("UBERON:0000104", "G1", entry(1, SummaryQuality.GOLD, SummaryQuality.SILVER));
+        writer.write("UBERON:0000092", "G1", entry(1, SummaryQuality.SILVER, null));
+        writer.write("UBERON:0000104", "G2", entry(0, SummaryQuality.SILVER, SummaryQuality.GOLD));
+        writer.write("UBERON:0000092", "G3", entry(2, null, SummaryQuality.SILVER));
+        writer.complete();
+        return callFile;
+    }
+    /**
+     * @return  The entry of one condition in a call file, with the quality of each combination
+     *          of data types, {@code null} when it supports no call.
+     */
+    private static StringBuilder entry(int conditionIndex, SummaryQuality... qualities) {
+        StringBuilder letters = new StringBuilder();
+        for (SummaryQuality quality: qualities) {
+            letters.append(TopAnatCallFile.qualityLetter(quality));
+        }
+        StringBuilder entries = new StringBuilder();
+        TopAnatCallFile.appendEntry(entries, conditionIndex, letters);
+        return entries;
+    }
+
+    /**
+     * Test {@link TopAnatCallFile.CallFileWriter}: one gzip member per stage, in the order of
+     * the stages, a gene being written once per stage, and its index.
+     */
+    @Test
+    public void shouldWriteCallFile() throws IOException {
+        //The conditions of a gene at a stage, separated by commas
+        StringBuilder entries = entry(1, SummaryQuality.GOLD, null);
+        TopAnatCallFile.appendEntry(entries, 2, "SN");
+        assertEquals("Incorrect conditions of a gene at a stage", "1:GN,2:SN", entries.toString());
+
+        Path callFile = this.callFile();
+
+        //Read whole, as zcat would, the members being decompressed in sequence
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                new GZIPInputStream(Files.newInputStream(callFile)), StandardCharsets.UTF_8))) {
+            assertEquals("Incorrect content of the call file", List.of(
+                    "UBERON:0000092\tG1\t1:SN",
+                    "UBERON:0000092\tG3\t2:NS",
+                    "UBERON:0000104\tG1\t1:GS",
+                    "UBERON:0000104\tG2\t0:SG"),
+                    reader.lines().collect(Collectors.toList()));
+        }
+
+        Path indexFile = this.tmpFolder.getRoot().toPath().resolve("calls.index.tsv");
+        List<String> index = Files.readAllLines(indexFile, StandardCharsets.UTF_8);
+        assertEquals("Incorrect size in the index", "size\t" + Files.size(callFile), index.get(0));
+        assertEquals("Incorrect combinations in the index",
+                "combinations\tRNA_SEQ\tIN_SITU-RNA_SEQ", index.get(1));
+        //The members follow each other in the order of the stages
+        String[] firstStage = index.get(2).split("\t");
+        String[] secondStage = index.get(3).split("\t");
+        assertEquals("Incorrect first stage", List.of("stage", "UBERON:0000092", "0"),
+                List.of(firstStage).subList(0, 3));
+        assertEquals("Incorrect second stage", List.of("stage", "UBERON:0000104", firstStage[3]),
+                List.of(secondStage).subList(0, 3));
+        assertEquals("Incorrect end of the last member", Files.size(callFile),
+                Long.parseLong(secondStage[2]) + Long.parseLong(secondStage[3]));
+        assertEquals("Incorrect conditions in the index", List.of(
+                "condition\t0\tCL:0000540-UBERON:0000955", "condition\t1\tUBERON:0000955",
+                "condition\t2\tUBERON:0002107"), index.subList(4, index.size()));
+        assertFalse("The temporary members should have been deleted", Files.exists(
+                this.tmpFolder.getRoot().toPath().resolve("calls.tsv.gz.members.tmp")));
+        assertEquals("Incorrect index file of a call file", indexFile,
+                TopAnatCallFile.indexFile(callFile));
+        assertEquals("Incorrect path of an index file",
+                Paths.get("root", TopAnatService.CALL_FILE_DIRECTORY,
+                        "topanat_calls_propagated_species_1.index.tsv"),
+                TopAnatService.getCallIndexFilePath("root",
+                        TopAnatService.CallFileType.PROPAGATED, 1));
+    }
+
+    /**
+     * Test {@link TopAnatService#subsetCalls(Path, EnumSet, SummaryQuality, String)}.
      */
     @Test
     public void shouldSubsetCalls() throws IOException {
-        //Only two combination columns: the columns are located by name
-        Path callFile = this.tmpFolder.newFile("calls.tsv").toPath();
-        Files.write(callFile, List.of(
-                "geneId\tstageId\tconditionId\tRNA_SEQ\tIN_SITU-RNA_SEQ",
-                "G1\tUBERON:0000104\tUBERON:0000955\tGOLD\tSILVER",
-                "G1\tUBERON:0000092\tUBERON:0000955\tSILVER\tNA",
-                "G2\tUBERON:0000104\tCL:0000540-UBERON:0000955\tSILVER\tGOLD",
-                "G3\tUBERON:0000092\tUBERON:0002107\tNA\tSILVER"));
+        Path callFile = this.callFile();
 
         //No stage requested: the calls of the root of the stages, G3 only holding a call
         //at another stage
@@ -234,22 +317,25 @@ public class TopAnatServiceTest extends TestAncestor {
                 subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.GOLD, null));
         assertEquals("Incorrect calls at one stage", List.of(List.of("G3", "UBERON:0002107")),
                 subsetCalls(callFile, EnumSet.of(DataType.IN_SITU, DataType.RNA_SEQ),
-                        SummaryQuality.SILVER, List.of("UBERON:0000092")));
-        //A gene holding calls in a condition at several of the requested stages is returned once
-        assertEquals("Incorrect calls at several stages", List.of(
-                List.of("G1", "UBERON:0000955"),
-                List.of("G2", "CL:0000540-UBERON:0000955")),
+                        SummaryQuality.SILVER, "UBERON:0000092"));
+
+        assertEquals("A stage with no call should return no call", List.of(),
                 subsetCalls(callFile, EnumSet.of(DataType.RNA_SEQ), SummaryQuality.SILVER,
-                        List.of("UBERON:0000104", "UBERON:0000092")));
+                        "UBERON:0000066"));
 
         assertThrows("A combination of data types missing from the file should be rejected",
                 IllegalStateException.class, () -> subsetCalls(callFile,
                         EnumSet.of(DataType.IN_SITU), SummaryQuality.SILVER, null));
+        //A call file that does not match its index, for instance while it is being replaced
+        Files.write(callFile, new byte[] {0}, StandardOpenOption.APPEND);
+        assertThrows("A call file not matching its index should be rejected",
+                IllegalStateException.class, () -> subsetCalls(callFile,
+                        EnumSet.of(DataType.RNA_SEQ), SummaryQuality.SILVER, null));
     }
     private static List<List<String>> subsetCalls(Path callFile, EnumSet<DataType> dataTypes,
-            SummaryQuality quality, List<String> stageIds) throws IOException {
+            SummaryQuality quality, String stageId) throws IOException {
         try (Stream<String[]> calls = TopAnatService.subsetCalls(callFile, dataTypes,
-                quality, stageIds)) {
+                quality, stageId)) {
             return calls.map(Arrays::asList).collect(Collectors.toList());
         }
     }

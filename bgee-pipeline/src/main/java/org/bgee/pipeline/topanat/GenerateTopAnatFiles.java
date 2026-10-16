@@ -9,7 +9,7 @@ import org.bgee.model.topanat.TopAnatService;
 import org.bgee.pipeline.CommandRunner;
 
 /**
- * Generates the files topAnat reads its expression calls and its conditions from, four per
+ * Generates the files topAnat reads its expression calls and its conditions from, six per
  * species: the calls are propagated once by {@code TopAnatService} and written to files,
  * the analyses then reading them rather than propagating the calls of a whole species inside
  * a web request.

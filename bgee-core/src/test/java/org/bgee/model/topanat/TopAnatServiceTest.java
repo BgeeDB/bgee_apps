@@ -2,6 +2,7 @@ package org.bgee.model.topanat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,6 +12,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,32 +20,39 @@ import org.bgee.model.ComposedEntity;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTOResultSet;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.Condition2;
 import org.bgee.model.species.Species;
+import org.bgee.model.topanat.TopAnatService.Background;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * Unit tests for {@link TopAnatCallFileService}, of the columns of the generated files: topAnat
+ * Unit tests for {@link TopAnatService}, of the columns of the generated files: topAnat
  * reads them by name, so a change of their number, their name or their order breaks it. And of
- * the content of the files describing the conditions, on a small graph, and of the reading of
- * the call files, on a small file.
+ * the content of the files describing the conditions, on a small graph, of the reading of
+ * the call files, on a small file, and of the genes of the backgrounds, on a species with
+ * a protein coding gene, a pseudogene targeted by the polyA libraries, and a lncRNA, which they
+ * do not target.
  *
  * @author  Julien Wollbrett
  * @version Bgee 16
  */
-public class TopAnatCallFileServiceTest extends TestAncestor {
+public class TopAnatServiceTest extends TestAncestor {
 
     /**
-     * Test {@link TopAnatCallFileService#dataTypeCombinations()}.
+     * Test {@link TopAnatService#dataTypeCombinations()}.
      */
     @Test
     public void shouldGetDataTypeCombinations() {
-        List<EnumSet<DataType>> combinations = TopAnatCallFileService.dataTypeCombinations();
+        List<EnumSet<DataType>> combinations = TopAnatService.dataTypeCombinations();
 
         //Every non-empty combination of the data types, so 2^n - 1 of them
         assertEquals("Incorrect number of data type combinations",
@@ -60,23 +69,23 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
     }
 
     /**
-     * Test {@link TopAnatCallFileService#combinationColumnName(EnumSet)}.
+     * Test {@link TopAnatService#combinationColumnName(EnumSet)}.
      */
     @Test
     public void shouldGetCombinationColumnName() {
         assertEquals("Incorrect column name of a single data type",
                 "RNA_SEQ",
-                TopAnatCallFileService.combinationColumnName(EnumSet.of(DataType.RNA_SEQ)));
+                TopAnatService.combinationColumnName(EnumSet.of(DataType.RNA_SEQ)));
         //The separator must not be one that the names of the data types contain, otherwise
         //a combination could not be read back unambiguously
         assertEquals("Incorrect column name of a combination of data types",
                 "SC_RNA_SEQ-RNA_SEQ",
-                TopAnatCallFileService.combinationColumnName(
+                TopAnatService.combinationColumnName(
                         EnumSet.of(DataType.SC_RNA_SEQ, DataType.RNA_SEQ)));
         assertEquals("The column names of the combinations should all be distinct",
-                TopAnatCallFileService.dataTypeCombinations().size(),
-                TopAnatCallFileService.dataTypeCombinations().stream()
-                        .map(TopAnatCallFileService::combinationColumnName)
+                TopAnatService.dataTypeCombinations().size(),
+                TopAnatService.dataTypeCombinations().stream()
+                        .map(TopAnatService::combinationColumnName)
                         .collect(Collectors.toSet()).size());
     }
 
@@ -119,7 +128,7 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
     }
 
     /**
-     * Test {@link TopAnatCallFileService#conditionLines(java.util.Collection)}.
+     * Test {@link TopAnatService#conditionLines(java.util.Collection)}.
      */
     @Test
     public void shouldGetConditionLines() {
@@ -128,23 +137,23 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
                 "CL:0000540-BGEE:0000000\tneuron in anatomical entity\tBGEE:0000000\tCL:0000540",
                 "CL:0000540-UBERON:0000955\tneuron in brain\tUBERON:0000955\tCL:0000540",
                 "UBERON:0000955\tbrain\tUBERON:0000955\tGO:0005575"),
-                TopAnatCallFileService.conditionLines(conditions().values()));
+                TopAnatService.conditionLines(conditions().values()));
 
         //A cell type that is the anat. entity itself is held as a single entity by the condition,
         //it must not be confused with the anat. entity alone
         assertEquals("Incorrect lines of a cell type that is the anat. entity itself", List.of(
                 "CL:0000000\tcell\tCL:0000000\tGO:0005575",
                 "CL:0000000-CL:0000000\tcell in cell\tCL:0000000\tCL:0000000"),
-                TopAnatCallFileService.conditionLines(
+                TopAnatService.conditionLines(
                         List.of(condition(CELL, CELL_TYPE_ROOT), condition(CELL, CELL))));
 
         assertThrows("Two conditions with the same ID should be rejected",
-                IllegalStateException.class, () -> TopAnatCallFileService.conditionLines(List.of(
+                IllegalStateException.class, () -> TopAnatService.conditionLines(List.of(
                         condition(BRAIN, CELL_TYPE_ROOT), condition(BRAIN, CELL_TYPE_ROOT))));
     }
 
     /**
-     * Test {@link TopAnatCallFileService#relationLines(Map, Map)}.
+     * Test {@link TopAnatService#relationLines(Map, Map)}.
      */
     @Test
     public void shouldGetRelationLines() {
@@ -154,13 +163,13 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
                 "CL:0000540-UBERON:0000955\tCL:0000540-BGEE:0000000",
                 "CL:0000540-UBERON:0000955\tUBERON:0000955",
                 "UBERON:0000955\tBGEE:0000000"),
-                TopAnatCallFileService.relationLines(conditions(), directAncestors()));
+                TopAnatService.relationLines(conditions(), directAncestors()));
 
         assertThrows("A parent that is not one of the conditions should be rejected",
-                IllegalStateException.class, () -> TopAnatCallFileService.relationLines(
+                IllegalStateException.class, () -> TopAnatService.relationLines(
                         Map.of(2, condition(BRAIN, CELL_TYPE_ROOT)), directAncestors()));
         assertThrows("Conditions with several roots should be rejected",
-                IllegalStateException.class, () -> TopAnatCallFileService.relationLines(
+                IllegalStateException.class, () -> TopAnatService.relationLines(
                         Map.of(1, condition(ROOT, CELL_TYPE_ROOT),
                                 2, condition(BRAIN, CELL_TYPE_ROOT)),
                         Map.of(1, new int[0], 2, new int[0])));
@@ -170,7 +179,7 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
     public TemporaryFolder tmpFolder = new TemporaryFolder();
 
     /**
-     * Test {@link TopAnatCallFileService#subsetCalls(Path, EnumSet, SummaryQuality,
+     * Test {@link TopAnatService#subsetCalls(Path, EnumSet, SummaryQuality,
      * java.util.Collection)}.
      */
     @Test
@@ -209,9 +218,95 @@ public class TopAnatCallFileServiceTest extends TestAncestor {
     }
     private static List<List<String>> subsetCalls(Path callFile, EnumSet<DataType> dataTypes,
             SummaryQuality quality, List<String> stageIds) throws IOException {
-        try (Stream<String[]> calls = TopAnatCallFileService.subsetCalls(callFile, dataTypes,
+        try (Stream<String[]> calls = TopAnatService.subsetCalls(callFile, dataTypes,
                 quality, stageIds)) {
             return calls.map(Arrays::asList).collect(Collectors.toList());
         }
+    }
+
+    private final static int SPECIES_ID = 1;
+
+    private final static GeneBioTypeTO PROTEIN_CODING = new GeneBioTypeTO(1, "protein_coding");
+    private final static GeneBioTypeTO LNC_RNA = new GeneBioTypeTO(2, "lncRNA");
+    private final static GeneBioTypeTO PSEUDOGENE = new GeneBioTypeTO(3, "processed_pseudogene");
+
+    private static GeneTO gene(int bgeeGeneId, String geneId, GeneBioTypeTO bioType) {
+        return new GeneTO(bgeeGeneId, geneId, null, null, SPECIES_ID, bioType.getId(), true,
+                null, null, 1, null);
+    }
+    private final static GeneTO CODING_1 = gene(1, "G1", PROTEIN_CODING);
+    private final static GeneTO LNC = gene(2, "G2", LNC_RNA);
+    private final static GeneTO PSEUDO = gene(3, "G3", PSEUDOGENE);
+    private final static GeneTO CODING_2 = gene(4, "G4", PROTEIN_CODING);
+
+    /**
+     * Configure the {@code GeneDAO} to return the genes of the backgrounds.
+     */
+    private void mockBackgroundGenes() {
+        //A result set can only be read once: a new one for each call
+        when(this.geneDAO.getGenesBySpeciesIds(Set.of(SPECIES_ID))).thenAnswer(
+                invocation -> getMockResultSet(GeneTOResultSet.class,
+                        List.of(CODING_2, LNC, PSEUDO, CODING_1)));
+        when(this.geneDAO.getGeneBioTypes()).thenAnswer(
+                invocation -> getMockResultSet(GeneBioTypeTOResultSet.class,
+                        List.of(PROTEIN_CODING, LNC_RNA, PSEUDOGENE)));
+        when(this.geneDAO.getGeneBioTypesByPopulationCaptureIds(Set.of("polyA"))).thenAnswer(
+                invocation -> getMockResultSet(GeneBioTypeTOResultSet.class,
+                        List.of(PROTEIN_CODING, PSEUDOGENE)));
+        //The genes with an observation, the pseudogene having none, so that each background
+        //holds different genes
+        when(this.geneDAO.getGenesWithDataBySpeciesIdsOrdered(Set.of(SPECIES_ID), 0, 0))
+        .thenAnswer(invocation -> getMockResultSet(GeneTOResultSet.class,
+                List.of(CODING_1, LNC, CODING_2)));
+    }
+
+    /**
+     * Test {@link TopAnatService#loadBackgroundGeneIds(int, Background)}.
+     */
+    @Test
+    public void shouldLoadBackgroundGeneIds() {
+        this.mockBackgroundGenes();
+        TopAnatService service = new TopAnatService(this.serviceFactory);
+
+        assertEquals("Incorrect protein coding genes", List.of("G1", "G4"),
+                service.loadBackgroundGeneIds(SPECIES_ID, Background.PROTEIN_CODING));
+        assertEquals("Incorrect genes of the biotypes targeted by the polyA libraries",
+                List.of("G1", "G3", "G4"),
+                service.loadBackgroundGeneIds(SPECIES_ID, Background.POLY_A));
+        assertEquals("Incorrect genes with an observation", List.of("G1", "G2", "G4"),
+                service.loadBackgroundGeneIds(SPECIES_ID, Background.OBSERVED));
+
+        assertThrows("A background must be provided", IllegalArgumentException.class,
+                () -> service.loadBackgroundGeneIds(SPECIES_ID, null));
+        assertThrows("An invalid species ID should be rejected", IllegalArgumentException.class,
+                () -> service.loadBackgroundGeneIds(0, Background.POLY_A));
+    }
+
+    /**
+     * Test {@link TopAnatService#loadBackgroundGeneIds(int, Background)} when no biotype
+     * defines the requested background: returning no gene would look like a species with
+     * no gene.
+     */
+    @Test
+    public void shouldRejectABackgroundDefinedByNoBiotype() {
+        this.mockBackgroundGenes();
+        when(this.geneDAO.getGeneBioTypes()).thenAnswer(
+                invocation -> getMockResultSet(GeneBioTypeTOResultSet.class, List.of(LNC_RNA)));
+        assertThrows("A background defined by no biotype should be rejected",
+                IllegalStateException.class,
+                () -> new TopAnatService(this.serviceFactory).loadBackgroundGeneIds(
+                        SPECIES_ID, Background.PROTEIN_CODING));
+    }
+
+    /**
+     * Test that a {@code TopAnatService} created without {@code ServiceFactory} supplier
+     * does not generate the files.
+     */
+    @Test
+    public void shouldNotGenerateFilesWithoutServiceFactorySupplier() {
+        assertThrows("A service with no ServiceFactory supplier should not generate the files",
+                IllegalStateException.class,
+                () -> new TopAnatService(this.serviceFactory).generateFiles(
+                        List.of(SPECIES_ID), this.tmpFolder.getRoot().getPath(), false, 1));
     }
 }

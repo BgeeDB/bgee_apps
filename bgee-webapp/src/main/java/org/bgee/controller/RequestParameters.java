@@ -2449,6 +2449,16 @@ public class RequestParameters {
         return this.getFirstValue(this.getUrlParametersInstance().getParamCallFileType());
     }
     /**
+     * Convenient method to retrieve the value of the parameter returned by
+     * {@link URLParameters#getParamBackgroundType()}.
+     *
+     * @return  A {@code String} that is the requested background of topAnat, {@code null}
+     *          when the request does not specify one.
+     */
+    public String getBackgroundType() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamBackgroundType());
+    }
+    /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamDataType()}. Equivalent to calling 
      * {@link #getValues(URLParameters.Parameter)} for this parameter.

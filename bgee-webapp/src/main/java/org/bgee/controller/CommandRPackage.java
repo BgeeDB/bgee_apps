@@ -59,8 +59,9 @@ import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
-import org.bgee.model.topanat.TopAnatCallFileService;
-import org.bgee.model.topanat.TopAnatCallFileService.CallFileType;
+import org.bgee.model.topanat.TopAnatService;
+import org.bgee.model.topanat.TopAnatService.Background;
+import org.bgee.model.topanat.TopAnatService.CallFileType;
 import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -83,6 +84,8 @@ public class CommandRPackage extends CommandParent {
 
     public final static String CALLS_GENE_ID_PARAM = "GENE_ID";
     public final static String CALLS_CONDITION_ID_PARAM = "CONDITION_ID";
+
+    public final static String BACKGROUND_GENE_ID_PARAM = "GENE_ID";
 
     //The ID and the name of a condition keep the names they had when topAnat only tested
     //anatomical entities
@@ -156,19 +159,19 @@ public class CommandRPackage extends CommandParent {
     private final static Map<String, String> CONDITION_RELATION_COLUMNS;
     static {
         Map<String, String> conditionColumns = new LinkedHashMap<>();
-        conditionColumns.put(CONDITIONS_ID_PARAM, TopAnatCallFileService.CONDITION_ID_COLUMN);
-        conditionColumns.put(CONDITIONS_NAME_PARAM, TopAnatCallFileService.CONDITION_NAME_COLUMN);
+        conditionColumns.put(CONDITIONS_ID_PARAM, TopAnatService.CONDITION_ID_COLUMN);
+        conditionColumns.put(CONDITIONS_NAME_PARAM, TopAnatService.CONDITION_NAME_COLUMN);
         conditionColumns.put(CONDITIONS_ANAT_ENTITY_ID_PARAM,
-                TopAnatCallFileService.ANAT_ENTITY_ID_COLUMN);
+                TopAnatService.ANAT_ENTITY_ID_COLUMN);
         conditionColumns.put(CONDITIONS_CELL_TYPE_ID_PARAM,
-                TopAnatCallFileService.CELL_TYPE_ID_COLUMN);
+                TopAnatService.CELL_TYPE_ID_COLUMN);
         CONDITION_COLUMNS = Collections.unmodifiableMap(conditionColumns);
 
         Map<String, String> relationColumns = new LinkedHashMap<>();
         relationColumns.put(RELATIONS_SOURCE_PARAM,
-                TopAnatCallFileService.SOURCE_CONDITION_ID_COLUMN);
+                TopAnatService.SOURCE_CONDITION_ID_COLUMN);
         relationColumns.put(RELATIONS_TARGET_PARAM,
-                TopAnatCallFileService.TARGET_CONDITION_ID_COLUMN);
+                TopAnatService.TARGET_CONDITION_ID_COLUMN);
         CONDITION_RELATION_COLUMNS = Collections.unmodifiableMap(relationColumns);
     }
 
@@ -215,6 +218,10 @@ public class CommandRPackage extends CommandParent {
                     this.requestParameters.getAction())) {
 
                 this.processGetAnatEntityRelations();
+            } else if ("get_background_genes".equals(
+                    this.requestParameters.getAction())) {
+
+                this.processGetBackgroundGenes();
             } else if ("get_all_species".equals(
                     this.requestParameters.getAction())) {
 
@@ -243,11 +250,11 @@ public class CommandRPackage extends CommandParent {
      * Performs the query and display the results when requesting {@code ExpressionCall}s.
      * <p>
      * The calls are read from the file generated for the requested species by
-     * {@code TopAnatCallFileService}, of the kind the request asks for, rather than propagated
+     * {@code TopAnatService}, of the kind the request asks for, rather than propagated
      * for the occasion: a whole species holds far more genes than a web request can propagate.
      * The rows returned are the ones the requested combination of data types supports a call of
      * the requested quality in, restricted to the requested developmental stages, or to the root
-     * of the stages when none is requested (see {@code TopAnatCallFileService#subsetCalls}): a gene
+     * of the stages when none is requested (see {@code TopAnatService#subsetCalls}): a gene
      * ID and the ID of a condition of the condition files. They cover the whole species:
      * restricting them to a set of genes is left to the consumer, which keeps the response
      * a function of a handful of parameters, identical for every caller asking the same question.
@@ -266,22 +273,15 @@ public class CommandRPackage extends CommandParent {
         EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
         SummaryQuality quality = this.checkAndGetSummaryQuality();
         CallFileType fileType = this.checkAndGetCallFileType();
-        List<Integer> speciesIds = this.requestParameters.getSpeciesList();
-        List<String> stageIds = this.requestParameters.getDevStage();
-
         //for now, we force to select one and only one species, to not return
         //the complete expression table at once
-        if (speciesIds == null || speciesIds.size() != 1 ||
-                speciesIds.stream().anyMatch(id -> id == null || id <= 0)) {
-            throw log.throwing(new InvalidRequestException(
-                    "One and only one species ID must be provided"));
-        }
-        int speciesId = speciesIds.iterator().next();
+        int speciesId = this.checkAndGetSpeciesId();
+        List<String> stageIds = this.requestParameters.getDevStage();
 
         //****************************************
         // Subset the generated file and display the results
         //****************************************
-        Path callFile = TopAnatCallFileService.getCallFilePath(
+        Path callFile = TopAnatService.getCallFilePath(
                 this.prop.getTopAnatResultsWritingDirectory(), fileType, speciesId);
         if (!Files.exists(callFile)) {
             throw log.throwing(new InvalidRequestException("No "
@@ -290,9 +290,9 @@ public class CommandRPackage extends CommandParent {
         }
         List<String> columns = List.of(CALLS_GENE_ID_PARAM, CALLS_CONDITION_ID_PARAM);
         //The stream is closed once the view has consumed it, the file holding a whole species
-        try (Stream<String[]> calls = TopAnatCallFileService.subsetCalls(callFile, dataTypes,
+        try (Stream<String[]> calls = TopAnatService.subsetCalls(callFile, dataTypes,
                 quality, stageIds)) {
-            display.displayRowsFromFile(columns, calls);
+            display.displayRows(columns, calls);
         }
 
         log.traceExit();
@@ -322,8 +322,67 @@ public class CommandRPackage extends CommandParent {
     }
 
     /**
+     * @return  The {@code Background} of topAnat the request asks the genes of. It must be
+     *          requested explicitly, as the background changes the result of an analysis.
+     * @throws InvalidRequestException  If no background is requested, or if the requested
+     *                                  value matches no {@code Background}.
+     */
+    private Background checkAndGetBackground() throws InvalidRequestException {
+        log.traceEntry();
+        String requested = this.requestParameters.getBackgroundType();
+        if (StringUtils.isBlank(requested)) {
+            throw log.throwing(new InvalidRequestException("A background type must be provided, "
+                    + "one of: " + EnumSet.allOf(Background.class).stream()
+                            .map(Background::getStringRepresentation)
+                            .collect(Collectors.joining(", "))));
+        }
+        if (!BgeeEnum.isInEnum(Background.class, requested)) {
+            throw log.throwing(new InvalidRequestException("Incorrect background type provided: "
+                    + requested));
+        }
+        return log.traceExit(BgeeEnum.convert(Background.class, requested));
+    }
+
+    /**
+     * @return  An {@code int} that is the ID of the one species the request targets.
+     * @throws InvalidRequestException  If not exactly one valid species ID is requested.
+     */
+    private int checkAndGetSpeciesId() throws InvalidRequestException {
+        log.traceEntry();
+        List<Integer> speciesIds = this.requestParameters.getSpeciesList();
+        if (speciesIds == null || speciesIds.size() != 1 ||
+                speciesIds.stream().anyMatch(id -> id == null || id <= 0)) {
+            throw log.throwing(new InvalidRequestException(
+                    "One and only one species ID must be provided"));
+        }
+        return log.traceExit(speciesIds.iterator().next());
+    }
+
+    /**
+     * Display the genes of the requested background of topAnat in the requested species,
+     * read from the database by {@code TopAnatService}: their IDs, sorted. A user
+     * background needs none of them, it is only known to the consumer.
+     *
+     * @throws InvalidRequestException  If not exactly one species is requested, or if no valid
+     *                                  background is requested.
+     * @throws IOException              In case of issue when writing results.
+     */
+    private void processGetBackgroundGenes() throws InvalidRequestException, IOException {
+        log.traceEntry();
+
+        int speciesId = this.checkAndGetSpeciesId();
+        Background background = this.checkAndGetBackground();
+        List<String> geneIds = new TopAnatService(this.serviceFactory)
+                .loadBackgroundGeneIds(speciesId, background);
+        this.viewFactory.getRPackageDisplay().displayRows(List.of(BACKGROUND_GENE_ID_PARAM),
+                geneIds.stream().map(geneId -> new String[] {geneId}));
+
+        log.traceExit();
+    }
+
+    /**
      * Display the conditions of topAnat for the requested species, read from the condition file
-     * generated by {@code TopAnatCallFileService}: their IDs, which the expression calls refer to,
+     * generated by {@code TopAnatService}: their IDs, which the expression calls refer to,
      * their names, and their anatomical entities and cell types. The action keeps the name it had
      * when topAnat only tested anatomical entities.
      *
@@ -332,14 +391,14 @@ public class CommandRPackage extends CommandParent {
      */
     private void processGetAnatEntities() throws InvalidRequestException, IOException {
         log.traceEntry();
-        this.displayGeneratedFile(TopAnatCallFileService::getConditionFilePath, "condition",
+        this.displayGeneratedFile(TopAnatService::getConditionFilePath, "condition",
                 CONDITION_COLUMNS);
         log.traceExit();
     }
 
     /**
      * Display the relations between the conditions of topAnat for the requested species, read
-     * from the relation file generated by {@code TopAnatCallFileService}: the ID of a condition,
+     * from the relation file generated by {@code TopAnatService}: the ID of a condition,
      * then the ID of one of its direct parents. The action keeps the name it had when topAnat
      * only tested anatomical entities.
      *
@@ -348,13 +407,13 @@ public class CommandRPackage extends CommandParent {
      */
     private void processGetAnatEntityRelations() throws InvalidRequestException, IOException {
         log.traceEntry();
-        this.displayGeneratedFile(TopAnatCallFileService::getConditionRelationFilePath,
+        this.displayGeneratedFile(TopAnatService::getConditionRelationFilePath,
                 "condition relation", CONDITION_RELATION_COLUMNS);
         log.traceExit();
     }
 
     /**
-     * Display some columns of a file generated by {@code TopAnatCallFileService} for
+     * Display some columns of a file generated by {@code TopAnatService} for
      * the requested species: those of the attributes requested, all of them when none is.
      *
      * @param filePath          A {@code BiFunction} returning the {@code Path} of the file
@@ -374,13 +433,7 @@ public class CommandRPackage extends CommandParent {
                     throws InvalidRequestException, IOException {
         log.traceEntry("{}, {}, {}", filePath, fileDescription, attributeColumns);
 
-        List<Integer> speciesIds = this.requestParameters.getSpeciesList();
-        if (speciesIds == null || speciesIds.size() != 1 ||
-                speciesIds.stream().anyMatch(id -> id == null || id <= 0)) {
-            throw log.throwing(new InvalidRequestException(
-                    "One and only one species ID must be provided"));
-        }
-        int speciesId = speciesIds.iterator().next();
+        int speciesId = this.checkAndGetSpeciesId();
 
         List<String> requestedAttrs = this.requestParameters.getValues(
                 this.requestParameters.getUrlParametersInstance().getParamAttributeList());
@@ -400,9 +453,9 @@ public class CommandRPackage extends CommandParent {
                     + " file has been generated for the species " + speciesId));
         }
         //The stream is closed once the view has consumed it
-        try (Stream<String[]> rows = TopAnatCallFileService.readColumns(file,
+        try (Stream<String[]> rows = TopAnatService.readColumns(file,
                 attrs.stream().map(attributeColumns::get).collect(Collectors.toList()))) {
-            this.viewFactory.getRPackageDisplay().displayRowsFromFile(attrs, rows);
+            this.viewFactory.getRPackageDisplay().displayRows(attrs, rows);
         }
 
         log.traceExit();

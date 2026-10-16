@@ -28,7 +28,7 @@ import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.topanat.TopAnatCallFileService;
+import org.bgee.model.topanat.TopAnatService;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.expressiondata.call.ConditionGraphCacheService;
 import org.bgee.model.gene.GeneNotFoundException;
@@ -449,7 +449,7 @@ public class FrontController extends HttpServlet {
                 this.prop.isGenerateTopAnatCallFilesOnStartup());
         if (this.prop.isGenerateTopAnatCallFilesOnStartup()) {
             try {
-                new TopAnatCallFileService(this.serviceFactoryProvider.get(),
+                new TopAnatService(this.serviceFactoryProvider.get(),
                         this.serviceFactoryProvider)
                 .generateFilesIfMissing(speciesIds, this.prop.getTopAnatResultsWritingDirectory(),
                         //One gene batch at a time: the files are normally produced by the pipeline,

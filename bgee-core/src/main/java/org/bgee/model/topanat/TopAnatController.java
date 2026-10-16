@@ -25,9 +25,8 @@ import org.bgee.model.job.Job;
  * @version Bgee 13 Oct. 2016
  * @since Bgee 13
  */
-//XXX: rename to TopAnatService, to be obtain through the ServiceFactory?
-//Or create another TopAnatService class?
-//This TopAnatService should receive the JobService instance at instantiation?
+//XXX: merge into TopAnatService, to be obtained through the ServiceFactory?
+//TopAnatService should then receive the JobService instance at instantiation?
 public class TopAnatController {
 
     private final static Logger log = LogManager.getLogger(TopAnatController.class.getName()); 

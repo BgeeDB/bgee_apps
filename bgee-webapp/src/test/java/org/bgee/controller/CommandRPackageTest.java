@@ -12,6 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,10 +27,17 @@ import org.bgee.TestAncestor;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.user.User;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTOResultSet;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
-import org.bgee.model.topanat.TopAnatCallFileService;
-import org.bgee.model.topanat.TopAnatCallFileService.CallFileType;
+import org.bgee.model.topanat.TopAnatService;
+import org.bgee.model.topanat.TopAnatService.Background;
+import org.bgee.model.topanat.TopAnatService.CallFileType;
 import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
 import org.junit.Before;
@@ -37,7 +47,8 @@ import org.junit.rules.TemporaryFolder;
 
 /**
  * Integration tests of the actions of {@link CommandRPackage} serving the files generated for
- * topAnat by {@link TopAnatCallFileService}, on small files written in a temporary directory.
+ * topAnat by {@link TopAnatService}, on small files written in a temporary directory,
+ * and the genes of the backgrounds of topAnat, read from a mocked {@code GeneDAO}.
  *
  * @author  Julien Wollbrett
  * @version Bgee 16
@@ -57,6 +68,7 @@ public class CommandRPackageTest extends TestAncestor {
     public TemporaryFolder tmpFolder = new TemporaryFolder();
 
     private BgeeProperties props;
+    private ServiceFactory serviceFactory;
     private ViewFactory viewFactory;
     private JobService jobService;
     private User user;
@@ -70,21 +82,21 @@ public class CommandRPackageTest extends TestAncestor {
     public void setUp() throws Exception {
         String root = this.tmpFolder.getRoot().getPath();
         //Only the column of the combination of all data types, the one requested when none is
-        write(TopAnatCallFileService.getCallFilePath(root, CallFileType.PROPAGATED, SPECIES_ID),
+        write(TopAnatService.getCallFilePath(root, CallFileType.PROPAGATED, SPECIES_ID),
                 "geneId\tstageId\tconditionId\tIN_SITU-SC_RNA_SEQ-RNA_SEQ",
                 "G1\tUBERON:0000104\tUBERON:0000955\tGOLD",
                 "G1\tUBERON:0000104\tBGEE:0000000\tSILVER",
                 "G2\tUBERON:0000104\tCL:0000540-UBERON:0000955\tSILVER",
                 "G2\tUBERON:0000092\tUBERON:0000955\tSILVER");
-        write(TopAnatCallFileService.getCallFilePath(root, CallFileType.OBSERVED, SPECIES_ID),
+        write(TopAnatService.getCallFilePath(root, CallFileType.OBSERVED, SPECIES_ID),
                 "geneId\tstageId\tconditionId\tIN_SITU-SC_RNA_SEQ-RNA_SEQ",
                 "G1\tUBERON:0000104\tUBERON:0000955\tGOLD");
-        write(TopAnatCallFileService.getConditionFilePath(root, SPECIES_ID),
+        write(TopAnatService.getConditionFilePath(root, SPECIES_ID),
                 "conditionId\tconditionName\tanatEntityId\tcellTypeId",
                 "BGEE:0000000\tanatomical entity\tBGEE:0000000\tGO:0005575",
                 "CL:0000540-UBERON:0000955\tneuron in brain\tUBERON:0000955\tCL:0000540",
                 "UBERON:0000955\tbrain\tUBERON:0000955\tGO:0005575");
-        write(TopAnatCallFileService.getConditionRelationFilePath(root, SPECIES_ID),
+        write(TopAnatService.getConditionRelationFilePath(root, SPECIES_ID),
                 "sourceConditionId\ttargetConditionId",
                 "CL:0000540-UBERON:0000955\tUBERON:0000955",
                 "UBERON:0000955\tBGEE:0000000");
@@ -101,7 +113,32 @@ public class CommandRPackageTest extends TestAncestor {
             Stream<String[]> rows = invocation.getArgument(1);
             this.displayedRows = rows.map(Arrays::asList).collect(Collectors.toList());
             return null;
-        }).when(display).displayRowsFromFile(any(), any());
+        }).when(display).displayRows(any(), any());
+        //The genes of the backgrounds: a protein coding gene, a lncRNA, which the polyA libraries
+        //do not target, a pseudogene, which they target and which has no observation, and
+        //a second protein coding gene
+        GeneBioTypeTO proteinCoding = new GeneBioTypeTO(1, "protein_coding");
+        GeneBioTypeTO lncRNA = new GeneBioTypeTO(2, "lncRNA");
+        GeneBioTypeTO pseudogene = new GeneBioTypeTO(3, "processed_pseudogene");
+        GeneTO coding1 = gene(1, "G1", proteinCoding);
+        GeneTO lnc = gene(2, "G2", lncRNA);
+        GeneTO pseudo = gene(3, "G3", pseudogene);
+        GeneTO coding2 = gene(4, "G4", proteinCoding);
+        GeneDAO geneDAO = mock(GeneDAO.class);
+        //A result set can only be read once: a new one for each call
+        when(geneDAO.getGenesBySpeciesIds(Set.of(SPECIES_ID))).thenAnswer(
+                invocation -> geneResultSet(List.of(coding2, lnc, pseudo, coding1)));
+        when(geneDAO.getGenesWithDataBySpeciesIdsOrdered(Set.of(SPECIES_ID), 0, 0)).thenAnswer(
+                invocation -> geneResultSet(List.of(coding1, lnc, coding2)));
+        when(geneDAO.getGeneBioTypes()).thenAnswer(
+                invocation -> bioTypeResultSet(List.of(proteinCoding, lncRNA, pseudogene)));
+        when(geneDAO.getGeneBioTypesByPopulationCaptureIds(Set.of("polyA"))).thenAnswer(
+                invocation -> bioTypeResultSet(List.of(proteinCoding, pseudogene)));
+        DAOManager daoManager = mock(DAOManager.class);
+        when(daoManager.getGeneDAO()).thenReturn(geneDAO);
+        this.serviceFactory = mock(ServiceFactory.class);
+        when(this.serviceFactory.getDAOManager()).thenReturn(daoManager);
+
         this.jobService = mock(JobService.class);
         when(this.jobService.registerNewJob(any())).thenReturn(mock(Job.class));
         this.user = mock(User.class);
@@ -110,6 +147,20 @@ public class CommandRPackageTest extends TestAncestor {
     private static void write(Path file, String... lines) throws IOException {
         Files.createDirectories(file.getParent());
         Files.write(file, Arrays.asList(lines));
+    }
+    private static GeneTO gene(int bgeeGeneId, String geneId, GeneBioTypeTO bioType) {
+        return new GeneTO(bgeeGeneId, geneId, null, null, SPECIES_ID, bioType.getId(), true,
+                null, null, 1, null);
+    }
+    private static GeneTOResultSet geneResultSet(List<GeneTO> genes) {
+        GeneTOResultSet resultSet = mock(GeneTOResultSet.class);
+        when(resultSet.stream()).thenReturn(genes.stream());
+        return resultSet;
+    }
+    private static GeneBioTypeTOResultSet bioTypeResultSet(List<GeneBioTypeTO> bioTypes) {
+        GeneBioTypeTOResultSet resultSet = mock(GeneBioTypeTOResultSet.class);
+        when(resultSet.stream()).thenReturn(bioTypes.stream());
+        return resultSet;
     }
 
     /**
@@ -125,7 +176,7 @@ public class CommandRPackageTest extends TestAncestor {
     }
     private void process(RequestParameters params) throws Exception {
         new CommandRPackage(mock(HttpServletResponse.class), params, this.props,
-                this.viewFactory, mock(ServiceFactory.class), this.jobService, this.user)
+                this.viewFactory, this.serviceFactory, this.jobService, this.user)
         .processRequest();
     }
 
@@ -161,6 +212,31 @@ public class CommandRPackageTest extends TestAncestor {
         this.process(params);
         assertEquals("Incorrect expression calls of the observed file",
                 List.of(List.of("G1", "UBERON:0000955")), this.displayedRows);
+    }
+
+    /**
+     * Test the action {@code get_background_genes}.
+     */
+    @Test
+    public void shouldGetBackgroundGenes() throws Exception {
+        //The background must be requested explicitly
+        assertThrows("A request with no background type should be rejected",
+                InvalidRequestException.class, () -> this.process(params("get_background_genes")));
+
+        for (Entry<Background, List<List<String>>> expected: Map.of(
+                Background.PROTEIN_CODING, List.of(List.of("G1"), List.of("G4")),
+                Background.POLY_A, List.of(List.of("G1"), List.of("G3"), List.of("G4")),
+                Background.OBSERVED, List.of(List.of("G1"), List.of("G2"), List.of("G4")))
+                .entrySet()) {
+            RequestParameters params = params("get_background_genes");
+            params.addValue(params.getUrlParametersInstance().getParamBackgroundType(),
+                    expected.getKey().getStringRepresentation());
+            this.process(params);
+            assertEquals("Incorrect columns of the background genes",
+                    List.of(CommandRPackage.BACKGROUND_GENE_ID_PARAM), this.displayedColumns);
+            assertEquals("Incorrect genes of the background " + expected.getKey(),
+                    expected.getValue(), this.displayedRows);
+        }
     }
 
     /**

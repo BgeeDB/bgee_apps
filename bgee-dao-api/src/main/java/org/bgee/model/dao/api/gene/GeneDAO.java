@@ -180,6 +180,23 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @throws DAOException If an error occurred while accessing the data source. 
      */
     public GeneBioTypeTOResultSet getGeneBioTypes();
+    /**
+     * Retrieves the gene biotypes that the requested RNA-Seq population captures target: the genes
+     * of these biotypes can be observed in the libraries of these population captures, the others
+     * are excluded from them.
+     * <p>
+     * The biotypes are retrieved and returned as a {@code GeneBioTypeTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rnaSeqPopulationCaptureIds    A {@code Collection} of {@code String}s that are the IDs
+     *                                      of RNA-Seq population captures, such as "polyA".
+     *                                      Can be neither {@code null} nor empty.
+     * @return              A {@code GeneBioTypeTOResultSet} containing the biotypes targeted by
+     *                      at least one of the requested population captures.
+     * @throws DAOException If an error occurred while accessing the data source.
+     */
+    public GeneBioTypeTOResultSet getGeneBioTypesByPopulationCaptureIds(
+            Collection<String> rnaSeqPopulationCaptureIds) throws DAOException;
 
     /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 

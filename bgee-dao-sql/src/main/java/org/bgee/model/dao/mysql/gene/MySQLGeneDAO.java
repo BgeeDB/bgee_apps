@@ -301,6 +301,33 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
     }
 
+    @Override
+    public GeneBioTypeTOResultSet getGeneBioTypesByPopulationCaptureIds(
+            Collection<String> rnaSeqPopulationCaptureIds) throws DAOException {
+        log.traceEntry("{}", rnaSeqPopulationCaptureIds);
+        if (rnaSeqPopulationCaptureIds == null || rnaSeqPopulationCaptureIds.isEmpty() ||
+                rnaSeqPopulationCaptureIds.stream().anyMatch(id -> StringUtils.isBlank(id))) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Some population capture IDs must be provided, and none can be blank"));
+        }
+        Set<String> clonedIds = new HashSet<>(rnaSeqPopulationCaptureIds);
+
+        String sql = "SELECT DISTINCT geneBioType.* FROM geneBioType "
+                + "INNER JOIN rnaSeqPopulationCaptureToBiotype "
+                + "ON geneBioType.geneBioTypeId = rnaSeqPopulationCaptureToBiotype.geneBioTypeId "
+                + "WHERE rnaSeqPopulationCaptureToBiotype.rnaSeqPopulationCaptureId IN ("
+                + BgeePreparedStatement.generateParameterizedQueryString(clonedIds.size()) + ")";
+        // we don't use a try-with-resource, because we return a pointer to the results,
+        // not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            stmt.setStrings(1, clonedIds, true);
+            return log.traceExit(new MySQLGeneBioTypeTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
     // ***************************************************************************
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT
     // TO BE EXPOSED TO THE PUBLIC API.

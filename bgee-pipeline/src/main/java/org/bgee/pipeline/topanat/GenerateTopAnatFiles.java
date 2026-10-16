@@ -5,12 +5,12 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.topanat.TopAnatCallFileService;
+import org.bgee.model.topanat.TopAnatService;
 import org.bgee.pipeline.CommandRunner;
 
 /**
  * Generates the files topAnat reads its expression calls and its conditions from, four per
- * species: the calls are propagated once by {@code TopAnatCallFileService} and written to files,
+ * species: the calls are propagated once by {@code TopAnatService} and written to files,
  * the analyses then reading them rather than propagating the calls of a whole species inside
  * a web request.
  * <p>
@@ -19,7 +19,7 @@ import org.bgee.pipeline.CommandRunner;
  *
  * @author  Julien Wollbrett
  * @version Bgee 16
- * @see     TopAnatCallFileService
+ * @see     TopAnatService
  */
 public class GenerateTopAnatFiles {
     private final static Logger log = LogManager.getLogger(GenerateTopAnatFiles.class.getName());
@@ -29,7 +29,7 @@ public class GenerateTopAnatFiles {
      * in order in {@code args} are:
      * <ol>
      * <li>The path to the directory the files are written into. The files themselves are written
-     * into the sub-directory {@code TopAnatCallFileService#CALL_FILE_DIRECTORY} of that directory.
+     * into the sub-directory {@code TopAnatService#CALL_FILE_DIRECTORY} of that directory.
      * <li>A list of IDs of the species to generate the files of, separated by
      * {@code Utils.VALUE_SEPARATOR}, or {@code CommandRunner#EMPTY_LIST} to generate the files
      * of every species of the database.
@@ -65,7 +65,7 @@ public class GenerateTopAnatFiles {
         try (ServiceFactory serviceFactory = new ServiceFactory()) {
             //One ServiceFactory per thread: the genes of a species are propagated by batches
             //in parallel, and a ServiceFactory is not thread-safe
-            new TopAnatCallFileService(serviceFactory, ServiceFactory::new)
+            new TopAnatService(serviceFactory, ServiceFactory::new)
             .generateFiles(speciesIds, directory, overwriteExistingFiles, parallelism);
         }
 

@@ -44,6 +44,9 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -63,8 +66,11 @@ import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.Species;
 
 /**
- * Generates the files topAnat reads its expression calls and its conditions from, four per
- * species.
+ * Provides what the topAnat analyses read: the files holding their expression calls and their
+ * conditions, four per species, generated once, and the genes of the backgrounds offered for
+ * an analysis, read from the database at each request (see
+ * {@link #loadBackgroundGeneIds(int, Background)}): a list of genes is a simple read, unlike
+ * the calls of a whole species.
  * <p>
  * topAnat needs, for a whole species at once, which genes are expressed in which conditions —
  * a query shape the on-the-fly propagation cannot answer inside a web request (it propagates
@@ -108,8 +114,8 @@ import org.bgee.model.species.Species;
  * @author  Julien Wollbrett
  * @version Bgee 16
  */
-public class TopAnatCallFileService extends CommonService {
-    private final static Logger log = LogManager.getLogger(TopAnatCallFileService.class.getName());
+public class TopAnatService extends CommonService {
+    private final static Logger log = LogManager.getLogger(TopAnatService.class.getName());
 
     /**
      * The directory, under {@code BgeeProperties#getTopAnatResultsWritingDirectory()}, holding
@@ -149,6 +155,40 @@ public class TopAnatCallFileService extends CommonService {
          */
         public String getFileName(int speciesId) {
             return "topanat_calls_" + this.representation + "_species_" + speciesId + ".tsv";
+        }
+    }
+
+    /**
+     * The backgrounds offered for a topAnat analysis. Whatever the background, an analysis only
+     * keeps the genes of the background holding a call in its setting: the genes of
+     * the background with no call take no part in it.
+     */
+    public static enum Background implements BgeeEnumField {
+        /**
+         * The genes of the biotypes targeted by the polyA libraries. Every RNA-Seq library targets
+         * them, polyA as ribo-minus, so that whether such a gene is called expressed in a condition
+         * does not depend on the kind of library sequenced in that condition.
+         */
+        POLY_A("polyA"),
+        /**
+         * The protein coding genes.
+         */
+        PROTEIN_CODING("protein_coding"),
+        /**
+         * The genes with at least one observation, whatever their biotype: almost every gene of
+         * the species. An analysis only keeping the genes holding a call, it is the background of
+         * topAnat before Bgee 16.
+         */
+        OBSERVED("observed");
+
+        private final String representation;
+
+        private Background(String representation) {
+            this.representation = representation;
+        }
+        @Override
+        public String getStringRepresentation() {
+            return this.representation;
         }
     }
 
@@ -228,14 +268,35 @@ public class TopAnatCallFileService extends CommonService {
      */
     private final static Map<ExpressionSummary, SummaryQuality> CALL_TYPE_FILTER =
             Map.of(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+    /**
+     * The ID of the RNA-Seq population capture of the polyA libraries.
+     */
+    private final static String POLY_A_POPULATION_CAPTURE_ID = "polyA";
+    /**
+     * The name of the biotype of the protein coding genes.
+     */
+    private final static String PROTEIN_CODING_BIOTYPE_NAME = "protein_coding";
 
     /**
      * Provides one {@code ServiceFactory} per thread: the genes of a species are propagated
-     * by batches in parallel, and a {@code ServiceFactory} is not thread-safe.
+     * by batches in parallel, and a {@code ServiceFactory} is not thread-safe. {@code null}
+     * when this service does not generate the files.
      */
     private final Supplier<ServiceFactory> serviceFactorySupplier;
 
-    public TopAnatCallFileService(ServiceFactory serviceFactory,
+    /**
+     * Constructor for the uses that do not generate the files, such as providing the genes
+     * of a background: {@link #generateFiles(Collection, String, boolean, int)} then throws
+     * an {@code IllegalStateException}.
+     *
+     * @param serviceFactory    The {@code ServiceFactory} to obtain {@code Service}s
+     *                          and {@code DAOManager} from.
+     */
+    public TopAnatService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
+        this.serviceFactorySupplier = null;
+    }
+    public TopAnatService(ServiceFactory serviceFactory,
             Supplier<ServiceFactory> serviceFactorySupplier) {
         super(serviceFactory);
         if (serviceFactorySupplier == null) {
@@ -419,6 +480,56 @@ public class TopAnatCallFileService extends CommonService {
     }
 
     /**
+     * @param speciesId     An {@code int} that is the ID of the species to retrieve
+     *                      the background of.
+     * @param background    The {@code Background} to retrieve the genes of.
+     * @return              A {@code List} of {@code String}s that are the IDs of the genes
+     *                      of {@code background} in the species, sorted.
+     * @throws IllegalArgumentException If {@code speciesId} is not a valid species ID,
+     *                                  or {@code background} is {@code null}.
+     * @throws IllegalStateException    If no biotype defines {@code background}.
+     */
+    public List<String> loadBackgroundGeneIds(int speciesId, Background background)
+            throws IllegalArgumentException, IllegalStateException {
+        log.traceEntry("{}, {}", speciesId, background);
+        if (speciesId <= 0) {
+            throw log.throwing(new IllegalArgumentException("Invalid species ID: " + speciesId));
+        }
+        if (background == null) {
+            throw log.throwing(new IllegalArgumentException("A background must be provided"));
+        }
+        GeneDAO geneDAO = this.getDaoManager().getGeneDAO();
+        Stream<GeneTO> genes;
+        switch (background) {
+        case OBSERVED:
+            genes = geneDAO.getGenesWithDataBySpeciesIdsOrdered(Set.of(speciesId), 0, 0).stream();
+            break;
+        case POLY_A:
+        case PROTEIN_CODING:
+            Stream<GeneBioTypeTO> bioTypes = background == Background.POLY_A?
+                    geneDAO.getGeneBioTypesByPopulationCaptureIds(
+                            Set.of(POLY_A_POPULATION_CAPTURE_ID)).stream():
+                    geneDAO.getGeneBioTypes().stream()
+                    .filter(to -> PROTEIN_CODING_BIOTYPE_NAME.equals(to.getName()));
+            Set<Integer> bioTypeIds = bioTypes.map(GeneBioTypeTO::getId)
+                    .collect(Collectors.toSet());
+            //An empty set would silently return no gene
+            if (bioTypeIds.isEmpty()) {
+                throw log.throwing(new IllegalStateException("No biotype defines the background "
+                        + background.getStringRepresentation()));
+            }
+            genes = geneDAO.getGenesBySpeciesIds(Set.of(speciesId)).stream()
+                    .filter(to -> bioTypeIds.contains(to.getGeneBioTypeId()));
+            break;
+        default:
+            throw log.throwing(new IllegalArgumentException("Unsupported background: "
+                    + background));
+        }
+        return log.traceExit(genes.map(GeneTO::getGeneId).distinct().sorted()
+                .collect(Collectors.toList()));
+    }
+
+    /**
      * Generate the files of each species that does not have them yet. A species whose four files
      * already exist is skipped, so that this can be called at every server start.
      *
@@ -465,6 +576,10 @@ public class TopAnatCallFileService extends CommonService {
             throw log.throwing(new IllegalArgumentException(
                     "At least one gene batch must be propagated at a time, requested: "
                     + parallelism));
+        }
+        if (this.serviceFactorySupplier == null) {
+            throw log.throwing(new IllegalStateException(
+                    "A ServiceFactory supplier is needed to generate the files"));
         }
         //No species requested means every species of the database: the files of a species
         //are independent of each other, this service simply generates them all.
@@ -683,7 +798,7 @@ public class TopAnatCallFileService extends CommonService {
                 conditionLines.size(), relationLines.size());
 
         return log.traceExit(conditions.values().stream()
-                .map(TopAnatCallFileService::conditionId)
+                .map(TopAnatService::conditionId)
                 .collect(Collectors.toSet()));
     }
     /**
@@ -908,7 +1023,7 @@ public class TopAnatCallFileService extends CommonService {
     private static String header(List<EnumSet<DataType>> combinations) {
         List<String> columns = new ArrayList<>(List.of(GENE_ID_COLUMN, STAGE_ID_COLUMN,
                 CONDITION_ID_COLUMN));
-        combinations.stream().map(TopAnatCallFileService::combinationColumnName)
+        combinations.stream().map(TopAnatService::combinationColumnName)
                 .forEach(columns::add);
         return String.join(COLUMN_SEPARATOR, columns);
     }

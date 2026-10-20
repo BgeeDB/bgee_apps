@@ -613,6 +613,197 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
     }
 
     /**
+     * A homologous condition is one unit. Requesting lung (under respiratory system)
+     * must also load swim bladder, and both calls stay on the combined row.
+     * An unrelated organ is not added.
+     */
+    @Test
+    public void shouldLoadHomologousPartnersOutsideRequestedParent() {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        org.bgee.model.expressiondata.call.ExpressionCallService exprCallService =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallService.class);
+        org.bgee.model.expressiondata.call.ExpressionCallLoader exprCallLoader =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallLoader.class);
+        AnatEntitySimilarityService aeSimService = mock(AnatEntitySimilarityService.class);
+
+        when(serviceFactory.getExpressionCallService()).thenReturn(exprCallService);
+        when(serviceFactory.getAnatEntitySimilarityService()).thenReturn(aeSimService);
+        when(serviceFactory.getSpeciesService()).thenReturn(mock(SpeciesService.class));
+        when(serviceFactory.getCallService()).thenReturn(mock(CallService.class));
+        when(serviceFactory.getDevStageSimilarityService())
+                .thenReturn(mock(org.bgee.model.anatdev.multispemapping.DevStageSimilarityService.class));
+        when(serviceFactory.getOntologyService()).thenReturn(mock(OntologyService.class));
+        when(serviceFactory.getGeneService()).thenReturn(mock(org.bgee.model.gene.GeneService.class));
+
+        int taxonId = 10;
+        Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
+        int speciesId1 = 1;
+        Species species1 = new Species(speciesId1);
+        String lungId = "UBERON:0002048";
+        String swimBladderId = "UBERON:0006860";
+        String gillId = "UBERON:0000205";
+        AnatEntity lung = new AnatEntity(lungId, "lung", null);
+        AnatEntity swimBladder = new AnatEntity(swimBladderId, "swim bladder", null);
+        AnatEntity gill = new AnatEntity(gillId, "gill", null);
+        AnatEntity cellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+        Gene gene1 = new Gene("gene1a", species1, new GeneBioType("biotype1"));
+        GeneFilter geneFilter1 = new GeneFilter(speciesId1, Collections.singleton(gene1.getGeneId()));
+
+        Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
+                new AnatEntitySimilarityTaxonSummary(taxon, true, true));
+        AnatEntitySimilarity lungSwimBladder = new AnatEntitySimilarity(
+                Arrays.asList(lung, swimBladder), null, taxon, aeSimTaxonSummaries, taxOnt);
+        AnatEntitySimilarity gillSim = new AnatEntitySimilarity(
+                Arrays.asList(gill), null, taxon, aeSimTaxonSummaries, taxOnt);
+        when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
+                .thenReturn(new HashSet<>(Arrays.asList(lungSwimBladder, gillSim)));
+
+        org.bgee.model.expressiondata.call.Call.ExpressionCall2 lungCall =
+                expressionCallOn(gene1, cellType, lung);
+        org.bgee.model.expressiondata.call.Call.ExpressionCall2 swimBladderCall =
+                expressionCallOn(gene1, cellType, swimBladder);
+
+        ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
+                ArgumentCaptor.forClass(ExpressionCallFilter2.class);
+        when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
+        when(exprCallLoader.loadData(anyLong(), anyInt()))
+                .thenReturn(Arrays.asList(lungCall, swimBladderCall));
+
+        FilterIds<String> anatFilter = new FilterIds<>(Set.of(lungId), false);
+        ComposedFilterIds<String> composed = new ComposedFilterIds<>(List.of(anatFilter));
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, composed);
+        ConditionFilter2 condFilter = new ConditionFilter2(speciesId1, condParamToFilter,
+                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false);
+
+        MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
+        List<SimilarityExpressionCall2> results = service.loadSimilarityExpressionCalls2(
+                taxonId, Collections.singleton(geneFilter1), Collections.singleton(condFilter),
+                true, SummaryQuality.BRONZE)
+                .collect(Collectors.toList());
+
+        Set<String> loadedAnatIds = loadedAnatEntityIds(exprFilterCaptor);
+        assertTrue("Lung stays in the load set", loadedAnatIds.contains(lungId));
+        assertTrue("Swim bladder is loaded with the homologous condition",
+                loadedAnatIds.contains(swimBladderId));
+        assertFalse("An unrelated organ is not pulled in", loadedAnatIds.contains(gillId));
+
+        assertEquals(1, results.size());
+        Set<String> sourceIds = results.get(0).getMultiSpeciesCondition().getAnatSimilarity()
+                .getSourceAnatEntities().stream().map(AnatEntity::getId).collect(Collectors.toSet());
+        assertEquals(Set.of(lungId, swimBladderId), sourceIds);
+        assertEquals(2, results.get(0).getCalls().size());
+        assertTrue(results.get(0).getCalls().contains(lungCall));
+        assertTrue(results.get(0).getCalls().contains(swimBladderCall));
+    }
+
+    /**
+     * Under "others" (anatomy root minus discarded organ systems) the group matches
+     * through swim bladder. Lung, which sits in the discarded respiratory system,
+     * is still loaded because it belongs to the same homologous condition.
+     */
+    @Test
+    public void shouldLoadHomologousPartnersWhenGroupMatchesViaRejectedParent() {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        org.bgee.model.expressiondata.call.ExpressionCallService exprCallService =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallService.class);
+        org.bgee.model.expressiondata.call.ExpressionCallLoader exprCallLoader =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallLoader.class);
+        AnatEntitySimilarityService aeSimService = mock(AnatEntitySimilarityService.class);
+        OntologyService ontService = mock(OntologyService.class);
+
+        when(serviceFactory.getExpressionCallService()).thenReturn(exprCallService);
+        when(serviceFactory.getAnatEntitySimilarityService()).thenReturn(aeSimService);
+        when(serviceFactory.getSpeciesService()).thenReturn(mock(SpeciesService.class));
+        when(serviceFactory.getCallService()).thenReturn(mock(CallService.class));
+        when(serviceFactory.getDevStageSimilarityService())
+                .thenReturn(mock(org.bgee.model.anatdev.multispemapping.DevStageSimilarityService.class));
+        when(serviceFactory.getOntologyService()).thenReturn(ontService);
+        when(serviceFactory.getGeneService()).thenReturn(mock(org.bgee.model.gene.GeneService.class));
+
+        int taxonId = 10;
+        Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
+        int speciesId1 = 1;
+        String respiratoryId = "UBERON:0001004";
+        String lungId = "UBERON:0002048";
+        String swimBladderId = "UBERON:0006860";
+        AnatEntity lung = new AnatEntity(lungId, "lung", null);
+        AnatEntity swimBladder = new AnatEntity(swimBladderId, "swim bladder", null);
+
+        @SuppressWarnings("unchecked")
+        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
+        when(anatOnt.getDescendantIds(respiratoryId, false)).thenReturn(Set.of(lungId));
+        when(anatOnt.getDescendantIds(lungId, false)).thenReturn(Collections.emptySet());
+        when(anatOnt.getDescendantIds(swimBladderId, false)).thenReturn(Collections.emptySet());
+        when(ontService.getAnatEntityOntology(anyCollection(), any(), any(), eq(false), eq(true)))
+                .thenReturn(anatOnt);
+
+        Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
+                new AnatEntitySimilarityTaxonSummary(taxon, true, true));
+        when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
+                .thenReturn(Collections.singleton(new AnatEntitySimilarity(
+                        Arrays.asList(lung, swimBladder), null, taxon, aeSimTaxonSummaries, taxOnt)));
+
+        FilterIds<String> anatFilter = new FilterIds<>(
+                Set.of(ConditionDAO.ANAT_ENTITY_ROOT_ID), true, Set.of(respiratoryId), null);
+        ComposedFilterIds<String> composed = new ComposedFilterIds<>(List.of(anatFilter));
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, composed);
+        ConditionFilter2 condFilter = new ConditionFilter2(speciesId1, condParamToFilter,
+                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false);
+
+        ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
+                ArgumentCaptor.forClass(ExpressionCallFilter2.class);
+        when(exprCallService.loadCallLoader(exprFilterCaptor.capture())).thenReturn(exprCallLoader);
+        when(exprCallLoader.loadData(anyLong(), anyInt())).thenReturn(Collections.emptyList());
+
+        MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
+        service.loadSimilarityExpressionCalls2(taxonId,
+                Collections.singleton(new GeneFilter(speciesId1, Collections.singleton("gene1a"))),
+                Collections.singleton(condFilter), true, SummaryQuality.BRONZE)
+                .collect(Collectors.toList());
+
+        Set<String> loadedAnatIds = loadedAnatEntityIds(exprFilterCaptor);
+        assertTrue("Swim bladder matches the others bucket", loadedAnatIds.contains(swimBladderId));
+        assertTrue("Lung is loaded because it belongs to the same homologous condition",
+                loadedAnatIds.contains(lungId));
+    }
+
+    private static org.bgee.model.expressiondata.call.Call.ExpressionCall2 expressionCallOn(
+            Gene gene, AnatEntity cellType, AnatEntity anatEntity) {
+        org.bgee.model.expressiondata.call.Call.ExpressionCall2 call =
+                mock(org.bgee.model.expressiondata.call.Call.ExpressionCall2.class);
+        org.bgee.model.expressiondata.call.Condition2 condition =
+                mock(org.bgee.model.expressiondata.call.Condition2.class);
+        @SuppressWarnings("unchecked")
+        org.bgee.model.ComposedEntity<AnatEntity> composed = mock(org.bgee.model.ComposedEntity.class);
+        when(call.getGene()).thenReturn(gene);
+        when(call.getCondition()).thenReturn(condition);
+        when(call.getSummaryCallType()).thenReturn(ExpressionSummary.EXPRESSED);
+        when(condition.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE))
+                .thenReturn(composed);
+        when(composed.isEmpty()).thenReturn(false);
+        when(composed.size()).thenReturn(2);
+        when(composed.getEntity(0)).thenReturn(cellType);
+        when(composed.getEntity(1)).thenReturn(anatEntity);
+        return call;
+    }
+
+    private static Set<String> loadedAnatEntityIds(ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor) {
+        return exprFilterCaptor.getAllValues().stream()
+                .flatMap(f -> f.getConditionFilters().stream())
+                .map(cf -> cf.getComposedFilterIds(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
+                        .getFilterIds(0))
+                .filter(ids -> ids != null)
+                .flatMap(ids -> ids.getIds().stream())
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * {@code observed_data} is applied as a call-level filter on anatomical entity and cell type.
      * Omitting it leaves the expression-call query unfiltered on observation.
      */

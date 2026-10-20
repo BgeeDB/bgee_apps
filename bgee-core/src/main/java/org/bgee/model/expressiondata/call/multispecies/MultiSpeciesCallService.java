@@ -1093,6 +1093,9 @@ public class MultiSpeciesCallService extends CommonService {
 
         Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntity =
                 buildSimilaritiesByAnatEntity(anatEntitySimilarities);
+        // Members of the kept similarities, including homologous partners that sit
+        // outside the requested parent. Empty sets stay empty; the load step inserts
+        // a root ID only when the resolved load set itself is empty.
         Set<String> globalAnatEntityIds = similaritiesByAnatEntity.keySet().stream()
                 .filter(ae -> !isCellTypeAnatEntity(ae))
                 .map(Entity::getId)
@@ -1101,12 +1104,6 @@ public class MultiSpeciesCallService extends CommonService {
                 .filter(MultiSpeciesCallService::isCellTypeAnatEntity)
                 .map(Entity::getId)
                 .collect(Collectors.toSet());
-        if (globalAnatEntityIds.isEmpty()) {
-            globalAnatEntityIds = Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID);
-        }
-        if (globalCellTypeIds.isEmpty()) {
-            globalCellTypeIds = Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID);
-        }
 
         List<AnatEntitySimilarity> orderedSimilarities = anatEntitySimilarities.stream()
                 .sorted(SIMILARITY_ORDER)
@@ -1572,21 +1569,26 @@ public class MultiSpeciesCallService extends CommonService {
      * Builds the condition parameter map for expression call loading.
      * Anatomical entity and cell type IDs are split using {@link AnatEntity#getIsCellType()}
      * when building {@code ComposedFilterIds} (index 0 = anat entity, index 1 = cell type).
+     * <p>
+     * When the user filter is non-empty, load IDs are the union of that filter and every
+     * entity of the similarities already kept. A homologous condition is one unit: if any
+     * member sits under the requested parent, calls for every member are loaded, including
+     * partners outside that parent (lung under respiratory system also loads swim bladder).
      */
     private static Map<ConditionParameter<?, ?>, ComposedFilterIds<String>>
     buildAnatEntityCellTypeCondParamToFilter(AnatCellTypeFilterIds userFilterIds,
             Set<String> similarityAnatEntityIds, Set<String> similarityCellTypeIds,
             boolean preferUserWhenPresent) {
-        Set<String> anatIdsForLoad = resolveIdsForLoad(userFilterIds.anatEntityIds,
-                similarityAnatEntityIds, preferUserWhenPresent);
+        Set<String> anatIdsForLoad = idsForLoadOrFallback(userFilterIds.anatEntityIds,
+                similarityAnatEntityIds, preferUserWhenPresent, ConditionDAO.ANAT_ENTITY_ROOT_ID);
         Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
         if (userFilterIds.unrestrictedCellTypes) {
             condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
                     new ComposedFilterIds<>(List.of(new FilterIds<>(anatIdsForLoad, false))));
             return condParamToFilter;
         }
-        Set<String> cellIdsForLoad = resolveIdsForLoad(userFilterIds.cellTypeIds,
-                similarityCellTypeIds, preferUserWhenPresent);
+        Set<String> cellIdsForLoad = idsForLoadOrFallback(userFilterIds.cellTypeIds,
+                similarityCellTypeIds, preferUserWhenPresent, ConditionDAO.CELL_TYPE_ROOT_ID);
         condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
                 new ComposedFilterIds<>(List.of(
                         new FilterIds<>(anatIdsForLoad, false),
@@ -1594,18 +1596,41 @@ public class MultiSpeciesCallService extends CommonService {
         return condParamToFilter;
     }
 
+    /**
+     * IDs used to load expression calls.
+     * <p>
+     * When {@code preferUserWhenPresent} is {@code true} and {@code userIds} is non-empty,
+     * the result is the union of {@code userIds} and {@code similarityIds}. The user IDs
+     * keep terms that have expression data and no similarity annotation. The similarity IDs
+     * add homologous partners that are outside the requested parent.
+     * When {@code userIds} is empty, {@code similarityIds} are used as-is (the "others"
+     * query, which selects groups by rejection and must still load every member).
+     */
     private static Set<String> resolveIdsForLoad(Set<String> userIds, Set<String> similarityIds,
             boolean preferUserWhenPresent) {
-        if (preferUserWhenPresent && !userIds.isEmpty()) {
-            return userIds;
+        Set<String> safeUserIds = userIds == null ? Set.of() : userIds;
+        Set<String> safeSimilarityIds = similarityIds == null ? Set.of() : similarityIds;
+        if (preferUserWhenPresent && !safeUserIds.isEmpty()) {
+            Set<String> idsForLoad = new HashSet<>(safeUserIds);
+            idsForLoad.addAll(safeSimilarityIds);
+            return idsForLoad;
         }
-        if (userIds.isEmpty()) {
-            return similarityIds;
+        if (safeUserIds.isEmpty()) {
+            return safeSimilarityIds;
         }
-        Set<String> intersection = similarityIds.stream()
-                .filter(userIds::contains)
+        Set<String> intersection = safeSimilarityIds.stream()
+                .filter(safeUserIds::contains)
                 .collect(Collectors.toSet());
-        return intersection.isEmpty() ? similarityIds : intersection;
+        return intersection.isEmpty() ? new HashSet<>(safeSimilarityIds) : intersection;
+    }
+
+    private static Set<String> idsForLoadOrFallback(Set<String> userIds, Set<String> similarityIds,
+            boolean preferUserWhenPresent, String fallbackId) {
+        Set<String> resolved = resolveIdsForLoad(userIds, similarityIds, preferUserWhenPresent);
+        if (resolved.isEmpty()) {
+            return Collections.singleton(fallbackId);
+        }
+        return resolved;
     }
 
     private static boolean isCellTypeAnatEntity(AnatEntity anatEntity) {

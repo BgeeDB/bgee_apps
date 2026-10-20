@@ -827,10 +827,9 @@ public class CommandData extends CommandParent {
     // The complement (terms in none of these subtrees) is requested by expanding
     // BGEE:0000000 with discard_anat_entity_and_children_id=SUMMARY.
     private final static Set<String> SUMMARY_ANAT_ENTITY_IDS = Set.of(
-            "UBERON:0001062",
-            "UBERON:0000010", "UBERON:0000211", "UBERON:0000309",
+            "UBERON:0001062", "UBERON:0000211", "UBERON:0000309",
             "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007",
-            "UBERON:0001008", "UBERON:0004535", "UBERON:0001015", "UBERON:0001017",
+            "UBERON:0001008", "UBERON:0004535", "UBERON:0001015", "UBERON:0001016",
             "UBERON:0001032", "UBERON:0001434", "UBERON:0002193", "UBERON:0002330",
             "UBERON:0002384", "UBERON:0002405", "UBERON:0002416", "UBERON:0015204");
     private final static String SUMMARY_ANAT_ENTITY_ROOT_ID = "UBERON:0001062";

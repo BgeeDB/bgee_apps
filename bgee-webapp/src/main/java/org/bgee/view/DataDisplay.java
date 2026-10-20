@@ -7,6 +7,8 @@ import java.util.List;
 import org.bgee.controller.CommandData.ColumnDescription;
 import org.bgee.controller.CommandData.DataFormDetails;
 import org.bgee.controller.CommandData.ExpressionCallResponse;
+import org.bgee.controller.CommandData.MultispecExprCallResponse;
+import org.bgee.model.species.TaxonWithSpecies;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
@@ -36,6 +38,11 @@ public interface DataDisplay {
     public void displayExprCallPage(List<Species> speciesList, DataFormDetails formDetails,
             List<ColumnDescription> colDescriptions, ExpressionCallResponse callresponse,
             Long callCount, ExpressionCallPostFilter postFilter);
+
+    public void displayMultispecExprCallPage(TaxonWithSpecies speciesByTaxon,
+            DataFormDetails formDetails, List<ColumnDescription> colDescriptions,
+            MultispecExprCallResponse response, Long callCount,
+            ExpressionCallPostFilter postFilter);
 
     public void displayExperimentPage(List<Experiment<?>> experiments, LinkedHashSet<Assay> assays,
             DataType dataType, List<ColumnDescription> columnDescriptions);

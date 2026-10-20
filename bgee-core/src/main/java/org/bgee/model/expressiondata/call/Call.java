@@ -1425,7 +1425,7 @@ V> {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            ExpressionCall other = (ExpressionCall) obj;
+            ExpressionCall2 other = (ExpressionCall2) obj;
             if (dataPropagation == null) {
                 if (other.dataPropagation != null)
                     return false;
@@ -1438,7 +1438,7 @@ V> {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("ExpressionCall [gene=").append(getGene())
+            builder.append("ExpressionCall2 [gene=").append(getGene())
                    .append(", condition=").append(getCondition())
                    .append(", summaryCallType=").append(getSummaryCallType())
                    .append(", summaryQuality=").append(getSummaryQuality())

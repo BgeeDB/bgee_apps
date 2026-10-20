@@ -30,6 +30,7 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
+import org.bgee.model.species.Taxon;
 
 import com.google.gson.stream.JsonWriter;
 
@@ -174,7 +175,12 @@ public class TypeAdaptersUtils {
 
     public void writeSimplifiedMultiSpeciesCondition(JsonWriter out, MultiSpeciesCondition cond)
             throws IOException {
-        log.traceEntry("{}, {}", out, cond);
+        writeSimplifiedMultiSpeciesCondition(out, cond, null, null);
+    }
+
+    public void writeSimplifiedMultiSpeciesCondition(JsonWriter out, MultiSpeciesCondition cond,
+            Taxon anatEntityTaxonScope, Taxon cellTypeTaxonScope) throws IOException {
+        log.traceEntry("{}, {}, {}, {}", out, cond, anatEntityTaxonScope, cellTypeTaxonScope);
         out.beginObject();
 
         out.name("anatEntities");
@@ -184,17 +190,52 @@ public class TypeAdaptersUtils {
         }
         out.endArray();
 
+        out.name("anatEntityTaxonScope");
+        writeSimplifiedTaxon(out, anatEntityTaxonScope != null
+                ? anatEntityTaxonScope
+                : cond.getAnatSimilarity().getHomologyScopeTaxon());
+
         out.name("cellTypes");
         out.beginArray();
-        for (AnatEntity cellType: cond.getCellTypeSimilarity().getSourceAnatEntities()) {
-            if (cellType != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
-                writeSimplifiedNamedEntity(out, cellType);
+        if (cond.getCellTypeSimilarity() != null) {
+            for (AnatEntity cellType: cond.getCellTypeSimilarity().getSourceAnatEntities()) {
+                if (cellType != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+                    writeSimplifiedNamedEntity(out, cellType);
+                }
             }
         }
         out.endArray();
 
+        out.name("cellTypeTaxonScope");
+        boolean hasNonRootCellTypes = cond.getCellTypeSimilarity() != null
+                && cond.getCellTypeSimilarity().getSourceAnatEntities().stream()
+                        .anyMatch(ct -> ct != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(ct.getId()));
+        if (cellTypeTaxonScope != null) {
+            writeSimplifiedTaxon(out, cellTypeTaxonScope);
+        } else if (anatEntityTaxonScope == null && hasNonRootCellTypes) {
+            writeSimplifiedTaxon(out, cond.getCellTypeSimilarity().getHomologyScopeTaxon());
+        } else {
+            out.nullValue();
+        }
+
         //TODO: stageSimilarity and Sex
 
+        out.endObject();
+        log.traceExit();
+    }
+
+    public void writeSimplifiedTaxon(JsonWriter out, Taxon taxon) throws IOException {
+        log.traceEntry("{}, {}", out, taxon);
+        if (taxon == null) {
+            out.nullValue();
+            log.traceExit();
+            return;
+        }
+        out.beginObject();
+        out.name("id").value(taxon.getId());
+        out.name("scientificName").value(taxon.getScientificName());
+        out.name("level").value(taxon.getLevel());
+        out.name("lca").value(taxon.isLca());
         out.endObject();
         log.traceExit();
     }

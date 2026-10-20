@@ -144,18 +144,44 @@ public class CommandDataMultispecTest extends TestAncestor {
     }
 
     @Test
-    public void shouldRejectMultispecRequestWithFewerThanTwoGenes() throws Exception {
+    public void shouldRejectMultispecRequestWithNoGenes() throws Exception {
         RequestParameters params = newMultispecParams();
-        params.addValues(params.getUrlParametersInstance().getParamGeneList(),
-                Collections.singletonList("ENSG00000130208"));
         params.addValue(params.getUrlParametersInstance().getParamGetResults(), true);
 
         try {
             buildController(params).processRequest();
             fail("An InvalidRequestException should be thrown");
         } catch (InvalidRequestException e) {
-            assertEquals("At least two gene IDs must be provided in gene_list.", e.getMessage());
+            assertEquals("At least one gene ID must be provided in gene_list.", e.getMessage());
         }
+    }
+
+    @Test
+    public void shouldProcessMultispecRequestWithOneGene() throws Exception {
+        List<String> geneIds = Collections.singletonList(humanGene.getGeneId());
+        when(geneService.searchGenesByIds(geneIds)).thenReturn(new SearchResult<>(
+                geneIds, Collections.emptyList(), Collections.singletonList(humanGene)));
+        when(taxonService.loadLeastCommonAncestor(new HashSet<>(Collections.singletonList(HUMAN_ID))))
+                .thenReturn(new Taxon(LCA_ID, "Homo sapiens", null, "Homo sapiens", 1, false));
+        TaxonWithSpecies taxonTree = new TaxonWithSpecies(
+                new Taxon(LCA_ID, "Homo sapiens", null, "Homo sapiens", 1, false),
+                List.of(), List.of());
+        when(taxonTreeService.buildTaxonTreeWithSpecies(
+                eq(new HashSet<>(Collections.singletonList(HUMAN_ID))), any()))
+                .thenReturn(taxonTree);
+        when(loader.loadData(0L, 100)).thenReturn(Collections.emptyList());
+
+        RequestParameters params = newMultispecParams();
+        params.addValues(params.getUrlParametersInstance().getParamGeneList(), geneIds);
+        params.addValue(params.getUrlParametersInstance().getParamGetResults(), true);
+
+        buildController(params).processRequest();
+
+        ArgumentCaptor<SimilarityExpressionCallFilter> filterCaptor =
+                ArgumentCaptor.forClass(SimilarityExpressionCallFilter.class);
+        verify(multiSpeciesCallService).loadSimilarityCallLoader(filterCaptor.capture());
+        assertEquals(1, filterCaptor.getValue().getGeneFilters().size());
+        assertEquals(HUMAN_ID, filterCaptor.getValue().getGeneFilters().iterator().next().getSpeciesId());
     }
 
     @Test

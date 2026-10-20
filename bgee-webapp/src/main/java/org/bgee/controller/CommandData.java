@@ -1124,9 +1124,9 @@ public class CommandData extends CommandParent {
 
         List<String> userGeneList = Optional.ofNullable(this.requestParameters.getGeneList())
                 .orElse(Collections.emptyList());
-        if (userGeneList.size() < 2) {
+        if (userGeneList.isEmpty()) {
             throw log.throwing(new InvalidRequestException(
-                    "At least two gene IDs must be provided in gene_list."));
+                    "At least one gene ID must be provided in gene_list."));
         }
 
         SearchResult<String, Gene> searchResult = this.serviceFactory.getGeneService()

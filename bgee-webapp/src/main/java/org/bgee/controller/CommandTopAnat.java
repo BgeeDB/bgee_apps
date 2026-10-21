@@ -61,9 +61,9 @@ import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.model.species.Species;
-import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatResults;
+import org.bgee.model.topanat.TopAnatService;
 import org.bgee.model.topanat.exception.MissingParameterException;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
@@ -177,19 +177,17 @@ public class CommandTopAnat extends CommandParent {
                         this.jobTitle, this.topAnatParams.size());
                 
                 log.debug("Launching TopAnat job");
-                TopAnatController controller2 = new TopAnatController(this.topAnatParams, 
-                        this.props, 
+                TopAnatService topAnatService = new TopAnatService(
                         //For properly loading the ServiceFactory, 
                         //we need to acquire a different DAOManager than the one used 
                         //by the launching thread, because it will be closed when the thread terminates. 
-                        this.serviceFactoryProvider.get(), 
-                        job);
+                        this.serviceFactoryProvider.get());
                 
                 //we need to consume the Stream to actually launch the analysis. 
                 //Also, if it is requested to send an email to the user, we count number of results, 
                 //otherwise it is not needed.
-                Set<TopAnatResults> results = controller2.proceedToTopAnatAnalyses()
-                        .collect(Collectors.toSet());
+                Set<TopAnatResults> results = topAnatService.proceedToTopAnatAnalyses(
+                        this.topAnatParams, job).collect(Collectors.toSet());
                 if (sendMail) {
                     for (TopAnatResults result: results) {
                         int rowCount = result.getRows().size();
@@ -474,18 +472,19 @@ public class CommandTopAnat extends CommandParent {
             //send a "job's done" response. 
             JobStatus status = JobStatus.RUNNING;
             long jobId = 0;
-            final TopAnatController controller = this.loadTopAnatController();
+            final List<TopAnatParams> topAnatParams = this.loadTopAnatParams();
+            final TopAnatService topAnatService = new TopAnatService(this.serviceFactory);
 
             //We need a data hash in most cases for TopAnat to work properly,
             //getDataKey() is used in various places of this class
             this.requestParameters.generateKeyAndStore();
 
-            if (controller.areAnalysesDone()) {
+            if (topAnatService.areAnalysesDone(topAnatParams)) {
                 log.debug("Results already exist.");
                 status = JobStatus.UNDEFINED;
                 
             } else {
-                jobId = this.launchNewJob(controller);
+                jobId = this.launchNewJob(topAnatParams);
             }
             
             // Job ID if available, add hash
@@ -533,14 +532,15 @@ public class CommandTopAnat extends CommandParent {
         // Get results
         } else if (this.requestParameters.isATopAnatGetResult()) {
             
-            TopAnatController controller = this.loadTopAnatController();
+            List<TopAnatParams> topAnatParams = this.loadTopAnatParams();
+            TopAnatService topAnatService = new TopAnatService(this.serviceFactory);
 
             LinkedHashMap<String, Object> data = new LinkedHashMap<>();
             if (this.requestParameters.getGeneInfo() != null && this.requestParameters.getGeneInfo()) {
                 data.putAll(this.getGeneResponses());
             }
 
-            if (!controller.areAnalysesDone()) {
+            if (!topAnatService.areAnalysesDone(topAnatParams)) {
                 //Maybe the results are not present simply because the job was canceled by the user, 
                 //not because of an error. One way of being sure would be to store the Job 
                 //running the analysis even after completion, to make sure an interruption was requested.
@@ -551,7 +551,8 @@ public class CommandTopAnat extends CommandParent {
                         data));
             }
 
-            Stream<TopAnatResults> topAnatResults = controller.proceedToTopAnatAnalyses();
+            Stream<TopAnatResults> topAnatResults = topAnatService.proceedToTopAnatAnalyses(
+                    topAnatParams, null);
 
             //FIXME: I don't know why, but I don't manage to make the Stream to be printed.
             //Collecting the results while waiting for a fix.
@@ -575,13 +576,14 @@ public class CommandTopAnat extends CommandParent {
     /**
      * Launch new TopAnat analyses and return the ID of the associated job.
      * 
-     * @param controller    The {@code TopAnatController} holding the parameters 
+     * @param topAnatParams A {@code List} of {@code TopAnatParams} that are the parameters 
      *                      of the analyses. 
      * @return              A {@code long} that is the ID of the job running the analyses.
      * @throws TooManyJobsException     If the user already has too many running jobs.
      */
-    private long launchNewJob(final TopAnatController controller) throws TooManyJobsException {
-        log.traceEntry("{}", controller);
+    private long launchNewJob(final List<TopAnatParams> topAnatParams)
+            throws TooManyJobsException {
+        log.traceEntry("{}", topAnatParams);
         
         //before formally registering a new job in another thread, we check whether 
         //the user has already too many running jobs. If we checked only in the other thread, 
@@ -611,16 +613,19 @@ public class CommandTopAnat extends CommandParent {
         final String email = this.requestParameters.getFirstValue(
                 this.requestParameters.getUrlParametersInstance().getParamEmail());
         final Properties daoProps = this.serviceFactory.getDAOManager().getParameters();
+        //The analyses read their properties from the ServiceFactory: the one of the job
+        //must hold the properties of the webapp, as the one of the request
+        final BgeeProperties props = this.prop;
         
         
         Thread newThread = new Thread(new TopAnatJobRunner(
-                controller.getTopAnatParams(), resultUrl, 
+                topAnatParams, resultUrl, 
                 this.jobService, this.user, jobId, jobTitle, jobCreationDate, 
                 email, this.prop, this.mailSender, 
                 //Also, for properly loading the ServiceFactory, 
                 //we need to acquire a different DAOManager than the one used 
                 //by the launching thread, because it will be closed when the thread terminates.
-                () -> new ServiceFactory(daoProps)));
+                () -> new ServiceFactory(props, DAOManager.getDAOManager(daoProps))));
         
         newThread.start();
         
@@ -639,15 +644,16 @@ public class CommandTopAnat extends CommandParent {
         UnsupportedEncodingException, IOException {
         log.traceEntry();
         
-        final TopAnatController controller = this.loadTopAnatController();
-        if (!controller.areAnalysesDone()) {
+        final List<TopAnatParams> topAnatParams = this.loadTopAnatParams();
+        final TopAnatService topAnatService = new TopAnatService(this.serviceFactory);
+        if (!topAnatService.areAnalysesDone(topAnatParams)) {
             throw log.throwing(new InvalidRequestException(
                     "No results available for the provided parameters."));
         }
-        List<TopAnatResults> topAnatResults = controller.proceedToTopAnatAnalyses()
-                .collect(Collectors.toList());
+        List<TopAnatResults> topAnatResults = topAnatService.proceedToTopAnatAnalyses(
+                topAnatParams, null).collect(Collectors.toList());
         Function<TopAnatResults, Path> generateFilePath = result -> 
-            Paths.get(controller.getBgeeProperties().getTopAnatResultsWritingDirectory(), 
+            Paths.get(topAnatService.getBgeeProperties().getTopAnatResultsWritingDirectory(), 
                 result.getResultDirectory(), result.getZipFileName());
         Function<TopAnatResults, String> generateFileName = result -> 
             result.getTopAnatParams().toString("_", "_", false)
@@ -948,10 +954,12 @@ public class CommandTopAnat extends CommandParent {
 
     /**
      * @param display
+     * @return  A {@code List} of {@code TopAnatParams} that are the parameters of the requested
+     *          analyses, one per call type and developmental stage.
      * @throws InvalidRequestException
      * @throws MissingParameterException
      */
-    private TopAnatController loadTopAnatController() 
+    private List<TopAnatParams> loadTopAnatParams() 
             throws InvalidRequestException, MissingParameterException {
         log.traceEntry();
 
@@ -1103,9 +1111,7 @@ public class CommandTopAnat extends CommandParent {
             }
         }
         
-        TopAnatController controller = new TopAnatController(allTopAnatParams, this.prop, 
-                this.serviceFactory);
-        return log.traceExit(controller);
+        return log.traceExit(allTopAnatParams);
     }
 
     /**

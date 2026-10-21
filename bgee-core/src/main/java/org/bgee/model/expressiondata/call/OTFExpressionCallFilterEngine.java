@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -53,8 +54,8 @@ public class OTFExpressionCallFilterEngine {
             return log.traceExit((Entry<ExpressionSummary, SummaryQuality>) null);
         }
         BigDecimal trustedPValue = call.getTrustedDataTypePValue();
-        BigDecimal bestDescAllPValue = call.getBestDirectDescendantAllDataTypePValue();
-        BigDecimal bestDescTrustedPValue = call.getBestDirectDescendantTrustedDataTypePValue();
+        BigDecimal bestDescAllPValue = call.getBestDescendantAllDataTypePValue();
+        BigDecimal bestDescTrustedPValue = call.getBestDescendantTrustedDataTypePValue();
 
         //The order of the comparisons is important
         if (allPValue.compareTo(presentHighThreshold) <= 0) {
@@ -116,7 +117,7 @@ public class OTFExpressionCallFilterEngine {
         Predicate<OTFExpressionCall> p = call -> true;
 
         // =========================================================
-        // ANAT ENTITY (index 0 = anat entity)
+        // ANAT ENTITY
         // =========================================================
         {
             FilterIds<String> anat =
@@ -130,7 +131,17 @@ public class OTFExpressionCallFilterEngine {
 
                 p = p.and(call -> {
 
-                    String anatId = anatEntityAndCellType(call).getAnatEntity().getId();
+                    //When the anat. entity and the cell type of a condition are the same term,
+                    //the composition holds a single entity: reading it by index here used to
+                    //throw a NullPointerException.
+                    AnatEntity anatEntity = call.getCondition().getAnatEntity();
+                    if (anatEntity == null) {
+                        //No anatomical entity to compare: the filter cannot accept the call
+                        log.trace("Call rejected, no anat. entity in condition {}",
+                                call.getCondition());
+                        return false;
+                    }
+                    String anatId = anatEntity.getId();
 
                     boolean allowedOk = true;
                     boolean excludedOk = true;
@@ -177,7 +188,15 @@ public class OTFExpressionCallFilterEngine {
 
                 p = p.and(call -> {
 
-                    String cellId = anatEntityAndCellType(call).getCellType().getId();
+                    //Read through the accessor as above, the single place reading
+                    //the composition.
+                    AnatEntity cellType = call.getCondition().getCellType();
+                    if (cellType == null) {
+                        log.trace("Call rejected, no cell type in condition {}",
+                                call.getCondition());
+                        return false;
+                    }
+                    String cellId = cellType.getId();
 
                     boolean allowedOk = true;
                     boolean excludedOk = true;
@@ -258,17 +277,6 @@ public class OTFExpressionCallFilterEngine {
         }
 
         return p;
-    }
-
-    /**
-     * Anatomical entity and cell type of {@code call}. A composed value with a single member,
-     * or with none, is resolved by {@link CallServiceUtils#resolveAnatEntityAndCellType}:
-     * the missing member is the root of that parameter, so a call stored with only an
-     * anatomical entity is filtered as being in the cell-type root.
-     */
-    private static CallServiceUtils.AnatEntityAndCellType anatEntityAndCellType(OTFExpressionCall call) {
-        return CallServiceUtils.resolveAnatEntityAndCellType(call.getCondition()
-                .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE));
     }
 
 }

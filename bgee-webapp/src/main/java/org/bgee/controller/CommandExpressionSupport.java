@@ -45,17 +45,34 @@ public abstract class CommandExpressionSupport extends CommandParent{
 
     private final static Logger log = LogManager.getLogger(CommandExpressionSupport.class.getName());
     
+        /**
+         * Key of the cache of the processed condition parts. A processed condition part holds
+         * the conditions the on-the-fly propagation runs over, which depend on the species and
+         * on the combination of condition parameters of the {@code ExpressionCallFilter2}, not
+         * only on its condition filters: a request with no condition value over all
+         * the condition parameters has no condition filter at all.
+         */
         public static class ExprCallCondPartProcessingCacheKey {
                 private final Set<ConditionFilter2> condFilters;
-                public ExprCallCondPartProcessingCacheKey(Set<ConditionFilter2> condFilters) {
-                        this.condFilters = condFilters;
+                private final Set<Integer> speciesIds;
+                private final Set<ConditionParameter<?, ?>> condParamCombination;
+                public ExprCallCondPartProcessingCacheKey(ExpressionCallFilter2 filter) {
+                        this.condFilters = filter.getConditionFilters();
+                        this.speciesIds = filter.getSpeciesIdsConsidered();
+                        this.condParamCombination = filter.getCondParamCombination();
                 }
                 public Set<ConditionFilter2> getCondFilters() {
                         return condFilters;
                 }
+                public Set<Integer> getSpeciesIds() {
+                        return speciesIds;
+                }
+                public Set<ConditionParameter<?, ?>> getCondParamCombination() {
+                        return condParamCombination;
+                }
                 @Override
                 public int hashCode() {
-                        return Objects.hash(condFilters);
+                        return Objects.hash(condFilters, speciesIds, condParamCombination);
                 }
                 @Override
                 public boolean equals(Object obj) {
@@ -66,13 +83,17 @@ public abstract class CommandExpressionSupport extends CommandParent{
                         if (getClass() != obj.getClass())
                                 return false;
                         ExprCallCondPartProcessingCacheKey other = (ExprCallCondPartProcessingCacheKey) obj;
-                        return Objects.equals(condFilters, other.condFilters);
+                        return Objects.equals(condFilters, other.condFilters)
+                                        && Objects.equals(speciesIds, other.speciesIds)
+                                        && Objects.equals(condParamCombination, other.condParamCombination);
                 }
                 @Override
                 public String toString() {
                         StringBuilder builder = new StringBuilder();
                         builder.append("ExprCallCondPartProcessingCacheKey [condFilters=")
                                    .append(condFilters)
+                                   .append(", speciesIds=").append(speciesIds)
+                                   .append(", condParamCombination=").append(condParamCombination)
                                    .append("]");
                         return builder.toString();
                 }
@@ -145,12 +166,11 @@ public abstract class CommandExpressionSupport extends CommandParent{
 
     protected final static String ID_PARAM_SUMMARY_VALUE = "SUMMARY";
     protected final static Set<String> SUMMARY_ANAT_ENTITY_IDS = Set.of(
-            "UBERON:0001062",
-            "UBERON:0000010", "UBERON:0000211", "UBERON:0000309",
+            "UBERON:0001062", "UBERON:0000010", "UBERON:0000211", "UBERON:0000309", 
             "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007",
-            "UBERON:0001008", "UBERON:0004535", "UBERON:0001015", "UBERON:0001017",
-            "UBERON:0001032", "UBERON:0001434", "UBERON:0002193", "UBERON:0002330",
-            "UBERON:0002384", "UBERON:0002405", "UBERON:0002416", "UBERON:0015204");
+            "UBERON:0001008", "UBERON:0001015", "UBERON:0001017", "UBERON:0001032",
+            "UBERON:0001434", "UBERON:0002193", "UBERON:0002330", "UBERON:0002384",
+            "UBERON:0002405", "UBERON:0002416", "UBERON:0004535", "UBERON:0015204");
     private final static String SUMMARY_ANAT_ENTITY_ROOT_ID = "UBERON:0001062";
     protected final static Set<String> SUMMARY_DISCARD_ANAT_ENTITY_AND_CHILDREN_IDS =
             Collections.unmodifiableSet(
@@ -196,7 +216,7 @@ public abstract class CommandExpressionSupport extends CommandParent{
         // Of course filterIds has to be kept as part of the caching key.
        ExpressionCallProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
                EXPR_CALL_PROCESSED_COND_PART_CACHE_DEF,
-               new ExprCallCondPartProcessingCacheKey(filter.getConditionFilters()),
+               new ExprCallCondPartProcessingCacheKey(filter),
                () -> callService.processExpressionCallFilter(filter),
                pf -> pf.getConditionPart(),
                condPart -> callService.processExpressionCallFilter(filter,

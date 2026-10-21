@@ -199,7 +199,7 @@ public class TopAnatResults {
 
     private final String zipFileName;
 
-    private final TopAnatController controller;
+    private final TopAnatService topAnatService;
 
     private final BgeeProperties props;
 
@@ -207,7 +207,7 @@ public class TopAnatResults {
             String resultPDFFileName, String rScriptAnalysisFileName, String  paramsOutputFileName,
             String anatEntitiesFilename, String anatEntitiesRelationshipsFileName, 
             String geneToAnatEntitiesFileName, String rScriptConsoleFileName,
-            String zipFileName, TopAnatController controller){
+            String zipFileName, TopAnatService topAnatService){
         this.topAnatParams = topAnatParams;
         this.resultDirectory = resultDirectory;
         this.resultFileName = resultFileName;
@@ -219,8 +219,8 @@ public class TopAnatResults {
         this.anatEntitiesRelationshipsFileName = anatEntitiesRelationshipsFileName;
         this.geneToAnatEntitiesFileName = geneToAnatEntitiesFileName;
         this.zipFileName = zipFileName;
-        this.controller = controller;
-        this.props = controller.getBgeeProperties();
+        this.topAnatService = topAnatService;
+        this.props = topAnatService.getBgeeProperties();
     }
     
     //TODO: javadoc. CellProcessor needed because R returns "Inf" or "NaN" in case of division by 0.
@@ -276,7 +276,7 @@ public class TopAnatResults {
                     this.getResultDirectory(), 
                     this.getResultFileName()).toFile();
 
-            this.controller.getReadWriteLocks().acquireReadLock(resultFile.getPath());
+            this.topAnatService.getReadWriteLocks().acquireReadLock(resultFile.getPath());
 
             List<TopAnatResults.TopAnatResultRow> listToReturn 
             = new ArrayList<TopAnatResults.TopAnatResultRow>();
@@ -304,7 +304,7 @@ public class TopAnatResults {
                 }
             }
 
-            this.controller.getReadWriteLocks().releaseReadLock(resultFile.getPath());
+            this.topAnatService.getReadWriteLocks().releaseReadLock(resultFile.getPath());
 
             return log.traceExit(listToReturn);
    
@@ -364,7 +364,7 @@ public class TopAnatResults {
                 .append(", anatEntitiesRelationshipsFileName=").append(anatEntitiesRelationshipsFileName)
                 .append(", geneToAnatEntitiesFileName=").append(geneToAnatEntitiesFileName)
                 .append(", rScriptConsoleFileName=").append(rScriptConsoleFileName).append(", zipFileName=")
-                .append(zipFileName).append(", controller=").append(controller).append(", props=").append(props)
+                .append(zipFileName).append(", topAnatService=").append(topAnatService).append(", props=").append(props)
                 .append("]");
         return builder.toString();
     }

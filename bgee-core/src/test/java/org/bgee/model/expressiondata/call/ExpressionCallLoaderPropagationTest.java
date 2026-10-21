@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,11 +29,12 @@ import org.bgee.model.expressiondata.call.ConditionGraphCacheService.ConditionGr
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.species.Species;
 import org.junit.Test;
 
 /**
  * Unit tests for {@link ExpressionCallLoader#propagateCalls(Map, ConditionGraphCache, Set)}
- * and for {@link ExpressionCallLoader#identifyRedundantCalls(Set, Map, ConditionGraphCache)},
+ * and for {@link ExpressionCallLoader#identifyRedundantCalls(Map, Map, ConditionGraphCache)},
  * run over small synthetic condition graphs.
  * <p>
  * The condition graph is a DAG, not a tree: a same condition can be reached from an ancestor
@@ -159,66 +161,85 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     }
 
     /**
-     * A present call is redundant when a more precise condition carries a present call of
-     * a quality at least as good: over the chain {@code L1 -> A -> R}, the two ancestors of
-     * {@code L1} are discarded, and {@code L1} itself is kept.
+     * A present call is redundant when a more precise condition carries a present call at least
+     * as expressed: over the chain {@code L1 -> A -> R}, with the expression decreasing from
+     * {@code L1} to {@code R}, the two ancestors of {@code L1} are discarded. A condition more
+     * expressed than all its sub-conditions is kept, and the most precise call is kept in case
+     * of equality.
      */
     @Test
     public void shouldIdentifyRedundantPresentCalls() {
         ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
                 Map.of(GENE_ID, mock(Gene.class)));
+        Map<Integer, Entry<ExpressionSummary, SummaryQuality>> allPresent = Map.of(
+                L1, present(SummaryQuality.GOLD), A, present(SummaryQuality.GOLD),
+                R, present(SummaryQuality.GOLD));
 
-        assertEquals("The ancestors of L1, carrying the same present call, should be redundant",
+        assertEquals("The ancestors of L1, less expressed than L1, should be redundant",
                 Set.of(A, R),
-                loader.identifyRedundantCalls(Set.of(L1, A, R),
-                        Map.of(L1, present(SummaryQuality.GOLD),
-                                A, present(SummaryQuality.GOLD),
-                                R, present(SummaryQuality.GOLD)),
-                        chainGraph()));
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("90"), A, scored("80"), R, scored("70")),
+                        allPresent, chainGraph()));
+        assertEquals("A, more expressed than L1, should be kept, and R, less expressed than A, "
+                + "redundant", Set.of(R),
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("70"), A, scored("90"), R, scored("80")),
+                        allPresent, chainGraph()));
+        assertEquals("A, as expressed as L1, should be redundant: the most precise call is kept",
+                Set.of(A, R),
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("80"), A, scored("80"), R, scored("70")),
+                        allPresent, chainGraph()));
     }
 
     /**
-     * An absent call is redundant under the very same rule, which discards the less precise
-     * condition: the absence reported in {@code L1} is the most precise one, so the absent calls
-     * of {@code A} and {@code R} are discarded. This mirrors what the rank-based
-     * {@code ExpressionCall#identifyRedundantCalls(List, ConditionGraph)} does for
-     * the precomputed absent calls, which are ordered by decreasing rank before being filtered.
+     * An absent call is redundant when a more precise condition carries an absent call at most
+     * as expressed, as in Bgee 15, where the absent calls were ordered by decreasing rank: over
+     * the chain {@code L1 -> A -> R}, with the expression increasing from {@code L1} to
+     * {@code R}, the absence reported in {@code L1} is the strongest one, and the absent calls
+     * of {@code A} and {@code R} are discarded.
      */
     @Test
     public void shouldIdentifyRedundantAbsentCalls() {
         ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
                 Map.of(GENE_ID, mock(Gene.class)));
+        Map<Integer, Entry<ExpressionSummary, SummaryQuality>> allAbsent = Map.of(
+                L1, absent(SummaryQuality.SILVER), A, absent(SummaryQuality.SILVER),
+                R, absent(SummaryQuality.SILVER));
 
-        assertEquals("The ancestors of L1, carrying the same absent call, should be redundant",
+        assertEquals("The ancestors of L1, more expressed than L1, should be redundant",
                 Set.of(A, R),
-                loader.identifyRedundantCalls(Set.of(L1, A, R),
-                        Map.of(L1, absent(SummaryQuality.SILVER),
-                                A, absent(SummaryQuality.SILVER),
-                                R, absent(SummaryQuality.SILVER)),
-                        chainGraph()));
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("10"), A, scored("20"), R, scored("30")),
+                        allAbsent, chainGraph()));
+        assertEquals("A, less expressed than L1, should be kept, and R, more expressed than A, "
+                + "redundant", Set.of(R),
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("30"), A, scored("10"), R, scored("20")),
+                        allAbsent, chainGraph()));
     }
 
     /**
-     * A call is never discarded in favour of a less confident one, and calls of different summary
-     * call types never make each other redundant: over the chain {@code L1 -> A -> R}, a BRONZE
-     * call in {@code L1} leaves the GOLD call of {@code A} in place, and the present call
-     * of {@code R} is not made redundant by the absent calls below it.
+     * A call is never discarded in favour of a weaker one, and calls of different summary call
+     * types never make each other redundant: over the chain {@code L1 -> A -> R}, a present call
+     * in {@code L1} less expressed than the present call of {@code A} leaves it in place, whatever
+     * their qualities, and a present call is not made redundant by an absent call below it.
      */
     @Test
     public void shouldNotDiscardACallInFavourOfAWeakerOrDifferentOne() {
         ExpressionCallLoader loader = mockLoader(mockConditionMap(L1, A, R),
                 Map.of(GENE_ID, mock(Gene.class)));
 
-        assertEquals("A GOLD call must not be discarded in favour of a BRONZE descendant",
-                Collections.emptySet(),
-                loader.identifyRedundantCalls(Set.of(L1, A),
-                        Map.of(L1, absent(SummaryQuality.BRONZE),
-                                A, absent(SummaryQuality.GOLD)),
+        assertEquals("A present call must not be discarded in favour of a less expressed "
+                + "descendant, even of a better quality", Collections.emptySet(),
+                loader.identifyRedundantCalls(Map.of(L1, scored("60"), A, scored("90")),
+                        Map.of(L1, present(SummaryQuality.GOLD),
+                                A, present(SummaryQuality.SILVER)),
                         chainGraph()));
 
         assertEquals("An absent call must not make a present call redundant, nor the other way round",
                 Collections.emptySet(),
-                loader.identifyRedundantCalls(Set.of(L1, A),
+                loader.identifyRedundantCalls(Map.of(L1, scored("90"), A, scored("90")),
                         Map.of(L1, absent(SummaryQuality.GOLD),
                                 A, present(SummaryQuality.GOLD)),
                         chainGraph()));
@@ -228,8 +249,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      * A condition that carries no candidate call - discarded by the condition filters or by
      * the requested summary call type - still relays the calls of its own sub-conditions, so that
      * the chain {@code L1 -> A -> R} collapses onto {@code L1} even when {@code A} is not
-     * a candidate. Were the relay missing, {@code R} would be kept while the very same call
-     * is displayed for {@code L1}.
+     * a candidate. Were the relay missing, {@code R} would be kept while a call at least as
+     * expressed is displayed for {@code L1}.
      */
     @Test
     public void shouldRelayThroughAConditionCarryingNoCandidateCall() {
@@ -238,7 +259,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
 
         assertEquals("R should be redundant with L1, through the non-candidate A",
                 Set.of(R),
-                loader.identifyRedundantCalls(Set.of(L1, A, R),
+                loader.identifyRedundantCalls(
+                        Map.of(L1, scored("90"), A, scored("85"), R, scored("80")),
                         Map.of(L1, present(SummaryQuality.GOLD),
                                 R, present(SummaryQuality.GOLD)),
                         chainGraph()));
@@ -299,11 +321,11 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      * The walk reaches {@code g} through {@code f} before coming back to {@code e}, so the
      * relation {@code e -> g} is met when {@code g} has already been contributed to, and the
      * relation {@code b -> e} when {@code e} has. Every condition must still hold the single
-     * observation exactly once: a weight of 10, a score of 80, and an observation count of 1,
-     * which is what keeps the p-value uncalibrated at 0.01.
+     * observation exactly once: a weight of 10, a score of 80, an observation count of 1,
+     * and the p-value of 0.01 of that observation.
      * <p>
      * Counting the observation once per path would give {@code e} a weight of 20 and {@code g}
-     * a weight of 30, and their observation counts of 2 and 3 would double their p-value.
+     * a weight of 30, and observation counts of 2 and 3.
      */
     @Test
     public void shouldNotCountTwiceADescendantOverTwoChainedDiamonds() {
@@ -340,7 +362,9 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      * The walk started from {@code a} marks {@code g} as already reached, but that marking only
      * holds for that walk: the stamp is incremented for each observed condition, so the walk
      * started from {@code e} does reach {@code g}, which therefore holds both observations —
-     * a weight of 20 and a score of (80 * 10 + 20 * 10) / 20 = 50.
+     * a weight of 20 and a score of (80 * 10 + 20 * 10) / 20 = 50. Their p-value is
+     * the weighted harmonic mean of the self p-values of {@code a} and {@code e}, those of
+     * their single observation: 20 / (10 / 0.01 + 10 / 0.4) = 20 / 1025.
      * <p>
      * What every walk pushes is the aggregate of the observations of its own condition, never
      * an accumulated total: the walk from {@code e} carries the observation of {@code e} alone,
@@ -374,15 +398,69 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         OTFExpressionCall topCall = callForCondition("top condition g", calls, condMap.get(DD_G));
         assertEquals("The two observations should be counted once each in the top condition g",
                 2, topCall.getObservationCount());
-        //The raw weighted mean is (0.01 * 10 + 0.4 * 10) / 20 = 0.205, doubled when read
-        //because the call aggregates more than one observation
-        assertBigDecimalEquals("Unexpected p-value for the top condition g", "0.41",
-                topCall.getAllDataTypePValue());
+        //Not doubled: a self p-value is doubled when it averages several observations,
+        //the harmonic mean combining the self p-values is not
+        assertBigDecimalEquals("Unexpected p-value for the top condition g",
+                quotient("20", "1025"), topCall.getAllDataTypePValue());
+        assertBigDecimalEquals("Unexpected p-value for the intermediate condition e",
+                quotient("20", "1025"), callForCondition("intermediate condition e", calls,
+                        condMap.get(DD_E)).getAllDataTypePValue());
         //Above a but not above e
         assertCall("condition f", calls, condMap.get(DD_F), "10", "80");
         //Below e: the propagation never moves downward
         assertCall("condition b", calls, condMap.get(DD_B), "10", "80");
         assertCall("condition c", calls, condMap.get(DD_C), "10", "80");
+    }
+
+    /**
+     * The p-value of a call is the weighted harmonic mean of the self p-values of its condition
+     * and of all its sub-conditions, each counted once. Over the graph of
+     * {@link #shouldNotCountTwiceADescendantReachedThroughSeveralPaths()}:
+     * <ul>
+     * <li>{@code L1} holds a bulk RNA-Seq observation (p-value 0.01, weight 10) and a single-cell
+     * one (p-value 0.03, weight 10). Its self p-value over all data types is their mean 0.02,
+     * doubled to 0.04 because it averages two observations, of weight 20. Its self p-value over
+     * the data types trusted for absent calls is the one of its bulk observation alone, 0.01,
+     * not doubled, of weight 10.
+     * <li>{@code L2} holds two bulk RNA-Seq observations of mean 0.8 and weight 20: doubled,
+     * its self p-value is capped at 1.
+     * </ul>
+     * {@code B} and {@code R} combine both: 40 / (20 / 0.04 + 20 / 1) = 40 / 520 over all
+     * data types, 30 / (10 / 0.01 + 20 / 1) = 30 / 1020 over the trusted ones. Counting
+     * {@code L1} twice in {@code R} would give 60 / 1020 over all data types.
+     */
+    @Test
+    public void shouldCombineTheSelfPValuesWithAHarmonicMean() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, L2, A, B, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(
+                GENE_ID, Map.of(
+                        L1, Set.of(bulkAndSingleCellObservation(L1, "0.01", "10", "0.03", "10")),
+                        L2, Set.of(bulkObservation(L2, "0.8", "50", "20", 2))));
+
+        Map<Integer, OTFExpressionCall> callsByCondId = loader.propagateCalls(observations,
+                diamondGraph(), Collections.emptySet()).get(gene);
+
+        //A only holds the observations of L1
+        for (int condId: new int[] {L1, A}) {
+            assertBigDecimalEquals("The self p-value of L1 averages two observations, "
+                    + "it must be doubled, condition " + condId, "0.04",
+                    callsByCondId.get(condId).getAllDataTypePValue());
+            assertBigDecimalEquals("The trusted self p-value of L1 comes from a single "
+                    + "observation, it must not be doubled, condition " + condId, "0.01",
+                    callsByCondId.get(condId).getTrustedDataTypePValue());
+        }
+        assertBigDecimalEquals("The doubled self p-value of L2 must be capped at 1", "1",
+                callsByCondId.get(L2).getAllDataTypePValue());
+        //R holds the very same observations as B, L1 being reachable through two paths
+        for (int condId: new int[] {B, R}) {
+            assertBigDecimalEquals("Unexpected p-value for the condition " + condId,
+                    quotient("40", "520"), callsByCondId.get(condId).getAllDataTypePValue());
+            assertBigDecimalEquals("Unexpected trusted p-value for the condition " + condId,
+                    quotient("30", "1020"), callsByCondId.get(condId).getTrustedDataTypePValue());
+        }
     }
 
     /**
@@ -510,7 +588,7 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
                     + "for absent calls, call: " + call, call.getTrustedDataTypePValue());
             assertNull("Single-cell data must not produce a best descendant p-value over the data "
                     + "types trusted for absent calls, call: " + call,
-                    call.getBestDirectDescendantTrustedDataTypePValue());
+                    call.getBestDescendantTrustedDataTypePValue());
         }
 
         //Same propagation with bulk RNA-Seq, which is trusted for absent calls
@@ -536,6 +614,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         ExpressionCallProcessedFilter processedFilter = mock(ExpressionCallProcessedFilter.class);
         when(processedFilter.getRequestedConditionMap()).thenReturn(condMap);
         when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
+        //The loader propagates over the condition graph of a single species
+        when(processedFilter.getSpeciesMap()).thenReturn(Map.of(1, new Species(1)));
 
         return new ExpressionCallLoader(processedFilter, serviceFactory,
                 mock(CallServiceUtils.class));
@@ -554,6 +634,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         ExpressionCallProcessedFilter processedFilter = mock(ExpressionCallProcessedFilter.class);
         when(processedFilter.getRequestedConditionMap()).thenReturn(condMap);
         when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
+        //The loader propagates over the condition graph of a single species
+        when(processedFilter.getSpeciesMap()).thenReturn(Map.of(1, new Species(1)));
         //A real filter rather than a mock: the propagation reads the requested combination from it
         //to know which condition parameters it may not move along
         when(processedFilter.getSourceFilter()).thenReturn(new ExpressionCallFilter2(null,
@@ -577,6 +659,15 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      */
     private static Entry<ExpressionSummary, SummaryQuality> absent(SummaryQuality quality) {
         return new AbstractMap.SimpleEntry<>(ExpressionSummary.NOT_EXPRESSED, quality);
+    }
+
+    /**
+     * @return  A call carrying only an expression score, the value its redundancy with the calls
+     *          of the other conditions is assessed from.
+     */
+    private static OTFExpressionCall scored(String expressionScore) {
+        return new OTFExpressionCall(null, null, null, null, null, null, null, 1, null, null,
+                BigDecimal.ONE, new BigDecimal(expressionScore), null, null, PropagationState.SELF);
     }
 
     /**
@@ -668,11 +759,42 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      */
     private static ObservedExpressionTO bulkObservation(int condId, String pValue, String score,
             String weight) {
+        return bulkObservation(condId, pValue, score, weight, 1);
+    }
+    /**
+     * @return  An {@code ObservedExpressionTO} holding the bulk RNA-Seq observations of
+     *          {@code numberObs} samples, all other data types being absent from the condition.
+     */
+    private static ObservedExpressionTO bulkObservation(int condId, String pValue, String score,
+            String weight, int numberObs) {
         return new ObservedExpressionTO(null, condId, GENE_ID,
-                new BigDecimal(score), new BigDecimal(pValue), new BigDecimal(weight), 1,
+                new BigDecimal(score), new BigDecimal(pValue), new BigDecimal(weight), numberObs,
                 null, null, null, null,
                 null, null, null, null,
                 null, null, null, null);
+    }
+    /**
+     * @return  An {@code ObservedExpressionTO} holding one bulk RNA-Seq observation and one
+     *          droplet-based single-cell RNA-Seq observation, both of score 50, all other
+     *          data types being absent from the condition.
+     */
+    private static ObservedExpressionTO bulkAndSingleCellObservation(int condId,
+            String bulkPValue, String bulkWeight, String singleCellPValue,
+            String singleCellWeight) {
+        return new ObservedExpressionTO(null, condId, GENE_ID,
+                new BigDecimal("50"), new BigDecimal(bulkPValue), new BigDecimal(bulkWeight), 1,
+                null, null, null, null,
+                new BigDecimal("50"), new BigDecimal(singleCellPValue),
+                new BigDecimal(singleCellWeight), 1,
+                null, null, null, null);
+    }
+    /**
+     * @return  The quotient of {@code dividend} by {@code divisor}, at the precision of
+     *          the propagation, as a {@code String}.
+     */
+    private static String quotient(String dividend, String divisor) {
+        return new BigDecimal(dividend).divide(new BigDecimal(divisor), MathContext.DECIMAL128)
+                .toPlainString();
     }
 
     /**

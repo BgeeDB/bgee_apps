@@ -9,8 +9,10 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.DAOObservedExpressionFilter;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.RawConditionToSelfGlobalConditionTO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
@@ -204,6 +206,8 @@ public class ExpressionCallService extends CallServiceParent {
                     //thus there will be no result and no query done".
                     //While here we want to say "give me all results".
                     new HashSet<>(),
+                    //No condition part to retrieve the raw conditions of the observations from
+                    null,
 
                     procGeneSpeciesPart,
                     null,
@@ -261,7 +265,7 @@ public class ExpressionCallService extends CallServiceParent {
         //between the species requested in GeneFilters and ConditionFilters
         if (procGeneSpeciesPart.getSpeciesMap().keySet().equals(speciesIdsWithCondRequested) &&
                 speciesIdsWithCondFound.isEmpty()) {
-            return log.traceExit(new ExpressionCallProcessedFilter(filter, null,
+            return log.traceExit(new ExpressionCallProcessedFilter(filter, null, null,
                     procGeneSpeciesPart,
                     procConditionPart,
                     procInvariablePart,
@@ -297,8 +301,17 @@ public class ExpressionCallService extends CallServiceParent {
                         ABSENT_HIGH_GREATER_THAN)
                 );
         log.debug("daoFilter: {}", daoFilter);
+        //The observations the propagation aggregates: those of the requested genes, for
+        //the requested data types, in the raw conditions mapped to the requested conditions
+        Map<Integer, Integer> rawCondIdToGlobalCondId =
+                procConditionPart.getRawConditionToGlobalConditionIds();
+        DAOObservedExpressionFilter daoObsExprFilter = rawCondIdToGlobalCondId.isEmpty()? null:
+            new DAOObservedExpressionFilter(procGeneSpeciesPart.getRequestedGeneMap().keySet(),
+                    this.utils.convertDataTypeToDAODataType(filter.getDataTypeFilters()),
+                    rawCondIdToGlobalCondId.keySet());
 
         return log.traceExit(new ExpressionCallProcessedFilter(filter, Set.of(daoFilter),
+                daoObsExprFilter,
                 procGeneSpeciesPart,
                 procConditionPart,
                 procInvariablePart,
@@ -365,10 +378,11 @@ public class ExpressionCallService extends CallServiceParent {
         //FIXME: creation of daoCondFilters does not require to use the ontologies.
         //       Everything is available in the database to create a DAO that would return values
         //       of condition parameters with there descendants. It would be way way faster.
-        Set<DAOConditionFilter2> daoCondFilters =
-                this.utils.convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
+        CallServiceUtils.ConvertedConditionFilters convertedCondFilters =
+                this.utils.convertConditionFilters(filter.getConditionFilters(),
                         this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered(),
                         filter.getCondParamCombination());
+        Set<DAOConditionFilter2> daoCondFilters = convertedCondFilters.getDAOConditionFilters();
         log.debug("convertConditionFiltersToDAOConditionFilters() completed in {} ms ({} DAO filters)",
                 System.currentTimeMillis() - t0, daoCondFilters.size());
         t0 = System.currentTimeMillis();
@@ -382,9 +396,30 @@ public class ExpressionCallService extends CallServiceParent {
                             this.sexService, this.strainService);
         log.debug("loadGlobalConditionMap() completed in {} ms ({} conditions)",
                 System.currentTimeMillis() - t0, requestedCondMap.size());
+        //The conditions excluded by the condition filters are part of requestedCondMap,
+        //for their observations to be propagated to their ancestors: their own calls are
+        //discarded after the propagation.
+        Set<Integer> excludedCondIds = requestedCondMap.entrySet().stream()
+                .filter(e -> convertedCondFilters.isExcluded(e.getValue()))
+                .map(e -> e.getKey())
+                .collect(Collectors.toSet());
+        //The raw conditions the observations were made in, mapped to the conditions they are
+        //aggregated into for the requested combination of condition parameters: they only depend
+        //on these conditions, so they are retrieved once with them.
+        t0 = System.currentTimeMillis();
+        Map<Integer, Integer> rawCondIdToGlobalCondId = requestedCondMap.isEmpty()? new HashMap<>():
+            this.conditionDAO.getRawConditionToSelfGlobalConditionFromGlobalConditionIds(
+                    requestedCondMap.keySet(),
+                    this.utils.convertCondParamsToDAOCondParams(filter.getCondParamCombination()))
+            .getAllTOs().stream()
+            .collect(Collectors.toMap(
+                    RawConditionToSelfGlobalConditionTO::getRawConditionId,
+                    RawConditionToSelfGlobalConditionTO::getGlobalConditionId));
+        log.debug("Raw conditions of the requested conditions retrieved in {} ms ({} raw conditions)",
+                System.currentTimeMillis() - t0, rawCondIdToGlobalCondId.size());
         return log.traceExit(new ExpressionCallProcessedFilterConditionPart(
                 filter.getConditionFilters(),
-                requestedCondMap));
+                requestedCondMap, excludedCondIds, rawCondIdToGlobalCondId));
     }
 
 }

@@ -343,8 +343,7 @@ flowchart TD
     CALLS --> DT["Collect DataTypes with data<br/>(union of supportingDataTypes)"]
     CALLS --> QUAL["Infer SummaryQuality from<br/>the p-values, keep the best"]
 
-    DT --> CONF{"Quality better than BRONZE<br/>AND has RNA_SEQ<br/>or SC_RNA_SEQ?"}
-    QUAL --> CONF
+    QUAL --> CONF{"Quality better than BRONZE?"}
     CONF -->|Yes| HIGH["confidence = 'high'"]
     CONF -->|No| LOW["confidence = 'low'"]
 

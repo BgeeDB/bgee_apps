@@ -25,9 +25,9 @@ import org.junit.Test;
 /**
  * Unit tests for {@link OTFExpressionCallFilterEngine#compile(Set)}.
  * <p>
- * A condition may carry only an anatomical entity, or only a cell type. The filter has to
- * resolve the missing member to the root of that parameter, which is how an organ-level call
- * satisfies {@code cell_type_id=SUMMARY}.
+ * A missing anatomical entity or cell type rejects the call. A composed value with a single
+ * member is both, because the anatomical entity and the cell type collapse when they are
+ * the same term.
  */
 public class OTFExpressionCallFilterEngineTest extends TestAncestor {
 
@@ -40,7 +40,7 @@ public class OTFExpressionCallFilterEngineTest extends TestAncestor {
      * one organ, exact match, and the cell-type root.
      */
     @Test
-    public void shouldKeepOrganLevelCallsWhenTheCellTypeIsTheRoot() {
+    public void shouldKeepACallOnlyWhenBothTheOrganAndTheCellTypeRootArePresent() {
         Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParams = new HashMap<>();
         condParams.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, new ComposedFilterIds<>(List.of(
                 new FilterIds<>(Set.of(BRAIN), false),
@@ -55,10 +55,13 @@ public class OTFExpressionCallFilterEngineTest extends TestAncestor {
 
         assertTrue("A call in the organ and the cell-type root must be kept",
                 keep.test(call(cellRoot, brain)));
-        assertTrue("An organ-level call, stored with no cell type, must be kept",
+        assertFalse("A single member is both the anatomical entity and the cell type, "
+                + "so an organ stored alone is not the cell-type root",
                 keep.test(call(brain)));
         assertFalse("A cell type outside the requested organ must be rejected",
                 keep.test(call(neuron)));
+        assertFalse("A call with no anatomical entity and no cell type must be rejected",
+                keep.test(call()));
     }
 
     private static OTFExpressionCall call(AnatEntity... entities) {

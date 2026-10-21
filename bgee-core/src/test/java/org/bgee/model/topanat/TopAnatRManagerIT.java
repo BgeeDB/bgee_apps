@@ -115,13 +115,13 @@
 //        this.copyFileToWorkingDir(sourceFunctionFileName,"/topAnat_functions.R");
 //        
 //        // input required by the R analysis
-//        this.copyFileToWorkingDir(TopAnatControllerTest.class.getClassLoader().getResource("").getPath()
+//        this.copyFileToWorkingDir(TopAnatServiceTest.class.getClassLoader().getResource("").getPath()
 //                .toString()+"/topanat/inputs/topAnat_AnatEntitiesNames_test.tsv",
 //                "/topAnat_AnatEntitiesNames_test.tsv");
-//        this.copyFileToWorkingDir(TopAnatControllerTest.class.getClassLoader().getResource("").getPath()
+//        this.copyFileToWorkingDir(TopAnatServiceTest.class.getClassLoader().getResource("").getPath()
 //                .toString()+"/topanat/inputs/topAnat_AnatEntitiesRelationships_test.tsv",
 //                "/topAnat_AnatEntitiesRelationships_test.tsv");
-//        this.copyFileToWorkingDir(TopAnatControllerTest.class.getClassLoader().getResource("").getPath()
+//        this.copyFileToWorkingDir(TopAnatServiceTest.class.getClassLoader().getResource("").getPath()
 //                .toString()+"/topanat/inputs/topAnat_GeneToAnatEntities_test.tsv",
 //                "/topAnat_GeneToAnatEntities_test.tsv");
 //    }

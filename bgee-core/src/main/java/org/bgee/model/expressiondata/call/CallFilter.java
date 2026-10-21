@@ -513,13 +513,15 @@ V> extends DataFilter<V> {
          *                                      condition parameters, {@code false} to select calls
          *                                      not observed in the selected condition parameters
          *                                      (propagation only).
-         * @param redundantAncestorCallsFilter  A {@code boolean} used to filter redundant ancestor calls.
-         *                                      Redundant ancestor calls are calls that are propagated from
-         *                                      one unique descendant. That call then have the same pvalue,
-         *                                      score and weight than its descendant. Removing such calls remove
-         *                                      redundant information but can also result as a side effect to
-         *                                      missing condition if the goal is to compare expression of several
-         *                                      genes in one specific condition.
+         * @param redundantAncestorCallsFilter  A {@code boolean} defining whether to discard the calls
+         *                                      redundant with a more precise call: the call of a condition
+         *                                      is redundant when one of its sub-conditions carries a call
+         *                                      of the same type at least as strong, with an expression score
+         *                                      at least as high for a present call, at most as high for
+         *                                      an absent call. Removing such calls removes redundant
+         *                                      information, but can also make conditions missing when
+         *                                      the goal is to compare the expression of several genes
+         *                                      in a same condition.
          * @throws IllegalArgumentException
          * @throws {@code NullPointerException} If {@code callObservedDataCondParams} is not null
          *                                      and contains a null value.

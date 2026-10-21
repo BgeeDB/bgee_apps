@@ -28,7 +28,7 @@ import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.topanat.TopAnatCallFileService;
+import org.bgee.model.topanat.TopAnatService;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.expressiondata.call.ConditionGraphCacheService;
 import org.bgee.model.gene.GeneNotFoundException;
@@ -443,18 +443,24 @@ public class FrontController extends HttpServlet {
         //This is long, but it runs in the initialization thread started by the context listener,
         //so the server itself does not wait for it. A failure here must not be seen as a failure
         //of the cache initialization above: only topAnat is affected.
-        try {
-            new TopAnatCallFileService(this.serviceFactoryProvider.get(),
-                    this.serviceFactoryProvider)
-            .generateFilesIfMissing(speciesIds, this.prop.getTopAnatResultsWritingDirectory(),
-                    //One gene batch at a time: the files are normally produced by the pipeline,
-                    //this only fills a gap and must not take every core of the server. The
-                    //propagation of a batch would otherwise run in the ForkJoinPool common to
-                    //the whole JVM, for hours.
-                    1);
-        } catch (Exception e) {
-            log.error("Could not generate the topAnat call files, topAnat analyses will not run");
-            log.catching(e);
+        //A deployment not serving topAnat, such as an API version used for tests, can skip
+        //this altogether with the property org.bgee.webapp.generateTopAnatCallFiles.
+        log.info("Generating the missing topAnat call files: {}",
+                this.prop.isGenerateTopAnatCallFilesOnStartup());
+        if (this.prop.isGenerateTopAnatCallFilesOnStartup()) {
+            try {
+                new TopAnatService(this.serviceFactoryProvider.get(),
+                        this.serviceFactoryProvider)
+                .generateFilesIfMissing(speciesIds, this.prop.getTopAnatResultsWritingDirectory(),
+                        //One gene batch at a time: the files are normally produced by the pipeline,
+                        //this only fills a gap and must not take every core of the server. The
+                        //propagation of a batch would otherwise run in the ForkJoinPool common to
+                        //the whole JVM, for hours.
+                        1);
+            } catch (Exception e) {
+                log.error("Could not generate the topAnat call files, topAnat analyses will not run");
+                log.catching(e);
+            }
         }
 
         log.traceExit();

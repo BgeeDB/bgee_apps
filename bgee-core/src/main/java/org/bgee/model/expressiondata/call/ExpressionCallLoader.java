@@ -22,12 +22,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.DAOObservedExpressionFilter;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpressionTO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.RawConditionToSelfGlobalConditionTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -57,7 +53,6 @@ public class ExpressionCallLoader extends CommonService {
 
 
     private final GeneDAO geneDAO;
-    private final ConditionDAO condDAO;
     private final CallServiceUtils utils;
     /**
      * @see #getProcessedFilter()
@@ -88,6 +83,12 @@ public class ExpressionCallLoader extends CommonService {
      */
     private final Map<Integer, Gene> geneMap;
     /**
+     * The IDs of the conditions of {@link #conditionMap} excluded by the condition filters:
+     * they are propagated like the other conditions, so that the calls of their ancestors are
+     * the same as without exclusion, and only their own calls are discarded.
+     */
+    private final Set<Integer> excludedConditionIds;
+    /**
      * The condition parameters the propagation is allowed to move along, empty when it may move
      * along all of them.
      * <p>
@@ -98,6 +99,11 @@ public class ExpressionCallLoader extends CommonService {
      * from the observations made in its own anatomical entity alone.
      */
     private final Set<ConditionParameter<?, ?>> propagationCondParams;
+    /**
+     * The ID of the species the calls are propagated in: the propagation runs over the condition
+     * graph of a single species, so the processed filter must target exactly one.
+     */
+    private final int speciesId;
 
     ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter, ServiceFactory serviceFactory) {
         this(processedFilter, serviceFactory, new CallServiceUtils(), null);
@@ -127,8 +133,14 @@ public class ExpressionCallLoader extends CommonService {
         }
         this.utils = utils;
         this.geneDAO = this.getDaoManager().getGeneDAO();
-        this.condDAO = this.getDaoManager().getConditionDAO();
         this.processedFilter = processedFilter;
+        //A filter requesting no species targets all of them, as they can all be queried
+        Set<Integer> speciesIds = this.processedFilter.getSpeciesMap().keySet();
+        if (speciesIds.size() != 1) {
+            throw log.throwing(new IllegalArgumentException("The on-the-fly propagation requires "
+                    + "a filter targeting exactly one species, targeted species: " + speciesIds));
+        }
+        this.speciesId = speciesIds.iterator().next();
         //The conditions and genes identified by the processed filter are never updated by this
         //Loader, so they are exposed as unmodifiable views rather than copied.
         Map<Integer, Condition2> requestedCondMap = this.processedFilter.getRequestedConditionMap();
@@ -137,6 +149,7 @@ public class ExpressionCallLoader extends CommonService {
             Collections.unmodifiableMap(requestedCondMap);
         this.geneMap = requestedGeneMap == null? Map.of():
             Collections.unmodifiableMap(requestedGeneMap);
+        this.excludedConditionIds = this.processedFilter.getExcludedConditionIds();
         this.propagationCondParams = propagationCondParams == null? Set.of():
             Collections.unmodifiableSet(new HashSet<>(propagationCondParams));
         if (!this.propagationCondParams.isEmpty() &&
@@ -196,64 +209,33 @@ public class ExpressionCallLoader extends CommonService {
             return log.traceExit(new HashMap<>());
         }
 
-        EnumSet<ConditionDAO.ConditionParameter> daoCondParams =
-                this.utils.convertCondParamsToDAOCondParams(
-                        this.processedFilter.getSourceFilter().getCondParamCombination());
-
-        EnumSet<DataType> queriedDataTypes = this.processedFilter.getSourceFilter().getDataTypeFilters();
-        EnumSet<DAODataType> queriedDaoDataTypes = queriedDataTypes
-                .stream()
-                .map(dt -> convertDataTypeToDAODataType(dt)).collect(() -> 
-                        EnumSet.noneOf(DAODataType.class),
-                        EnumSet::add,
-                        EnumSet::addAll);
-
-        //FIXME: at this point we assume a single species per request (validated by processExprCallPage)
-        int speciesId = this.processedFilter.getGeneSpeciesPart()
-                .getSpeciesMap().keySet().iterator().next();
         long startTimeCondGraph = System.currentTimeMillis();
         ConditionGraphCache condGraphCache = new ConditionGraphCacheService(this.getServiceFactory())
-                .getOrLoadGraph(speciesId);
+                .getOrLoadGraph(this.speciesId);
         log.debug("Condition graph retrieved for species {} in {} ms",
-                speciesId, System.currentTimeMillis() - startTimeCondGraph);
+                this.speciesId, System.currentTimeMillis() - startTimeCondGraph);
 
-        //2. retrieve rawconditionIds from the globalCond and the condition parameters.
-        //   If conditionMap is empty (no condition filter provided), use all global conditions
-        //   from the graph so that observed expressions are not missed.
-        //   Snapshot filter-matching condition IDs before any ancestor expansion so that
-        //   propagateCalls() can stop propagating upward at the filter boundary.
-        final Set<Integer> filterConditionIds = conditionMap.isEmpty()?
-                Collections.emptySet(): new HashSet<>(conditionMap.keySet());
-        Set<Integer> globalCondIdsToQuery = conditionMap.isEmpty()?
-                condGraphCache.getGlobalCondToDirectAncestors().keySet():
-                conditionMap.keySet();
-        long startTimeRawConds = System.currentTimeMillis();
-        List<RawConditionToSelfGlobalConditionTO> rawCondToSeflGlobalCondTOs = this.condDAO
-        .getRawConditionToSelfGlobalConditionFromGlobalConditionIds(globalCondIdsToQuery,
-                daoCondParams).getAllTOs();
-        Map<Integer, Integer> rawCondIdToGlobalCondIds = rawCondToSeflGlobalCondTOs.stream()
-                .collect(Collectors.toMap(
-                        RawConditionToSelfGlobalConditionTO::getRawConditionId,
-                        RawConditionToSelfGlobalConditionTO::getGlobalConditionId));
-        log.debug("Raw condition IDs retrieved ({} entries) in {} ms",
-                rawCondIdToGlobalCondIds.size(), System.currentTimeMillis() - startTimeRawConds);
-
+        //The conditions identified by the processed filter: the requested conditions with all
+        //their descendants, or all the conditions of the requested combination when none is
+        //requested. The propagation only contributes an observation to the ancestors among them:
+        //when only "brain" is requested, nothing is computed for "nervous system" or for any
+        //other ancestor of "brain".
+        Set<Integer> filterConditionIds = this.conditionMap.keySet();
+        //The raw conditions the observations were made in, mapped to the requested conditions
+        //they are aggregated into, retrieved with the conditions of the processed filter
+        Map<Integer, Integer> rawCondIdToGlobalCondIds =
+                this.processedFilter.getRawConditionToGlobalConditionIds();
         if (rawCondIdToGlobalCondIds.isEmpty()) {
             log.debug("No raw conditions matched the requested global conditions; returning empty result");
             return log.traceExit(new HashMap<>());
         }
 
-        //3. retrieve the rawExpressionCalls filtering on rawConditionIds and datatypes
+        //3. retrieve the observations of the requested genes in these raw conditions
         ObservedExpressionDAO obsExprDAO = this.getDaoManager().getObservedExpressionDAO();
-        // generate the filter from all info we already have
-        //XXX: Could be created directly when instantiating the ExpressionCallLoader, Didn't want to touch the Loader while testing the new approach
-        DAOObservedExpressionFilter obsExprFilter = new DAOObservedExpressionFilter(this.geneMap.keySet(),
-                queriedDaoDataTypes, rawCondIdToGlobalCondIds.keySet());
-
         // first key -> bgeeGeneId, 2nd key globalConditionId
         long startTimeObsExpr = System.currentTimeMillis();
-        List<ObservedExpressionTO> observedExpressionTOs =
-            obsExprDAO.getObservedExpression(obsExprFilter, null).stream().toList();
+        List<ObservedExpressionTO> observedExpressionTOs = obsExprDAO.getObservedExpression(
+                this.processedFilter.getDAOObservedExpressionFilter(), null).stream().toList();
         Set<Integer> unmatchedRawCondIds = observedExpressionTOs.stream()
             .map(ObservedExpressionTO::getConditionId)
             .filter(id -> !rawCondIdToGlobalCondIds.containsKey(id))
@@ -276,9 +258,6 @@ public class ExpressionCallLoader extends CommonService {
                 geneToGlobalCondIdToRawExpressionCall.size(), System.currentTimeMillis() - startTimeObsExpr);
 
         //5. use the topological order and the map<condId, Set<directParentCondId>> to propagate the calls.
-        //   filterConditionIds restricts score computation to the queried conditions;
-        //   propagation stops at the filter boundary so no wasteful scores are computed
-        //   for ancestor conditions (e.g. "nervous system" when only "brain" was requested).
         long startTimePropagation = System.currentTimeMillis();
         //Null unless the propagation is restricted to some condition parameters, in which case
         //it tells which conditions may be propagated into which
@@ -301,10 +280,6 @@ public class ExpressionCallLoader extends CommonService {
         boolean filterRedundantCalls = this.processedFilter.getSourceFilter()
                 .isRedundantAncestorCallsFilter();
         boolean specificCallTypeRequested = this.isSpecificSummaryCallTypeRequested();
-        //The summary call type and quality of a call are inferred once and reused: both
-        //the filtering on the requested call type and the identification of the redundant calls
-        //need them. They are not inferred at all when neither does.
-        boolean callTypeQualityNeeded = filterRedundantCalls || specificCallTypeRequested;
         //Whether calls observed in the condition itself, or on the contrary calls only propagated
         //from sub-conditions, were requested ({@code null} when both are wanted). The propagation
         //state of a call already answers that question, for the requested combination of condition
@@ -337,46 +312,10 @@ public class ExpressionCallLoader extends CommonService {
         Map<Gene, List<OTFExpressionCall>> sortedCalls = new HashMap<>();
         for (Entry<Gene, Map<Integer, OTFExpressionCall>> geneEntry:
                 propagatedExpressionCalls.entrySet()) {
-            Map<Integer, OTFExpressionCall> keptCalls = new HashMap<>();
-            Map<Integer, Entry<ExpressionSummary, SummaryQuality>> keptCallTypeQualities =
-                    filterRedundantCalls? new HashMap<>(): null;
-
-            for (Entry<Integer, OTFExpressionCall> callEntry: geneEntry.getValue().entrySet()) {
-                OTFExpressionCall call = callEntry.getValue();
-                if (!condFilter.test(call)) {
-                    continue;
-                }
-                //A call includes observed data when the gene was observed in the condition itself,
-                //whatever the observations made in its sub-conditions.
-                if (requestedObservedData != null && !requestedObservedData.equals(
-                        call.getDataPropagation().isIncludingObservedData())) {
-                    continue;
-                }
-                Entry<ExpressionSummary, SummaryQuality> callTypeQuality = !callTypeQualityNeeded?
-                        null: this.inferSummaryCallTypeAndQuality(call);
-                //A call to which no summary call type applies is only discarded when a specific
-                //call type was requested: with no such request it is returned as before,
-                //and the response simply carries no expression state for it.
-                if (specificCallTypeRequested &&
-                        !this.matchesRequestedSummaryCallType(callTypeQuality)) {
-                    continue;
-                }
-                keptCalls.put(callEntry.getKey(), call);
-                if (keptCallTypeQualities != null && callTypeQuality != null) {
-                    keptCallTypeQualities.put(callEntry.getKey(), callTypeQuality);
-                }
-            }
-
-            if (filterRedundantCalls) {
-                Set<Integer> redundantCondIds = identifyRedundantCalls(
-                        geneEntry.getValue().keySet(), keptCallTypeQualities, condGraphCache,
-                        propagationGroup);
-                log.debug("Discarding {} redundant call(s) out of {} for gene {}",
-                        redundantCondIds.size(), keptCalls.size(), geneEntry.getKey().getGeneId());
-                keptCalls.keySet().removeAll(redundantCondIds);
-            }
-
-            sortedCalls.put(geneEntry.getKey(), keptCalls.values().stream()
+            sortedCalls.put(geneEntry.getKey(), this.filterPropagatedCalls(geneEntry.getKey(),
+                    geneEntry.getValue(), condFilter, requestedObservedData,
+                    specificCallTypeRequested, filterRedundantCalls, condGraphCache,
+                    propagationGroup).stream()
                     .sorted(callComparator)
                     .toList());
         }
@@ -384,6 +323,90 @@ public class ExpressionCallLoader extends CommonService {
                 System.currentTimeMillis() - startTimeFiltering);
 
         return log.traceExit(sortedCalls);
+    }
+
+    /**
+     * Filters the calls propagated for one gene: the calls of the excluded conditions, of
+     * the conditions retrieved only for the propagation, and those not matching the requested
+     * observed data or summary call type are discarded, then, if requested, the calls redundant
+     * with a more precise one.
+     *
+     * @param gene                      The {@code Gene} the calls were propagated for.
+     * @param propagatedCalls           A {@code Map} where keys are {@code Integer}s that are
+     *                                  the IDs of all the global conditions the calls of
+     *                                  {@code gene} were propagated to, the associated value
+     *                                  being that call.
+     * @param condFilter                The {@code Predicate} accepting the calls of
+     *                                  the conditions requested by the condition filters.
+     * @param requestedObservedData     A {@code Boolean} that is {@code true} to keep only
+     *                                  the calls observed in their condition itself, {@code false}
+     *                                  to keep only the calls propagated from sub-conditions,
+     *                                  {@code null} to keep both.
+     * @param specificCallTypeRequested A {@code boolean} that is {@code true} to keep only
+     *                                  the calls matching the requested summary call types.
+     * @param filterRedundantCalls      A {@code boolean} that is {@code true} to discard the calls
+     *                                  redundant with a more precise one.
+     * @param condGraphCache            The {@code ConditionGraphCache} the calls were propagated
+     *                                  over.
+     * @param propagationGroup          The groups of conditions the propagation moved within,
+     *                                  as returned by {@link #propagationGroups(ConditionGraphCache)}.
+     * @return                          A {@code Collection} of the {@code OTFExpressionCall}s
+     *                                  kept, in no particular order.
+     */
+    private Collection<OTFExpressionCall> filterPropagatedCalls(Gene gene,
+            Map<Integer, OTFExpressionCall> propagatedCalls,
+            Predicate<OTFExpressionCall> condFilter, Boolean requestedObservedData,
+            boolean specificCallTypeRequested, boolean filterRedundantCalls,
+            ConditionGraphCache condGraphCache, int[] propagationGroup) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", gene, propagatedCalls, condFilter,
+                requestedObservedData, specificCallTypeRequested, filterRedundantCalls,
+                condGraphCache, propagationGroup);
+
+        //The summary call type and quality of a call are inferred once and reused: both
+        //the filtering on the requested call type and the identification of the redundant calls
+        //need them. They are not inferred at all when neither does.
+        boolean callTypeQualityNeeded = filterRedundantCalls || specificCallTypeRequested;
+        Map<Integer, OTFExpressionCall> keptCalls = new HashMap<>();
+        Map<Integer, Entry<ExpressionSummary, SummaryQuality>> keptCallTypeQualities =
+                filterRedundantCalls? new HashMap<>(): null;
+
+        for (Entry<Integer, OTFExpressionCall> callEntry: propagatedCalls.entrySet()) {
+            if (this.excludedConditionIds.contains(callEntry.getKey())) {
+                continue;
+            }
+            OTFExpressionCall call = callEntry.getValue();
+            if (!condFilter.test(call)) {
+                continue;
+            }
+            //A call includes observed data when the gene was observed in the condition itself,
+            //whatever the observations made in its sub-conditions.
+            if (requestedObservedData != null && !requestedObservedData.equals(
+                    call.getDataPropagation().isIncludingObservedData())) {
+                continue;
+            }
+            Entry<ExpressionSummary, SummaryQuality> callTypeQuality = !callTypeQualityNeeded?
+                    null: this.inferSummaryCallTypeAndQuality(call);
+            //A call to which no summary call type applies is only discarded when a specific
+            //call type was requested: with no such request it is returned as before,
+            //and the response simply carries no expression state for it.
+            if (specificCallTypeRequested &&
+                    !this.matchesRequestedSummaryCallType(callTypeQuality)) {
+                continue;
+            }
+            keptCalls.put(callEntry.getKey(), call);
+            if (keptCallTypeQualities != null && callTypeQuality != null) {
+                keptCallTypeQualities.put(callEntry.getKey(), callTypeQuality);
+            }
+        }
+
+        if (filterRedundantCalls) {
+            Set<Integer> redundantCondIds = identifyRedundantCalls(
+                    propagatedCalls, keptCallTypeQualities, condGraphCache, propagationGroup);
+            log.debug("Discarding {} redundant call(s) out of {} for gene {}",
+                    redundantCondIds.size(), keptCalls.size(), gene.getGeneId());
+            keptCalls.keySet().removeAll(redundantCondIds);
+        }
+        return log.traceExit(keptCalls.values());
     }
 
     /**
@@ -440,15 +463,12 @@ public class ExpressionCallLoader extends CommonService {
     /**
      * Identify the calls that are redundant with a more precise call: a call is redundant when
      * one of the conditions more precise than its own carries a call of the same
-     * {@code ExpressionSummary} with a {@code SummaryQuality} at least as good.
-     * <p>
-     * The rule applies to present and to absent calls alike, and always discards the less precise
-     * call. It follows the same logic used for filtering redundant calls before the OTF propagation.
-     * For a present call the more precise call is the one
-     * the expression was propagated from, for an absent call it is the one carrying the most
-     * convincing absence. A call is never discarded in favour of a less confident one, so that
-     * the surviving call always is the strongest statement available about the most precise
-     * condition.
+     * {@code ExpressionSummary} at least as strong, that is, with an expression score at least
+     * as high for a present call, at most as high for an absent call. This is the rule of Bgee 15,
+     * applied to the expression score instead of the rank: a condition is kept above its
+     * sub-conditions only when its call is a stronger statement than all of theirs, for instance
+     * when a gene is more expressed in an organ than in any of its parts. In case of equality,
+     * the most precise call is kept.
      * <p>
      * Only the calls of {@code condIdToCallTypeQuality} are candidates, and only they make
      * another call redundant: a call already discarded by the condition filters or by
@@ -457,9 +477,10 @@ public class ExpressionCallLoader extends CommonService {
      * of its own sub-conditions, so that a chain of conditions collapses whatever the calls
      * it holds in between.
      *
-     * @param propagatedCondIds         A {@code Set} of {@code Integer}s that are the IDs of all
-     *                                  the global conditions a call was propagated to for one
-     *                                  gene, candidates or not.
+     * @param propagatedCalls           A {@code Map} where keys are {@code Integer}s that are
+     *                                  the IDs of all the global conditions a call was propagated
+     *                                  to for one gene, candidates or not, the associated value
+     *                                  being that call.
      * @param condIdToCallTypeQuality   The summary call type and quality of the candidates,
      *                                  by global condition ID.
      * @param condGraphCache            The {@code ConditionGraphCache} holding the relations
@@ -470,10 +491,10 @@ public class ExpressionCallLoader extends CommonService {
      */
     //Package-private rather than private to allow unit testing over synthetic condition graphs
     //(see ExpressionCallLoaderPropagationTest).
-    Set<Integer> identifyRedundantCalls(Set<Integer> propagatedCondIds,
+    Set<Integer> identifyRedundantCalls(Map<Integer, OTFExpressionCall> propagatedCalls,
             Map<Integer, Entry<ExpressionSummary, SummaryQuality>> condIdToCallTypeQuality,
             ConditionGraphCache condGraphCache) {
-        return this.identifyRedundantCalls(propagatedCondIds, condIdToCallTypeQuality,
+        return this.identifyRedundantCalls(propagatedCalls, condIdToCallTypeQuality,
                 condGraphCache, null);
     }
     /**
@@ -483,53 +504,53 @@ public class ExpressionCallLoader extends CommonService {
      *                          with a more precise one of its own group: two groups reached
      *                          separately hold calls computed from distinct observations.
      */
-    Set<Integer> identifyRedundantCalls(Set<Integer> propagatedCondIds,
+    Set<Integer> identifyRedundantCalls(Map<Integer, OTFExpressionCall> propagatedCalls,
             Map<Integer, Entry<ExpressionSummary, SummaryQuality>> condIdToCallTypeQuality,
             ConditionGraphCache condGraphCache, int[] propagationGroup) {
-        log.traceEntry("{}, {}, {}, {}", propagatedCondIds, condIdToCallTypeQuality,
+        log.traceEntry("{}, {}, {}, {}", propagatedCalls, condIdToCallTypeQuality,
                 condGraphCache, propagationGroup);
 
         //The conditions are visited children before parents, so that a condition already knows
-        //the best quality of each call type carried by its sub-conditions when it is visited:
+        //the strongest call of each call type carried by its sub-conditions when it is visited:
         //the index of a condition is its position in the topological order of the graph.
-        List<Integer> condIdsToVisit = new ArrayList<>(propagatedCondIds);
+        List<Integer> condIdsToVisit = new ArrayList<>(propagatedCalls.keySet());
         condIdsToVisit.sort(Comparator.comparingInt(condGraphCache::getIndex));
 
-        //The best quality of a candidate present call, respectively absent call, found in
-        //the sub-conditions of a condition. An entry is created when a descendant contributes
-        //to a condition, and removed when that condition is visited: the maps only ever hold
-        //the conditions not visited yet that have a candidate below them.
-        Map<Integer, SummaryQuality> bestPresentQualBelow = new HashMap<>();
-        Map<Integer, SummaryQuality> bestAbsentQualBelow = new HashMap<>();
+        //The highest expression score of a candidate present call, respectively the lowest
+        //of a candidate absent call, found in the sub-conditions of a condition. An entry is
+        //created when a descendant contributes to a condition, and removed when that condition
+        //is visited: the maps only ever hold the conditions not visited yet that have
+        //a candidate below them.
+        Map<Integer, BigDecimal> highestPresentScoreBelow = new HashMap<>();
+        Map<Integer, BigDecimal> lowestAbsentScoreBelow = new HashMap<>();
         Set<Integer> redundantCondIds = new HashSet<>();
 
         for (int condId: condIdsToVisit) {
-            SummaryQuality presentQualBelow = bestPresentQualBelow.remove(condId);
-            SummaryQuality absentQualBelow = bestAbsentQualBelow.remove(condId);
+            BigDecimal presentScoreBelow = highestPresentScoreBelow.remove(condId);
+            BigDecimal absentScoreBelow = lowestAbsentScoreBelow.remove(condId);
             Entry<ExpressionSummary, SummaryQuality> callTypeQuality =
                     condIdToCallTypeQuality.get(condId);
             boolean present = callTypeQuality != null &&
                     ExpressionSummary.EXPRESSED.equals(callTypeQuality.getKey());
-            SummaryQuality ownQual = callTypeQuality == null? null: callTypeQuality.getValue();
+            BigDecimal ownScore = callTypeQuality == null? null:
+                    propagatedCalls.get(condId).getExpressionScore();
 
-            if (ownQual != null) {
-                SummaryQuality qualBelow = present? presentQualBelow: absentQualBelow;
-                //(the SummaryQuality enum is declared from the lowest to the highest quality,
-                //so that its compareTo can be used)
-                if (qualBelow != null && qualBelow.compareTo(ownQual) >= 0) {
-                    redundantCondIds.add(condId);
-                }
+            //An equal score makes the less precise call redundant: the most precise one is kept
+            if (ownScore != null && (present?
+                    presentScoreBelow != null && presentScoreBelow.compareTo(ownScore) >= 0:
+                    absentScoreBelow != null && absentScoreBelow.compareTo(ownScore) <= 0)) {
+                redundantCondIds.add(condId);
             }
 
-            //What this condition contributes to its parents: the best qualities carried by its
+            //What this condition contributes to its parents: the strongest calls carried by its
             //sub-conditions, and its own call if it is a candidate, redundant or not. Passing up
             //the call of a redundant condition changes nothing, since it is redundant with
-            //a call at least as good that is passed up as well.
-            SummaryQuality presentQualUp = present?
-                    bestQuality(presentQualBelow, ownQual): presentQualBelow;
-            SummaryQuality absentQualUp = present?
-                    absentQualBelow: bestQuality(absentQualBelow, ownQual);
-            if (presentQualUp == null && absentQualUp == null) {
+            //a call at least as strong that is passed up as well.
+            BigDecimal presentScoreUp = present?
+                    higherScore(presentScoreBelow, ownScore): presentScoreBelow;
+            BigDecimal absentScoreUp = present?
+                    absentScoreBelow: lowerScore(absentScoreBelow, ownScore);
+            if (presentScoreUp == null && absentScoreUp == null) {
                 continue;
             }
             int[] parentCondIds = condGraphCache.getGlobalCondToDirectAncestors().get(condId);
@@ -540,7 +561,7 @@ public class ExpressionCallLoader extends CommonService {
                 //A parent the propagation did not reach is outside the requested conditions,
                 //and so is everything only reachable through it: it can neither be a candidate
                 //nor relay this condition to a propagated ancestor.
-                if (!propagatedCondIds.contains(parentCondId)) {
+                if (!propagatedCalls.containsKey(parentCondId)) {
                     continue;
                 }
                 if (propagationGroup != null &&
@@ -548,13 +569,13 @@ public class ExpressionCallLoader extends CommonService {
                         propagationGroup[condGraphCache.getIndex(condId)]) {
                     continue;
                 }
-                if (presentQualUp != null) {
-                    bestPresentQualBelow.merge(parentCondId, presentQualUp,
-                            ExpressionCallLoader::bestQuality);
+                if (presentScoreUp != null) {
+                    highestPresentScoreBelow.merge(parentCondId, presentScoreUp,
+                            ExpressionCallLoader::higherScore);
                 }
-                if (absentQualUp != null) {
-                    bestAbsentQualBelow.merge(parentCondId, absentQualUp,
-                            ExpressionCallLoader::bestQuality);
+                if (absentScoreUp != null) {
+                    lowestAbsentScoreBelow.merge(parentCondId, absentScoreUp,
+                            ExpressionCallLoader::lowerScore);
                 }
             }
         }
@@ -562,17 +583,30 @@ public class ExpressionCallLoader extends CommonService {
         return log.traceExit(redundantCondIds);
     }
     /**
-     * @return  The best of the two {@code SummaryQuality}s, {@code null}-tolerant:
-     *          a {@code null} stands for the absence of quality, and loses against any quality.
+     * @return  The higher of the two expression scores, {@code null}-tolerant: a {@code null}
+     *          stands for the absence of score, and loses against any score.
      */
-    private static SummaryQuality bestQuality(SummaryQuality qual1, SummaryQuality qual2) {
-        if (qual1 == null) {
-            return qual2;
+    private static BigDecimal higherScore(BigDecimal score1, BigDecimal score2) {
+        if (score1 == null) {
+            return score2;
         }
-        if (qual2 == null) {
-            return qual1;
+        if (score2 == null) {
+            return score1;
         }
-        return qual1.compareTo(qual2) >= 0? qual1: qual2;
+        return score1.compareTo(score2) >= 0? score1: score2;
+    }
+    /**
+     * @return  The lower of the two expression scores, {@code null}-tolerant: a {@code null}
+     *          stands for the absence of score, and loses against any score.
+     */
+    private static BigDecimal lowerScore(BigDecimal score1, BigDecimal score2) {
+        if (score1 == null) {
+            return score2;
+        }
+        if (score2 == null) {
+            return score1;
+        }
+        return score1.compareTo(score2) <= 0? score1: score2;
     }
 
     /**
@@ -581,7 +615,7 @@ public class ExpressionCallLoader extends CommonService {
      *          the associated value being the {@code OTFExpressionCall} propagated to that
      *          condition. Whether a call is redundant with a more precise one is not assessed
      *          here, it needs the summary call types: see {@link #identifyRedundantCalls(
-     *          Set, Map, ConditionGraphCache)}.
+     *          Map, Map, ConditionGraphCache)}.
      */
     //Package-private rather than private to allow unit testing of the propagation
     //over synthetic condition graphs (see ExpressionCallLoaderPropagationTest).
@@ -697,11 +731,18 @@ public class ExpressionCallLoader extends CommonService {
      * an ancestor with a handful of additions, rather than iterating the observations and
      * multiplying again for each of the ancestors reached.
      * <p>
-     * Weights are stored as {@code bigint} and scores as {@code decimal(9,2)}, so summing
+     * The p-values of the condition are reduced to its self p-value: their weighted arithmetic
+     * mean, doubled when it averages several observations, since the mean of several p-values
+     * is not a p-value while twice that mean is one, whatever the dependence between them.
+     * The propagation combines the self p-values of a condition and of all its sub-conditions
+     * with a weighted harmonic mean: a condition therefore contributes its weight, and its weight
+     * divided by its self p-value.
+     * <p>
+     * Weights are stored as {@code bigint} and scores as {@code decimal(5,2)}, so summing
      * the weights as {@code long}, and the scores as their unscaled value at scale 2, is exact:
      * the quantities aggregated over thousands of conditions are the very same as the ones
-     * a {@code BigDecimal} accumulation would produce. Only the p-values, stored as
-     * {@code decimal(31,30)}, need {@code BigDecimal} to be summed without any loss.
+     * a {@code BigDecimal} accumulation would produce. The p-values, stored as
+     * {@code decimal(16,15)}, are summed as {@code BigDecimal}.
      */
     private static final class ObservedCondAggregate {
         /**
@@ -720,6 +761,7 @@ public class ExpressionCallLoader extends CommonService {
             long scoreByWeightSumUnscaled = 0;
             long weightSum = 0;
             int observationCount = 0;
+            int trustedObservationCount = 0;
             int dataTypeMask = 0;
 
             for (ObservedExpressionTO obs: observations) {
@@ -781,6 +823,7 @@ public class ExpressionCallLoader extends CommonService {
                     if (dataType.isTrustedForAbsentCalls()) {
                         trustedPValueByWeightSum = trustedPValueByWeightSum.add(pValueByWeight);
                         trustedPValueWeightSum = Math.addExact(trustedPValueWeightSum, weightValue);
+                        trustedObservationCount += numberObs;
                     }
                     scoreByWeightSumUnscaled = Math.addExact(scoreByWeightSumUnscaled,
                             scoreByWeightUnscaled);
@@ -789,13 +832,56 @@ public class ExpressionCallLoader extends CommonService {
                     dataTypeMask |= 1 << dataType.ordinal();
                 }
             }
-            return new ObservedCondAggregate(pValueByWeightSum, trustedPValueByWeightSum,
+            return new ObservedCondAggregate(
+                    weightBySelfPValue(pValueByWeightSum, pValueWeightSum, observationCount,
+                            observations),
+                    weightBySelfPValue(trustedPValueByWeightSum, trustedPValueWeightSum,
+                            trustedObservationCount, observations),
                     pValueWeightSum, trustedPValueWeightSum, scoreByWeightSumUnscaled, weightSum,
                     observationCount, dataTypeMask);
         }
+        /**
+         * Compute the self p-value of a condition, the weighted arithmetic mean of the p-values
+         * observed in it, x2 when it averages several observations (capped at 1), and return
+         * the term the condition contributes to the weighted harmonic means of the propagation:
+         * its weight divided by its self p-value.
+         *
+         * @param pValueByWeightSum A {@code BigDecimal} that is the sum of the p-values observed
+         *                          in a condition, multiplied by their weight.
+         * @param weightSum         A {@code long} that is the sum of their weights.
+         * @param observationCount  An {@code int} that is the number of observations they were
+         *                          computed from.
+         * @param observations      The observations, to identify them in case of error.
+         * @return                  A {@code BigDecimal} that is the weight of the condition divided
+         *                          by its self p-value, 0 if no p-value was observed.
+         */
+        private static BigDecimal weightBySelfPValue(BigDecimal pValueByWeightSum, long weightSum,
+                int observationCount, Collection<ObservedExpressionTO> observations) {
+            if (weightSum == 0) {
+                return BigDecimal.ZERO;
+            }
+            BigDecimal weight = BigDecimal.valueOf(weightSum);
+            //Weighted arithmetic mean of the p-values of the condition
+            BigDecimal selfPValue = pValueByWeightSum.divide(weight, MathContext.DECIMAL128);
+            //x2 when it averages several observations: the mean of several p-values is not
+            //a p-value, while twice that mean is one, whatever the dependence between them
+            if (observationCount > 1) {
+                selfPValue = selfPValue.multiply(TWO).min(BigDecimal.ONE);
+            }
+            //A single self p-value of 0 would make the p-value of every ancestor 0. The p-values
+            //of the expression table are floored, a 0 means a table filled without the floor.
+            if (selfPValue.signum() == 0) {
+                ObservedExpressionTO obs = observations.iterator().next();
+                throw log.throwing(new IllegalStateException("Self p-value of 0 for the gene "
+                        + obs.getBgeeGeneId() + " in the condition " + obs.getConditionId()
+                        + ", the p-values of the expression table must be floored"));
+            }
+            return weight.divide(selfPValue, MathContext.DECIMAL128);
+        }
+        private static final BigDecimal TWO = BigDecimal.valueOf(2);
 
-        private final BigDecimal pValueByWeightSum;
-        private final BigDecimal trustedPValueByWeightSum;
+        private final BigDecimal weightByPValue;
+        private final BigDecimal trustedWeightByPValue;
         private final long pValueWeightSum;
         private final long trustedPValueWeightSum;
         private final long scoreByWeightSumUnscaled;
@@ -803,12 +889,12 @@ public class ExpressionCallLoader extends CommonService {
         private final int observationCount;
         private final int dataTypeMask;
 
-        private ObservedCondAggregate(BigDecimal pValueByWeightSum,
-                BigDecimal trustedPValueByWeightSum, long pValueWeightSum,
+        private ObservedCondAggregate(BigDecimal weightByPValue,
+                BigDecimal trustedWeightByPValue, long pValueWeightSum,
                 long trustedPValueWeightSum, long scoreByWeightSumUnscaled, long weightSum,
                 int observationCount, int dataTypeMask) {
-            this.pValueByWeightSum = pValueByWeightSum;
-            this.trustedPValueByWeightSum = trustedPValueByWeightSum;
+            this.weightByPValue = weightByPValue;
+            this.trustedWeightByPValue = trustedWeightByPValue;
             this.pValueWeightSum = pValueWeightSum;
             this.trustedPValueWeightSum = trustedPValueWeightSum;
             this.scoreByWeightSumUnscaled = scoreByWeightSumUnscaled;
@@ -842,8 +928,8 @@ public class ExpressionCallLoader extends CommonService {
         private static final byte SELF_OBSERVATION = 1;
         private static final byte DESCENDANT_OBSERVATION = 2;
 
-        private final BigDecimal[] pValueByWeightSum;
-        private final BigDecimal[] trustedPValueByWeightSum;
+        private final BigDecimal[] weightByPValueSum;
+        private final BigDecimal[] trustedWeightByPValueSum;
         private final long[] pValueWeightSum;
         private final long[] trustedPValueWeightSum;
         private final long[] scoreByWeightSumUnscaled;
@@ -880,8 +966,8 @@ public class ExpressionCallLoader extends CommonService {
         private final int[] stack;
 
         private PropagationBuffers(int condCount) {
-            this.pValueByWeightSum = new BigDecimal[condCount];
-            this.trustedPValueByWeightSum = new BigDecimal[condCount];
+            this.weightByPValueSum = new BigDecimal[condCount];
+            this.trustedWeightByPValueSum = new BigDecimal[condCount];
             this.pValueWeightSum = new long[condCount];
             this.trustedPValueWeightSum = new long[condCount];
             this.scoreByWeightSumUnscaled = new long[condCount];
@@ -923,8 +1009,8 @@ public class ExpressionCallLoader extends CommonService {
             }
             this.geneStamp[index] = this.currentGeneStamp;
             this.touched[this.touchedCount++] = index;
-            this.pValueByWeightSum[index] = BigDecimal.ZERO;
-            this.trustedPValueByWeightSum[index] = BigDecimal.ZERO;
+            this.weightByPValueSum[index] = BigDecimal.ZERO;
+            this.trustedWeightByPValueSum[index] = BigDecimal.ZERO;
             this.pValueWeightSum[index] = 0;
             this.trustedPValueWeightSum[index] = 0;
             this.scoreByWeightSumUnscaled[index] = 0;
@@ -992,10 +1078,10 @@ public class ExpressionCallLoader extends CommonService {
                 //Nothing was observed, only the propagation state is contributed
                 return;
             }
-            this.pValueByWeightSum[index] = this.pValueByWeightSum[index]
-                    .add(aggregate.pValueByWeightSum);
-            this.trustedPValueByWeightSum[index] = this.trustedPValueByWeightSum[index]
-                    .add(aggregate.trustedPValueByWeightSum);
+            this.weightByPValueSum[index] = this.weightByPValueSum[index]
+                    .add(aggregate.weightByPValue);
+            this.trustedWeightByPValueSum[index] = this.trustedWeightByPValueSum[index]
+                    .add(aggregate.trustedWeightByPValue);
             this.pValueWeightSum[index] = Math.addExact(this.pValueWeightSum[index],
                     aggregate.pValueWeightSum);
             this.trustedPValueWeightSum[index] = Math.addExact(this.trustedPValueWeightSum[index],
@@ -1072,28 +1158,28 @@ public class ExpressionCallLoader extends CommonService {
                 continue;
             }
             bestDescendantAllDataTypePValue = getBestDescendantValue(bestDescendantAllDataTypePValue,
-                    childCall.getAllDataTypePValue(), childCall.getBestDirectDescendantAllDataTypePValue());
+                    childCall.getAllDataTypePValue(), childCall.getBestDescendantAllDataTypePValue());
             bestDescendantTrustedDataTypePValue = getBestDescendantValue(bestDescendantTrustedDataTypePValue,
-                    childCall.getTrustedDataTypePValue(), childCall.getBestDirectDescendantTrustedDataTypePValue());
+                    childCall.getTrustedDataTypePValue(), childCall.getBestDescendantTrustedDataTypePValue());
             if (bestDescendantExpressionScore == null ||
                     childCall.getExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
                 bestDescendantExpressionScore = childCall.getExpressionScore();
                 bestDescendantExpressionScoreWeight = childCall.getExpressionScoreWeight();
             }
-            if (childCall.getBestDirectDescendantExpressionScore() != null &&
-                    childCall.getBestDirectDescendantExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
-                bestDescendantExpressionScore = childCall.getBestDirectDescendantExpressionScore();
-                bestDescendantExpressionScoreWeight = childCall.getBestDirectDescendantExpressionScoreWeight();
+            if (childCall.getBestDescendantExpressionScore() != null &&
+                    childCall.getBestDescendantExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
+                bestDescendantExpressionScore = childCall.getBestDescendantExpressionScore();
+                bestDescendantExpressionScoreWeight = childCall.getBestDescendantExpressionScoreWeight();
             }
         }
 
         long weightSum = buf.weightSum[index];
         BigDecimal allDataTypePValueWeight = BigDecimal.valueOf(buf.pValueWeightSum[index]);
         BigDecimal trustedDataTypePValueWeight = BigDecimal.valueOf(buf.trustedPValueWeightSum[index]);
-        BigDecimal ultimateAllDataTypePValue = weightedMean(buf.pValueByWeightSum[index],
-                allDataTypePValueWeight);
-        BigDecimal ultimateTrustedDataTypePValue = weightedMean(buf.trustedPValueByWeightSum[index],
-                trustedDataTypePValueWeight);
+        BigDecimal ultimateAllDataTypePValue = harmonicMean(allDataTypePValueWeight,
+                buf.weightByPValueSum[index]);
+        BigDecimal ultimateTrustedDataTypePValue = harmonicMean(trustedDataTypePValueWeight,
+                buf.trustedWeightByPValueSum[index]);
         if (weightSum == 0) {
             log.warn("weightSum is zero for gene {} in condition {} - all observation counts are null/0. Defaulting score to 0.", gene, cond);
         }
@@ -1140,18 +1226,19 @@ public class ExpressionCallLoader extends CommonService {
 
 
     /**
-     * @param valueByWeightSum  A {@code BigDecimal} that is the sum of the values multiplied
-     *                          by their weight.
      * @param weightSum         A {@code BigDecimal} that is the sum of the weights.
-     * @return                  A {@code BigDecimal} that is the weighted mean, or {@code null}
-     *                          if {@code weightSum} is zero, meaning that nothing contributed.
+     * @param weightByValueSum  A {@code BigDecimal} that is the sum of the weights divided by
+     *                          their value.
+     * @return                  A {@code BigDecimal} that is the weighted harmonic mean, or
+     *                          {@code null} if {@code weightSum} is zero, meaning that nothing
+     *                          contributed.
      */
-    protected BigDecimal weightedMean(BigDecimal valueByWeightSum, BigDecimal weightSum) {
-        log.traceEntry("{}, {}", valueByWeightSum, weightSum);
+    protected BigDecimal harmonicMean(BigDecimal weightSum, BigDecimal weightByValueSum) {
+        log.traceEntry("{}, {}", weightSum, weightByValueSum);
         if (weightSum == null || BigDecimal.ZERO.compareTo(weightSum) == 0) {
             return log.traceExit((BigDecimal) null);
         }
-        return log.traceExit(valueByWeightSum.divide(weightSum, MathContext.DECIMAL128));
+        return log.traceExit(weightSum.divide(weightByValueSum, MathContext.DECIMAL128));
     }
 
 

@@ -566,6 +566,28 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public final static boolean INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_DEFAULT = false;
 
     /**
+     * A {@code String} that is the key to access to the property containing the {@code boolean}
+     * defining whether the topAnat call files missing from
+     * {@link #getTopAnatResultsWritingDirectory()} should be generated on webapp startup.
+     * <p>
+     * Generating them means propagating the expression calls of every gene of every species,
+     * which takes a long time: a deployment that does not serve topAnat, such as an API version
+     * used for tests, can set this property to {@code false}. The files are then simply absent,
+     * and only topAnat is affected.
+     *
+     * @see #GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_DEFAULT
+     * @see #isGenerateTopAnatCallFilesOnStartup()
+     */
+    public final static String GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_KEY =
+            "org.bgee.webapp.generateTopAnatCallFiles";
+    /**
+     * The default {@code boolean} value for the property
+     * {@link #GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_KEY}. {@code true}, so that a deployment
+     * serving topAnat keeps working without having to declare anything.
+     */
+    public final static boolean GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_DEFAULT = true;
+
+    /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties
      *          or the properties file present in the classpath or the default properties if 
      *          nothing else is available. The method will create an instance only once for 
@@ -802,6 +824,11 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     private final boolean initializeCommandDataCachesOnStartup;
 
     /**
+     * @see #isGenerateTopAnatCallFilesOnStartup()
+     */
+    private final boolean generateTopAnatCallFilesOnStartup;
+
+    /**
      * Private constructor, can be only called through the use of one of the
      * {@code getBgeeProperties} method, the only way for the user to obtain an instance of this
      * class.
@@ -887,6 +914,9 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 GENE_SCORE_CLUSTERING_THRESHOLD_KEY, GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT);
         initializeCommandDataCachesOnStartup = getBooleanOption(prop, SYS_PROPS, FILE_PROPS,
                 INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_KEY, INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_DEFAULT);
+        generateTopAnatCallFilesOnStartup = getBooleanOption(prop, SYS_PROPS, FILE_PROPS,
+                GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_KEY,
+                GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_DEFAULT);
         log.debug("Initialization done.");
         log.traceExit();
     }
@@ -1206,5 +1236,15 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public boolean isInitializeCommandDataCachesOnStartup() {
         return initializeCommandDataCachesOnStartup;
+    }
+
+    /**
+     * @return  A {@code boolean} defining, when {@code true}, that the topAnat call files
+     *          missing from {@link #getTopAnatResultsWritingDirectory()} should be generated
+     *          on webapp startup. When {@code false}, they are left absent and topAnat
+     *          analyses will not run.
+     */
+    public boolean isGenerateTopAnatCallFilesOnStartup() {
+        return generateTopAnatCallFilesOnStartup;
     }
 }

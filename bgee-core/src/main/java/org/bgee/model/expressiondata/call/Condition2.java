@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.ComposedEntity;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.BaseCondition2;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
@@ -80,6 +81,55 @@ public class Condition2 extends BaseCondition2 {
             return log.traceExit((ComposedEntity<T>) null);
         }
         return log.traceExit((ComposedEntity<T>) value);
+    }
+
+    /**
+     * The anatomical entity of this condition. {@code ANAT_ENTITY_CELL_TYPE} is a composed
+     * condition parameter: when it holds two entities the cell type comes first and the
+     * anatomical entity second. The composition is a {@code Set}, so when the two are the same
+     * term they collapse into a single element that is both the anatomical entity and the cell
+     * type. Reading the composition by index at each call site
+     * invites an off-by-one, or a {@code null} when there is no cell type, which is the
+     * common case: this accessor and {@link #getCellType()} are the single place doing it.
+     *
+     * @return  The {@code AnatEntity} of this condition, {@code null} if it has none.
+     */
+    public AnatEntity getAnatEntity() {
+        log.traceEntry();
+        ComposedEntity<AnatEntity> composed = this.getConditionParameterValue(
+                ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (composed == null || composed.isEmpty()) {
+            return log.traceExit((AnatEntity) null);
+        }
+        if (composed.size() > 1) {
+            return log.traceExit(composed.getEntity(1));
+        }
+        //The composition is a Set: when the anatomical entity and the cell type are the same
+        //term, such as the cell type root CL:0000000, they collapse into a single element that
+        //is both.
+        return log.traceExit(composed.getEntity(0));
+    }
+
+    /**
+     * @return  The cell type of this condition, {@code null} if it has none.
+     * @see #getAnatEntity()
+     */
+    public AnatEntity getCellType() {
+        log.traceEntry();
+        ComposedEntity<AnatEntity> composed = this.getConditionParameterValue(
+                ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        if (composed == null || composed.isEmpty()) {
+            return log.traceExit((AnatEntity) null);
+        }
+        if (composed.size() > 1) {
+            return log.traceExit(composed.getEntity(0));
+        }
+        //A Condition2 is a global condition: its anat. entity and its cell type are retrieved
+        //together and neither is ever null (an unused cell type is the root, not null). A lone
+        //element therefore always means that both are the same term, see getAnatEntity().
+        //This would not hold for a raw condition, where the cell type can be null: these
+        //accessors must not be moved to a class also describing raw conditions.
+        return log.traceExit(composed.getEntity(0));
     }
 
     @Override

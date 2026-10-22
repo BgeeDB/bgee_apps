@@ -249,7 +249,7 @@ public class JsonHelperTest extends TestAncestor {
         when(topAnatService.getReadWriteLocks()).thenReturn(new ManageReadWriteLocks());
         
         TopAnatResults results = new TopAnatResults(params, "view", "topAnatResults.tsv", 
-                null, null, null, null, null, null, null, "result_hash.zip", 
+                null, null, null, null, "result_hash.zip", 
                 topAnatService);
         
         JsonHelper helper = new JsonHelper(props, new RequestParameters(props));

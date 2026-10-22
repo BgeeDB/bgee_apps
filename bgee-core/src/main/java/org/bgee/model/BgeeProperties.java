@@ -237,6 +237,22 @@ public class BgeeProperties {
 
     /**
      * A {@code String} that is the key to access to the System property that contains 
+     * the minimum version of the BgeeDB {@code R} package that topAnat runs with.
+     *
+     * @see #BGEEDB_MINIMUM_VERSION_DEFAULT
+     */
+    public final static String BGEEDB_MINIMUM_VERSION_KEY = "org.bgee.core.bgeeDBMinimumVersion";
+    /**
+     * A {@code String} that is the default value of the minimum version of the BgeeDB {@code R}
+     * package that topAnat runs with: the first one able to run the topAnat analyses of
+     * the web page.
+     *
+     * @see #BGEEDB_MINIMUM_VERSION_KEY
+     */
+    public final static String BGEEDB_MINIMUM_VERSION_DEFAULT = "2.39.4";
+
+    /**
+     * A {@code String} that is the key to access to the System property that contains 
      * the current working directory of {@code R}, where all the other files required 
      * for the processing of the topAnat analysis are kept.
      * 
@@ -977,6 +993,9 @@ public class BgeeProperties {
         bioconductorReleaseNumber = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 BIOCONDUCTOR_RELEASE_NUMBER_KEY,
                 BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT);
+        bgeeDBMinimumVersion = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                BGEEDB_MINIMUM_VERSION_KEY,
+                BGEEDB_MINIMUM_VERSION_DEFAULT);
         topAnatFunctionFile = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_FUNCTION_FILE_KEY,
                 TOP_ANAT_FUNCTION_FILE_DEFAULT);
@@ -1071,6 +1090,12 @@ public class BgeeProperties {
      * {@code R} packages.
      */
     private final String bioconductorReleaseNumber;
+
+    /**
+     * A {@code String} that is the minimum version of the BgeeDB {@code R} package
+     * that topAnat runs with.
+     */
+    private final String bgeeDBMinimumVersion;
 
     /**
      * A {@code String} that is the path of RScript Executable file 
@@ -1285,6 +1310,13 @@ public class BgeeProperties {
         return bioconductorReleaseNumber;
     }
     /**
+     * @return A {@code String} that is the minimum version of the BgeeDB {@code R} package
+     * that topAnat runs with
+     */
+    public String getBgeeDBMinimumVersion() {
+        return bgeeDBMinimumVersion;
+    }
+    /**
      * @return A {@code String} that is the path of RScript Executable file which is used 
      * to execute the {@code R} code.
      */
@@ -1417,6 +1449,7 @@ public class BgeeProperties {
         StringBuilder builder = new StringBuilder();
         builder.append("BgeeProperties [topAnatRScriptExecutable=").append(topAnatRScriptExecutable)
                 .append(", bioconductorReleaseNumber=").append(bioconductorReleaseNumber)
+                .append(", bgeeDBMinimumVersion=").append(bgeeDBMinimumVersion)
                 .append(", topAnatRWorkingDirectory=").append(topAnatRWorkingDirectory)
                 .append(", topAnatFunctionFile=").append(topAnatFunctionFile)
                 .append(", topAnatResultsWritingDirectory=").append(topAnatResultsWritingDirectory)

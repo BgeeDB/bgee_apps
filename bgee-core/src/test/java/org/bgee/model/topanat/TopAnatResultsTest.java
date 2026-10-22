@@ -63,7 +63,7 @@ public class TopAnatResultsTest extends TestAncestor {
         this.topAnatResults = new TopAnatResults(mockTopAnatParams,
                 "topanat/results",
                 "test.tsv",
-                "","","","","","","","",
+                "","","","","",
                 mockTopAnatService);
         
     }

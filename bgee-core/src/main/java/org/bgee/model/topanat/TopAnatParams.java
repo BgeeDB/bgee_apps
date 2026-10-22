@@ -3,9 +3,7 @@ package org.bgee.model.topanat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -18,14 +16,9 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.expressiondata.call.CallFilter;
-import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.expressiondata.call.ConditionFilter;
-import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.topanat.TopAnatService.Background;
+import org.bgee.model.topanat.TopAnatService.CallFileType;
 import org.bgee.model.topanat.exception.MissingParameterException;
 
 /**
@@ -61,6 +54,13 @@ public class TopAnatParams {
     private final static StatisticTest STATISTIC_TEST_DEFAULT = StatisticTest.FISHER;
 
     /**
+     * A {@code Background} that is the default background when running a {@code TopAnatAnalysis}
+     * with no background gene IDs submitted: the protein coding genes, random lists of protein
+     * coding genes finding no enriched condition with it.
+     */
+    private final static Background BACKGROUND_DEFAULT = Background.PROTEIN_CODING;
+
+    /**
      * A {@code int} that is the default node size
      * when running a {@code TopAnatAnalysis}
      */
@@ -93,6 +93,12 @@ public class TopAnatParams {
      * A {@code Set} of {@code String} which specifies the genes ids that constitute the background
      */
     private final Set<String> submittedBackgroundIds;
+
+    /**
+     * A {@code Background} that is the background of the analysis, {@code null} when
+     * background gene IDs are submitted
+     */
+    private final Background background;
 
     /**
      * A {@code String} that contains the id of the species tested in the analysis
@@ -187,6 +193,12 @@ public class TopAnatParams {
          * the background
          */
         private Collection<String> submittedBackgroundIds;
+
+        /**
+         * A {@code Background} that is the background of the analysis when no background gene IDs
+         * are submitted
+         */
+        private Background background;
 
         /**
          * A {@code SummaryCallType} that specifies the type of expression call in the analysis
@@ -412,6 +424,19 @@ public class TopAnatParams {
         }  
 
         /**
+         * Update the attribute background
+         *
+         * @param background    A {@code Background} that is the background of the analysis,
+         *                      when no background gene IDs are submitted
+         * @return the updated current Builder instance
+         */
+        public Builder background(Background background){
+            log.traceEntry("{}", background);
+            this.background = background;
+            return log.traceExit(this);
+        }
+
+        /**
          * Update the attribute isWithZip
          * 
          * @param isWithZip         A {@code Boolean} that tells whether all results should be
@@ -483,6 +508,15 @@ public class TopAnatParams {
                 : builder.pvalueThreshold;
         this.submittedBackgroundIds = builder.submittedBackgroundIds == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.submittedBackgroundIds));
+        //The background is either the background gene IDs submitted, or a background of Bgee
+        boolean hasBackgroundIds = this.submittedBackgroundIds != null
+                && !this.submittedBackgroundIds.isEmpty();
+        if (hasBackgroundIds && builder.background != null) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Background gene IDs and a background cannot be both provided"));
+        }
+        this.background = hasBackgroundIds ? null :
+            builder.background == null ? TopAnatParams.BACKGROUND_DEFAULT : builder.background;
         this.key = this.generateKey();
         this.isWithZip = builder.isWithZip == null ? true : builder.isWithZip;
         log.traceExit();
@@ -501,6 +535,14 @@ public class TopAnatParams {
      */
     public Set<String> getSubmittedBackgroundIds() {
         return submittedBackgroundIds;
+    }
+
+    /**
+     * @return  A {@code Background} that is the background of the analysis, {@code null} when
+     *          background gene IDs are submitted (see {@link #getSubmittedBackgroundIds()}).
+     */
+    public Background getBackground() {
+        return background;
     }
 
     /**
@@ -534,6 +576,16 @@ public class TopAnatParams {
     }
 
     /**
+     * @return  An {@code EnumSet} of {@code DataType}s that is the combination of data types
+     *          whose calls the analysis reads in the generated call files: the requested data
+     *          types, every data type when none is requested.
+     */
+    public EnumSet<DataType> getDataTypeCombination() {
+        return dataTypes == null || dataTypes.isEmpty() ? EnumSet.allOf(DataType.class) :
+            EnumSet.copyOf(dataTypes);
+    }
+
+    /**
      * @return  A {@code String} that contains the developmental stage id to be considered
      *          during the analysis
      */
@@ -547,6 +599,16 @@ public class TopAnatParams {
      */
     public DecorrelationType getDecorrelationType() {
         return decorrelationType;
+    }
+
+    /**
+     * @return  A {@code CallFileType} that is the kind of generated call file the analysis reads:
+     *          without decorrelation, the calls propagated by Bgee; with a decorrelation,
+     *          the observed calls, that topGO propagates.
+     */
+    public CallFileType getCallFileType() {
+        return decorrelationType == DecorrelationType.NONE ? CallFileType.PROPAGATED :
+            CallFileType.OBSERVED;
     }
 
     /**
@@ -601,61 +663,6 @@ public class TopAnatParams {
         return this.isWithZip;
     }
     
-    /**
-     * Create an return a {@code CallFilter} based on the parameter values 
-     * 
-     * @return A {@code CallFilter} to be used for the analysis
-     */
-    public CallFilter<?, ?, ConditionFilter> convertRawParametersToCallFilter() {
-        log.traceEntry();
-        
-        GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);
-        
-        //XXX: filter only on dev. stage. Could potentially add filtering on sex/strain
-        Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
-            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), 
-                    null, null, null, null));
-        
-        if (this.callType == ExpressionSummary.EXPRESSED) {
-            Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
-            callQualFilter.put(ExpressionSummary.EXPRESSED, this.summaryQuality);
-
-            Map<EnumSet<CallService.Attribute>, Boolean> observedDataFilter = null;
-            //retrieve also propagated anat. entities when no decorrelation is requested in order to run
-            //a Fisher test without running topGo (faster)
-            if (this.decorrelationType != DecorrelationType.NONE) {
-                observedDataFilter = ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT;
-            }
-            return log.traceExit(new ExpressionCallFilter(
-                    //call type and quality filter
-                    callQualFilter,
-                    //gene filter 
-                    Collections.singleton(geneFilter), 
-                    //condition filter
-                    condFilters,
-                    //data type filter
-                    this.dataTypes,
-                    //cond. params observed states
-                    observedDataFilter
-            ));
-        }
-        if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {
-            //TODO: to implement, and use method getDiffExpressionCallData
-            throw log.throwing(new UnsupportedOperationException(
-                    "CallService for diff. expression not yet implemented"));
-//            return log.traceExit(new DiffExpressionCallFilter(
-//                //gene filter 
-//                geneFilter, 
-//                //condition filter
-//                condFilters,
-//                this.dataTypes,
-//                summaryQualityFilter,
-//                DiffExpressionSummary.OVER_EXPRESSED)
-//            );
-        }
-        throw log.throwing(new IllegalStateException("Unsupported CallType: " + this.callType));
-    }
- 
 //TODO: following methods to be used?
 //    /**
 //     * @return a {@code Collection} of {@code ExpressionCallData}
@@ -721,6 +728,8 @@ public class TopAnatParams {
             valueToHash.append(new TreeSet<String>(this.submittedForegroundIds).toString());
         if(this.submittedBackgroundIds != null)
             valueToHash.append(new TreeSet<String>(this.submittedBackgroundIds).toString());
+        if(this.background != null)
+            valueToHash.append(this.background.getStringRepresentation());
         if(this.speciesId != null)
             valueToHash.append(this.speciesId.toString());
         if(this.callType != null)
@@ -774,6 +783,11 @@ public class TopAnatParams {
             ret.append(valSep);
             if(this.submittedBackgroundIds != null)
                 ret.append(this.submittedBackgroundIds.toString());
+            ret.append(paramSep);
+            ret.append("background");
+            ret.append(valSep);
+            if(this.background != null)
+                ret.append(this.background.getStringRepresentation());
             ret.append(paramSep);
         }
         

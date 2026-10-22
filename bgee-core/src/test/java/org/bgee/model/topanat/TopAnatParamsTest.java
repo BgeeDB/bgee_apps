@@ -1,9 +1,13 @@
 package org.bgee.model.topanat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,8 +17,8 @@ import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.CallFilter;
-import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.topanat.TopAnatService.Background;
+import org.bgee.model.topanat.TopAnatService.CallFileType;
 import org.bgee.model.topanat.exception.MissingParameterException;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +26,7 @@ import org.junit.Test;
 /**
  * Unit tests for {@link TopAnatParams}.
  * - Get a hash key according to the parameter values
- * - Get {@link CallFilter} corresponding to the parameter values
+ * - Get the subset of the generated call files and the background corresponding to the parameter values
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
@@ -78,17 +82,39 @@ public class TopAnatParamsTest extends TestAncestor {
     }
 
     /**
-     * Test that the generated CallFilter fits the provided parameters
+     * Test the subset of the generated call files that the analysis reads, and its background.
      */
     @Test
-    public void testConvertRawParametersToCallFilter(){
-        CallFilter<?, ?, ConditionFilter> callFilter = this.topAnatParams.convertRawParametersToCallFilter();
-        assertEquals("ExpressionCallFilter [callObservedData={}, anatEntityObservedData=true,"
-                + " devStageObservedData=null, geneFilters=[GeneFilter [speciesId=999,"
-                + " geneIds=[G1, G2, G3, G4]]], conditionFilters=[ConditionFilter"
-                + " [anatEntityIds=[], devStageIds=[a], observedConditions=null]],"
-                + " dataTypeFilters=[AFFYMETRIX], summaryCallTypeQualityFilter={EXPRESSED=GOLD}]",
-                callFilter.toString());
+    public void shouldGiveCallFileSubsetAndBackground() {
+        //A decorrelation reads the observed calls
+        assertEquals(CallFileType.OBSERVED, this.topAnatParams.getCallFileType());
+        assertEquals(EnumSet.of(DataType.RNA_SEQ), this.topAnatParams.getDataTypeCombination());
+        //Background gene IDs submitted: no background of Bgee
+        assertNull(this.topAnatParams.getBackground());
+    }
+
+    /**
+     * Test the default values of the subset of the generated call files and of the background.
+     */
+    @Test
+    public void shouldDefaultToPropagatedCallsAndProteinCodingGenes() throws MissingParameterException {
+        TopAnatParams params = new TopAnatParams.Builder(Set.of("G1"), 999,
+                SummaryCallType.ExpressionSummary.EXPRESSED).build();
+        assertEquals(CallFileType.PROPAGATED, params.getCallFileType());
+        assertEquals(EnumSet.allOf(DataType.class), params.getDataTypeCombination());
+        assertEquals(Background.PROTEIN_CODING, params.getBackground());
+        //Another background is another analysis
+        assertNotEquals(params.getKey(), new TopAnatParams.Builder(Set.of("G1"), 999,
+                SummaryCallType.ExpressionSummary.EXPRESSED).background(Background.POLY_A).build()
+                .getKey());
+    }
+
+    /**
+     * Test that background gene IDs and a background of Bgee cannot be both provided.
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldRefuseBackgroundIdsWithBackground() throws MissingParameterException {
+        new TopAnatParams.Builder(Set.of("G1"), Set.of("G1", "G2"), 999,
+                SummaryCallType.ExpressionSummary.EXPRESSED).background(Background.POLY_A).build();
     }
 }
-

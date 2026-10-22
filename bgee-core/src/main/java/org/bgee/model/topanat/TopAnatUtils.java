@@ -10,6 +10,7 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeProperties;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.call.CallService;
@@ -53,6 +54,16 @@ public class TopAnatUtils {
      * a condition targeting a specific cell type, see {@link #conditionId(String, String)}.
      */
     public final static String CONDITION_ID_SEPARATOR = "-";
+
+    /**
+     * @param props The {@code BgeeProperties} of the instance of Bgee running the analyses.
+     * @return      A {@code String} that is the release of Bgee, its major and minor versions
+     *              separated by a dot, as the BgeeDB R package names it, for instance "16.0".
+     */
+    public static String bgeeRelease(BgeeProperties props) {
+        return props.getMajorVersion() + "." + (StringUtils.isBlank(props.getMinorVersion())?
+                "0": props.getMinorVersion());
+    }
 
     /**
      * Build the ID of a condition of topAnat, an anat. entity possibly restricted to a cell type.

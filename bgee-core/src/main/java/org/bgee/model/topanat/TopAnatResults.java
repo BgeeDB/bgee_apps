@@ -189,12 +189,6 @@ public class TopAnatResults {
 
     private final String paramsOutputFileName;
 
-    private final String anatEntitiesFilename;
-
-    private final String anatEntitiesRelationshipsFileName;
-
-    private final String geneToAnatEntitiesFileName;
-
     private final String rScriptConsoleFileName;
 
     private final String zipFileName;
@@ -205,9 +199,7 @@ public class TopAnatResults {
 
     public TopAnatResults(TopAnatParams topAnatParams, String resultDirectory, String resultFileName,
             String resultPDFFileName, String rScriptAnalysisFileName, String  paramsOutputFileName,
-            String anatEntitiesFilename, String anatEntitiesRelationshipsFileName, 
-            String geneToAnatEntitiesFileName, String rScriptConsoleFileName,
-            String zipFileName, TopAnatService topAnatService){
+            String rScriptConsoleFileName, String zipFileName, TopAnatService topAnatService){
         this.topAnatParams = topAnatParams;
         this.resultDirectory = resultDirectory;
         this.resultFileName = resultFileName;
@@ -215,9 +207,6 @@ public class TopAnatResults {
         this.rScriptAnalysisFileName = rScriptAnalysisFileName;
         this.rScriptConsoleFileName = rScriptConsoleFileName;
         this.paramsOutputFileName = paramsOutputFileName;
-        this.anatEntitiesFilename = anatEntitiesFilename;
-        this.anatEntitiesRelationshipsFileName = anatEntitiesRelationshipsFileName;
-        this.geneToAnatEntitiesFileName = geneToAnatEntitiesFileName;
         this.zipFileName = zipFileName;
         this.topAnatService = topAnatService;
         this.props = topAnatService.getBgeeProperties();
@@ -334,18 +323,6 @@ public class TopAnatResults {
         return paramsOutputFileName;
     }
 
-    public String getAnatEntitiesFilename() {
-        return anatEntitiesFilename;
-    }
-
-    public String getAnatEntitiesRelationshipsFileName() {
-        return anatEntitiesRelationshipsFileName;
-    }
-
-    public String getGeneToAnatEntitiesFileName() {
-        return geneToAnatEntitiesFileName;
-    }
-
     public String getRScriptConsoleFileName() {
         return rScriptConsoleFileName;
     }
@@ -360,10 +337,7 @@ public class TopAnatResults {
         builder.append("TopAnatResults [topAnatParams=").append(topAnatParams).append(", resultFileName=")
                 .append(resultFileName).append(", resultPDFFileName=").append(resultPDFFileName)
                 .append(", rScriptAnalysisFileName=").append(rScriptAnalysisFileName).append(", paramsOutputFileName=")
-                .append(paramsOutputFileName).append(", anatEntitiesFilename=").append(anatEntitiesFilename)
-                .append(", anatEntitiesRelationshipsFileName=").append(anatEntitiesRelationshipsFileName)
-                .append(", geneToAnatEntitiesFileName=").append(geneToAnatEntitiesFileName)
-                .append(", rScriptConsoleFileName=").append(rScriptConsoleFileName).append(", zipFileName=")
+                .append(paramsOutputFileName).append(", rScriptConsoleFileName=").append(rScriptConsoleFileName).append(", zipFileName=")
                 .append(zipFileName).append(", topAnatService=").append(topAnatService).append(", props=").append(props)
                 .append("]");
         return builder.toString();

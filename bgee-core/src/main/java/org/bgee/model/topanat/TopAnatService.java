@@ -208,19 +208,21 @@ public class TopAnatService extends CommonService {
      * The columns of the file holding the conditions of a species, see
      * {@link #getConditionFilePath(String, int)}: the ID of the condition, by the index of which
      * the call files refer to it, its name, the ID of its anatomical entity, and the ID of its
-     * cell type, the root of the cell types when it targets no specific one.
+     * cell type, the root of the cell types when it targets no specific one. They bear the names
+     * of the attributes of the R package API displaying them, which are the names BgeeDB reads,
+     * so that the R code of the topAnat analyses reads the file as it is.
      */
-    public final static String CONDITION_ID_COLUMN = "conditionId";
-    public final static String CONDITION_NAME_COLUMN = "conditionName";
-    public final static String ANAT_ENTITY_ID_COLUMN = "anatEntityId";
-    public final static String CELL_TYPE_ID_COLUMN = "cellTypeId";
+    public final static String CONDITION_ID_COLUMN = "ID";
+    public final static String CONDITION_NAME_COLUMN = "NAME";
+    public final static String ANAT_ENTITY_ID_COLUMN = "ANAT_ENTITY_ID";
+    public final static String CELL_TYPE_ID_COLUMN = "CELL_TYPE_ID";
     /**
      * The columns of the file holding the relations between the conditions of a species, see
      * {@link #getConditionRelationFilePath(String, int)}: the ID of a condition, then the ID
-     * of one of its direct parents.
+     * of one of its direct parents. Named as the columns of the condition file.
      */
-    public final static String SOURCE_CONDITION_ID_COLUMN = "sourceConditionId";
-    public final static String TARGET_CONDITION_ID_COLUMN = "targetConditionId";
+    public final static String SOURCE_CONDITION_ID_COLUMN = "SOURCE_ID";
+    public final static String TARGET_CONDITION_ID_COLUMN = "TARGET_ID";
     /**
      * Separates the columns of the generated files.
      */

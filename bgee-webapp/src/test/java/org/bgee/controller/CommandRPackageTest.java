@@ -115,12 +115,12 @@ public class CommandRPackageTest extends TestAncestor {
                 combinations, conditionIds, List.<String[]>of(
                         new String[] {"UBERON:0000104", "G1", "2:G"}));
         write(TopAnatService.getConditionFilePath(root, SPECIES_ID),
-                "conditionId\tconditionName\tanatEntityId\tcellTypeId",
+                "ID\tNAME\tANAT_ENTITY_ID\tCELL_TYPE_ID",
                 "BGEE:0000000\tanatomical entity\tBGEE:0000000\tGO:0005575",
                 "CL:0000540-UBERON:0000955\tneuron in brain\tUBERON:0000955\tCL:0000540",
                 "UBERON:0000955\tbrain\tUBERON:0000955\tGO:0005575");
         write(TopAnatService.getConditionRelationFilePath(root, SPECIES_ID),
-                "sourceConditionId\ttargetConditionId",
+                "SOURCE_ID\tTARGET_ID",
                 "CL:0000540-UBERON:0000955\tUBERON:0000955",
                 "UBERON:0000955\tBGEE:0000000");
 

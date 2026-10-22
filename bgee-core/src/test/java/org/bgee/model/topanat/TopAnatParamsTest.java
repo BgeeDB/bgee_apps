@@ -72,9 +72,9 @@ public class TopAnatParamsTest extends TestAncestor {
     @Test
 //    @Ignore("to reactivate")
     public void testGetKey(){
-        // Value used to generate the key should be [G1, G2][G1, G2, G3, G4]999EXPRESSEDGOLD[AFFYMETRIX]aELIMFISHER101.01.05
-        // The corresponding sha-1 should be 957bffc28bde2338dcb4e7102a1cbc85562bccb5
-        assertEquals("957bffc28bde2338dcb4e7102a1cbc85562bccb5",this.topAnatParams.getKey());
+        // Value used to generate the key should be [G1, G2][G1, G2, G3, G4]999EXPRESSEDGOLD[RNA_SEQ]aELIMFISHER101.01.05
+        // The corresponding sha-1 should be ba8f92c9686a8025da37bf8513a64d43b8d9cff5
+        assertEquals("ba8f92c9686a8025da37bf8513a64d43b8d9cff5",this.topAnatParams.getKey());
     }
 
     /**

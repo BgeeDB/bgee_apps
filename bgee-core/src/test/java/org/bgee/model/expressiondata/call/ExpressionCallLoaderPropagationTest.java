@@ -77,6 +77,9 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     private static final int DD_E = 25;
     private static final int DD_F = 26;
     private static final int DD_G = 27;
+    //Raw conditions of the rows of the expression table projected onto a same global condition
+    private static final int RAW_1 = 31;
+    private static final int RAW_2 = 32;
 
     private static final String ANAT_A_PRIME = "A'";
     private static final String ANAT_B_PRIME = "B'";
@@ -365,7 +368,7 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      * holds for that walk: the stamp is incremented for each observed condition, so the walk
      * started from {@code e} does reach {@code g}, which therefore holds both observations —
      * a weight of 20 and a score of (80 * 10 + 20 * 10) / 20 = 50. Their p-value is
-     * the weighted harmonic mean of the self p-values of {@code a} and {@code e}, those of
+     * the weighted harmonic mean of the p-values of the rows of {@code a} and {@code e}, those of
      * their single observation: 20 / (10 / 0.01 + 10 / 0.4) = 20 / 1025.
      * <p>
      * What every walk pushes is the aggregate of the observations of its own condition, never
@@ -400,8 +403,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         OTFExpressionCall topCall = callForCondition("top condition g", calls, condMap.get(DD_G));
         assertEquals("The two observations should be counted once each in the top condition g",
                 2, topCall.getObservationCount());
-        //Not doubled: a self p-value is doubled when it averages several observations,
-        //the harmonic mean combining the self p-values is not
+        //Not doubled: the p-value of a row is doubled when it averages several observations,
+        //the harmonic mean combining the rows is not
         assertBigDecimalEquals("Unexpected p-value for the top condition g",
                 quotient("20", "1025"), topCall.getAllDataTypePValue());
         assertBigDecimalEquals("Unexpected p-value for the intermediate condition e",
@@ -415,24 +418,24 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     }
 
     /**
-     * The p-value of a call is the weighted harmonic mean of the self p-values of its condition
-     * and of all its sub-conditions, each counted once. Over the graph of
+     * The p-value of a call is the weighted harmonic mean of the p-values of the rows of its
+     * condition and of all its sub-conditions, each counted once. Over the graph of
      * {@link #shouldNotCountTwiceADescendantReachedThroughSeveralPaths()}:
      * <ul>
      * <li>{@code L1} holds a bulk RNA-Seq observation (p-value 0.01, weight 10) and a single-cell
-     * one (p-value 0.03, weight 10). Its self p-value over all data types is their mean 0.02,
-     * doubled to 0.04 because it averages two observations, of weight 20. Its self p-value over
-     * the data types trusted for absent calls is the one of its bulk observation alone, 0.01,
-     * not doubled, of weight 10.
-     * <li>{@code L2} holds two bulk RNA-Seq observations of mean 0.8 and weight 20: doubled,
-     * its self p-value is capped at 1.
+     * one (p-value 0.03, weight 10), in a single row. The p-value of the row over all data types
+     * is their mean 0.02, doubled to 0.04 because it averages two observations, of weight 20.
+     * Its p-value over the data types trusted for absent calls is the one of its bulk observation
+     * alone, 0.01, not doubled, of weight 10.
+     * <li>{@code L2} holds a row of two bulk RNA-Seq observations of mean 0.8 and weight 20:
+     * doubled, its p-value is capped at 1.
      * </ul>
      * {@code B} and {@code R} combine both: 40 / (20 / 0.04 + 20 / 1) = 40 / 520 over all
      * data types, 30 / (10 / 0.01 + 20 / 1) = 30 / 1020 over the trusted ones. Counting
      * {@code L1} twice in {@code R} would give 60 / 1020 over all data types.
      */
     @Test
-    public void shouldCombineTheSelfPValuesWithAHarmonicMean() {
+    public void shouldCombineThePValuesOfTheRowsWithAHarmonicMean() {
         Map<Integer, Condition2> condMap = mockConditionMap(L1, L2, A, B, R);
         Gene gene = mock(Gene.class);
         ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
@@ -447,14 +450,14 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
 
         //A only holds the observations of L1
         for (int condId: new int[] {L1, A}) {
-            assertBigDecimalEquals("The self p-value of L1 averages two observations, "
+            assertBigDecimalEquals("The p-value of the row of L1 averages two observations, "
                     + "it must be doubled, condition " + condId, "0.04",
                     callsByCondId.get(condId).getAllDataTypePValue());
-            assertBigDecimalEquals("The trusted self p-value of L1 comes from a single "
+            assertBigDecimalEquals("The trusted p-value of the row of L1 comes from a single "
                     + "observation, it must not be doubled, condition " + condId, "0.01",
                     callsByCondId.get(condId).getTrustedDataTypePValue());
         }
-        assertBigDecimalEquals("The doubled self p-value of L2 must be capped at 1", "1",
+        assertBigDecimalEquals("The doubled p-value of the row of L2 must be capped at 1", "1",
                 callsByCondId.get(L2).getAllDataTypePValue());
         //R holds the very same observations as B, L1 being reachable through two paths
         for (int condId: new int[] {B, R}) {
@@ -463,6 +466,63 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
             assertBigDecimalEquals("Unexpected trusted p-value for the condition " + condId,
                     quotient("30", "1020"), callsByCondId.get(condId).getTrustedDataTypePValue());
         }
+    }
+
+    /**
+     * The rows of a condition, observations made in distinct raw conditions, are combined with
+     * a weighted harmonic mean, as the rows of its sub-conditions: {@code L1} holds two bulk
+     * RNA-Seq rows of p-values 0.001 and 0.5, of weight 10 each, of a single observation each,
+     * not doubled: 20 / (10 / 0.001 + 10 / 0.5) = 20 / 10020. A row averaging several
+     * observations is doubled: with 3 observations, the row of p-value 0.001 counts as 0.002,
+     * 20 / (10 / 0.002 + 10 / 0.5) = 20 / 5020.
+     */
+    @Test
+    public void shouldCombineTheRowsOfAConditionWithAHarmonicMean() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, L2, A, B, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        OTFExpressionCall call = loader.propagateCalls(Map.of(GENE_ID, Map.of(L1, Set.of(
+                bulkObservation(RAW_1, "0.001", "50", "10"),
+                bulkObservation(RAW_2, "0.5", "50", "10")))),
+                diamondGraph(), Collections.emptySet()).get(gene).get(L1);
+        assertBigDecimalEquals("The rows of L1 should be combined with a harmonic mean",
+                quotient("20", "10020"), call.getAllDataTypePValue());
+
+        call = loader.propagateCalls(Map.of(GENE_ID, Map.of(L1, Set.of(
+                bulkObservation(RAW_1, "0.001", "50", "10", 3),
+                bulkObservation(RAW_2, "0.5", "50", "10")))),
+                diamondGraph(), Collections.emptySet()).get(gene).get(L1);
+        assertBigDecimalEquals("A row averaging several observations should be doubled",
+                quotient("20", "5020"), call.getAllDataTypePValue());
+    }
+
+    /**
+     * The p-value of a call does not depend on the condition parameters the rows are grouped by:
+     * the same two rows give {@code B} the same p-values whether they are both observations
+     * of {@code B}, as when a condition parameter they differ by is not requested, or
+     * observations of its sub-conditions {@code L1} and {@code L2}.
+     */
+    @Test
+    public void shouldNotDependOnTheGroupingOfTheRows() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, L2, A, B, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+        ObservedExpressionTO row1 = bulkAndSingleCellObservation(RAW_1, "0.001", "10",
+                "0.03", "30");
+        ObservedExpressionTO row2 = bulkObservation(RAW_2, "0.5", "50", "20", 2);
+
+        OTFExpressionCall grouped = loader.propagateCalls(Map.of(GENE_ID,
+                Map.of(B, Set.of(row1, row2))), diamondGraph(), Collections.emptySet())
+                .get(gene).get(B);
+        OTFExpressionCall split = loader.propagateCalls(Map.of(GENE_ID,
+                Map.of(L1, Set.of(row1), L2, Set.of(row2))), diamondGraph(),
+                Collections.emptySet()).get(gene).get(B);
+        assertBigDecimalEquals("The p-value should not depend on the grouping of the rows",
+                grouped.getAllDataTypePValue().toPlainString(), split.getAllDataTypePValue());
+        assertBigDecimalEquals("The trusted p-value should not depend on the grouping of the rows",
+                grouped.getTrustedDataTypePValue().toPlainString(),
+                split.getTrustedDataTypePValue());
     }
 
     /**

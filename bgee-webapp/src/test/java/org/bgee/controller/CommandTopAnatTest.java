@@ -3,11 +3,14 @@ package org.bgee.controller;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -38,7 +41,9 @@ import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
+import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatService.Background;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 import org.junit.Test;
@@ -287,6 +292,64 @@ public class CommandTopAnatTest extends TestAncestor {
         }
         return new CommandTopAnat(mock(HttpServletResponse.class), params,
                 mock(BgeeProperties.class), mock(ViewFactory.class), mock(ServiceFactory.class),
+                mock(JobService.class), mock(User.class), null, mock(MailSender.class));
+    }
+
+    /**
+     * Test {@link CommandTopAnat#loadTopAnatParams()} with no decorrelation type and no node size
+     * requested: the analyses get the default ones, and the background gene IDs submitted are
+     * compared with the default node size.
+     */
+    @Test
+    public void shouldLoadTopAnatParamsWithTheDefaults() throws Exception {
+        List<TopAnatParams> params = this.topAnatCommand(List.of("ID1", "ID2"), null)
+                .loadTopAnatParams();
+        assertEquals("A single analysis should be requested", 1, params.size());
+        assertEquals("Incorrect default decorrelation type", DecorrelationType.NONE,
+                params.get(0).getDecorrelationType());
+        assertEquals("Incorrect default node size",
+                TopAnatParams.NODE_SIZE_DEFAULT, (int) params.get(0).getNodeSize());
+
+        //Fewer background genes than the default node size: no result can be obtained
+        assertThrows("A background smaller than the default node size should be rejected",
+                InvalidRequestException.class,
+                () -> this.topAnatCommand(List.of("ID1", "ID2"), List.of("ID1", "ID2", "ID3"))
+                .loadTopAnatParams());
+    }
+    /**
+     * @param fgGeneIds The IDs of the genes of interest submitted.
+     * @param bgGeneIds The background gene IDs submitted, {@code null} for none.
+     * @return          A {@code CommandTopAnat} processing a request submitting them, with
+     *                  no other parameter, all the genes belonging to the human species.
+     */
+    private CommandTopAnat topAnatCommand(List<String> fgGeneIds, List<String> bgGeneIds)
+            throws Exception {
+        Species species = new Species(9606, "human", "", "Homo", "sapiens", "genome9606",
+                "assembly9606", new Source(1), null, null, null, null, null);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        GeneService geneService = mock(GeneService.class);
+        when(serviceFactory.getGeneService()).thenReturn(geneService);
+        //A new stream at each call: the same genes are loaded several times
+        when(geneService.loadGenesByAnyId(any(), eq(false))).thenAnswer(invocation ->
+                invocation.<Collection<String>>getArgument(0).stream().map(id -> Map.entry(id,
+                        Set.of(new Gene(id, species, new GeneBioType("type1"))))));
+        SpeciesService speciesService = mock(SpeciesService.class);
+        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
+        when(speciesService.loadSpeciesByIds(any(), eq(false))).thenReturn(Set.of(species));
+        DevStageService devStageService = mock(DevStageService.class);
+        when(serviceFactory.getDevStageService()).thenReturn(devStageService);
+        when(devStageService.loadGroupingDevStages(any(), eq(2))).thenReturn(Set.of(
+                new DevStage("25", "embryo", "embryo desc", 2, 3, 2, false, true)));
+
+        RequestParameters params = new RequestParameters();
+        params.setPage(RequestParameters.PAGE_TOP_ANAT);
+        params.setAction(RequestParameters.ACTION_TOP_ANAT_SUBMIT_JOB);
+        params.addValues(params.getUrlParametersInstance().getParamForegroundList(), fgGeneIds);
+        if (bgGeneIds != null) {
+            params.addValues(params.getUrlParametersInstance().getParamBackgroundList(), bgGeneIds);
+        }
+        return new CommandTopAnat(mock(HttpServletResponse.class), params,
+                mock(BgeeProperties.class), mock(ViewFactory.class), serviceFactory,
                 mock(JobService.class), mock(User.class), null, mock(MailSender.class));
     }
 }

@@ -64,7 +64,7 @@ public class TopAnatParams {
      * A {@code int} that is the default node size
      * when running a {@code TopAnatAnalysis}
      */
-    private final static int NODE_SIZE_DEFAULT = 20;
+    public final static int NODE_SIZE_DEFAULT = 20;
 
     /**
      * A {@code Double} that is the default False Discovery Rate

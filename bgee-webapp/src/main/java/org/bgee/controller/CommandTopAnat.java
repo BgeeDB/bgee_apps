@@ -960,7 +960,8 @@ public class CommandTopAnat extends CommandParent {
      * @throws InvalidRequestException
      * @throws MissingParameterException
      */
-    private List<TopAnatParams> loadTopAnatParams() 
+    //Package-private rather than private to allow unit testing (see CommandTopAnatTest)
+    List<TopAnatParams> loadTopAnatParams() 
             throws InvalidRequestException, MissingParameterException {
         log.traceEntry();
 
@@ -1051,7 +1052,9 @@ public class CommandTopAnat extends CommandParent {
             }
             cleanFgIds = this.cleanGeneIds(bgGeneResponse, cleanFgIds);
             cleanBgIds = this.cleanGeneIds(bgGeneResponse, cleanBgIds);
-            if (subNodeSize > cleanBgIds.size()) {
+            //The node size of the analyses, the default one when none is requested
+            int nodeSize = subNodeSize == null? TopAnatParams.NODE_SIZE_DEFAULT: subNodeSize;
+            if (nodeSize > cleanBgIds.size()) {
                 throw log.throwing(new InvalidRequestException("It is impossible to obtain results "
                         + "if the node size parameter is greater than the number of *valid* genes "
                         + "in the background."));
@@ -1103,7 +1106,9 @@ public class CommandTopAnat extends CommandParent {
                 } else {
                     builder.devStageId(devStageId);
                 }
-                if (BgeeEnum.isInEnum(DecorrelationType.class, subDecorrType)) {
+                //No decorrelation type requested: the default one of TopAnatParams
+                if (subDecorrType != null &&
+                        BgeeEnum.isInEnum(DecorrelationType.class, subDecorrType)) {
                     builder.decorrelationType(DecorrelationType.convertToDecorrelationType(subDecorrType));
                 }
                 builder.nodeSize(subNodeSize);

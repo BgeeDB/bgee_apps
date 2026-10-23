@@ -104,6 +104,13 @@ public class ExpressionCallLoader extends CommonService {
      * graph of a single species, so the processed filter must target exactly one.
      */
     private final int speciesId;
+    /**
+     * The requested data types, as a mask of {@code 1 << DataType#ordinal()}: the observations
+     * of the other data types are left out. A row of the expression table holds the observations
+     * of every data type, the database only restricting the rows to those holding at least one
+     * of the requested data types.
+     */
+    private final int requestedDataTypeMask;
 
     ExpressionCallLoader(ExpressionCallProcessedFilter processedFilter, ServiceFactory serviceFactory) {
         this(processedFilter, serviceFactory, new CallServiceUtils(), null);
@@ -141,6 +148,8 @@ public class ExpressionCallLoader extends CommonService {
                     + "a filter targeting exactly one species, targeted species: " + speciesIds));
         }
         this.speciesId = speciesIds.iterator().next();
+        this.requestedDataTypeMask = this.processedFilter.getSourceFilter().getDataTypeFilters()
+                .stream().mapToInt(dataType -> 1 << dataType.ordinal()).reduce(0, (a, b) -> a | b);
         //The conditions and genes identified by the processed filter are never updated by this
         //Loader, so they are exposed as unmodifiable views rather than copied.
         Map<Integer, Condition2> requestedCondMap = this.processedFilter.getRequestedConditionMap();
@@ -687,7 +696,8 @@ public class ExpressionCallLoader extends CommonService {
                     continue;
                 }
                 buffers.accumulateUpward(condGraphCache, inFilter, propagationGroup,
-                        observedIndex, ObservedCondAggregate.of(observedEntry.getValue()));
+                        observedIndex, ObservedCondAggregate.of(observedEntry.getValue(),
+                                this.requestedDataTypeMask));
             }
 
             //The conditions touched by the accumulation are exactly the conditions to process:
@@ -746,14 +756,18 @@ public class ExpressionCallLoader extends CommonService {
      */
     private static final class ObservedCondAggregate {
         /**
-         * @param observations  The observations made in one condition for one gene.
-         * @return              An {@code ObservedCondAggregate} reducing them. Never {@code null}:
-         *                      observations that all have a number of observations of 0 yield
-         *                      an aggregate contributing nothing, so that the condition still
-         *                      produces a call, as it did when the observations were aggregated
-         *                      one condition at a time.
+         * @param observations          The observations made in one condition for one gene.
+         * @param requestedDataTypeMask An {@code int} that is the mask of the requested data types
+         *                              (see {@link ExpressionCallLoader#requestedDataTypeMask}):
+         *                              the observations of the other data types are left out.
+         * @return                      An {@code ObservedCondAggregate} reducing them. Never
+         *                              {@code null}: observations that all have a number of
+         *                              observations of 0 yield an aggregate contributing nothing,
+         *                              so that the condition still produces a call, as it did when
+         *                              the observations were aggregated one condition at a time.
          */
-        private static ObservedCondAggregate of(Collection<ObservedExpressionTO> observations) {
+        private static ObservedCondAggregate of(Collection<ObservedExpressionTO> observations,
+                int requestedDataTypeMask) {
             BigDecimal pValueByWeightSum = BigDecimal.ZERO;
             BigDecimal trustedPValueByWeightSum = BigDecimal.ZERO;
             long pValueWeightSum = 0;
@@ -801,7 +815,8 @@ public class ExpressionCallLoader extends CommonService {
                         dataType = DataType.SC_RNA_SEQ;
                         break;
                     }
-                    if (numberObs == null || numberObs == 0) {
+                    if ((requestedDataTypeMask & 1 << dataType.ordinal()) == 0 ||
+                            numberObs == null || numberObs == 0) {
                         continue;
                     }
                     //Exact: the weight is an integer, and the product of a score of scale 2

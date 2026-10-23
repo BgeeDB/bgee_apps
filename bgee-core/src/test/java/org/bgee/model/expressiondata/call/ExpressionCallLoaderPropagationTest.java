@@ -12,6 +12,7 @@ import java.math.MathContext;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,6 +23,7 @@ import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.expressiondata.ObservedExpressionDAO.ObservedExpressionTO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -464,6 +466,38 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
     }
 
     /**
+     * The observations of the data types not requested are left out: a row of the expression
+     * table holds the observations of every data type, the database only restricting the rows
+     * to those holding a requested one. {@code L1} holds a bulk RNA-Seq observation (p-value
+     * 0.01, weight 10) and a single-cell one (p-value 0.03, weight 10).
+     */
+    @Test
+    public void shouldOnlyAggregateTheRequestedDataTypes() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, L2, A, B, R);
+        Gene gene = mock(Gene.class);
+        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(GENE_ID,
+                Map.of(L1, Set.of(bulkAndSingleCellObservation(L1, "0.01", "10", "0.03", "10"))));
+
+        OTFExpressionCall bulkCall = mockLoader(condMap, Map.of(GENE_ID, gene),
+                EnumSet.of(DataType.RNA_SEQ)).propagateCalls(observations, diamondGraph(),
+                Collections.emptySet()).get(gene).get(L1);
+        assertEquals("Only the bulk RNA-Seq observation should be aggregated",
+                EnumSet.of(DataType.RNA_SEQ), bulkCall.getSupportingDataTypes());
+        assertBigDecimalEquals("The p-value of the single bulk RNA-Seq observation, not doubled",
+                "0.01", bulkCall.getAllDataTypePValue());
+
+        OTFExpressionCall singleCellCall = mockLoader(condMap, Map.of(GENE_ID, gene),
+                EnumSet.of(DataType.SC_RNA_SEQ)).propagateCalls(observations, diamondGraph(),
+                Collections.emptySet()).get(gene).get(L1);
+        assertEquals("Only the single-cell observation should be aggregated",
+                EnumSet.of(DataType.SC_RNA_SEQ), singleCellCall.getSupportingDataTypes());
+        assertBigDecimalEquals("The p-value of the single single-cell observation", "0.03",
+                singleCellCall.getAllDataTypePValue());
+        assertNull("No data type trusted for absent calls is requested",
+                singleCellCall.getTrustedDataTypePValue());
+    }
+
+    /**
      * A propagation restricted to some condition parameters only moves towards the ancestors
      * leaving every other condition parameter unchanged. Over the graph
      * <pre>
@@ -609,6 +643,15 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
      */
     private static ExpressionCallLoader mockLoader(Map<Integer, Condition2> condMap,
             Map<Integer, Gene> geneMap) {
+        return mockLoader(condMap, geneMap, EnumSet.allOf(DataType.class));
+    }
+    /**
+     * @param dataTypes The requested {@code DataType}s.
+     * @return          An {@code ExpressionCallLoader} propagating the observations of
+     *                  {@code dataTypes} only.
+     */
+    private static ExpressionCallLoader mockLoader(Map<Integer, Condition2> condMap,
+            Map<Integer, Gene> geneMap, EnumSet<DataType> dataTypes) {
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(mock(DAOManager.class));
         ExpressionCallProcessedFilter processedFilter = mock(ExpressionCallProcessedFilter.class);
@@ -616,6 +659,9 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
         //The loader propagates over the condition graph of a single species
         when(processedFilter.getSpeciesMap()).thenReturn(Map.of(1, new Species(1)));
+        //The propagation reads the requested data types from the source filter
+        when(processedFilter.getSourceFilter()).thenReturn(new ExpressionCallFilter2(null,
+                new GeneFilter(1, "gene1"), null, dataTypes, null, null, null, false));
 
         return new ExpressionCallLoader(processedFilter, serviceFactory,
                 mock(CallServiceUtils.class));

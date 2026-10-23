@@ -38,7 +38,7 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.BIOCONDUCTOR_RELEASE_NUMBER_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
+        System.clearProperty(BgeeProperties.BGEEDB_MINIMUM_VERSION_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.MAX_JOB_COUNT_PER_USER_KEY);
         
@@ -77,8 +77,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
                 BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT,
                 bgeeProp.getTopAnatRWorkingDirectory());
         assertEquals("Wrong property value retrieved",
-                BgeeProperties.TOP_ANAT_FUNCTION_FILE_DEFAULT,
-                bgeeProp.getTopAnatFunctionFile());
+                BgeeProperties.BGEEDB_MINIMUM_VERSION_DEFAULT,
+                bgeeProp.getBgeeDBMinimumVersion());
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT, 
                 bgeeProp.getTopAnatResultsWritingDirectory());

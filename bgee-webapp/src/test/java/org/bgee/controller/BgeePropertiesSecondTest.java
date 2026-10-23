@@ -80,6 +80,6 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
                 "/fileurldir", bgeeProp.getTopAnatResultsUrlDirectory());
         // Test a superclass property
         assertEquals("Wrong property value retrieved", 
-                "/filetopanatfunction", bgeeProp.getTopAnatFunctionFile());
+                "filebgeedb", bgeeProp.getBgeeDBMinimumVersion());
     }
 }

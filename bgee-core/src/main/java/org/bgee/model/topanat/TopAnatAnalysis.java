@@ -132,25 +132,6 @@ public class TopAnatAnalysis extends CommonService {
             // Generate R code and write it on the disk
             this.generateRCodeFile();
             
-            // Copy the Rscript file to the working directory, if it doesn't already exists
-            String sourceFunctionFileName = TopAnatAnalysis.class.getResource(
-                    this.props.getTopAnatFunctionFile()).getPath();
-            Path source = Paths.get(sourceFunctionFileName);
-            File targetFunctionFile = new File(
-                    this.getResultDirectoryPath() + 
-                    source.getFileName());
-            Path target = Paths.get(targetFunctionFile.getPath());
-            if (!targetFunctionFile.exists()) {
-                try{
-                    topAnatService.getReadWriteLocks().acquireReadLock(sourceFunctionFileName);
-                    topAnatService.getReadWriteLocks().acquireWriteLock(targetFunctionFile.getPath());
-                    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-                } finally{
-                    topAnatService.getReadWriteLocks().releaseReadLock(sourceFunctionFileName);
-                    topAnatService.getReadWriteLocks().releaseWriteLock(targetFunctionFile.getPath());
-                }
-            }
-            
             // Run the R analysis
             this.runRcode();
             
@@ -613,9 +594,7 @@ public class TopAnatAnalysis extends CommonService {
                              this.getResultPDFFilePath(false), 
                              this.getRScriptConsoleFilePath(), 
                              this.getParamsOutputFilePath(false), 
-                             this.getRScriptAnalysisFilePath(false),
-                             this.getResultDirectoryPath() + Paths.get(TopAnatAnalysis.class.getResource(
-                        this.props.getTopAnatFunctionFile()).getPath()).getFileName().toString()
+                             this.getRScriptAnalysisFilePath(false)
         };
 
         // create byte buffer

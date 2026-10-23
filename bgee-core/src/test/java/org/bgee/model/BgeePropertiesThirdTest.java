@@ -49,7 +49,7 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         System.setProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/sysrexec");
         System.setProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, 
                 "/sysrwd");
-        System.setProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/sysfunction");
+        System.setProperty(BgeeProperties.BGEEDB_MINIMUM_VERSION_KEY, "sysbgeedb");
         System.setProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY, "/syswd");
         System.setProperty(BgeeProperties.MAX_JOB_COUNT_PER_USER_KEY, "5");
         
@@ -74,7 +74,7 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved","/sysrwd",
                 bgeeProp.getTopAnatRWorkingDirectory());
         assertEquals("Wrong property value retrieved", 
-                "/sysfunction", bgeeProp.getTopAnatFunctionFile());
+                "sysbgeedb", bgeeProp.getBgeeDBMinimumVersion());
         assertEquals("Wrong property value retrieved", 
                 "/syswd", bgeeProp.getTopAnatResultsWritingDirectory());
         assertEquals("Wrong property value retrieved", 

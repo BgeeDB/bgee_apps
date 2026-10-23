@@ -233,7 +233,7 @@ public class BgeeProperties {
      *
      * @see #BIOCONDUCTOR_RELEASE_NUMBER_KEY
      */
-    public final static String BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT = "3.11";
+    public final static String BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT = "3.24";
 
     /**
      * A {@code String} that is the key to access to the System property that contains 
@@ -267,20 +267,6 @@ public class BgeeProperties {
      */
     public final static String TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT = "topanat/results/";
     
-    /**
-     * A {@code String} that is the key to access to the System property that contains the name of 
-     * the file containing R functions used by topAnat.
-     * 
-     * @see #TOP_ANAT_FUNCTION_FILE_DEFAULT
-     */
-    public final static String TOP_ANAT_FUNCTION_FILE_KEY = "org.bgee.core.topAnatFunctionFile";
-    /**
-     * A {@code String} that is the default value of the name of the file which contains the 
-     * additional modified topGO R functions used by topAnat to perform the analyses.
-     * 
-     * @see #TOP_ANAT_FUNCTION_FILE_KEY
-     */
-    public final static String TOP_ANAT_FUNCTION_FILE_DEFAULT = "/R_scripts/topAnat_functions.R";   
 
     /**
      * A {@code String} that is the key to access to the System property that contains the name of 
@@ -996,9 +982,6 @@ public class BgeeProperties {
         bgeeDBMinimumVersion = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 BGEEDB_MINIMUM_VERSION_KEY,
                 BGEEDB_MINIMUM_VERSION_DEFAULT);
-        topAnatFunctionFile = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
-                TOP_ANAT_FUNCTION_FILE_KEY,
-                TOP_ANAT_FUNCTION_FILE_DEFAULT);
         topAnatResultsWritingDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY,
                 TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT);
@@ -1120,12 +1103,6 @@ public class BgeeProperties {
      * @see #topAnatResultsUrlDirectory
      */
     private final String topAnatRWorkingDirectory;
-
-    /**
-     * A {@code String} that is the name of the file which contains the additional modified
-     * topGO R functions used by topAnat to perform the analyses.
-     */
-    private final String topAnatFunctionFile;
 
     /**
      * A {@code String} that is the name of the directory to store outputs of the TopAnat analyses
@@ -1331,13 +1308,6 @@ public class BgeeProperties {
         return topAnatRWorkingDirectory;
     }
     /**
-     * @return A {@code String} that is the name of the file which contains the additional modified 
-     * topGO {@code R} functions used by topAnat to perform the analyses.
-     */
-    public String getTopAnatFunctionFile() {
-        return topAnatFunctionFile;
-    }
-    /**
      * @return A {@code String} that is the name of the directory to store outputs of the TopAnat 
      * analyses that should be kept to be retrieved in case the same TopAnat query is performed again.
      */
@@ -1451,7 +1421,6 @@ public class BgeeProperties {
                 .append(", bioconductorReleaseNumber=").append(bioconductorReleaseNumber)
                 .append(", bgeeDBMinimumVersion=").append(bgeeDBMinimumVersion)
                 .append(", topAnatRWorkingDirectory=").append(topAnatRWorkingDirectory)
-                .append(", topAnatFunctionFile=").append(topAnatFunctionFile)
                 .append(", topAnatResultsWritingDirectory=").append(topAnatResultsWritingDirectory)
                 .append("]");
         return builder.toString();

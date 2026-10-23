@@ -67,7 +67,7 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         System.setProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cacheConfigFileName");
         System.setProperty(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY, "/sysurldir");
         // Test a superclass property
-        System.setProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/systopanatfunction");
+        System.setProperty(BgeeProperties.BGEEDB_MINIMUM_VERSION_KEY, "sysbgeedb");
         
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
@@ -117,7 +117,7 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
                 "/sysurldir", bgeeProp.getTopAnatResultsUrlDirectory());
         // Test a superclass property
         assertEquals("Wrong property value retrieved", 
-                "/systopanatfunction", bgeeProp.getTopAnatFunctionFile());
+                "sysbgeedb", bgeeProp.getBgeeDBMinimumVersion());
 
     }
 }

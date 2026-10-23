@@ -48,7 +48,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.BIOCONDUCTOR_RELEASE_NUMBER_KEY, "injectedbioconductor");
         prop.put(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/injectedrexec");
         prop.put(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, "/injectedrwd");
-        prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
+        prop.put(BgeeProperties.BGEEDB_MINIMUM_VERSION_KEY, "injectedbgeedb");
         prop.put(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY, "/injectedwd");
         prop.put(BgeeProperties.MAX_JOB_COUNT_PER_USER_KEY, 5);
 
@@ -75,7 +75,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved","/injectedrwd",
                 bgeeProp.getTopAnatRWorkingDirectory());
         assertEquals("Wrong property value retrieved", 
-                "/injectedfunctionfile", bgeeProp.getTopAnatFunctionFile());
+                "injectedbgeedb", bgeeProp.getBgeeDBMinimumVersion());
         assertEquals("Wrong property value retrieved", 
                 "/injectedwd", bgeeProp.getTopAnatResultsWritingDirectory());
         assertEquals("Wrong property value retrieved", 

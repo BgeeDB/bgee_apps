@@ -48,7 +48,8 @@
       <filter.org.bgee.search.experiments>bgee_experiment_auto_${project.version}</filter.org.bgee.search.experiments>
       <filter.org.bgee.search.assays>bgee_assay_auto_${project.version}</filter.org.bgee.search.assays>
       <!-- Properties for running TopAnat -->
-      <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
+      <filter.org.bgee.core.bioconductorReleaseNumber>3.24</filter.org.bgee.core.bioconductorReleaseNumber>
+      <filter.org.bgee.core.bgeeDBMinimumVersion>2.39.4</filter.org.bgee.core.bgeeDBMinimumVersion>
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
       <filter.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</filter.org.bgee.core.topAnatRScriptExecutable>
@@ -99,7 +100,8 @@
       <filter.org.bgee.search.experiments>bgee_experiment_auto_${project.version}</filter.org.bgee.search.experiments>
       <filter.org.bgee.search.assays>bgee_assay_auto_${project.version}</filter.org.bgee.search.assays>
       <!-- Properties for running TopAnat -->
-      <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
+      <filter.org.bgee.core.bioconductorReleaseNumber>3.24</filter.org.bgee.core.bioconductorReleaseNumber>
+      <filter.org.bgee.core.bgeeDBMinimumVersion>2.39.4</filter.org.bgee.core.bgeeDBMinimumVersion>
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
       <filter.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</filter.org.bgee.core.topAnatRScriptExecutable>

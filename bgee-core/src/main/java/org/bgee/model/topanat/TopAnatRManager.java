@@ -140,12 +140,10 @@ public class TopAnatRManager {
         code.addRCode("  stop('BgeeDB " + minimumVersion + " or later is needed, version ', "
                 + "as.character(packageVersion('BgeeDB')), ' is installed')");
         code.addRCode("}");
-        //Rgraphviz draws the graph, Runiversal and rJava are used by RCaller
-        code.addRCode("for (package in c('Rgraphviz', 'Runiversal', 'rJava')) {");
-        code.addRCode("  if (!nzchar(system.file(package = package))) {");
-        code.addRCode("    BiocManager::install(package, version = '" + bioconductorRelease
+        //Rgraphviz draws the graph. RCaller needs no package, it provides its own R code.
+        code.addRCode("if (!nzchar(system.file(package = 'Rgraphviz'))) {");
+        code.addRCode("  BiocManager::install('Rgraphviz', version = '" + bioconductorRelease
                 + "', update = FALSE, ask = FALSE)");
-        code.addRCode("  }");
         code.addRCode("}");
         //The versions of R and of the packages, in the console log given to the user, before
         //its last line, which tells an analysis without result. Rgraphviz is only loaded to draw

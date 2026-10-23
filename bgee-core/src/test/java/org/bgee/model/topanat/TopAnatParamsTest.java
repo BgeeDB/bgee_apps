@@ -2,7 +2,7 @@ package org.bgee.model.topanat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -89,8 +89,8 @@ public class TopAnatParamsTest extends TestAncestor {
         //A decorrelation reads the observed calls
         assertEquals(CallFileType.OBSERVED, this.topAnatParams.getCallFileType());
         assertEquals(EnumSet.of(DataType.RNA_SEQ), this.topAnatParams.getDataTypeCombination());
-        //Background gene IDs submitted: no background of Bgee
-        assertNull(this.topAnatParams.getBackground());
+        //Background gene IDs submitted: a custom background
+        assertEquals(Background.CUSTOM, this.topAnatParams.getBackground());
     }
 
     /**
@@ -116,5 +116,23 @@ public class TopAnatParamsTest extends TestAncestor {
     public void shouldRefuseBackgroundIdsWithBackground() throws MissingParameterException {
         new TopAnatParams.Builder(Set.of("G1"), Set.of("G1", "G2"), 999,
                 SummaryCallType.ExpressionSummary.EXPRESSED).background(Background.POLY_A).build();
+    }
+
+    /**
+     * Test that a custom background requires background gene IDs, which identify it.
+     */
+    @Test
+    public void shouldRequireBackgroundIdsForCustomBackground() throws MissingParameterException {
+        assertThrows("A custom background requires background gene IDs",
+                IllegalArgumentException.class,
+                () -> new TopAnatParams.Builder(Set.of("G1"), 999,
+                        SummaryCallType.ExpressionSummary.EXPRESSED)
+                        .background(Background.CUSTOM).build());
+        //Requested or not, the custom background is the one of the background gene IDs
+        assertEquals(new TopAnatParams.Builder(Set.of("G1"), Set.of("G1", "G2"), 999,
+                        SummaryCallType.ExpressionSummary.EXPRESSED).build().getKey(),
+                new TopAnatParams.Builder(Set.of("G1"), Set.of("G1", "G2"), 999,
+                        SummaryCallType.ExpressionSummary.EXPRESSED)
+                        .background(Background.CUSTOM).build().getKey());
     }
 }

@@ -64,6 +64,7 @@ import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatService;
+import org.bgee.model.topanat.TopAnatService.Background;
 import org.bgee.model.topanat.exception.MissingParameterException;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
@@ -975,7 +976,9 @@ public class CommandTopAnat extends CommandParent {
         // Bg gene list can be null if the default species background should be used
         final List<String> subBgIds = Collections.unmodifiableList(Optional.ofNullable(
                 this.requestParameters.getBackgroundList()).orElse(new ArrayList<>())); 
-        boolean hasBgList = !subBgIds.isEmpty();
+        // The background gene IDs submitted are only used for a custom background
+        final Background background = this.checkAndGetBackground(!subBgIds.isEmpty());
+        boolean hasBgList = background == Background.CUSTOM;
     
         //NOTE: As of Bgee 15.2, the only valid call type is CallType.Expression.EXPRESSED.
         //We comment previous code, and use a Collection as in previous code to not modify the next steps,
@@ -1093,7 +1096,7 @@ public class CommandTopAnat extends CommandParent {
                 TopAnatParams.Builder builder = new TopAnatParams.Builder(
                         cleanFgIds, cleanBgIds, speciesId, callTypeEnum);
                 
-                builder.summaryQuality(dataQuality).dataTypes(dataTypes);
+                builder.summaryQuality(dataQuality).dataTypes(dataTypes).background(background);
                 
                 if (StringUtils.isBlank(devStageId)) {
                     builder.devStageId(null);
@@ -1112,6 +1115,36 @@ public class CommandTopAnat extends CommandParent {
         }
         
         return log.traceExit(allTopAnatParams);
+    }
+
+    /**
+     * @param bgListSubmitted   A {@code boolean} telling whether background gene IDs are
+     *                          submitted.
+     * @return                  The {@code Background} of the requested analyses: the requested
+     *                          background, the background gene IDs submitted being ignored with
+     *                          a background of Bgee; the custom background when background gene IDs
+     *                          are submitted with no background requested; {@code null} when none
+     *                          of them is, for the default background.
+     * @throws InvalidRequestException  If the requested value matches no {@code Background},
+     *                                  or if the custom background is requested with no background
+     *                                  gene IDs.
+     */
+    Background checkAndGetBackground(boolean bgListSubmitted) throws InvalidRequestException {
+        log.traceEntry("{}", bgListSubmitted);
+        String requested = this.requestParameters.getBackgroundType();
+        if (StringUtils.isBlank(requested)) {
+            return log.traceExit(bgListSubmitted? Background.CUSTOM: null);
+        }
+        if (!BgeeEnum.isInEnum(Background.class, requested)) {
+            throw log.throwing(new InvalidRequestException("Incorrect background type provided: "
+                    + requested));
+        }
+        Background background = BgeeEnum.convert(Background.class, requested);
+        if (background == Background.CUSTOM && !bgListSubmitted) {
+            throw log.throwing(new InvalidRequestException(
+                    "A custom background requires a background gene ID list"));
+        }
+        return log.traceExit(background);
     }
 
     /**

@@ -95,8 +95,8 @@ public class TopAnatParams {
     private final Set<String> submittedBackgroundIds;
 
     /**
-     * A {@code Background} that is the background of the analysis, {@code null} when
-     * background gene IDs are submitted
+     * A {@code Background} that is the background of the analysis, {@link Background#CUSTOM}
+     * when background gene IDs are submitted
      */
     private final Background background;
 
@@ -195,8 +195,7 @@ public class TopAnatParams {
         private Collection<String> submittedBackgroundIds;
 
         /**
-         * A {@code Background} that is the background of the analysis when no background gene IDs
-         * are submitted
+         * A {@code Background} that is the background of the analysis
          */
         private Background background;
 
@@ -426,8 +425,9 @@ public class TopAnatParams {
         /**
          * Update the attribute background
          *
-         * @param background    A {@code Background} that is the background of the analysis,
-         *                      when no background gene IDs are submitted
+         * @param background    A {@code Background} that is the background of the analysis:
+         *                      {@link Background#CUSTOM}, the default when background gene IDs
+         *                      are submitted, requires them, the other backgrounds exclude them
          * @return the updated current Builder instance
          */
         public Builder background(Background background){
@@ -508,14 +508,20 @@ public class TopAnatParams {
                 : builder.pvalueThreshold;
         this.submittedBackgroundIds = builder.submittedBackgroundIds == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.submittedBackgroundIds));
-        //The background is either the background gene IDs submitted, or a background of Bgee
+        //The background is either the background gene IDs submitted, a custom background,
+        //or a background of Bgee
         boolean hasBackgroundIds = this.submittedBackgroundIds != null
                 && !this.submittedBackgroundIds.isEmpty();
-        if (hasBackgroundIds && builder.background != null) {
+        if (hasBackgroundIds && builder.background != null
+                && builder.background != Background.CUSTOM) {
             throw log.throwing(new IllegalArgumentException(
-                    "Background gene IDs and a background cannot be both provided"));
+                    "Background gene IDs can only be provided for a custom background"));
         }
-        this.background = hasBackgroundIds ? null :
+        if (!hasBackgroundIds && builder.background == Background.CUSTOM) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A custom background requires background gene IDs"));
+        }
+        this.background = hasBackgroundIds ? Background.CUSTOM :
             builder.background == null ? TopAnatParams.BACKGROUND_DEFAULT : builder.background;
         this.key = this.generateKey();
         this.isWithZip = builder.isWithZip == null ? true : builder.isWithZip;
@@ -538,8 +544,8 @@ public class TopAnatParams {
     }
 
     /**
-     * @return  A {@code Background} that is the background of the analysis, {@code null} when
-     *          background gene IDs are submitted (see {@link #getSubmittedBackgroundIds()}).
+     * @return  A {@code Background} that is the background of the analysis, {@link Background#CUSTOM}
+     *          when background gene IDs are submitted (see {@link #getSubmittedBackgroundIds()}).
      */
     public Background getBackground() {
         return background;
@@ -728,7 +734,8 @@ public class TopAnatParams {
             valueToHash.append(new TreeSet<String>(this.submittedForegroundIds).toString());
         if(this.submittedBackgroundIds != null)
             valueToHash.append(new TreeSet<String>(this.submittedBackgroundIds).toString());
-        if(this.background != null)
+        //The background gene IDs submitted identify a custom background
+        if(this.background != Background.CUSTOM)
             valueToHash.append(this.background.getStringRepresentation());
         if(this.speciesId != null)
             valueToHash.append(this.speciesId.toString());

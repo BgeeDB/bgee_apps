@@ -191,7 +191,12 @@ public class TopAnatService extends CommonService {
          * the species. An analysis only keeping the genes holding a call, it amounts to every
          * gene with a call.
          */
-        OBSERVED("observed");
+        OBSERVED("observed"),
+        /**
+         * The background gene IDs submitted with an analysis, that only its user knows: Bgee
+         * provides no genes for it.
+         */
+        CUSTOM("custom");
 
         private final String representation;
 
@@ -523,7 +528,8 @@ public class TopAnatService extends CommonService {
      * @return              A {@code List} of {@code String}s that are the IDs of the genes
      *                      of {@code background} in the species, sorted.
      * @throws IllegalArgumentException If {@code speciesId} is not a valid species ID,
-     *                                  or {@code background} is {@code null}.
+     *                                  or {@code background} is {@code null} or
+     *                                  {@link Background#CUSTOM}.
      * @throws IllegalStateException    If no biotype defines {@code background}.
      */
     public List<String> loadBackgroundGeneIds(int speciesId, Background background)
@@ -558,6 +564,9 @@ public class TopAnatService extends CommonService {
             genes = geneDAO.getGenesBySpeciesIds(Set.of(speciesId)).stream()
                     .filter(to -> bioTypeIds.contains(to.getGeneBioTypeId()));
             break;
+        case CUSTOM:
+            throw log.throwing(new IllegalArgumentException("The genes of a custom background "
+                    + "are the background gene IDs submitted, unknown to Bgee"));
         default:
             throw log.throwing(new IllegalArgumentException("Unsupported background: "
                     + background));

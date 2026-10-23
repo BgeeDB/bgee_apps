@@ -317,6 +317,13 @@ public class CommandRPackageTest extends TestAncestor {
             assertEquals("Incorrect genes of the background " + expected.getKey(),
                     expected.getValue(), this.displayedRows);
         }
+
+        //The genes of a custom background are the ones its user submits
+        RequestParameters customParams = params("get_background_genes");
+        customParams.addValue(customParams.getUrlParametersInstance().getParamBackgroundType(),
+                Background.CUSTOM.getStringRepresentation());
+        assertThrows("A custom background should be rejected", InvalidRequestException.class,
+                () -> this.process(customParams));
     }
 
     /**

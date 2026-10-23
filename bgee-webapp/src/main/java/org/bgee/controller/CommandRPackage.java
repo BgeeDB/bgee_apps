@@ -380,15 +380,16 @@ public class CommandRPackage extends CommandParent {
     /**
      * @return  The {@code Background} of topAnat the request asks the genes of. It must be
      *          requested explicitly, as the background changes the result of an analysis.
-     * @throws InvalidRequestException  If no background is requested, or if the requested
-     *                                  value matches no {@code Background}.
+     * @throws InvalidRequestException  If no background is requested, if the requested
+     *                                  value matches no {@code Background}, or if it is
+     *                                  the custom background, whose genes only its user knows.
      */
     private Background checkAndGetBackground() throws InvalidRequestException {
         log.traceEntry();
         String requested = this.requestParameters.getBackgroundType();
         if (StringUtils.isBlank(requested)) {
             throw log.throwing(new InvalidRequestException("A background type must be provided, "
-                    + "one of: " + EnumSet.allOf(Background.class).stream()
+                    + "one of: " + EnumSet.complementOf(EnumSet.of(Background.CUSTOM)).stream()
                             .map(Background::getStringRepresentation)
                             .collect(Collectors.joining(", "))));
         }
@@ -396,7 +397,12 @@ public class CommandRPackage extends CommandParent {
             throw log.throwing(new InvalidRequestException("Incorrect background type provided: "
                     + requested));
         }
-        return log.traceExit(BgeeEnum.convert(Background.class, requested));
+        Background background = BgeeEnum.convert(Background.class, requested);
+        if (background == Background.CUSTOM) {
+            throw log.throwing(new InvalidRequestException("The genes of a custom background "
+                    + "are the background gene IDs submitted with an analysis, unknown to Bgee"));
+        }
+        return log.traceExit(background);
     }
 
     /**

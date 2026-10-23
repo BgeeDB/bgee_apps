@@ -394,6 +394,9 @@ public class TopAnatServiceTest extends TestAncestor {
 
         assertThrows("A background must be provided", IllegalArgumentException.class,
                 () -> service.loadBackgroundGeneIds(SPECIES_ID, null));
+        assertThrows("The genes of a custom background are unknown to Bgee",
+                IllegalArgumentException.class,
+                () -> service.loadBackgroundGeneIds(SPECIES_ID, Background.CUSTOM));
         assertThrows("An invalid species ID should be rejected", IllegalArgumentException.class,
                 () -> service.loadBackgroundGeneIds(0, Background.POLY_A));
     }

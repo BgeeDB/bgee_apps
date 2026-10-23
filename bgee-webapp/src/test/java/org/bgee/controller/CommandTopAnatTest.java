@@ -1,5 +1,8 @@
 package org.bgee.controller;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
 import org.bgee.controller.CommandTopAnat.GeneListResponse;
 import org.bgee.controller.CommandTopAnat.JobResponse;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
@@ -34,6 +38,7 @@ import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
+import org.bgee.model.topanat.TopAnatService.Background;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 import org.junit.Test;
@@ -249,5 +254,39 @@ public class CommandTopAnatTest extends TestAncestor {
         data.put("jobResponse", response);
         
         verify(display).sendTrackingJobResponse(data, "Job is RUNNING");
+    }
+
+    /**
+     * Test {@link CommandTopAnat#checkAndGetBackground(boolean)}: the background gene IDs
+     * submitted are a custom background, unless a background of Bgee is requested.
+     */
+    @Test
+    public void shouldCheckAndGetBackground() throws Exception {
+        assertNull("With no background requested and no background gene IDs, the default one",
+                this.topAnatCommand(null).checkAndGetBackground(false));
+        assertEquals("Background gene IDs with no background requested are a custom background",
+                Background.CUSTOM, this.topAnatCommand(null).checkAndGetBackground(true));
+        assertEquals("Incorrect custom background", Background.CUSTOM,
+                this.topAnatCommand(Background.CUSTOM).checkAndGetBackground(true));
+        assertEquals("The background gene IDs are ignored with a background of Bgee",
+                Background.POLY_A, this.topAnatCommand(Background.POLY_A).checkAndGetBackground(true));
+        assertThrows("A custom background requires background gene IDs",
+                InvalidRequestException.class,
+                () -> this.topAnatCommand(Background.CUSTOM).checkAndGetBackground(false));
+    }
+    /**
+     * @param background    The {@code Background} requested, {@code null} for none.
+     * @return              A {@code CommandTopAnat} processing a request for {@code background}.
+     */
+    private CommandTopAnat topAnatCommand(Background background) throws Exception {
+        RequestParameters params = new RequestParameters();
+        params.setPage(RequestParameters.PAGE_TOP_ANAT);
+        if (background != null) {
+            params.addValue(params.getUrlParametersInstance().getParamBackgroundType(),
+                    background.getStringRepresentation());
+        }
+        return new CommandTopAnat(mock(HttpServletResponse.class), params,
+                mock(BgeeProperties.class), mock(ViewFactory.class), mock(ServiceFactory.class),
+                mock(JobService.class), mock(User.class), null, mock(MailSender.class));
     }
 }

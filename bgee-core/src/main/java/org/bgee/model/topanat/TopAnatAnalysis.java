@@ -35,6 +35,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
+import org.bgee.model.topanat.TopAnatService.Background;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
 import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
 import org.bgee.model.topanat.exception.RAnalysisException;
@@ -362,7 +363,7 @@ public class TopAnatAnalysis extends CommonService {
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(RcodeFile)))) {
             out.println(this.rManager.generateUserScript(
-                    this.params.getBackground() == null ? BACKGROUND_FILE_NAME : null));
+                    this.params.getBackground() == Background.CUSTOM ? BACKGROUND_FILE_NAME : null));
         }
 
         log.traceExit();
@@ -427,7 +428,7 @@ public class TopAnatAnalysis extends CommonService {
     private void generateBackgroundFile() throws IOException {
         log.traceEntry();
         log.info("Generating the background file...");
-        Collection<String> geneIds = this.params.getBackground() == null ?
+        Collection<String> geneIds = this.params.getBackground() == Background.CUSTOM ?
                 new TreeSet<>(this.params.getSubmittedBackgroundIds()) :
                 this.topAnatService.loadBackgroundGeneIds(this.params.getSpeciesId(),
                         this.params.getBackground());
@@ -630,7 +631,7 @@ public class TopAnatAnalysis extends CommonService {
         //The background gene IDs submitted, that the script of the user reads, written from
         //the parameters: the file read by the R code is deleted once read. The writer is not
         //closed, which would close the zip.
-        if (this.params.getBackground() == null) {
+        if (this.params.getBackground() == Background.CUSTOM) {
             zos.putNextEntry(new ZipEntry(BACKGROUND_FILE_NAME));
             Writer out = new OutputStreamWriter(zos, StandardCharsets.UTF_8);
             writeGeneIds(out, new TreeSet<>(this.params.getSubmittedBackgroundIds()));

@@ -4,26 +4,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +30,6 @@ import org.bgee.model.ComposedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTOResultSet;
@@ -47,18 +39,9 @@ import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
-import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.expressiondata.call.Condition;
 import org.bgee.model.expressiondata.call.Condition2;
-import org.bgee.model.function.PentaFunction;
-import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneBioType;
-import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatService.Background;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -429,217 +412,41 @@ public class TopAnatServiceTest extends TestAncestor {
                         List.of(SPECIES_ID), this.tmpFolder.getRoot().getPath(), false, 1));
     }
 
-    //FIXME: Reenable the tests of the analyses
     /**
-     * The {@link BgeeProperties} instance that provides the properties for the tests
-     * of the analyses
-     */
-    private BgeeProperties props;
-
-    /**
-     * The {@link TopAnatService} instance running the analyses to be tested
-     */
-    private TopAnatService analysesService;
-
-    /**
-     * The {@link TopAnatParams} of the analyses to be tested: the mock {@code TopAnatParams}
-     * twice, to validate that several analyses can be run.
-     */
-    private List<TopAnatParams> analysesParams;
-
-    /**
-     * The mock {@link TopAnatParams} to be used in the tests
-     */
-    private TopAnatParams mockTopAnatParams;
-
-    /**
-     * The mock {@link ServiceFactory} to be used in the tests
-     */
-    private ServiceFactory mockServiceFactory;
-
-    /**
-     * The mock {@link TopAnatRManager} to be used in the tests
-     */
-    private TopAnatRManager mockTopAnatRManager;
-
-    /**
-     * The {@link PentaFunction} that is used to supply {@link TopAnatParams}
-     */
-    private PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager,
-    TopAnatService, TopAnatAnalysis>  topAnatAnalysisSupplier;
-
-    /**
-     * This method inits every mock and real objects needed to run the tests of the analyses.
-     * It is called by these tests only, as it changes the results writing directory.
-     */
-    private void initAnalysesTest() {
-
-        // create the result directory if needed
-        File newDir = new File(System.getProperty("java.io.tmpdir"),"test");        
-
-        if (!newDir.exists()) {
-            newDir.mkdirs();
-        }
-        else{
-            // remove the result files from previous tests
-            String[] filesToDelete = {"topAnat_functions.R",
-                    "topAnat_AnatEntitiesNames_1.tsv",
-                    "topAnat_AnatEntitiesRelationships_1.tsv",
-                    "topAnat_GeneToAnatEntities_1_DIFF_EXPRESSED_AFFYMETRIX_LOW.tsv",
-                    "topAnat_results.tsv",                                  
-                    "topAnat_Params.txt",
-            "topAnat_script.R"};
-            for(String fileToDelete: filesToDelete){
-                File currentFile = new File(System.getProperty("java.io.tmpdir")+"test/"
-                        +fileToDelete);
-                if(currentFile.exists()){
-                    currentFile.delete();
-                }
-            }
-        }
-
-        // init the BgeeProperties to define the results writing directory
-        System.setProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY, 
-                System.getProperty("java.io.tmpdir"));
-
-        // init all mock objects and behaviors
-        this.mockTopAnatParams = mock(TopAnatParams.class);
-        this.props = BgeeProperties.getBgeeProperties();
-        this.mockServiceFactory = mock(ServiceFactory.class);
-        this.mockTopAnatRManager = mock(TopAnatRManager.class);
-        GeneService mockGeneService = mock(GeneService.class);
-        CallService mockCallService = mock(CallService.class);
-        AnatEntityService mockAnatEntityService = mock(AnatEntityService.class);
-        AnatEntity mockEntity = mock(AnatEntity.class);
-        HashMap<String,Set<String>> relations = new HashMap<String,Set<String>>();
-        Set<DataType> dataTypes = new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ));
-        relations.put("A", new HashSet<String>(Arrays.asList("B","C")));
-        ExpressionCall mockCall = mock(ExpressionCall.class);
-        Gene myGene = new Gene("ENSG001", new Species(9606), new GeneBioType("type1"));
-        Condition mockCondition = mock(Condition.class);
-        when(this.mockTopAnatParams.toString()).thenReturn("mockTopAnatParams");
-        when(this.mockServiceFactory.toString()).thenReturn("mockServiceFactory");
-        //The service reads the properties of the analyses from its ServiceFactory
-        when(this.mockServiceFactory.getBgeeProperties()).thenReturn(this.props);
-        when(this.mockTopAnatRManager.toString()).thenReturn("mockTopAnatRManager");
-        when(this.mockServiceFactory.getGeneService()).thenReturn(mockGeneService);
-        when(this.mockServiceFactory.getAnatEntityService()).thenReturn(mockAnatEntityService);
-        when(this.mockServiceFactory.getCallService()).thenReturn(mockCallService);
-        when(this.mockTopAnatParams.getSpeciesId()).thenReturn(1);
-        when(this.mockTopAnatParams.getKey()).thenReturn("test");
-        when(this.mockTopAnatParams.getCallType()).thenReturn(SummaryCallType.DiffExpressionSummary.DIFF_EXPRESSED);
-        when(this.mockTopAnatParams.getDataTypes()).thenReturn(dataTypes);
-        when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(any()))
-        .thenReturn(Arrays.asList(mockEntity).stream());
-        when(mockGeneService.loadGenes(new GeneFilter(1, new HashSet<String>())))
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty());
-        
-        when(mockEntity.getId()).thenReturn("2");
-        when(mockEntity.getName()).thenReturn("testEntity");
-        when(mockCallService.loadExpressionCalls(any(), any(), any()))
-        .thenReturn(Stream.of(mockCall));
-        when(mockCall.getGene()).thenReturn(myGene);
-        when(mockCall.getCondition()).thenReturn(mockCondition);
-        when(mockCondition.getAnatEntityId()).thenReturn("2");
-
-        // Supplier for TopAnatAnalysis
-        this.topAnatAnalysisSupplier = (p1, p2, p3, p4, p5) -> 
-        new TopAnatAnalysis(
-                this.mockTopAnatParams,
-                this.props,
-                this.mockServiceFactory,
-                this.mockTopAnatRManager,
-                this.analysesService);
-
-        // Init the TopAnatService that will be tested, provide the mock TopAnatParams twice
-        // to validate that several analysis can be run.
-        this.analysesParams = Arrays.asList(this.mockTopAnatParams, this.mockTopAnatParams);
-        this.analysesService = new TopAnatService(this.mockServiceFactory, null,
-                this.topAnatAnalysisSupplier);
-    }
-
-    /**
-     * Test the behavior of {@link TopAnatService#areAnalysesDone(List)}
-     * @throws IOException 
+     * Test {@link TopAnatService#proceedToTopAnatAnalyses(List, org.bgee.model.job.Job)} and
+     * {@link TopAnatService#areAnalysesDone(List)}: each analysis is run, in the order of its
+     * parameters, and analyses are done when each of them is.
      */
     @Test
-    @Ignore
-    public void testAreAnalysesDone() throws IOException{
-        this.initAnalysesTest();
-        this.copyResultFile();
-        assertFalse(this.analysesService.areAnalysesDone(this.analysesParams));
-        this.analysesService.proceedToTopAnatAnalyses(this.analysesParams, null)
-        .forEach(System.out::println);
-        assertTrue(this.analysesService.areAnalysesDone(this.analysesParams));  
-    }
+    public void shouldProceedToTopAnatAnalyses() throws Exception {
+        TopAnatParams params1 = new TopAnatParams.Builder(Set.of("G1"), SPECIES_ID,
+                SummaryCallType.ExpressionSummary.EXPRESSED).build();
+        TopAnatParams params2 = new TopAnatParams.Builder(Set.of("G1"), SPECIES_ID,
+                SummaryCallType.ExpressionSummary.EXPRESSED).devStageId("UBERON:0000092").build();
+        TopAnatAnalysis analysis1 = mock(TopAnatAnalysis.class);
+        TopAnatAnalysis analysis2 = mock(TopAnatAnalysis.class);
+        TopAnatResults results1 = mock(TopAnatResults.class);
+        TopAnatResults results2 = mock(TopAnatResults.class);
+        when(analysis1.proceedToAnalysis()).thenReturn(results1);
+        when(analysis2.proceedToAnalysis()).thenReturn(results2);
+        when(analysis1.isAnalysisDone()).thenReturn(true);
+        when(analysis2.isAnalysisDone()).thenReturn(false);
+        Map<TopAnatParams, TopAnatAnalysis> analyses = Map.of(params1, analysis1,
+                params2, analysis2);
+        //The R manager of each analysis is created from the properties of the service
+        BgeeProperties props = mock(BgeeProperties.class);
+        when(props.getTopAnatRScriptExecutable()).thenReturn("Rscript");
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getBgeeProperties()).thenReturn(props);
+        TopAnatService service = new TopAnatService(serviceFactory, null,
+                (params, p, factory, rManager, topAnatService) -> analyses.get(params));
 
-    /**
-     * Test the execution of the analyses
-     * Validate the returned object and validate the presence of a non empty result file on the disk
-     * @throws IOException 
-     */
-    @Test
-    @Ignore
-    public void testProceedToTopAnatAnalyses() throws IOException{
-        this.initAnalysesTest();
-        this.copyResultFile();
-        this.analysesService.proceedToTopAnatAnalyses(this.analysesParams, null)
-        .forEach(topAnatResult -> 
-        assertTrue(topAnatResult.toString().matches("TopAnatResults \\[topAnatParams=mockTopAnatParams, "
-                + "resultFileName=topAnat_results.tsv, resultPDFFileName=topAnat_results.pdf, "
-                + "rScriptAnalysisFileName=topAnat_script.R, paramsOutputFileName=topAnat_Params.txt, "
-                + "anatEntitiesFilename=topAnat_AnatEntitiesNames_1.tsv, "
-                + "anatEntitiesRelationshipsFileName=topAnat_AnatEntitiesRelationships_1.tsv, "
-                + "geneToAnatEntitiesFileName=topAnat_GeneToAnatEntities_1_DIFF_EXPRESSED_AFFYMETRIX_SILVER.tsv,"
-                + " rScriptConsoleFileName=topAnat_log.R_console, zipFileName=topAnat_results.zip, "
-                + "topAnatService=TopAnatService \\[readWriteLocks=\\{.*\\}, "
-                + "serviceFactory=mockServiceFactory\\], props=BgeeProperties "
-                + "\\[topAnatRScriptExecutable=/usr/bin/Rscript, topAnatRWorkingDirectory=topanat/results/, "
-                + "topAnatFunctionFile=/R_scripts/topAnat_functions.R, topAnatResultsWritingDirectory=.*"
-                + "\\]\\]")));
-        File resultFile = new File(System.getProperty("java.io.tmpdir")+"/test/topAnat_results.tsv");
-        assertTrue(resultFile.exists() & resultFile.length() > 0);
-    }
-
-    /**
-     * Test the execution of the analyses when the R script encounters an empty file and
-     * throws a {@link ParseException}.
-     * Validate the returned object and validate the presence of an empty result file on the disk
-     * @throws FileNotFoundException 
-     */
-    @Test
-    @Ignore
-    public void testParseException() throws FileNotFoundException{
-        this.initAnalysesTest();
-        FileNotFoundException e = new FileNotFoundException("Can not parse output: "
-                + "The generated file filename is empty.");
-        doThrow(e).when(this.mockTopAnatRManager).performRFunction(any()); 
-        this.analysesService.proceedToTopAnatAnalyses(this.analysesParams, null)
-        .forEach(topAnatResult -> 
-        assertTrue(topAnatResult.toString().matches("TopAnatResults \\[topAnatParams=mockTopAnatParams, "
-                + "resultFileName=topAnat_results.tsv, resultPDFFileName=topAnat_results.pdf, "
-                + "rScriptAnalysisFileName=topAnat_script.R, paramsOutputFileName=topAnat_Params.txt, "
-                + "anatEntitiesFilename=topAnat_AnatEntitiesNames_1.tsv, "
-                + "anatEntitiesRelationshipsFileName=topAnat_AnatEntitiesRelationships_1.tsv, "
-                + "geneToAnatEntitiesFileName=topAnat_GeneToAnatEntities_1_DIFF_EXPRESSED_AFFYMETRIX_LOW.tsv,"
-                + " rScriptConsoleFileName=topAnat_log.R_console, zipFileName=topAnat_results.zip, "
-                + "topAnatService=TopAnatService \\[readWriteLocks=\\{.*\\}, "
-                + "serviceFactory=mockServiceFactory\\], props=BgeeProperties "
-                + "\\[topAnatRScriptExecutable=/usr/bin/Rscript, topAnatRWorkingDirectory=topanat/results/, "
-                + "topAnatFunctionFile=/R_scripts/topAnat_functions.R, topAnatResultsWritingDirectory=.*"
-                + "\\]\\]")));
-        File emptyFile = new File(System.getProperty("java.io.tmpdir")+"/test/topAnat_results.tsv");
-        assertTrue(emptyFile.exists() & emptyFile.length() == 0);
-    }
-
-    /**
-     * Move in the result folder a tmp result file, as it would be produced by R
-     * @throws IOException
-     */
-    private void copyResultFile() throws IOException{
-        Files.copy(Paths.get(TopAnatServiceTest.class.getClassLoader().getResource("").getPath()
-                .toString()+"/topanat/results/test.tsv"),Paths.get(System.getProperty("java.io.tmpdir")
-                        +"/test/topAnat_results.tsv.tmp"),StandardCopyOption.REPLACE_EXISTING);  
+        assertEquals("Incorrect results", List.of(results1, results2),
+                service.proceedToTopAnatAnalyses(List.of(params1, params2), null)
+                .collect(Collectors.toList()));
+        assertTrue("The first analysis should be done",
+                service.areAnalysesDone(List.of(params1)));
+        assertFalse("The second analysis should not be done",
+                service.areAnalysesDone(List.of(params1, params2)));
     }
 }

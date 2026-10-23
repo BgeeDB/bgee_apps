@@ -1,200 +1,255 @@
-//package org.bgee.model.topanat;
-//
-//import static org.junit.Assert.assertEquals;
-//import static org.junit.Assert.assertTrue;
-//import static org.mockito.Mockito.mock;
-//import static org.mockito.Mockito.when;
-//
-//import java.io.File;
-//import java.io.FileNotFoundException;
-//import java.io.IOException;
-//import java.nio.file.Files;
-//import java.nio.file.Paths;
-//import java.nio.file.StandardCopyOption;
-//import java.util.Arrays;
-//import java.util.HashSet;
-//
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
-//import org.bgee.model.BgeeProperties;
-//import org.bgee.model.TestAncestor;
-//import org.bgee.model.expressiondata.baseelements.DecorrelationType;
-//import org.bgee.model.expressiondata.baseelements.StatisticTest;
-//import org.junit.Before;
-//import org.junit.Test;
-//
-///**
-// * Integration tests for {@link TopAnatRManager}.
-// * It uses precomputed input files needed by the topAnat R script, located in the resources folder,
-// * to run a fast analysis
-// * - that produces real results to be checked
-// * - that produces no results, and check that it is correctly handled
-// * 
-// * @author Mathieu Seppey
-// * @version Bgee 13, March 2016
-// * @since Bgee 13
-// */
-//public class TopAnatRManagerIT extends TestAncestor {
-//
-//    private final static Logger log = LogManager.getLogger(TopAnatRManagerIT.class.getName());
-//
-//    @Override
-//    protected Logger getLogger() {
-//        return log;
-//    } 
-//
-//    /**
-//     * The {@link TopAnatRManager} instance to be tested
-//     */
-//    private TopAnatRManager topAnatRManager;
-//
-//    /**
-//     * The {@link String} that contains the path to the working directory
-//     */
-//    private String workingDirectory;
-//
-//    /**
-//     * The {@link BgeeProperties} instance that contains the properties
-//     */
-//    private BgeeProperties props;
-//
-//    /**
-//     * The mock {@link TopAnatParams} to be used in the tests
-//     */
-//    private TopAnatParams mockTopAnatParams;
-//
-//    /**
-//     * This method inits the mock and real objects needed to run the tests
-//     * @throws IOException 
-//     */
-//    @Before
-//    public void initTest() throws IOException {
-//
-//        // create the working directory if needed
-//        this.workingDirectory = System.getProperty("java.io.tmpdir")+"topAnat_IT";
-//        File newDir = new File(this.workingDirectory);        
-//
-//        if (!newDir.exists()) {
-//            newDir.mkdirs();
-//        }
-//        else{
-//            // else remove all result/input files from previous tests
-//            String[] filesToDelete = {
-//                    "topAnat_functions.R",
-//                    "topAnat_AnatEntitiesNames_test.tsv",
-//                    "topAnat_AnatEntitiesRelationships_test.tsv",
-//                    "topAnat_GeneToAnatEntities_test.tsv",
-//                    "results.tsv",                                  
-//                    "results.pdf",
-//                    "console.txt"
-//            };
-//            for(String fileToDelete: filesToDelete){
-//                File currentFile = new File(this.workingDirectory+"/"+fileToDelete);
-//                if(currentFile.exists()){
-//                    currentFile.delete();
-//                }
-//            }
-//        }
-//
-//        // init the BgeeProperties
-//        System.setProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY,this.workingDirectory);
-//        this.props = BgeeProperties.getBgeeProperties();
-//        // init the params
-//        this.mockTopAnatParams = mock(TopAnatParams.class);
-//        when(this.mockTopAnatParams.getNodeSize()).thenReturn(10);
-//        when(this.mockTopAnatParams.getDecorrelationType()).thenReturn(DecorrelationType.PARENT_CHILD);
-//        when(this.mockTopAnatParams.getStatisticTest()).thenReturn(StatisticTest.FISHER);
-//        when(this.mockTopAnatParams.getNumberOfSignificantNodes()).thenReturn(10);
-//        when(this.mockTopAnatParams.getPvalueThreshold()).thenReturn(0.05);
-//        this.topAnatRManager = new TopAnatRManager(this.props,this.mockTopAnatParams);
-//
-//        // move all needed file to the working directory
-//        // R script file
-//        String sourceFunctionFileName = TopAnatAnalysis.class.getResource(
-//                this.props.getTopAnatFunctionFile()).getPath();
-//        this.copyFileToWorkingDir(sourceFunctionFileName,"/topAnat_functions.R");
-//        
-//        // input required by the R analysis
-//        this.copyFileToWorkingDir(TopAnatServiceTest.class.getClassLoader().getResource("").getPath()
-//                .toString()+"/topanat/inputs/topAnat_AnatEntitiesNames_test.tsv",
-//                "/topAnat_AnatEntitiesNames_test.tsv");
-//        this.copyFileToWorkingDir(TopAnatServiceTest.class.getClassLoader().getResource("").getPath()
-//                .toString()+"/topanat/inputs/topAnat_AnatEntitiesRelationships_test.tsv",
-//                "/topAnat_AnatEntitiesRelationships_test.tsv");
-//        this.copyFileToWorkingDir(TopAnatServiceTest.class.getClassLoader().getResource("").getPath()
-//                .toString()+"/topanat/inputs/topAnat_GeneToAnatEntities_test.tsv",
-//                "/topAnat_GeneToAnatEntities_test.tsv");
-//    }
-//
-//    /**
-//     * Perform a R analysis that produces real results and validate these results
-//     * @throws IOException 
-//     */
-//    @Test
-//    public void testPerformRFunction() throws IOException{
-//        // Play with the FDR threshold to limit the output to 6 lines
-//        when(this.mockTopAnatParams.getFdrThreshold()).thenReturn(0.05d);
-//        this.performRFunction();
-//        // assert that the result file contains the expected content and that the pdf exists
-//        StringBuilder output = new StringBuilder();        
-//        Files.lines(Paths.get(this.workingDirectory+"/results.tsv")).forEach(output::append);  
-//        assertEquals("OrganId\tOrganName\tAnnotated\tSignificant\tExpected\tfoldEnrichment\t"
-//                + "p\tfdrUBERON:0007651\tanatomical junction\t11\t2\t0.02\t100.0\t9.91e-05\t"
-//                + "0.0193UBERON:0002539\tpharyngeal arch\t18\t2\t0.03\t 66.7\t5.36e-04\t"
-//                + "0.0431UBERON:0001048\tprimordium\t28\t2\t0.05\t 40.0\t6.82e-04\t"
-//                + "0.0431UBERON:0005423\tdeveloping anatomical structure\t36\t2\t0.07\t"
-//                + " 28.6\t1.14e-03\t0.0431UBERON:0002416\tintegumental system\t38\t2\t0.07\t"
-//                + " 28.6\t1.27e-03\t0.0431UBERON:0002050\tembryonic structure\t36\t2\t0.07\t"
-//                + " 28.6\t1.33e-03\t0.0431",
-//                output.toString());
-//        File pdf = new File(this.workingDirectory+"/results.tsv");        
-//        assertTrue(pdf.exists());
-//    }
-//
-//    /**
-//     * Perform a R analysis that produces no result and generate a ParseException
-//     * Validate the presence and the message of the ParseException
-//     * @throws IOException 
-//     */
-//    @Test(expected=FileNotFoundException.class)
-//    public void testPerformRFunctionNoResults() throws IOException{
-//        // Play with the FDR threshold to exclude all results from the output
-//        when(this.mockTopAnatParams.getFdrThreshold()).thenReturn(0d);
-//        try{
-//            this.performRFunction();
-//        }
-//        catch(FileNotFoundException e){
-//            assertTrue(e.getMessage().matches(".*Can not parse output: The generated file "
-//                    + ".* is empty"));  
-//            throw(e);
-//        }
-//    }
-//
-//    /**
-//     * Run the R analysis using two genes as foreground
-//     * @throws FileNotFoundException 
-//     */
-//    private void performRFunction() throws FileNotFoundException{
-//        this.topAnatRManager.generateRCode(this.props.getTopAnatResultsWritingDirectory(), 
-//                "results.tsv", 
-//                "results.pdf", 
-//                "topAnat_AnatEntitiesNames_test.tsv", 
-//                "topAnat_AnatEntitiesRelationships_test.tsv", 
-//                "topAnat_GeneToAnatEntities_test.tsv", 
-//                new HashSet<String>(Arrays.asList(
-//                        "ENSXETG00000001992", 
-//                        "ENSXETG00000001573")));
-//        this.topAnatRManager.performRFunction(this.props.getTopAnatResultsWritingDirectory()+
-//                "/console.txt");
-//    }
-//
-//    /**
-//     * Move in the working directory the provided file
-//     * @throws IOException
-//     */
-//    private void copyFileToWorkingDir(String src,String tar) throws IOException{
-//        Files.copy(Paths.get(src),Paths.get(this.workingDirectory+tar),
-//                StandardCopyOption.REPLACE_EXISTING);  
-//    }
-//
-//}
+package org.bgee.model.topanat;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.distribution.HypergeometricDistribution;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeProperties;
+import org.bgee.model.ManageReadWriteLocks;
+import org.bgee.model.TestAncestor;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
+import org.bgee.model.expressiondata.baseelements.StatisticTest;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+/**
+ * Integration tests for {@link TopAnatRManager}: the R code of the analyses run with R and
+ * BgeeDB, on small files written as {@code TopAnatAnalysis} writes them, and the results read
+ * as the web page reads them. The tests are skipped when R, BiocManager, Rgraphviz, or BgeeDB
+ * of the minimum version is missing, which the R code would install.
+ * <p>
+ * The genes G01 to G40 are expressed in an anatomical structure, G01 to G20 in an organ,
+ * G01 to G10 in the brain and G11 to G16 in the liver, both organs; G01 to G08 are the genes
+ * of interest, all of them expressed in the brain.
+ *
+ * @author  Julien Wollbrett
+ * @version Bgee 16
+ * @since   Bgee 13
+ */
+public class TopAnatRManagerIT extends TestAncestor {
+
+    private final static Logger log = LogManager.getLogger(TopAnatRManagerIT.class.getName());
+
+    @Override
+    protected Logger getLogger() {
+        return log;
+    }
+
+    private final static String STRUCTURE = "UBERON:0000061";
+    private final static String ORGAN = "UBERON:0000062";
+    private final static String BRAIN = "UBERON:0000955";
+    private final static String LIVER = "UBERON:0002107";
+    private final static int GENE_COUNT = 40;
+    private final static Set<String> FOREGROUND = genes(1, 8);
+
+    @Rule
+    public TemporaryFolder tmpFolder = new TemporaryFolder();
+
+    private String rscript;
+    private BgeeProperties props;
+    private Path conditionFile;
+    private Path relationFile;
+    private Path backgroundFile;
+
+    /**
+     * Skips the tests when the R code would install a package, and writes the files that do not
+     * depend on the kind of calls.
+     */
+    @Before
+    public void init() throws IOException {
+        String property = System.getProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
+        this.rscript = StringUtils.isBlank(property) || property.contains("${")?
+                "Rscript": property;
+        String check = "cat(all(nzchar(sapply(c('BiocManager', 'BgeeDB', 'Rgraphviz'), "
+                + "function(p) system.file(package = p)))) && packageVersion('BgeeDB') >= '"
+                + BgeeProperties.BGEEDB_MINIMUM_VERSION_DEFAULT + "')";
+        String output;
+        try {
+            Process process = new ProcessBuilder(this.rscript, "-e", check).start();
+            output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            process.waitFor();
+        } catch (IOException | InterruptedException e) {
+            output = e.getMessage();
+        }
+        Assume.assumeTrue("R, BiocManager, Rgraphviz and BgeeDB "
+                + BgeeProperties.BGEEDB_MINIMUM_VERSION_DEFAULT + " or later are needed: " + output,
+                output.trim().endsWith("TRUE"));
+
+        this.props = mock(BgeeProperties.class);
+        when(this.props.getTopAnatResultsWritingDirectory())
+                .thenReturn(this.tmpFolder.getRoot().getPath());
+        when(this.props.getTopAnatRScriptExecutable()).thenReturn(this.rscript);
+        when(this.props.getBioconductorReleaseNumber()).thenReturn("3.24");
+        when(this.props.getBgeeDBMinimumVersion())
+                .thenReturn(BgeeProperties.BGEEDB_MINIMUM_VERSION_DEFAULT);
+
+        this.conditionFile = this.write("conditions.tsv", List.of(
+                "ID\tNAME\tANAT_ENTITY_ID\tCELL_TYPE_ID",
+                STRUCTURE + "\tanatomical structure\t" + STRUCTURE + "\tGO:0005575",
+                ORGAN + "\torgan\t" + ORGAN + "\tGO:0005575",
+                BRAIN + "\tbrain\t" + BRAIN + "\tGO:0005575",
+                LIVER + "\tliver\t" + LIVER + "\tGO:0005575"));
+        this.relationFile = this.write("relations.tsv", List.of("SOURCE_ID\tTARGET_ID",
+                ORGAN + "\t" + STRUCTURE, BRAIN + "\t" + ORGAN, LIVER + "\t" + ORGAN));
+        List<String> background = new ArrayList<>(List.of("GENE_ID"));
+        background.addAll(genes(1, GENE_COUNT));
+        this.backgroundFile = this.write("background.tsv", background);
+    }
+
+    /**
+     * Test the classic Fisher test, run without topGO on the propagated calls.
+     */
+    @Test
+    public void shouldRunTheClassicFisherTest() throws Exception {
+        TopAnatParams params = params(DecorrelationType.NONE, FOREGROUND);
+        Map<String, TopAnatResultRow> rows = this.runAnalysis(params, Map.of(
+                STRUCTURE, genes(1, 40), ORGAN, genes(1, 20), BRAIN, genes(1, 10),
+                LIVER, genes(11, 16)));
+
+        //The brain, then the organ, the most significant conditions, drawn in the graph
+        assertCondition(rows.get(BRAIN), "brain", 10, 8);
+        assertCondition(rows.get(ORGAN), "organ", 20, 8);
+        assertTrue("The graph should be drawn", Files.size(
+                this.tmpFolder.getRoot().toPath().resolve("analysis/topAnat_results.pdf")) > 0);
+    }
+
+    /**
+     * Test the elim algorithm, run with topGO on the observed calls: once the brain is
+     * significant, its genes are removed from the organ.
+     */
+    @Test
+    public void shouldRunTheElimAlgorithm() throws Exception {
+        TopAnatParams params = params(DecorrelationType.ELIM, FOREGROUND);
+        Map<String, TopAnatResultRow> rows = this.runAnalysis(params, Map.of(
+                STRUCTURE, genes(21, 40), ORGAN, genes(17, 20), BRAIN, genes(1, 10),
+                LIVER, genes(11, 16)));
+
+        //The brain has no child: its p-value is the one of the classic algorithm
+        assertCondition(rows.get(BRAIN), "brain", 10, 8);
+        assertEquals("The genes of the brain should be removed from the organ", 1.0,
+                rows.get(ORGAN).getPval(), 0.0);
+    }
+
+    /**
+     * Test an analysis whose genes of interest have no call: the result file is empty,
+     * and the last line of the console tells it to {@code TopAnatAnalysis}.
+     */
+    @Test
+    public void shouldWriteAnEmptyResultFileWithoutResult() throws Exception {
+        TopAnatParams params = params(DecorrelationType.NONE, Set.of("G99"));
+        Path directory = this.runR(params, Map.of(STRUCTURE, genes(1, 40), ORGAN, genes(1, 20),
+                BRAIN, genes(1, 10), LIVER, genes(11, 16)));
+
+        assertEquals("The result file should be empty", 0,
+                Files.size(directory.resolve("topAnat_results.tsv")));
+        List<String> console = Files.readAllLines(directory.resolve("topAnat_log.R_console"));
+        assertTrue("The console should end with the message of an analysis without result",
+                console.get(console.size() - 1).contains(TopAnatRManager.NO_RESULT_MESSAGE_PREFIX));
+    }
+
+    /**
+     * Asserts the counts of a condition, and its p-value: the upper tail of the hypergeometric
+     * distribution, with the 3 significant digits written by the R code.
+     */
+    private static void assertCondition(TopAnatResultRow row, String name, int annotated,
+            int significant) {
+        assertEquals("Incorrect name", name, row.getAnatEntitiesName());
+        assertEquals("Incorrect number of genes", annotated, row.getAnnotated(), 0.0);
+        assertEquals("Incorrect number of genes of interest", significant,
+                row.getSignificant(), 0.0);
+        double p = new HypergeometricDistribution(GENE_COUNT, annotated, FOREGROUND.size())
+                .upperCumulativeProbability(significant);
+        assertEquals("Incorrect p-value of the " + name, Double.parseDouble(
+                String.format(Locale.ROOT, "%.3g", p)), row.getPval(), 0.0);
+    }
+
+    /**
+     * Runs the R code of an analysis and reads its results as the web page does.
+     *
+     * @return  The rows of the results, by condition ID.
+     */
+    private Map<String, TopAnatResultRow> runAnalysis(TopAnatParams params,
+            Map<String, Set<String>> calls) throws Exception {
+        this.runR(params, calls);
+        TopAnatService topAnatService = mock(TopAnatService.class);
+        when(topAnatService.getBgeeProperties()).thenReturn(this.props);
+        when(topAnatService.getReadWriteLocks()).thenReturn(new ManageReadWriteLocks());
+        List<TopAnatResultRow> rows = new TopAnatResults(params, "analysis", "topAnat_results.tsv",
+                null, null, null, null, null, topAnatService).getRows();
+        assertTrue("The results should be sorted by p-value", IntStream.range(1, rows.size())
+                .allMatch(i -> rows.get(i - 1).getPval() <= rows.get(i).getPval()));
+        return rows.stream().collect(Collectors.toMap(TopAnatResultRow::getAnatEntitiesId,
+                Function.identity()));
+    }
+
+    /**
+     * Writes the calls, then generates and runs the R code of an analysis.
+     *
+     * @param calls The genes expressed in each condition.
+     * @return      The {@code Path} of the directory of the analysis.
+     */
+    private Path runR(TopAnatParams params, Map<String, Set<String>> calls) throws Exception {
+        List<String> lines = new ArrayList<>(List.of("GENE_ID\tCONDITION_ID"));
+        calls.forEach((condition, genes) -> genes.forEach(gene -> lines.add(gene + "\t" + condition)));
+        Path geneToConditionsFile = this.write("calls.tsv", lines);
+        Path directory = Files.createDirectories(this.tmpFolder.getRoot().toPath().resolve("analysis"));
+
+        TopAnatRManager rManager = new TopAnatRManager(this.props, params);
+        rManager.generateRCode(directory.toString() + "/", "topAnat_results.tsv",
+                "topAnat_results.pdf", this.conditionFile, this.relationFile, geneToConditionsFile,
+                this.backgroundFile, params.getSubmittedForegroundIds());
+        rManager.performRFunction(directory.resolve("topAnat_log.R_console").toString());
+        return directory;
+    }
+
+    /**
+     * @return  The {@code TopAnatParams} of an analysis with the genes {@code foreground},
+     *          of conditions holding at least one gene, the conditions with a p-value below 0.01
+     *          drawn in the graph.
+     */
+    private static TopAnatParams params(DecorrelationType decorrelationType,
+            Set<String> foreground) throws Exception {
+        return new TopAnatParams.Builder(foreground, genes(1, GENE_COUNT), 6239,
+                SummaryCallType.ExpressionSummary.EXPRESSED)
+                .decorrelationType(decorrelationType).statisticTest(StatisticTest.FISHER)
+                .nodeSize(1).fdrThreshold(1.0).pvalueThreshold(0.01).numberOfSignificantNode(10)
+                .build();
+    }
+
+    /**
+     * @return  The IDs of the genes from {@code first} to {@code last}, sorted.
+     */
+    private static Set<String> genes(int first, int last) {
+        return IntStream.rangeClosed(first, last).mapToObj(i -> String.format("G%02d", i))
+                .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    private Path write(String fileName, List<String> lines) throws IOException {
+        return Files.write(this.tmpFolder.getRoot().toPath().resolve(fileName), lines);
+    }
+}

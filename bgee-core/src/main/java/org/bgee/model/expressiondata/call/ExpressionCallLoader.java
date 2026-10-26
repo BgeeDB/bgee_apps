@@ -741,12 +741,15 @@ public class ExpressionCallLoader extends CommonService {
      * an ancestor with a handful of additions, rather than iterating the observations and
      * multiplying again for each of the ancestors reached.
      * <p>
-     * The p-values of the condition are reduced to its self p-value: their weighted arithmetic
-     * mean, doubled when it averages several observations, since the mean of several p-values
-     * is not a p-value while twice that mean is one, whatever the dependence between them.
-     * The propagation combines the self p-values of a condition and of all its sub-conditions
-     * with a weighted harmonic mean: a condition therefore contributes its weight, and its weight
-     * divided by its self p-value.
+     * Each observation, a row of the expression table, is reduced to its p-value: the weighted
+     * arithmetic mean of the p-values of its requested data types, doubled when it averages
+     * several observations, since the mean of several p-values is not a p-value while twice that
+     * mean is one, whatever the dependence between them. The propagation combines the rows of
+     * a condition and of all its sub-conditions with a weighted harmonic mean: a condition
+     * therefore contributes the weight of its rows, and the sum of their weights divided by
+     * their p-values. The weighted harmonic mean being associative, the p-value of a call is
+     * the one of all the rows of its condition and of its sub-conditions, whatever the condition
+     * parameters the rows were grouped by.
      * <p>
      * Weights are stored as {@code bigint} and scores as {@code decimal(5,2)}, so summing
      * the weights as {@code long}, and the scores as their unscaled value at scale 2, is exact:
@@ -768,17 +771,24 @@ public class ExpressionCallLoader extends CommonService {
          */
         private static ObservedCondAggregate of(Collection<ObservedExpressionTO> observations,
                 int requestedDataTypeMask) {
-            BigDecimal pValueByWeightSum = BigDecimal.ZERO;
-            BigDecimal trustedPValueByWeightSum = BigDecimal.ZERO;
+            BigDecimal weightByPValue = BigDecimal.ZERO;
+            BigDecimal trustedWeightByPValue = BigDecimal.ZERO;
             long pValueWeightSum = 0;
             long trustedPValueWeightSum = 0;
             long scoreByWeightSumUnscaled = 0;
             long weightSum = 0;
             int observationCount = 0;
-            int trustedObservationCount = 0;
             int dataTypeMask = 0;
 
             for (ObservedExpressionTO obs: observations) {
+                //The p-value of the row, over its requested data types, and over the requested
+                //data types trusted for absent calls
+                BigDecimal rowPValueByWeightSum = BigDecimal.ZERO;
+                BigDecimal rowTrustedPValueByWeightSum = BigDecimal.ZERO;
+                long rowPValueWeight = 0;
+                long rowTrustedPValueWeight = 0;
+                int rowObservationCount = 0;
+                int rowTrustedObservationCount = 0;
                 for (int dataTypeIndex = 0; dataTypeIndex < 4; dataTypeIndex++) {
                     Integer numberObs = null;
                     BigDecimal pValue = null;
@@ -830,15 +840,16 @@ public class ExpressionCallLoader extends CommonService {
                             weightValue);
                     BigDecimal pValueByWeight = pValue.multiply(weight);
 
-                    pValueByWeightSum = pValueByWeightSum.add(pValueByWeight);
-                    pValueWeightSum = Math.addExact(pValueWeightSum, weightValue);
+                    rowPValueByWeightSum = rowPValueByWeightSum.add(pValueByWeight);
+                    rowPValueWeight = Math.addExact(rowPValueWeight, weightValue);
+                    rowObservationCount += numberObs;
                     //Only the data types trusted for absent calls feed the trusted p-value:
                     //an absent call cannot be better than BRONZE when it is not supported
                     //by any of them.
                     if (dataType.isTrustedForAbsentCalls()) {
-                        trustedPValueByWeightSum = trustedPValueByWeightSum.add(pValueByWeight);
-                        trustedPValueWeightSum = Math.addExact(trustedPValueWeightSum, weightValue);
-                        trustedObservationCount += numberObs;
+                        rowTrustedPValueByWeightSum = rowTrustedPValueByWeightSum.add(pValueByWeight);
+                        rowTrustedPValueWeight = Math.addExact(rowTrustedPValueWeight, weightValue);
+                        rowTrustedObservationCount += numberObs;
                     }
                     scoreByWeightSumUnscaled = Math.addExact(scoreByWeightSumUnscaled,
                             scoreByWeightUnscaled);
@@ -846,52 +857,57 @@ public class ExpressionCallLoader extends CommonService {
                     observationCount += numberObs;
                     dataTypeMask |= 1 << dataType.ordinal();
                 }
+                //The rows of the condition are combined with a weighted harmonic mean
+                weightByPValue = weightByPValue.add(weightByRowPValue(rowPValueByWeightSum,
+                        rowPValueWeight, rowObservationCount, obs));
+                trustedWeightByPValue = trustedWeightByPValue.add(weightByRowPValue(
+                        rowTrustedPValueByWeightSum, rowTrustedPValueWeight,
+                        rowTrustedObservationCount, obs));
+                pValueWeightSum = Math.addExact(pValueWeightSum, rowPValueWeight);
+                trustedPValueWeightSum = Math.addExact(trustedPValueWeightSum,
+                        rowTrustedPValueWeight);
             }
-            return new ObservedCondAggregate(
-                    weightBySelfPValue(pValueByWeightSum, pValueWeightSum, observationCount,
-                            observations),
-                    weightBySelfPValue(trustedPValueByWeightSum, trustedPValueWeightSum,
-                            trustedObservationCount, observations),
+            return new ObservedCondAggregate(weightByPValue, trustedWeightByPValue,
                     pValueWeightSum, trustedPValueWeightSum, scoreByWeightSumUnscaled, weightSum,
                     observationCount, dataTypeMask);
         }
         /**
-         * Compute the self p-value of a condition, the weighted arithmetic mean of the p-values
-         * observed in it, x2 when it averages several observations (capped at 1), and return
-         * the term the condition contributes to the weighted harmonic means of the propagation:
-         * its weight divided by its self p-value.
+         * Compute the p-value of a row of the expression table, the weighted arithmetic mean
+         * of the p-values of its requested data types, x2 when it averages several observations
+         * (capped at 1), and return the term the row contributes to the weighted harmonic means
+         * of the propagation: its weight divided by its p-value.
          *
-         * @param pValueByWeightSum A {@code BigDecimal} that is the sum of the p-values observed
-         *                          in a condition, multiplied by their weight.
+         * @param pValueByWeightSum A {@code BigDecimal} that is the sum of the p-values of a row,
+         *                          multiplied by their weight.
          * @param weightSum         A {@code long} that is the sum of their weights.
          * @param observationCount  An {@code int} that is the number of observations they were
          *                          computed from.
-         * @param observations      The observations, to identify them in case of error.
-         * @return                  A {@code BigDecimal} that is the weight of the condition divided
-         *                          by its self p-value, 0 if no p-value was observed.
+         * @param observation       The row, to identify it in case of error.
+         * @return                  A {@code BigDecimal} that is the weight of the row divided
+         *                          by its p-value, 0 if no p-value was observed.
          */
-        private static BigDecimal weightBySelfPValue(BigDecimal pValueByWeightSum, long weightSum,
-                int observationCount, Collection<ObservedExpressionTO> observations) {
+        private static BigDecimal weightByRowPValue(BigDecimal pValueByWeightSum, long weightSum,
+                int observationCount, ObservedExpressionTO observation) {
             if (weightSum == 0) {
                 return BigDecimal.ZERO;
             }
             BigDecimal weight = BigDecimal.valueOf(weightSum);
-            //Weighted arithmetic mean of the p-values of the condition
-            BigDecimal selfPValue = pValueByWeightSum.divide(weight, MathContext.DECIMAL128);
+            //Weighted arithmetic mean of the p-values of the row
+            BigDecimal rowPValue = pValueByWeightSum.divide(weight, MathContext.DECIMAL128);
             //x2 when it averages several observations: the mean of several p-values is not
             //a p-value, while twice that mean is one, whatever the dependence between them
             if (observationCount > 1) {
-                selfPValue = selfPValue.multiply(TWO).min(BigDecimal.ONE);
+                rowPValue = rowPValue.multiply(TWO).min(BigDecimal.ONE);
             }
-            //A single self p-value of 0 would make the p-value of every ancestor 0. The p-values
+            //A single p-value of 0 would make the p-value of every ancestor 0. The p-values
             //of the expression table are floored, a 0 means a table filled without the floor.
-            if (selfPValue.signum() == 0) {
-                ObservedExpressionTO obs = observations.iterator().next();
-                throw log.throwing(new IllegalStateException("Self p-value of 0 for the gene "
-                        + obs.getBgeeGeneId() + " in the condition " + obs.getConditionId()
+            if (rowPValue.signum() == 0) {
+                throw log.throwing(new IllegalStateException("P-value of 0 for the gene "
+                        + observation.getBgeeGeneId() + " in the condition "
+                        + observation.getConditionId()
                         + ", the p-values of the expression table must be floored"));
             }
-            return weight.divide(selfPValue, MathContext.DECIMAL128);
+            return weight.divide(rowPValue, MathContext.DECIMAL128);
         }
         private static final BigDecimal TWO = BigDecimal.valueOf(2);
 

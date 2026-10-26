@@ -29,14 +29,15 @@ public class OTFExpressionCall {
     private final EnumSet<DataType> supportingDataTypes;
     /**
      * The p-value of this call over all the requested data types: the weighted harmonic mean
-     * of the self p-values of this condition and of all its sub-conditions holding observations.
-     * The self p-value of a condition is the weighted arithmetic mean of the p-values observed
-     * in it, doubled when it averages several observations: the mean of several p-values is not
-     * a p-value, while twice that mean is one, whatever the dependence between them.
+     * of the p-values of the rows of the expression table of this condition and of all its
+     * sub-conditions. The p-value of a row is the weighted arithmetic mean of the p-values of its
+     * requested data types, doubled when it averages several observations: the mean of several
+     * p-values is not a p-value, while twice that mean is one, whatever the dependence between
+     * them.
      */
     private final BigDecimal allDataTypePValue;
     /**
-     * The total weight of the self p-values combined into {@link #allDataTypePValue}.
+     * The total weight of the rows combined into {@link #allDataTypePValue}.
      */
     private final BigDecimal allDataTypePValueWeight;
     /**
@@ -44,7 +45,7 @@ public class OTFExpressionCall {
      */
     private final BigDecimal trustedDataTypePValue;
     /**
-     * The total weight of the self p-values combined into {@link #trustedDataTypePValue}.
+     * The total weight of the rows combined into {@link #trustedDataTypePValue}.
      */
     private final BigDecimal trustedDataTypePValueWeight;
     /**

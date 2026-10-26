@@ -205,9 +205,8 @@ public class TopAnatRManager {
         //if there is no result, but no error occurred, we create an empty result file
         code.addRCode("if (!resultExist) {");
         code.addRCode("  cat('" + NO_RESULT_MESSAGE_PREFIX + ": ', topOBOResultFile, '\\n')");
-        code.addRCode("  file.create(topOBOResultFile)");
-        //we need a tableOver object for RCaller to perform the commands
-        code.addRCode("  tableOver <- data.frame(1, 8)");
+        //invisible, so that the message stays the last line of the console
+        code.addRCode("  invisible(file.create(topOBOResultFile))");
         code.addRCode("}");
 
         return log.traceExit(code.toString());
@@ -319,7 +318,10 @@ public class TopAnatRManager {
         }
         caller.redirectROutputToFile(consoleFileName, true);
         caller.setRCode(code);
-        caller.runAndReturnResult("tableOver");
+        //RCaller returns a variable by converting it into XML element by element, which takes
+        //tens of seconds for the result table once topGO has attached BiocGenerics: the results
+        //are read from the file written by the R code, the variable returned is only a flag.
+        caller.runAndReturnResult("resultExist");
         log.traceExit();
 
     }

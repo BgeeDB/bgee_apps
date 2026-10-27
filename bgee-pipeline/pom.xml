@@ -82,6 +82,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <!-- Guice, used by the OWL API, needs java.lang to be open to reflection,
+                         as the pipeline is run with (see JAVA_NO_JAR in Makefile.common) -->
+                    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                     <systemPropertyVariables>
                         <java.util.logging.config.file>${basedir}/src/test/resources/jdkLogConfig.properties</java.util.logging.config.file>
                         <org.slf4j.simpleLogger.defaultLogLevel>warn</org.slf4j.simpleLogger.defaultLogLevel>

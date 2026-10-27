@@ -493,7 +493,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
 
             // Build condition filter matching loadMultispecConditionFilter for anat_entity_id=SUMMARY, cell_type_id=SUMMARY
             Set<String> summaryAnatIds = Set.of(
-                    "UBERON:0001062", "UBERON:0000010", "UBERON:0000211", "UBERON:0000309", "UBERON:0000468",
+                    "UBERON:0001062", "UBERON:0000010", "UBERON:0000211", "UBERON:0000309",
                     "UBERON:0000949", "UBERON:0000990", "UBERON:0001004", "UBERON:0001007", "UBERON:0001008",
                     "UBERON:0001009", "UBERON:0001015", "UBERON:0001017", "UBERON:0001032", "UBERON:0001434",
                     "UBERON:0002193", "UBERON:0002330", "UBERON:0002384", "UBERON:0002405", "UBERON:0002416",
@@ -619,6 +619,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
     /**
      * {@code observed_data} is applied as a call-level filter on anatomical entity and cell type.
      * Omitting it leaves the expression-call query unfiltered on observation.
+     * The condition query itself must not require {@code condObservedCellType}: organ-level
+     * calls are stored on the cell-type root, which is not marked observed.
      */
     @Test
     public void shouldApplyObservedDataToExpressionCallFilter() {
@@ -668,6 +670,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         assertEquals(Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
                 observed.getCallObservedDataCondParams());
         assertEquals(Boolean.TRUE, observed.getCallObservedDataFilter());
+        assertTrue(observed.getConditionFilters().stream()
+                .allMatch(f -> f.getObservedCondForParams().isEmpty()));
 
         service.loadSimilarityCallLoader(new SimilarityExpressionCallFilter(
                 taxonId, geneFilters, null, false, SummaryQuality.BRONZE, Boolean.FALSE))
@@ -676,6 +680,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         assertEquals(Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
                 propagatedOnly.getCallObservedDataCondParams());
         assertEquals(Boolean.FALSE, propagatedOnly.getCallObservedDataFilter());
+        assertTrue(propagatedOnly.getConditionFilters().stream()
+                .allMatch(f -> f.getObservedCondForParams().isEmpty()));
 
         service.loadSimilarityCallLoader(new SimilarityExpressionCallFilter(
                 taxonId, geneFilters, null, false, SummaryQuality.BRONZE))
@@ -683,6 +689,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ExpressionCallFilter2 unrestricted = exprFilterCaptor.getValue();
         assertTrue(unrestricted.getCallObservedDataCondParams().isEmpty());
         assertEquals(null, unrestricted.getCallObservedDataFilter());
+        assertTrue(unrestricted.getConditionFilters().stream()
+                .allMatch(f -> f.getObservedCondForParams().isEmpty()));
         assertFalse(observed.equals(propagatedOnly));
         assertFalse(observed.equals(unrestricted));
     }

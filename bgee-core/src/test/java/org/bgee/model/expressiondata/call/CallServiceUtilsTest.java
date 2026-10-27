@@ -2,19 +2,24 @@ package org.bgee.model.expressiondata.call;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.bgee.model.ComposedEntity;
 import org.bgee.model.TestAncestor;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.call.CallServiceUtils.AnatEntityAndCellType;
 import org.junit.Test;
 
 /**
@@ -191,6 +196,56 @@ public class CallServiceUtilsTest extends TestAncestor {
                 Set.of(CNS), true, Set.of(ORGANISM, DIGESTIVE), null);
         assertEquals(Set.of(ORGANISM, DIGESTIVE),
                 CallServiceUtils.expandApplicableExcludeIds(filter, null));
+    }
+
+    /**
+     * A composed value stores the cell type at index 0 and the anatomical entity at index 1.
+     * One member, or none, stands for the root of the parameter that was not stored.
+     */
+    @Test
+    public void shouldResolveAnatEntityAndCellTypeFromAComposedValue() {
+        AnatEntity brain = new AnatEntity("UBERON:0000955", null, null, false);
+        AnatEntity cellRoot = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID, null, null, true);
+        AnatEntity neuron = new AnatEntity("CL:0000540", null, null, true);
+
+        LinkedHashSet<AnatEntity> both = new LinkedHashSet<>();
+        both.add(cellRoot);
+        both.add(brain);
+        AnatEntityAndCellType resolvedBoth = CallServiceUtils.resolveAnatEntityAndCellType(
+                new ComposedEntity<>(both, AnatEntity.class));
+        assertSame("Index 1 is the anatomical entity", brain, resolvedBoth.getAnatEntity());
+        assertSame("Index 0 is the cell type", cellRoot, resolvedBoth.getCellType());
+
+        AnatEntityAndCellType anatOnly = CallServiceUtils.resolveAnatEntityAndCellType(
+                new ComposedEntity<>(brain, AnatEntity.class));
+        assertSame(brain, anatOnly.getAnatEntity());
+        assertEquals(ConditionDAO.CELL_TYPE_ROOT_ID, anatOnly.getCellType().getId());
+
+        AnatEntityAndCellType cellOnly = CallServiceUtils.resolveAnatEntityAndCellType(
+                new ComposedEntity<>(neuron, AnatEntity.class));
+        assertEquals(ConditionDAO.ANAT_ENTITY_ROOT_ID, cellOnly.getAnatEntity().getId());
+        assertSame(neuron, cellOnly.getCellType());
+
+        //The cell-type flag is unset on an entity built from an ID alone. The cell-type root
+        //is still a cell type; any other ID is an anatomical entity.
+        AnatEntityAndCellType unsetRoot = CallServiceUtils.resolveAnatEntityAndCellType(
+                new ComposedEntity<>(new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID), AnatEntity.class));
+        assertEquals(ConditionDAO.ANAT_ENTITY_ROOT_ID, unsetRoot.getAnatEntity().getId());
+        assertEquals(ConditionDAO.CELL_TYPE_ROOT_ID, unsetRoot.getCellType().getId());
+
+        AnatEntityAndCellType unsetOrgan = CallServiceUtils.resolveAnatEntityAndCellType(
+                new ComposedEntity<>(new AnatEntity("UBERON:0000955"), AnatEntity.class));
+        assertEquals("UBERON:0000955", unsetOrgan.getAnatEntity().getId());
+        assertEquals(ConditionDAO.CELL_TYPE_ROOT_ID, unsetOrgan.getCellType().getId());
+
+        AnatEntityAndCellType empty = CallServiceUtils.resolveAnatEntityAndCellType(
+                new ComposedEntity<>(AnatEntity.class));
+        assertEquals(ConditionDAO.ANAT_ENTITY_ROOT_ID, empty.getAnatEntity().getId());
+        assertEquals(ConditionDAO.CELL_TYPE_ROOT_ID, empty.getCellType().getId());
+
+        AnatEntityAndCellType missing = CallServiceUtils.resolveAnatEntityAndCellType(null);
+        assertEquals(ConditionDAO.ANAT_ENTITY_ROOT_ID, missing.getAnatEntity().getId());
+        assertEquals(ConditionDAO.CELL_TYPE_ROOT_ID, missing.getCellType().getId());
     }
 
     private static Set<String> expandInclude(FilterIds<String> filter) {

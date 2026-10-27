@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.controller.URLParameters;
 import org.bgee.model.XRef;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.Condition2;
@@ -143,6 +144,9 @@ public class JsonHelper {
         } else {
             this.utils = utils;
         }
+        //The names of the URL parameters, known without any request as well
+        URLParameters urlParameters = this.requestParameters == null? new URLParameters():
+            this.requestParameters.getUrlParametersInstance();
         
         //we do not allow the Gson object to be injected, so that signatures of this class 
         //are not dependent of a specific JSON library. 
@@ -157,9 +161,9 @@ public class JsonHelper {
                 .registerTypeAdapter(RawDataAnnotation.class, new RawDataAnnotationTypeAdapter(this.utils))
                 .registerTypeAdapter(RawCall.class, new RawCallTypeAdapter(this.utils))
                 .registerTypeAdapter(RawDataPostFilter.class, new RawDataPostFilterTypeAdapter(
-                        this.utils, this.requestParameters.getUrlParametersInstance()))
+                        this.utils, urlParameters))
                 .registerTypeAdapter(ExpressionCallPostFilter.class, new ExpressionCallPostFilterTypeAdapter(
-                        this.utils, this.requestParameters.getUrlParametersInstance()))
+                        this.utils, urlParameters))
                 .registerTypeAdapter(ExperimentAssay.class, new ExperimentAssayTypeAdapter(
                         this.utils))
                 .registerTypeAdapter(Condition2.class, new Condition2TypeAdapter(this.utils))

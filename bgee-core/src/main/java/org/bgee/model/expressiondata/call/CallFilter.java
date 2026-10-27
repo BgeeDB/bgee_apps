@@ -157,20 +157,14 @@ V> extends DataFilter<V> {
          *                                      in several {@code GeneFilter}s, or if {@code geneFilters}
          *                                      contains a {@code null} element, an
          *                                      {@code IllegalArgumentException} is thrown.
-         *                                      At least one {@code GeneFilter} or one
-         *                                      {@code CoditionFilter} must be provided,
-         *                                      otherwise an {@code IllegalArgumentException} is thrown.
+         *                                      Can be {@code null} or empty.
          * @param conditionFilters              A {@code Collection} of {@code ConditionFilter}s
          *                                      allowing to specify the requested parameters regarding
          *                                      conditions related to the expression calls. If several
          *                                      {@code ConditionFilter}s are provided, they are seen
-         *                                      as "OR" conditions. Can be {@code null} or empty
-         *                                      if some {@code GeneFilter}s are provided.
+         *                                      as "OR" conditions. Can be {@code null} or empty.
          *                                      if contains a {@code null} element, an
          *                                      {@code IllegalArgumentException} is thrown.
-         *                                      At least one {@code GeneFilter} or one
-         *                                      {@code CoditionFilter} must be provided,
-         *                                      otherwise an {@code IllegalArgumentException} is thrown.
          * @param dataTypeFilter                A {@code Collection} of {@code DataType}s
          *                                      allowing to specify the data types to consider
          *                                      to retrieve expression calls. If {@code null}
@@ -187,9 +181,7 @@ V> extends DataFilter<V> {
          *                                      only from propagation on the related condition parameters).
          *                                      If a key is {@code null} or empty, or a value is {@code null},
          *                                      an {@code IllegalArgumentException} is thrown.
-         * @throws IllegalArgumentException     If no {@code GeneFilter} is provided in {@code geneFilters}
-         *                                      and no {@code ConditionFilter} in {@code conditionFilters}.
-         *                                      Or if a same species ID is present
+         * @throws IllegalArgumentException     If a same species ID is present
          *                                      in several {@code GeneFilter}s. Or if {@code geneFilters}
          *                                      or {@code conditionFilters} contains a {@code null} element.
          *                                      In {@code callObservedDataFilter} if a key is

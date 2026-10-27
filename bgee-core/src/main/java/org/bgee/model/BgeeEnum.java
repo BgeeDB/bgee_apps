@@ -91,8 +91,9 @@ public abstract class BgeeEnum {
      * @return                  The {@code Set} of {@code BgeeEnumField}s that are the 
      *                          representation of the {@code BgeeEnumField}s contained in 
      *                          {@code enums}. Can be {@code null} if {@code representations} is
-     *                          {@code null}. An element can be {@code null} if 
-     *                          {@code representations} has an element {@code null}.
+     *                          {@code null} or empty. An {@code EnumSet} holding no
+     *                          {@code null}, a {@code null} element of {@code representations}
+     *                          is left out.
      * @param <T> The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> EnumSet<T> 
@@ -107,7 +108,9 @@ public abstract class BgeeEnum {
         EnumSet<T> enumSet = EnumSet.noneOf(enumClass);
         for (String repr: filteredRepresentations) {
             T convertedRep = convert(enumClass, repr);
-            enumSet.add(convertedRep);
+            if (convertedRep != null) {
+                enumSet.add(convertedRep);
+            }
         }
         return log.traceExit(enumSet);
     }

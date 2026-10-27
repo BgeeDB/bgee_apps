@@ -123,18 +123,26 @@ public class GeneServiceTest extends TestAncestor {
         when(managerMock.getGeneXRefDAO()).thenReturn(geneXrefDao);
         GeneDAO geneDao = mock(GeneDAO.class);
         when(managerMock.getGeneDAO()).thenReturn(geneDao);
+        //The species of the genes found by their IDs, every species being loaded
+        SpeciesDAO speciesDAO = mock(SpeciesDAO.class);
+        when(managerMock.getSpeciesDAO()).thenReturn(speciesDAO);
+        SpeciesTOResultSet mockSpeciesRs = getMockResultSet(SpeciesTOResultSet.class, Arrays.asList(
+                new SpeciesTO(1, null, null, null, null, null, null, null, null, 1, null, null),
+                new SpeciesTO(2, null, null, null, null, null, null, null, null, 1, null, null)));
+        when(speciesDAO.getSpeciesByIds(new HashSet<>(), null)).thenReturn(mockSpeciesRs);
         
         // Initialize params
         Set<String> inputIds = new HashSet<>(Arrays.asList("ID1", "OtherID1",
                 "OtherID2", "OtherID4", "UnknownID"));
 
-        // Mock the GeneXrefDAO response
+        // Mock the GeneXrefDAO response, for the IDs not found as gene IDs
         GeneXRefTOResultSet mockGeneXRefRs = getMockResultSet(GeneXRefTOResultSet.class,
                 Arrays.asList(new GeneXRefTO(1, "OtherID1", null, null),
                         new GeneXRefTO(2, "OtherID2", null, null),
                         new GeneXRefTO(22, "OtherID2", null, null),
                         new GeneXRefTO(4, "OtherID4", null, null)));
-        when(geneXrefDao.getGeneXRefsByXRefIds(inputIds, 
+        when(geneXrefDao.getGeneXRefsByXRefIds(
+                new HashSet<>(Arrays.asList("OtherID1", "OtherID2", "OtherID4", "UnknownID")), 
                 Arrays.asList(GeneXRefDAO.Attribute.BGEE_GENE_ID, GeneXRefDAO.Attribute.XREF_ID)))
                 .thenReturn(mockGeneXRefRs);
 
@@ -156,12 +164,11 @@ public class GeneServiceTest extends TestAncestor {
                         new GeneTO(4, "ID4", "Name4", null, 1, 1, null, null, null, 1, null)));
         when(geneDao.getGenesByBgeeIds(bgeeGeneIds)).thenReturn(mockGeneRs1);
 
-        // Mock the GeneDAO response from IDs
+        // Mock the GeneDAO response from IDs, all the IDs being first searched as gene IDs
         GeneTOResultSet mockGeneRs2 = getMockResultSet(GeneTOResultSet.class,
                 Arrays.asList(new GeneTO(1, "ID1", "Name1a", null, 1, 1, null, null, null, 1, null),
                         new GeneTO(11, "ID1", "Name1b", null, 2, 1, null, null, null, 1, null)));
-        when(geneDao.getGenesByGeneIds(new HashSet<>(Arrays.asList("ID1", "UnknownID"))))
-                .thenReturn(mockGeneRs2);
+        when(geneDao.getGenesByGeneIds(inputIds)).thenReturn(mockGeneRs2);
 
         when(geneDao.getGeneBioTypes()).thenAnswer(
                 new Answer<GeneBioTypeTOResultSet>() {
@@ -229,14 +236,17 @@ public class GeneServiceTest extends TestAncestor {
         // Mock gene DAO
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
                 Arrays.asList(new GeneTO(bgeeGeneId, geneId, "Name1", "", 10090, 1, true, "reg1", null, 1, null)));
-        when(geneDao.getGenesByGeneIds(new HashSet<String>(Arrays.asList(geneId)))).thenReturn(mockGeneRs);
+        when(geneDao.getGenesByGeneIds(new HashSet<String>(Arrays.asList(geneId)), false))
+                .thenReturn(mockGeneRs);
 
-        // Mock species service
+        // Mock species DAO
         Set<Integer> speciesId = new HashSet<>(Arrays.asList(10090));
         Species species = new Species(10090);
-        Map<Integer, Species> speciesMap = new HashMap<>();
-        speciesMap.put(10090, species);
-        when(speciesService.loadSpeciesMap(speciesId, false)).thenReturn(speciesMap);
+        SpeciesDAO speciesDAO = mock(SpeciesDAO.class);
+        when(managerMock.getSpeciesDAO()).thenReturn(speciesDAO);
+        SpeciesTOResultSet mockSpeciesRs = getMockResultSet(SpeciesTOResultSet.class, Arrays.asList(
+                new SpeciesTO(10090, null, null, null, null, null, null, null, null, 1, null, null)));
+        when(speciesDAO.getSpeciesByIds(speciesId, null)).thenReturn(mockSpeciesRs);
 
         // Test
         Gene expectedGene = new Gene(geneId, species, new GeneBioType("type1"));

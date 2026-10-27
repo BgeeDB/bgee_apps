@@ -275,7 +275,8 @@ abstract class CommandParent {
      * Check and retrieve the data types requested in the {@code RequestParameters} object 
      * provided at instantiation. 
      * 
-     * @return  A {@code Set} of {@code DataType}s retrieved from the request parameters.
+     * @return  A {@code Set} of {@code DataType}s retrieved from the request parameters,
+     *          all of them when none is requested.
      * @throws InvalidRequestException  If the data type request parameter is incorrectly used.
      */
     protected EnumSet<DataType> checkAndGetDataTypes() throws InvalidRequestException {

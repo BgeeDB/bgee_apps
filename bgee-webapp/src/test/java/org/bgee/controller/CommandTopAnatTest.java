@@ -188,12 +188,10 @@ public class CommandTopAnatTest extends TestAncestor {
         data.put(params.getUrlParametersInstance().getParamBackgroundList().getName(),
                 response2);
         
+        //The message only tells the genes of the species selected, the data holding the details
         verify(display).sendGeneListReponse(data, 
-                "1 IDs provided: 1 unique genes found in Bgee, 1 in mouse for " +
-                        params.getUrlParametersInstance().getParamForegroundList().getName() + "\n" +
-                "4 IDs provided: 2 unique genes found in Bgee, 2 in human, 1 in mouse, " +
-                        "and 1 IDs not found for " +
-                        params.getUrlParametersInstance().getParamBackgroundList().getName());
+                "1 IDs provided: 1 unique gene found in mouse\n" +
+                "4 IDs provided: 2 unique genes found in human");
     }
     
     /**

@@ -54,7 +54,8 @@ public class SpeciesServiceTest extends TestAncestor {
         sourceMap.put(1, new Source(1));
         sourceMap.put(2, new Source(2));
         sourceMap.put(3, new Source(3));
-        when(sourceService.loadSourcesByIds(null)).thenReturn(sourceMap);
+        //The sources of the genomes and of the data of the species
+        when(sourceService.loadSourcesByIds(new HashSet<>(Arrays.asList(1, 2, 3)))).thenReturn(sourceMap);
         when(sourceService.loadAllSources(false)).thenReturn(
                 Arrays.asList(new Source(1), new Source(2), new Source(3)));
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
@@ -133,6 +134,12 @@ public class SpeciesServiceTest extends TestAncestor {
         when(sourceToSpeciesDAO.getSourceToSpecies(null, 
                 new HashSet<>(Arrays.asList(9606, 1234)), null, null, null)).thenReturn(sToSpRS);
 
+        //The sources of the genomes and of the data of the species
+        Map<Integer, Source> sourceMap = new HashMap<>();
+        sourceMap.put(1, new Source(1));
+        sourceMap.put(2, new Source(2));
+        sourceMap.put(3, new Source(3));
+        when(sourceService.loadSourcesByIds(new HashSet<>(Arrays.asList(1, 2, 3)))).thenReturn(sourceMap);
         when(sourceService.loadAllSources(false)).thenReturn(
                 Arrays.asList(new Source(1), new Source(2), new Source(3)));
     }

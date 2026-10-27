@@ -61,7 +61,8 @@ public class JsonHelperTest extends TestAncestor {
                 null, null, null, null, null, null, null, null, null, null);
 
         String json = new JsonHelper().toJson(species);
-        String expected = "{\n  \"name\": \"SpeciesName\",\n  " +
+        String expected = "{\n  \"dataSourcesForDataByDataTypes\": {},\n  "
+                + "\"dataSourcesForAnnotationByDataTypes\": {},\n  \"name\": \"SpeciesName\",\n  " +
                 "\"description\": \"A string description of that species\",\n  " +
                 "\"id\": 12\n}";
         assertEquals(expected, json);
@@ -85,11 +86,18 @@ public class JsonHelperTest extends TestAncestor {
         String json = helper.toJson(group);
         String expected = "{\n  \"members\": [\n    {\n      \"genus\": \"Homo\",\n      "
                 + "\"speciesName\": \"sapiens\",\n      \"genomeVersion\": \"hsap1\",\n      "
-                + "\"genomeSource\": {\n        \"id\": 1\n      },\n      \"name\": \"human\",\n"
+                + "\"speciesFullNameWithoutSpace\": \"Homo_sapiens\",\n      "
+                + "\"genomeAssemblyXRef\": \"assemblyHsap1\",\n      "
+                + "\"genomeSource\": {\n        \"id\": 1\n      },\n      "
+                + "\"dataSourcesForDataByDataTypes\": {},\n      "
+                + "\"dataSourcesForAnnotationByDataTypes\": {},\n      \"name\": \"human\",\n"
                 + "      \"id\": 9606\n    }\n  ],\n  \"downloadFiles\": [\n    {\n      "
                 + "\"name\": \"fileg1_1.tsv.zip\",\n      \"size\": 5000,\n      "
                 + "\"speciesDataGroupId\": 1,\n      \"path\": \"/myrootpath/my/path/fileg1_1.tsv.zip\",\n"
-                + "      \"category\": \"expr_simple\",\n      \"conditionParameters\": []\n    }"
+                //A file without condition parameters is described with all of them
+                + "      \"category\": \"expr_simple\",\n      \"conditionParameters\": [\n"
+                + "        \"anat_entity\",\n        \"dev_stage\",\n        \"cell_type\",\n"
+                + "        \"sex\",\n        \"strain\"\n      ]\n    }"
                 + "\n  ],\n  \"name\": \"single spe g1\",\n  \"id\": 1\n}";
 
         assertEquals("Incorrect JSON generated from SpeciesDataGroup", expected, json);
@@ -146,7 +154,14 @@ public class JsonHelperTest extends TestAncestor {
                 + "\"" + params.getParamExprType().getName() + "\": [\n    \"" 
                 + CallType.Expression.EXPRESSED.getStringRepresentation() + "\"\n  ],\n  "
                 + "\"" + params.getParamNbNode().getName() + "\": \"10\",\n  "
-                + "\"" + params.getParamAjax().getName() + "\": \"true\"\n}";
+                + "\"" + params.getParamAjax().getName() + "\": \"true\",\n  "
+                + "\"storableParameters\": [\n    \"" + params.getParamSpeciesList().getName()
+                + "\",\n    \"" + params.getParamForegroundList().getName() + "\",\n    \""
+                + params.getParamBackgroundList().getName() + "\",\n    \""
+                + params.getParamExprType().getName() + "\",\n    \""
+                + params.getParamNbNode().getName() + "\"\n  ],\n  "
+                + "\"nonStorableParameters\": [\n    \"" + params.getParamPage().getName()
+                + "\",\n    \"" + params.getParamAjax().getName() + "\"\n  ]\n}";
 
         assertEquals("Incorrect JSON generated from RequestParameters", expected, json);
     }
@@ -177,9 +192,11 @@ public class JsonHelperTest extends TestAncestor {
         assertEquals("Incorrect Json generated from writer", 
                 "{\n  \"code\": 200,\n  \"status\": \"success\",\n  \"message\": \"my msg\",\n"
                 + "  \"data\": {\n    \"speciesList\": [\n      {\n        "
+                + "\"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        "
                 + "\"name\": \"SpeciesName\",\n        \"description\": "
                 + "\"A string description of that species\",\n        \"id\": 12\n"
-                + "      },\n      {\n        \"name\": \"SpeciesName\",\n        "
+                + "      },\n      {\n        \"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        "
+                + "\"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n"
                 + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 out.toString());
@@ -204,27 +221,35 @@ public class JsonHelperTest extends TestAncestor {
         rp2.setPage("mypage2");
         rp2.setAction("myaction2");
         assertEquals("Incorrect dump of Stream of RequestParameters", 
-                "[\n  {\n    \"" + params.getParamPage().getName() + "\": \"mypage1\",\n"
-                + "    \"" + params.getParamAction().getName() + "\": \"myaction1\"\n"
-                + "  },\n  {\n    \"" + params.getParamPage().getName() + "\": \"mypage2\",\n"
-                + "    \"" + params.getParamAction().getName() + "\": \"myaction2\"\n  }\n]", 
+                "[\n  " + pageActionJson(params, "mypage1", "myaction1", "  ") + ",\n  "
+                + pageActionJson(params, "mypage2", "myaction2", "  ") + "\n]", 
                 helper.toJson(Stream.of(rp1, rp2)));
         
         //Stream of mixed element types, custom and not custom
         assertEquals("Incorrect dump of Stream of mixed element types", 
-                "[\n  {\n    \"" + params.getParamPage().getName() + "\": \"mypage1\",\n"
-               + "    \"" + params.getParamAction().getName() + "\": \"myaction1\"\n  },\n  \"2\"\n]", 
+                "[\n  " + pageActionJson(params, "mypage1", "myaction1", "  ") + ",\n  \"2\"\n]", 
                 helper.toJson(Stream.of(rp1, "2")));
         helper.toJson(Stream.of(Stream.of("a", "b"), Stream.of(rp1, rp2)));
         
         //Stream of Streams
         assertEquals("Incorrect dump of Stream of Streams", 
-                "[\n  [\n    \"a\",\n    \"b\"\n  ],\n  [\n    {\n      \"" 
-                + params.getParamPage().getName() + "\": \"mypage1\",\n      \"" 
-                + params.getParamAction().getName() + "\": \"myaction1\"\n    },\n    {\n      \"" 
-                + params.getParamPage().getName() + "\": \"mypage2\",\n"
-                + "      \"" + params.getParamAction().getName() + "\": \"myaction2\"\n    }\n  ]\n]", 
+                "[\n  [\n    \"a\",\n    \"b\"\n  ],\n  [\n    "
+                + pageActionJson(params, "mypage1", "myaction1", "    ") + ",\n    "
+                + pageActionJson(params, "mypage2", "myaction2", "    ") + "\n  ]\n]", 
                 helper.toJson(Stream.of(Stream.of("a", "b"), Stream.of(rp1, rp2))));
+    }
+    /**
+     * @return  The JSON of {@code RequestParameters} holding only a page and an action,
+     *          as written in an array, its lines after the first one indented by {@code indent}.
+     */
+    private static String pageActionJson(URLParameters params, String page, String action,
+            String indent) {
+        return "{\n" + indent + "  \"" + params.getParamPage().getName() + "\": \"" + page + "\",\n"
+                + indent + "  \"" + params.getParamAction().getName() + "\": \"" + action + "\",\n"
+                + indent + "  \"nonStorableParameters\": [\n"
+                + indent + "    \"" + params.getParamPage().getName() + "\",\n"
+                + indent + "    \"" + params.getParamAction().getName() + "\"\n"
+                + indent + "  ]\n" + indent + "}";
     }
 
     /**
@@ -248,9 +273,11 @@ public class JsonHelperTest extends TestAncestor {
         when(topAnatService.getBgeeProperties()).thenReturn(props);
         when(topAnatService.getReadWriteLocks()).thenReturn(new ManageReadWriteLocks());
         
+        //As the controller sends them by default, without the conditions redundant with
+        //a more precise one
         TopAnatResults results = new TopAnatResults(params, "view", "topAnatResults.tsv", 
                 null, null, null, null, "result_hash.zip", 
-                topAnatService);
+                topAnatService).keepRedundant(false);
         
         JsonHelper helper = new JsonHelper(props, new RequestParameters(props));
         String json = helper.toJson(results);

@@ -96,13 +96,13 @@ public class SourceServiceTest extends TestAncestor {
         expectedSources.add(new Source(2, "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
                 "https://www.ncbi.nlm.nih.gov/taxonomy",
                 date1, "v13", false, org.bgee.model.source.SourceCategory.NONE, 3, forData2, forAnnot2));
-        Map<Integer, Set<DataType>> forData4 = new HashMap<>();
+        //Without data type, a source has null maps rather than empty ones
         expectedSources.add(new Source(4, "ZFIN", "ZFIN desc",
                 "https://zfin.org/[xref_id]",
                 "https://zfin.org/[experiment_id]",
                 "https://zfin.org/[evidence_id]",
                 "https://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU,
-                2, forData4, null));
+                2, null, null));
 
         assertEquals("Incorrect sources", expectedSources, service.loadAllSources(true));
     }

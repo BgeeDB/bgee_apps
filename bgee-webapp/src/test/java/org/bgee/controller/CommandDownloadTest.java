@@ -65,7 +65,9 @@ public class CommandDownloadTest extends TestAncestor {
         
         //mock data returned by Services
         List<SpeciesDataGroup> groups = getTestGroups();
-        when(groupService.loadAllSpeciesDataGroup()).thenReturn(groups);
+        //The groups with call files, and the groups with processed expression value files
+        when(groupService.loadSpeciesDataGroup(true, false)).thenReturn(groups);
+        when(groupService.loadSpeciesDataGroup(false, true)).thenReturn(groups);
         when(keywordService.getKeywordForAllSpecies()).thenReturn(getTestSpeToKeywords());
 
         //mock view

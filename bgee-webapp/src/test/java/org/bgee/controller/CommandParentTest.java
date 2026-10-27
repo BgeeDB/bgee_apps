@@ -77,10 +77,11 @@ public class CommandParentTest extends TestAncestor {
         
         RequestParameters params = new RequestParameters();
         log.info("Generated query URL: " + params.getRequestURL());
-        //no data type parameter, should retrieve no data types
+        //no data type parameter, should retrieve all data types
         FakeCommand command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
                 null, null, null, null, context, null);
-        assertEquals("No data types should have been retrieved", null, command.checkAndGetDataTypes());
+        assertEquals("All data types should have been retrieved without data type requested",
+                EnumSet.allOf(DataType.class), command.checkAndGetDataTypes());
         
         //all parameters, should retrieve all data types
         params = new RequestParameters();

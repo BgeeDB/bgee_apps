@@ -327,7 +327,15 @@ public class TopAnatRManager {
         //RCaller returns a variable by converting it into XML element by element, which takes
         //tens of seconds for the result table once topGO has attached BiocGenerics: the results
         //are read from the file written by the R code, the variable returned is only a flag.
-        caller.runAndReturnResult("resultExist");
+        try {
+            caller.runAndReturnResult("resultExist");
+        } catch (RuntimeException e) {
+            //When the thread is interrupted, for instance by the cancellation of its job, RCaller
+            //stops waiting for R without stopping it, and R would run the analysis to its end.
+            //Stopping R does nothing when it has already ended.
+            caller.stopRCallerAsync();
+            throw e;
+        }
         log.traceExit();
 
     }

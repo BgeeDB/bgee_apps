@@ -2,6 +2,7 @@ package org.bgee.model.topanat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -17,6 +18,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -37,6 +40,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import com.github.rcaller.rstuff.FailurePolicy;
+import com.github.rcaller.rstuff.RCaller;
+import com.github.rcaller.rstuff.RCallerOptions;
+import com.github.rcaller.rstuff.RCode;
+import com.github.rcaller.util.Globals;
 
 /**
  * Integration tests for {@link TopAnatRManager}: the R code of the analyses run with R and
@@ -176,6 +185,48 @@ public class TopAnatRManagerIT extends TestAncestor {
         List<String> console = Files.readAllLines(directory.resolve("topAnat_log.R_console"));
         assertTrue("The console should end with the message of an analysis without result",
                 console.get(console.size() - 1).contains(TopAnatRManager.NO_RESULT_MESSAGE_PREFIX));
+    }
+
+    /**
+     * Test that interrupting the thread running the R code, as the cancellation of a job does,
+     * stops R, rather than letting it run to its end.
+     */
+    @Test
+    public void shouldStopRWhenInterrupted() throws Exception {
+        RCode code = RCode.create();
+        code.addRCode("Sys.sleep(120)");
+        code.addRCode("resultExist <- TRUE");
+        Globals.setRscriptCurrent(this.rscript);
+        TopAnatRManager rManager = new TopAnatRManager(
+                RCaller.create(RCallerOptions.create(FailurePolicy.RETRY_1, Long.MAX_VALUE)), code,
+                this.props, params(DecorrelationType.NONE, FOREGROUND));
+        String consoleFile = this.tmpFolder.getRoot().toPath().resolve("console.txt").toString();
+        AtomicReference<Throwable> thrown = new AtomicReference<>();
+        Thread analysis = new Thread(() -> {
+            try {
+                rManager.performRFunction(consoleFile);
+            } catch (Throwable e) {
+                thrown.set(e);
+            }
+        });
+        analysis.start();
+
+        //R, the only process started by the tests at this point
+        ProcessHandle r = null;
+        for (int i = 0; i < 100 && r == null; i++) {
+            r = ProcessHandle.current().children().findFirst().orElse(null);
+            if (r == null) {
+                Thread.sleep(100);
+            }
+        }
+        assertNotNull("R should have been started", r);
+        analysis.interrupt();
+        analysis.join(10000);
+        assertFalse("The analysis should end once interrupted", analysis.isAlive());
+        assertNotNull("The interrupted analysis should end with an exception", thrown.get());
+        //R ends right after being stopped, long before its 120 seconds
+        r.onExit().get(10, TimeUnit.SECONDS);
+        assertFalse("R should be stopped", r.isAlive());
     }
 
     /**

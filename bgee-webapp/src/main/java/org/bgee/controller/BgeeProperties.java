@@ -571,9 +571,10 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * {@link #getTopAnatResultsWritingDirectory()} should be generated on webapp startup.
      * <p>
      * Generating them means propagating the expression calls of every gene of every species,
-     * which takes a long time: a deployment that does not serve topAnat, such as an API version
-     * used for tests, can set this property to {@code false}. The files are then simply absent,
-     * and only topAnat is affected.
+     * which takes a long time and loads the database: the files are produced by the pipeline
+     * and copied there. A deployment can set this property to {@code true} for the webapp
+     * to fill a gap, by generating the files of the species missing them, one gene batch
+     * at a time.
      *
      * @see #GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_DEFAULT
      * @see #isGenerateTopAnatCallFilesOnStartup()
@@ -582,10 +583,10 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
             "org.bgee.webapp.generateTopAnatCallFiles";
     /**
      * The default {@code boolean} value for the property
-     * {@link #GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_KEY}. {@code true}, so that a deployment
-     * serving topAnat keeps working without having to declare anything.
+     * {@link #GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_KEY}. {@code false}: the files come from
+     * the pipeline, the webapp only generates them when requested.
      */
-    public final static boolean GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_DEFAULT = true;
+    public final static boolean GENERATE_TOPANAT_CALL_FILES_ON_STARTUP_DEFAULT = false;
 
     /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties
@@ -1241,8 +1242,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     /**
      * @return  A {@code boolean} defining, when {@code true}, that the topAnat call files
      *          missing from {@link #getTopAnatResultsWritingDirectory()} should be generated
-     *          on webapp startup. When {@code false}, they are left absent and topAnat
-     *          analyses will not run.
+     *          on webapp startup. When {@code false}, they are left absent, and the topAnat
+     *          analyses of their species fail.
      */
     public boolean isGenerateTopAnatCallFilesOnStartup() {
         return generateTopAnatCallFilesOnStartup;

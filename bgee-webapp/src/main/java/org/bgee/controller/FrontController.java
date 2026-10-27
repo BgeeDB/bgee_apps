@@ -443,8 +443,8 @@ public class FrontController extends HttpServlet {
         //This is long, but it runs in the initialization thread started by the context listener,
         //so the server itself does not wait for it. A failure here must not be seen as a failure
         //of the cache initialization above: only topAnat is affected.
-        //A deployment not serving topAnat, such as an API version used for tests, can skip
-        //this altogether with the property org.bgee.webapp.generateTopAnatCallFiles.
+        //Only when requested by the property org.bgee.webapp.generateTopAnatCallFiles:
+        //the files are normally produced by the pipeline.
         log.info("Generating the missing topAnat call files: {}",
                 this.prop.isGenerateTopAnatCallFilesOnStartup());
         if (this.prop.isGenerateTopAnatCallFilesOnStartup()) {

@@ -254,6 +254,13 @@ public class URLParameters {
      */
     private static final Parameter<Boolean> GENE_INFO = new Parameter<Boolean>("gene_info",
             false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} defining whether the results of a TopAnat analysis keep
+     * the conditions redundant with a more precise one, left out by default.
+     * Corresponds to the URL parameter "keep_redundant".
+     */
+    private static final Parameter<Boolean> KEEP_REDUNDANT = new Parameter<Boolean>("keep_redundant",
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
    
     /**
      * A {@code Parameter<String>} that contains the foreground gene IDs to be used 
@@ -855,7 +862,7 @@ public class URLParameters {
             EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DECORRELATION_TYPE,
             CALL_FILE_TYPE, BACKGROUND_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
-            GENE_INFO, 
+            GENE_INFO, KEEP_REDUNDANT,
             //ID to identify a specific analysis
             ANALYSIS_ID, 
             //DAO as webservice
@@ -1349,6 +1356,13 @@ public class URLParameters {
      */
     public Parameter<Boolean> getParamGeneInfo() {
         return GENE_INFO;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} defining whether the results of a TopAnat analysis
+     *          keep the conditions redundant with a more precise one, left out by default.
+     */
+    public Parameter<Boolean> getParamKeepRedundant() {
+        return KEEP_REDUNDANT;
     }
     
     /**

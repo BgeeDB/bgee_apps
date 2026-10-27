@@ -79,6 +79,11 @@ public final class TopAnatResultsTypeAdapter extends TypeAdapter<TopAnatResults>
             }
             out.name("pValue").value(row.getPval());
             out.name("FDR").value(row.getFdr());
+            //The flag of the conditions redundant with a more precise one, when the results
+            //keep them
+            if (results.isKeepRedundant()) {
+                out.name("redundant").value(row.isRedundant());
+            }
             
             out.endObject();
         }

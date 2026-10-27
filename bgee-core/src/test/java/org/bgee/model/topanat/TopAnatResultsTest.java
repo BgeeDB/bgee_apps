@@ -2,6 +2,8 @@ package org.bgee.model.topanat;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +14,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +47,11 @@ public class TopAnatResultsTest extends TestAncestor {
      * The {@link BgeeProperties} instance that contains the properties
      */
     private BgeeProperties props;
+
+    /**
+     * The {@link TopAnatService} providing the properties and the locks to the results
+     */
+    private TopAnatService mockTopAnatService;
     
     /**
      * This method inits the mock and real objects needed to run the tests
@@ -56,15 +65,15 @@ public class TopAnatResultsTest extends TestAncestor {
         this.props = BgeeProperties.getBgeeProperties();
         
         TopAnatParams mockTopAnatParams = mock(TopAnatParams.class);
-        TopAnatService mockTopAnatService = mock(TopAnatService.class);
-        when(mockTopAnatService.getBgeeProperties()).thenReturn(this.props);
-        when(mockTopAnatService.getReadWriteLocks()).thenReturn(new ManageReadWriteLocks());
+        this.mockTopAnatService = mock(TopAnatService.class);
+        when(this.mockTopAnatService.getBgeeProperties()).thenReturn(this.props);
+        when(this.mockTopAnatService.getReadWriteLocks()).thenReturn(new ManageReadWriteLocks());
         
         this.topAnatResults = new TopAnatResults(mockTopAnatParams,
                 "topanat/results",
                 "test.tsv",
                 "","","","","",
-                mockTopAnatService);
+                this.mockTopAnatService);
         
     }
 
@@ -78,30 +87,54 @@ public class TopAnatResultsTest extends TestAncestor {
         assertEquals(this.topAnatResults.getRows().toString(),
         "[TopAnatResultRow [anatEntitiesId=UBERON:0003052, anatEntitiesName=midbrain-hindbrain "
         + "boundary, annotated=48.0, significant=20.0, expected=0.0609837255732349, "
-        + "enrich=327.956349206349, pval=3.63340603984234E-52, fdr=1.86393729843912E-49], "
+        + "enrich=327.956349206349, pval=3.63340603984234E-52, fdr=1.86393729843912E-49, redundant=false], "
         + "TopAnatResultRow [anatEntitiesId=UBERON:0007651, anatEntitiesName=anatomical junction, "
         + "annotated=70.0, significant=20.0, expected=0.0889345997943009, enrich=224.884353741497, "
-        + "pval=3.51013974794287E-48, fdr=9.00350845347345E-46], TopAnatResultRow "
+        + "pval=3.51013974794287E-48, fdr=9.00350845347345E-46, redundant=false], TopAnatResultRow "
         + "[anatEntitiesId=UBERON:0002616, anatEntitiesName=regional part of brain, annotated=145.0, "
         + "significant=18.0, expected=0.18422167100248, enrich=97.7083743842364, "
-        + "pval=4.04315865669295E-35, fdr=6.91380130294494E-33], TopAnatResultRow "
+        + "pval=4.04315865669295E-35, fdr=6.91380130294494E-33, redundant=false], TopAnatResultRow "
         + "[anatEntitiesId=UBERON:0000073, anatEntitiesName=regional part of nervous system, "
         + "annotated=159.0, significant=18.0, expected=0.202008590961341, enrich=89.1051212938005, "
-        + "pval=2.34390883546403E-34, fdr=3.00606308148262E-32], TopAnatResultRow "
+        + "pval=2.34390883546403E-34, fdr=3.00606308148262E-32, redundant=false], TopAnatResultRow "
         + "[anatEntitiesId=UBERON:0000924, anatEntitiesName=ectoderm, annotated=193.0, "
         + "significant=18.0, expected=0.245205396575715, enrich=73.4078460399704, "
-        + "pval=9.14563003866293E-33, fdr=9.38341641966816E-31], TopAnatResultRow "
+        + "pval=9.14563003866293E-33, fdr=9.38341641966816E-31, redundant=false], TopAnatResultRow "
         + "[anatEntitiesId=UBERON:0001048, anatEntitiesName=primordium, annotated=274.0, "
         + "significant=19.0, expected=0.348115433480549, enrich=54.5795968022245, "
-        + "pval=1.57264900361549E-32, fdr=1.34461489809125E-30], TopAnatResultRow "
+        + "pval=1.57264900361549E-32, fdr=1.34461489809125E-30, redundant=false], TopAnatResultRow "
         + "[anatEntitiesId=UBERON:0000923, anatEntitiesName=germ layer, annotated=292.0, "
         + "significant=19.0, expected=0.370984330570512, enrich=51.2151011089367, "
-        + "pval=5.47277244903089E-32, fdr=3.50941533294106E-30], TopAnatResultRow "
+        + "pval=5.47277244903089E-32, fdr=3.50941533294106E-30, redundant=false], TopAnatResultRow "
         + "[anatEntitiesId=UBERON:0010316, anatEntitiesName=germ layer / neural crest, "
         + "annotated=292.0, significant=19.0, expected=0.370984330570512, enrich=51.2151011089367, "
-        + "pval=5.47277244903089E-32, fdr=3.50941533294106E-30], TopAnatResultRow "
+        + "pval=5.47277244903089E-32, fdr=3.50941533294106E-30, redundant=false], TopAnatResultRow "
         + "[anatEntitiesId=UBERON:0005291, anatEntitiesName=embryonic tissue, annotated=343.0, "
         + "significant=19.0, expected=0.435779538992075, enrich=43.6000277662085, "
-        + "pval=1.26851049582346E-30, fdr=7.23050982619374E-29]]");
-    }    
+        + "pval=1.26851049582346E-30, fdr=7.23050982619374E-29, redundant=false]]");
+    }
+
+    /**
+     * Test the reading of the flag of the conditions redundant with a more precise one,
+     * in a result file holding it, and the rows leaving them out.
+     */
+    @Test
+    public void shouldReadTheRedundantConditions() throws IOException {
+        TopAnatResults results = new TopAnatResults(mock(TopAnatParams.class),
+                "topanat/results", "test_redundant.tsv", "", "", "", "", "",
+                this.mockTopAnatService);
+        assertTrue("The rows should keep the redundant conditions by default",
+                results.isKeepRedundant());
+        List<TopAnatResults.TopAnatResultRow> rows = results.getRows();
+        assertEquals("Incorrect redundant conditions", List.of(false, true, false),
+                rows.stream().map(TopAnatResults.TopAnatResultRow::isRedundant)
+                .collect(Collectors.toList()));
+        assertEquals("Incorrect p-value of a redundant condition", 9.58e-23, rows.get(1).getPval(), 0.0);
+
+        TopAnatResults withoutRedundant = results.keepRedundant(false);
+        assertFalse("The rows should leave out the redundant conditions",
+                withoutRedundant.isKeepRedundant());
+        assertEquals("Incorrect rows without the redundant conditions",
+                List.of(rows.get(0), rows.get(2)), withoutRedundant.getRows());
+    }
 }

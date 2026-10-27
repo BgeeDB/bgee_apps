@@ -191,7 +191,9 @@ public class CommandTopAnat extends CommandParent {
                         this.topAnatParams, job).collect(Collectors.toSet());
                 if (sendMail) {
                     for (TopAnatResults result: results) {
-                        int rowCount = result.getRows().size();
+                        //The results displayed by default, without the conditions redundant
+                        //with a more precise one
+                        int rowCount = result.keepRedundant(false).getRows().size();
                         resultCount += rowCount;
                         if (rowCount > 0) {
                             analysesWithResultCount++;
@@ -552,8 +554,11 @@ public class CommandTopAnat extends CommandParent {
                         data));
             }
 
+            //The result files keep the conditions redundant with a more precise one, flagged:
+            //they are left out of the results sent, unless requested
+            boolean keepRedundant = Boolean.TRUE.equals(this.requestParameters.getKeepRedundant());
             Stream<TopAnatResults> topAnatResults = topAnatService.proceedToTopAnatAnalyses(
-                    topAnatParams, null);
+                    topAnatParams, null).map(result -> result.keepRedundant(keepRedundant));
 
             //FIXME: I don't know why, but I don't manage to make the Stream to be printed.
             //Collecting the results while waiting for a fix.

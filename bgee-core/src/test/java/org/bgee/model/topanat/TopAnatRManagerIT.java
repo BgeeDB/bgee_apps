@@ -1,6 +1,7 @@
 package org.bgee.model.topanat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -134,6 +135,11 @@ public class TopAnatRManagerIT extends TestAncestor {
         //The brain, then the organ, the most significant conditions, drawn in the graph
         assertCondition(rows.get(BRAIN), "brain", 10, 8);
         assertCondition(rows.get(ORGAN), "organ", 20, 8);
+        //The root added by BgeeDB holds the 40 genes of the anatomical structure, its child:
+        //it is kept in the result file, flagged as redundant
+        assertTrue("The root should be flagged as redundant", rows.get("BGEE:0").isRedundant());
+        assertFalse("The anatomical structure should not be redundant",
+                rows.get(STRUCTURE).isRedundant());
         assertTrue("The graph should be drawn", Files.size(
                 this.tmpFolder.getRoot().toPath().resolve("analysis/topAnat_results.pdf")) > 0);
     }

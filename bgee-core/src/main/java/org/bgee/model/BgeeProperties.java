@@ -249,7 +249,7 @@ public class BgeeProperties {
      *
      * @see #BGEEDB_MINIMUM_VERSION_KEY
      */
-    public final static String BGEEDB_MINIMUM_VERSION_DEFAULT = "2.39.4";
+    public final static String BGEEDB_MINIMUM_VERSION_DEFAULT = "2.39.6";
 
     /**
      * A {@code String} that is the key to access to the System property that contains 

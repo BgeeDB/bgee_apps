@@ -176,8 +176,11 @@ public class TopAnatRManager {
         code.addRCode("    results <- runTest(myTopAnatObject, algorithm = '"
                 + this.params.getDecorrelationType().getCode() + "', statistic = '"
                 + this.params.getStatisticTest().getCode() + "')");
+        //The conditions redundant with a more precise one are kept in the result file, flagged:
+        //the analyses being cached by their parameters, a display can show them without running
+        //the analysis again
         code.addRCode("    tableOver <- makeTable(topAnatData, myTopAnatObject, results, cutoff = "
-                + this.params.getFdrThreshold() + ")");
+                + this.params.getFdrThreshold() + ", keepRedundant = TRUE)");
         //if we get results, save the results and generate a graph visualization
         code.addRCode("    if (is.data.frame(tableOver) && nrow(tableOver) > 0) {");
         //The columns read by the web page, with 3 significant digits
@@ -185,14 +188,15 @@ public class TopAnatRManager {
         code.addRCode("        tableOver[[column]] <- signif(tableOver[[column]], 3)");
         code.addRCode("      }");
         code.addRCode("      names(tableOver) <- c('OrganId', 'OrganName', 'Annotated', 'Significant', "
-                + "'Expected', 'foldEnrichment', 'p', 'fdr')");
+                + "'Expected', 'foldEnrichment', 'p', 'fdr', '" + TopAnatResults.REDUNDANT_COLUMN + "')");
         code.addRCode("      write.table(tableOver, file = topOBOResultFile, sep = '\\t', row.names = FALSE, "
                 + "col.names = TRUE, quote = FALSE)");
         code.addRCode("      resultExist <- TRUE");
         //the most significant conditions below the p-value threshold, at most
-        //the number of nodes requested
+        //the number of nodes requested, without the redundant ones, as the graph draws them
         code.addRCode("      resultCount <- min(sum(tableOver$p <= " + this.params.getPvalueThreshold()
-                + "), " + this.params.getNumberOfSignificantNodes() + ")");
+                + " & !tableOver$" + TopAnatResults.REDUNDANT_COLUMN + "), "
+                + this.params.getNumberOfSignificantNodes() + ")");
         code.addRCode("      cat(paste('Number of nodes to display: ', resultCount, '\\n'))");
         code.addRCode("      if (resultCount > 0) {");
         code.addRCode("        printTopAnatGraph(topAnatData, myTopAnatObject, results, "
@@ -294,6 +298,8 @@ public class TopAnatRManager {
               .append("results <- runTest(myTopAnatObject, algorithm = '")
               .append(this.params.getDecorrelationType().getCode()).append("', statistic = '")
               .append(this.params.getStatisticTest().getCode()).append("')\n")
+              .append("# Without the conditions redundant with a more precise one: keepRedundant = TRUE ")
+              .append("keeps them, flagged in a column redundant, as the results file does\n")
               .append("tableOver <- makeTable(myTopAnatData, myTopAnatObject, results, cutoff = ")
               .append(this.params.getFdrThreshold()).append(")\n")
               .append("# The graph of the most significant conditions below the p-value threshold, at most ")

@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.supercsv.cellprocessor.CellProcessorAdaptor;
+import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDouble;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -35,6 +37,12 @@ public class TopAnatResults {
     private final static Logger log = LogManager
             .getLogger(TopAnatResults.class.getName());
 
+    /**
+     * The column of the result file telling the conditions redundant with a more precise one,
+     * written by the R code (see {@link TopAnatRManager}).
+     */
+    final static String REDUNDANT_COLUMN = "redundant";
+
     public static class TopAnatResultRow{
 
         /**
@@ -56,6 +64,11 @@ public class TopAnatResults {
 
         private final double fdr;
 
+        /**
+         * Whether the result of this condition repeats the one of one of its sub-conditions.
+         */
+        private final boolean redundant;
+
         public TopAnatResultRow(Map<String, Object> line){
             this.anatEntitiesId = (String) line.get("OrganId");
             this.anatEntitiesName = (String) line.get("OrganName");
@@ -65,6 +78,7 @@ public class TopAnatResults {
             this.enrich = (Double) line.get("foldEnrichment");
             this.pval = (Double) line.get("p");
             this.fdr = (Double) line.get("fdr");
+            this.redundant = Boolean.TRUE.equals(line.get(REDUNDANT_COLUMN));
         }
 
         public String getAnatEntitiesId() {
@@ -99,11 +113,21 @@ public class TopAnatResults {
             return fdr;
         }
 
+        /**
+         * @return  {@code true} when this condition is redundant with a more precise one: its result
+         *          repeats the one of one of its sub-conditions. The result file keeps it, for
+         *          a display to be able to show it.
+         */
+        public boolean isRedundant() {
+            return redundant;
+        }
+
         @Override
         public String toString() {
             return "TopAnatResultRow [anatEntitiesId=" + anatEntitiesId + ", anatEntitiesName=" + anatEntitiesName
                     + ", annotated=" + annotated + ", significant=" + significant + ", expected=" + expected
-                    + ", enrich=" + enrich + ", pval=" + pval + ", fdr=" + fdr + "]";
+                    + ", enrich=" + enrich + ", pval=" + pval + ", fdr=" + fdr + ", redundant="
+                    + redundant + "]";
         }
 
         @Override
@@ -125,6 +149,7 @@ public class TopAnatResults {
             result = prime * result + (int) (temp ^ (temp >>> 32));
             temp = Double.doubleToLongBits(significant);
             result = prime * result + (int) (temp ^ (temp >>> 32));
+            result = prime * result + Boolean.hashCode(redundant);
             return result;
         }
 
@@ -172,6 +197,9 @@ public class TopAnatResults {
             if (Double.doubleToLongBits(significant) != Double.doubleToLongBits(other.significant)) {
                 return false;
             }
+            if (redundant != other.redundant) {
+                return false;
+            }
             return true;
         }
     }
@@ -197,6 +225,12 @@ public class TopAnatResults {
 
     private final BgeeProperties props;
 
+    /**
+     * Whether {@link #getRows()} keeps the conditions redundant with a more precise one,
+     * as the result file holds them, or leaves them out.
+     */
+    private final boolean keepRedundant;
+
     public TopAnatResults(TopAnatParams topAnatParams, String resultDirectory, String resultFileName,
             String resultPDFFileName, String rScriptAnalysisFileName, String  paramsOutputFileName,
             String rScriptConsoleFileName, String zipFileName, TopAnatService topAnatService){
@@ -210,6 +244,43 @@ public class TopAnatResults {
         this.zipFileName = zipFileName;
         this.topAnatService = topAnatService;
         this.props = topAnatService.getBgeeProperties();
+        this.keepRedundant = true;
+    }
+    /**
+     * @param results       The {@code TopAnatResults} to copy.
+     * @param keepRedundant See {@link #keepRedundant(boolean)}.
+     */
+    private TopAnatResults(TopAnatResults results, boolean keepRedundant) {
+        this.topAnatParams = results.topAnatParams;
+        this.resultDirectory = results.resultDirectory;
+        this.resultFileName = results.resultFileName;
+        this.resultPDFFileName = results.resultPDFFileName;
+        this.rScriptAnalysisFileName = results.rScriptAnalysisFileName;
+        this.rScriptConsoleFileName = results.rScriptConsoleFileName;
+        this.paramsOutputFileName = results.paramsOutputFileName;
+        this.zipFileName = results.zipFileName;
+        this.topAnatService = results.topAnatService;
+        this.props = results.props;
+        this.keepRedundant = keepRedundant;
+    }
+
+    /**
+     * @param keepRedundant A {@code boolean} that is {@code true} for the rows returned by
+     *                      {@link #getRows()} to keep the conditions redundant with
+     *                      a more precise one, flagged (see {@link TopAnatResultRow#isRedundant()}),
+     *                      {@code false} for them to leave them out.
+     * @return              These results, keeping or leaving out the redundant conditions.
+     */
+    public TopAnatResults keepRedundant(boolean keepRedundant) {
+        return new TopAnatResults(this, keepRedundant);
+    }
+    /**
+     * @return  {@code true} when {@link #getRows()} keeps the conditions redundant with
+     *          a more precise one, as the result file holds them, {@code false} when it leaves
+     *          them out. See {@link #keepRedundant(boolean)}.
+     */
+    public boolean isKeepRedundant() {
+        return keepRedundant;
     }
     
     //TODO: javadoc. CellProcessor needed because R returns "Inf" or "NaN" in case of division by 0.
@@ -274,7 +345,7 @@ public class TopAnatResults {
                     new CsvMapReader(new FileReader(resultFile), 
                             CsvPreference.TAB_PREFERENCE)) {
                 String[] header = mapReader.getHeader(true);
-                CellProcessor[] processors = new CellProcessor[] { 
+                List<CellProcessor> processorList = new ArrayList<>(List.of(
                         new NotNull(), // AnatEntity Id
                         new org.supercsv.cellprocessor.Optional(), // AnatEntity Name
                         new NotNull(new ParseDouble()), // Annotated
@@ -283,12 +354,21 @@ public class TopAnatResults {
                         new NotNull(new CustomParseDouble()), // fold enrich
                         new NotNull(new ParseDouble()), // p
                         new NotNull(new ParseDouble()) // fdr
-                };
+                ));
+                //The flag of the conditions redundant with a more precise one, as R writes
+                //a logical, when the result file has it
+                if (header != null && Arrays.asList(header).contains(REDUNDANT_COLUMN)) {
+                    processorList.add(new NotNull(new ParseBool("TRUE", "FALSE")));
+                }
+                CellProcessor[] processors = processorList.toArray(new CellProcessor[0]);
                 Map<String, Object> row;
                 if(header != null){
                     // Stream all lines TODO
                     while( (row = mapReader.read(header, processors)) != null ) {
-                        listToReturn.add(new TopAnatResults.TopAnatResultRow(row));
+                        TopAnatResults.TopAnatResultRow resultRow = new TopAnatResults.TopAnatResultRow(row);
+                        if (this.keepRedundant || !resultRow.isRedundant()) {
+                            listToReturn.add(resultRow);
+                        }
                     }
                 }
             }

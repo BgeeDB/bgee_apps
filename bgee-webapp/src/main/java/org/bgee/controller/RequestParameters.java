@@ -2809,6 +2809,17 @@ public class RequestParameters {
     }
     /**
      * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamKeepRedundant()}. Equivalent to calling 
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
+     * 
+     * @return  A {@code Boolean} that is the value of the {@code keep_redundant} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public Boolean getKeepRedundant() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamKeepRedundant());
+    }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamApiKey()}. Equivalent to calling 
      * {@link #getFirstValue(Parameter)} for this parameter.
      * 

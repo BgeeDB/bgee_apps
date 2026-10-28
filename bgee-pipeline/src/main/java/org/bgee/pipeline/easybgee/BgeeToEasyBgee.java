@@ -1269,7 +1269,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 } catch (SQLException e) {
                     throw log.throwing(new IllegalStateException("Can not insert at least one " + tsvFile.getTableName()
                             + " in the database. Please verify that both the database "
-                            + "and the table exist, and that the table is empty."));
+                            + "and the table exist, and that the table is empty.", e));
                 }
             } catch (FileNotFoundException e) {
                 throw log.throwing(

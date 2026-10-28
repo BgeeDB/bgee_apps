@@ -262,7 +262,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("GLOBAL_CONDITION_ID", "globalConditionId");
                         put("SUMMARY_QUALITY", "summaryQuality");
                         put("MEAN_SCORE", "score");
-                        put("FDR_PVALUE", "pValue");
+                        put("PVALUE", "pValue");
                         put("ORIGIN", "propagationOrigin");
                         put("CALL_TYPE", "callType");
                     }
@@ -272,7 +272,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("GLOBAL_CONDITION_ID", Types.INTEGER);
                         put("SUMMARY_QUALITY", Types.VARCHAR);
                         put("MEAN_SCORE", Types.DECIMAL);
-                        put("FDR_PVALUE", Types.DECIMAL);
+                        put("PVALUE", Types.DECIMAL);
                         put("ORIGIN", Types.VARCHAR);
                         put("CALL_TYPE", Types.VARCHAR);
                     }
@@ -282,7 +282,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("GLOBAL_CONDITION_ID", false);
                         put("SUMMARY_QUALITY", false);
                         put("MEAN_SCORE", false);
-                        put("FDR_PVALUE", true);
+                        put("PVALUE", true);
                         put("ORIGIN", false);
                         put("CALL_TYPE", false);
                     }
@@ -330,7 +330,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     private static String GLOBAL_EXPRESSION_SUMMARY_QUALITY = "SUMMARY_QUALITY";
     private static String GLOBAL_EXPRESSION_MEAN_SCORE = "MEAN_SCORE";
     private static String GLOBAL_EXPRESSION_ORIGIN = "ORIGIN";
-    private static String GLOBAL_EXPRESSION_FDR_PVALUE = "FDR_PVALUE";
+    private static String GLOBAL_EXPRESSION_PVALUE = "PVALUE";
     private static String GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE = "CALL_TYPE";
 
     private final Function<DAOManager, ServiceFactory> serviceFactoryProvider;
@@ -512,7 +512,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
 
         String[] header = new String[] { "BGEE_GENE_ID", "GLOBAL_CONDITION_ID", GLOBAL_EXPRESSION_SUMMARY_QUALITY,
-                GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_FDR_PVALUE,
+                GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_PVALUE,
                 GLOBAL_EXPRESSION_ORIGIN, GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE };
 
         // init summaryCallTypeQualityFilter: only export calls of at least SILVER quality.
@@ -687,7 +687,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                     call.getExpressionScore() == null? null: call.getExpressionScore().toString());
             headerToValuePerCall.put(GLOBAL_EXPRESSION_ORIGIN,
                     dataPropagationToString(call.getDataPropagation()));
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE,
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_PVALUE,
                     call.getAllDataTypePValue() == null? null: call.getAllDataTypePValue().toString());
             return headerToValuePerCall;
         }).filter(Objects::nonNull).collect(Collectors.toList());

@@ -818,7 +818,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     processors[i] = new IsElementOf(qualitySummaries);
                     break;
                 case EXPRESSION_SCORE_COLUMN_NAME:
-                case FDR_COLUMN_NAME:
+                case PVALUE_COLUMN_NAME:
                     // It is a String to be able to write values such as '3.32e4' and NA_VALUE.
                     // It could be a Long if we didn't want exponential values
                     // and if all rows had a score and a rank => not the case
@@ -850,13 +850,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     processors[i] = new IsElementOf(originValues);
                 } else if (header[i].equals(IN_SITU_EXPRESSION_SCORE_COLUMN_NAME) ||
                         header[i].equals(IN_SITU_WEIGHT_COLUMN_NAME) ||
-                        header[i].equals(IN_SITU_FDR_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_PVALUE_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_EXPRESSION_SCORE_COLUMN_NAME) ||
                         header[i].equals(RNASEQ_WEIGHT_COLUMN_NAME) ||
-                        header[i].equals(RNASEQ_FDR_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_PVALUE_COLUMN_NAME) ||
                         header[i].equals(SC_RNA_SEQ_EXPRESSION_SCORE_COLUMN_NAME) ||
                         header[i].equals(SC_RNA_SEQ_WEIGHT_COLUMN_NAME) ||
-                        header[i].equals(SC_RNA_SEQ_FDR_COLUMN_NAME)) {
+                        header[i].equals(SC_RNA_SEQ_PVALUE_COLUMN_NAME)) {
                     // It is a String to be able to write values such as '3.32e4' and NA_VALUE.
                     // It could be a Long if we didn't want exponential values
                     // and if all columns had a score and a rank => not the case
@@ -910,26 +910,26 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
         headers.add(EXPRESSION_COLUMN_NAME);
         headers.add(QUALITY_COLUMN_NAME);
-        headers.add(FDR_COLUMN_NAME);
+        headers.add(PVALUE_COLUMN_NAME);
         headers.add(EXPRESSION_SCORE_COLUMN_NAME);
         if (!fileType.isSimpleFileType()) {
             // *** Headers specific to complete file ***
             headers.add(INCLUDING_OBSERVED_DATA_COLUMN_NAME);
             headers.add(IN_SITU_DATA_COLUMN_NAME);
             headers.add(IN_SITU_QUAL_COLUMN_NAME);
-            headers.add(IN_SITU_FDR_COLUMN_NAME);
+            headers.add(IN_SITU_PVALUE_COLUMN_NAME);
             headers.add(IN_SITU_EXPRESSION_SCORE_COLUMN_NAME);
             headers.add(IN_SITU_WEIGHT_COLUMN_NAME);
             headers.add(IN_SITU_OBSERVED_DATA_COLUMN_NAME);
             headers.add(RNASEQ_DATA_COLUMN_NAME);
             headers.add(RNASEQ_QUAL_COLUMN_NAME);
-            headers.add(RNASEQ_FDR_COLUMN_NAME);
+            headers.add(RNASEQ_PVALUE_COLUMN_NAME);
             headers.add(RNASEQ_EXPRESSION_SCORE_COLUMN_NAME);
             headers.add(RNASEQ_WEIGHT_COLUMN_NAME);
             headers.add(RNASEQ_OBSERVED_DATA_COLUMN_NAME);
             headers.add(SC_RNA_SEQ_DATA_COLUMN_NAME);
             headers.add(SC_RNA_SEQ_QUAL_COLUMN_NAME);
-            headers.add(SC_RNA_SEQ_FDR_COLUMN_NAME);
+            headers.add(SC_RNA_SEQ_PVALUE_COLUMN_NAME);
             headers.add(SC_RNA_SEQ_EXPRESSION_SCORE_COLUMN_NAME);
             headers.add(SC_RNA_SEQ_WEIGHT_COLUMN_NAME);
             headers.add(SC_RNA_SEQ_OBSERVED_DATA_COLUMN_NAME);
@@ -994,8 +994,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 case EXPRESSION_SCORE_COLUMN_NAME:
                     mapping[i] = "expressionScore";
                     break;
-                case FDR_COLUMN_NAME:
-                    mapping[i] = "fdr";
+                case PVALUE_COLUMN_NAME:
+                    mapping[i] = "pValue";
                     break;
             }
 
@@ -1058,8 +1058,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     // this should be the last tested because it's the least specific
                     mapping[i] = "dataExprCounts[" + index + "].callType";
 
-                } else if (header[i].endsWith(FDR_COLUMN_NAME_SUFFIX)) {
-                    mapping[i] = "dataExprCounts[" + index + "].fdr";
+                } else if (header[i].endsWith(PVALUE_COLUMN_NAME_SUFFIX)) {
+                    mapping[i] = "dataExprCounts[" + index + "].pValue";
 
                 } else {
                     throw log.throwing(new IllegalArgumentException("Unrecognized header: "
@@ -1109,26 +1109,26 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
                     headers[i].equals(IN_SITU_DATA_COLUMN_NAME) ||
                     headers[i].equals(IN_SITU_QUAL_COLUMN_NAME) ||
-                    headers[i].equals(IN_SITU_FDR_COLUMN_NAME) ||
+                    headers[i].equals(IN_SITU_PVALUE_COLUMN_NAME) ||
                     headers[i].equals(IN_SITU_EXPRESSION_SCORE_COLUMN_NAME) ||
                     headers[i].equals(IN_SITU_WEIGHT_COLUMN_NAME) ||
                     headers[i].equals(IN_SITU_OBSERVED_DATA_COLUMN_NAME) ||
 
                     headers[i].equals(RNASEQ_DATA_COLUMN_NAME) ||
                     headers[i].equals(RNASEQ_QUAL_COLUMN_NAME) ||
-                    headers[i].equals(RNASEQ_FDR_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_PVALUE_COLUMN_NAME) ||
                     headers[i].equals(RNASEQ_EXPRESSION_SCORE_COLUMN_NAME) ||
                     headers[i].equals(RNASEQ_WEIGHT_COLUMN_NAME) ||
                     headers[i].equals(RNASEQ_OBSERVED_DATA_COLUMN_NAME) ||
 
                     headers[i].equals(SC_RNA_SEQ_DATA_COLUMN_NAME) ||
                     headers[i].equals(SC_RNA_SEQ_QUAL_COLUMN_NAME) ||
-                    headers[i].equals(SC_RNA_SEQ_FDR_COLUMN_NAME) ||
+                    headers[i].equals(SC_RNA_SEQ_PVALUE_COLUMN_NAME) ||
                     headers[i].equals(SC_RNA_SEQ_EXPRESSION_SCORE_COLUMN_NAME) ||
                     headers[i].equals(SC_RNA_SEQ_WEIGHT_COLUMN_NAME) ||
                     headers[i].equals(SC_RNA_SEQ_OBSERVED_DATA_COLUMN_NAME) ||
 
-                    headers[i].equals(FDR_COLUMN_NAME)) {
+                    headers[i].equals(PVALUE_COLUMN_NAME)) {
 
                 quoteMode[i] = false;
             } else if (headers[i].equals(GENE_NAME_COLUMN_NAME) ||
@@ -1338,7 +1338,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 String summaryQuality = convertSummaryQualityToString(callTypeQuality.getValue());
                 String expressionScore = call.getExpressionScore() == null? NA_VALUE:
                     call.getExpressionScore().toPlainString();
-                String fdr = call.getAllDataTypePValue() == null? NA_VALUE:
+                String pValue = call.getAllDataTypePValue() == null? NA_VALUE:
                     call.getFormattedAllDatatypePValue();
                 //Only the calls observed in the requested conditions are retrieved
                 //(see buildCallFilter), so the propagation of every call of these files
@@ -1349,7 +1349,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 if (writerFileType.getKey().isSimpleFileType()) {
                     SingleSpeciesSimpleExprFileBean simpleBean = new SingleSpeciesSimpleExprFileBean(
                         geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
-                        sex, strain, summaryCallType, summaryQuality, expressionScore, fdr);
+                        sex, strain, summaryCallType, summaryQuality, expressionScore, pValue);
                     exprFileBeans.add(simpleBean);
                 } else {
                     List<DataExprCounts> counts = EnumSet.allOf(DataType.class).stream()
@@ -1361,7 +1361,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     SingleSpeciesCompleteExprFileBean completeBean = new SingleSpeciesCompleteExprFileBean(
                             geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
                             sex, strain, summaryCallType, summaryQuality, expressionScore,
-                            fdr, convertObservedDataToString(includingObservedData), counts);
+                            pValue, convertObservedDataToString(includingObservedData), counts);
                     exprFileBeans.add(completeBean);
                 }
             }
@@ -1442,7 +1442,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         private String expression;
         private String callQuality;
         private String expressionScore;
-        private String fdr;
+        private String pValue;
 
         /**
          * 0-argument constructor of the bean.
@@ -1458,7 +1458,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         protected SingleSpeciesExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
                 String sex, String strain, String expression,
-                String callQuality, String expressionScore, String fdr) {
+                String callQuality, String expressionScore, String pValue) {
             this.geneId = geneId;
             this.geneName = geneName;
             this.anatEntityId = anatEntityId;
@@ -1471,7 +1471,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             this.expression = expression;
             this.callQuality = callQuality;
             this.expressionScore = expressionScore;
-            this.fdr = fdr;
+            this.pValue = pValue;
         }
 
         public String getGeneId() {
@@ -1507,8 +1507,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public String getExpressionScore() {
             return expressionScore;
         }
-        public String getFdr() {
-            return fdr;
+        public String getPValue() {
+            return pValue;
         }
         public void setGeneId(String geneId) {
             this.geneId = geneId;
@@ -1543,8 +1543,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setExpressionScore(String expressionScore) {
             this.expressionScore = expressionScore;
         }
-        public void setFdr(String fdr) {
-            this.fdr = fdr;
+        public void setPValue(String pValue) {
+            this.pValue = pValue;
         }
 
         @Override
@@ -1562,7 +1562,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             result = prime * result + ((expression == null) ? 0 : expression.hashCode());
             result = prime * result + ((callQuality == null) ? 0 : callQuality.hashCode());
             result = prime * result + ((expressionScore == null) ? 0 : expressionScore.hashCode());
-            result = prime * result + ((fdr == null) ? 0 : fdr.hashCode());
+            result = prime * result + ((pValue == null) ? 0 : pValue.hashCode());
             return result;
         }
 
@@ -1630,10 +1630,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     return false;
             } else if (!expressionScore.equals(other.expressionScore))
                 return false;
-            if (fdr == null) {
-                if (other.fdr != null)
+            if (pValue == null) {
+                if (other.pValue != null)
                     return false;
-            } else if (!fdr.equals(other.fdr))
+            } else if (!pValue.equals(other.pValue))
                 return false;
             return true;
         }
@@ -1648,7 +1648,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 .append(", sex=").append(sex).append(", strain=").append(strain)
                 .append(", expression=").append(expression).append(", callQuality=").append(callQuality)
                 .append(", expressionScore=").append(expressionScore)
-                .append(", fdr=").append(fdr).append("]");
+                .append(", pValue=").append(pValue).append("]");
             return builder.toString();
         }
     }
@@ -1676,9 +1676,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         protected SingleSpeciesSimpleExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
                 String sex, String strain, String expression, String callQuality,
-                String expressionScore, String fdr) {
+                String expressionScore, String pValue) {
             super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName, sex,
-                    strain, expression, callQuality, expressionScore, fdr);
+                    strain, expression, callQuality, expressionScore, pValue);
         }
     }
 
@@ -1711,10 +1711,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         protected SingleSpeciesCompleteExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
                 String sex, String strain, String expression, String callQuality,
-                String expressionScore, String fdr, String includingObservedData,
+                String expressionScore, String pValue, String includingObservedData,
                 List<DataExprCounts> dataExprCounts) {
             super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName, sex, strain,
-                    expression, callQuality, expressionScore, fdr);
+                    expression, callQuality, expressionScore, pValue);
             this.includingObservedData = includingObservedData;
             this.dataExprCounts = Collections.unmodifiableList(dataExprCounts == null ?
                     new ArrayList<>() : new ArrayList<>(dataExprCounts));
@@ -1793,17 +1793,17 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         private DataType dataType;
         private String callType;
         private String callQuality;
-        private String fdr;
+        private String pValue;
         private String observedData;
         private String expressionScore;
         private String weight;
 
-        public DataExprCounts(DataType dataType, String callType, String callQuality, String fdr,
+        public DataExprCounts(DataType dataType, String callType, String callQuality, String pValue,
                 String observedData, String expressionScore, String weight) {
             this.dataType = dataType;
             this.callType = callType;
             this.callQuality = callQuality;
-            this.fdr= fdr;
+            this.pValue= pValue;
             this.observedData = observedData;
             this.expressionScore = expressionScore;
             this.weight = weight;
@@ -1827,11 +1827,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setCallQuality(String callQuality) {
             this.callQuality = callQuality;
         }
-        public String getFdr() {
-            return fdr;
+        public String getPValue() {
+            return pValue;
         }
-        public void setFdr(String fdr) {
-            this.fdr = fdr;
+        public void setPValue(String pValue) {
+            this.pValue = pValue;
         }
         public String getObservedData() {
             return observedData;
@@ -1860,7 +1860,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             result = prime * result + ((callQuality == null) ? 0 : callQuality.hashCode());
             result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
             result = prime * result + ((expressionScore == null) ? 0 : expressionScore.hashCode());
-            result = prime * result + ((fdr == null) ? 0 : fdr.hashCode());
+            result = prime * result + ((pValue == null) ? 0 : pValue.hashCode());
             result = prime * result + ((observedData == null) ? 0 : observedData.hashCode());
             result = prime * result + ((weight == null) ? 0 : weight.hashCode());
             return result;
@@ -1891,11 +1891,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             } else if (!callQuality.equals(other.callQuality)) {
                 return false;
             }
-            if (fdr == null) {
-                if (other.fdr != null) {
+            if (pValue == null) {
+                if (other.pValue != null) {
                     return false;
                 }
-            } else if (!fdr.equals(other.fdr)) {
+            } else if (!pValue.equals(other.pValue)) {
                 return false;
             }
             if (dataType != other.dataType) {
@@ -1931,7 +1931,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             builder.append("DataExprCounts [dataType=").append(dataType)
                    .append(", callType=").append(callType)
                    .append(", callQuality=").append(callQuality)
-                   .append(", fdr=").append(fdr)
+                   .append(", pValue=").append(pValue)
                    .append(", observedData=").append(observedData)
                    .append(", expressionScore=").append(expressionScore)
                    .append(", weight=").append(weight).append("]");

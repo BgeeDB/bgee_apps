@@ -94,7 +94,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
 
     public final static String CALL_TYPE_COLUMN_NAME_SUFFIX  = " expression";
     public final static String CALL_QUALITY_COLUMN_NAME_SUFFIX  = " call quality";
-    public final static String FDR_COLUMN_NAME_SUFFIX  = " FDR";
+    public final static String PVALUE_COLUMN_NAME_SUFFIX  = " pValue";
     public final static String EXPRESSION_RANK_COLUMN_NAME_SUFFIX  = " expression rank";
     public final static String EXPRESSION_SCORE_COLUMN_NAME_SUFFIX  = " expression score";
     public final static String WEIGHT_COLUMN_NAME_SUFFIX  = " weight for expression rank and score";
@@ -120,11 +120,11 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     public final static String IN_SITU_QUAL_COLUMN_NAME = 
             DataType.IN_SITU.getStringRepresentation() + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
-     * A {@code String} that is the name of the column containing FDR pvalue found with
-     * RNA-Seq experiment, in the download file.
+     * A {@code String} that is the name of the column containing the p-value found with
+     * <em>in situ</em> experiment, in the download file.
      */
-    public final static String IN_SITU_FDR_COLUMN_NAME = 
-            DataType.IN_SITU.getStringRepresentation() + FDR_COLUMN_NAME_SUFFIX;
+    public final static String IN_SITU_PVALUE_COLUMN_NAME = 
+            DataType.IN_SITU.getStringRepresentation() + PVALUE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing if an <em>in situ</em> experiment 
      * is observed, in the download file.
@@ -173,10 +173,10 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String RNASEQ_QUAL_COLUMN_NAME = DataType.RNA_SEQ.getStringRepresentation() + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
-     * A {@code String} that is the name of the column containing FDR pvalue found with
+     * A {@code String} that is the name of the column containing the p-value found with
      * RNA-Seq experiment, in the download file.
      */
-    public final static String RNASEQ_FDR_COLUMN_NAME = DataType.RNA_SEQ.getStringRepresentation() + FDR_COLUMN_NAME_SUFFIX;
+    public final static String RNASEQ_PVALUE_COLUMN_NAME = DataType.RNA_SEQ.getStringRepresentation() + PVALUE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing if a RNA-Seq experiment 
      * is observed, in the download file.
@@ -228,11 +228,11 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     public final static String SC_RNA_SEQ_QUAL_COLUMN_NAME = DataType.SC_RNA_SEQ.getStringRepresentation() 
             + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
-     * A {@code String} that is the name of the column containing FDR pvalue found with
-     * RNA-Seq experiment, in the download file.
+     * A {@code String} that is the name of the column containing the p-value found with
+     * single-cell RNA-Seq experiment, in the download file.
      */
-    public final static String SC_RNA_SEQ_FDR_COLUMN_NAME = DataType.SC_RNA_SEQ.getStringRepresentation()
-            + FDR_COLUMN_NAME_SUFFIX;
+    public final static String SC_RNA_SEQ_PVALUE_COLUMN_NAME = DataType.SC_RNA_SEQ.getStringRepresentation()
+            + PVALUE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing if a RNA-Seq experiment 
      * is observed, in the download file.
@@ -301,10 +301,10 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String QUALITY_COLUMN_NAME = "Call quality";
     /**
-     * A {@code String} that is the name of the column containing the FDR of the call,
+     * A {@code String} that is the name of the column containing the p-value of the call,
      * in the download file.
      */
-    public final static String FDR_COLUMN_NAME = "FDR";
+    public final static String PVALUE_COLUMN_NAME = "pValue";
     /**
      * A {@code String} that is the name of the column containing the expression score,
      * in the download file.
@@ -717,7 +717,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     protected void addIdsAndNames(Map<String, Object> row, Integer geneId, String geneName, 
             String anatEntityId, String anatEntityName, String stageId, String stageName, 
-            String sex, String strain, String fdr) {
+            String sex, String strain, String pValue) {
         log.entry(row, geneId, geneName, anatEntityId, anatEntityName, stageId, stageName,
                 sex, strain);
         

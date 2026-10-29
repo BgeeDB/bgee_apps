@@ -354,6 +354,14 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     private final static int LOG_EVERY_N_GENES = 500;
 
     /**
+     * A {@code long} that is the number of rows inserted by
+     * {@link #tsvToEasyBgee(String)} between two commits. The global expression table has
+     * more than a billion rows: committing once per file would keep an undo log of hundreds of
+     * GB, make a failure roll back the whole file, and hide the progress of the insertion.
+     */
+    private final static long COMMIT_EVERY_N_ROWS = 500000L;
+
+    /**
      * A {@code String} that is the namespace of the meta stages, the developmental stages
      * shared among species.
      */
@@ -1221,9 +1229,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                 log.info("SQL query : {}", sql);
 
                 try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
-                    // save all data contained in a tsv file using the same
-                    // transaction
+                    // data of a tsv file are committed every COMMIT_EVERY_N_ROWS rows
                     startTransaction();
+                    long insertedRows = 0;
                     Map<String, Object> customerMap;
 
                     // read all lines of the tsv file
@@ -1263,9 +1271,17 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                             columnNumber++;
                         }
                         stmt.executeUpdate();
+                        insertedRows++;
+                        if (insertedRows % COMMIT_EVERY_N_ROWS == 0) {
+                            commit();
+                            startTransaction();
+                            log.info("{} rows of table {} committed so far", insertedRows,
+                                    tsvFile.getTableName());
+                        }
                     }
-                    // commit once all lines of the file have been parsed
+                    // commit the rows inserted since the last commit
                     commit();
+                    log.info("{} rows inserted in table {}", insertedRows, tsvFile.getTableName());
                 } catch (SQLException e) {
                     throw log.throwing(new IllegalStateException("Can not insert at least one " + tsvFile.getTableName()
                             + " in the database. Please verify that both the database "

@@ -92,8 +92,8 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
                         .value(call.getBestDescendantExpressionScore());
                 out.endObject();
 
-                String fdr = call.getFormattedAllDatatypePValue();
-                out.name("fdr").value(fdr);
+                String pValue = call.getFormattedAllDatatypePValue();
+                out.name("pValue").value(pValue);
 
                 out.name("dataTypesWithData");
                 //        EnumSet<DataType> dtWithData = call.getCallData().stream()

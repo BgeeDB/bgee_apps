@@ -2009,9 +2009,9 @@ public class CommandData extends CommandExpressionSupport {
                 List.of("result.expressionQuality"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
-        colDescr.add(new ColumnDescription("FDR",
-                "FDR-corrected p-value of the test of significance of the gene being expressed in the condition.",
-                List.of("result.fdr"),
+        colDescr.add(new ColumnDescription("pValue",
+                "P-value of the test of significance of the gene being expressed in the condition.",
+                List.of("result.pValue"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true, null, null));
         colDescr.add(new ColumnDescription("Expression score",

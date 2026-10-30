@@ -168,6 +168,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * {@code ANAT_ENTITY_ID}, {@code DEV_STAGE_ID}, {@code SEX_ID} and {@code STRAIN_ID} together.
      * If an empty list is provided, the latter is used. Only the conditions using a meta stage
      * (a developmental stage shared among species) are reported.
+     * <li>the number of genes processed per thread.
+     * <li>optional: a {@code boolean} defining whether the species for which all the requested
+     * files already exist in the directory are skipped, to complete a previous pass without
+     * generating them again. A species with only some of the requested files is generated again
+     * entirely. Default is {@code false}.
      * </ol>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -177,12 +182,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     public static void main(String[] args) throws IllegalArgumentException, UncheckedIOException {
         log.traceEntry("{}", (Object[]) args);
 
-        int expectedArgLength = 5;
-        if (args.length != expectedArgLength) {
+        int minArgLength = 5;
+        int maxArgLength = 6;
+        if (args.length < minArgLength || args.length > maxArgLength) {
             throw log.throwing(new IllegalArgumentException(
-                    "Incorrect number of arguments provided, expected " +
-                    expectedArgLength + " arguments, " + args.length + " provided."));
+                    "Incorrect number of arguments provided, expected " + minArgLength + " or "
+                    + maxArgLength + " arguments, " + args.length + " provided."));
         }
+        boolean skipExistingFiles = args.length == maxArgLength
+                && CommandRunner.parseArgumentAsBoolean(args[5]);
 
         GenerateExprFile2 generator = new GenerateExprFile2(
             CommandRunner.parseListArgumentAsInt(args[0]),
@@ -190,7 +198,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 CommandRunner.parseListArgument(args[1]), SingleSpExprFileType2.class),
             args[2],
             GenerateExprFile2.convertToAttributes(CommandRunner.parseListArgument(args[3])),
-            Integer.valueOf(CommandRunner.parseArgument(args[4])));
+            Integer.valueOf(CommandRunner.parseArgument(args[4])),
+            skipExistingFiles);
         generator.generateExprFiles();
 
         log.traceExit();
@@ -259,6 +268,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     private Integer genesChunk;
 
     /**
+     * A {@code boolean} defining whether the species for which all the requested files already
+     * exist in the directory are skipped by {@link #generateExprFiles()}.
+     */
+    private final boolean skipExistingFiles;
+
+    /**
      * Default constructor.
      */
     // suppress warning as this default constructor should not be used.
@@ -285,7 +300,32 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     public GenerateExprFile2(List<Integer> speciesIds, Set<SingleSpExprFileType2> fileTypes, 
             String directory, Set<Attribute> attributes, Integer genesChunk) throws IllegalArgumentException {
-        this(null, speciesIds, fileTypes, directory, attributes, genesChunk);
+        this(speciesIds, fileTypes, directory, attributes, genesChunk, false);
+    }
+
+    /**
+     * Constructor providing parameters to generate files, and using the default
+     * {@code DAOManager}.
+     * 
+     * @param speciesIds        A {@code List} of {@code String}s that are the IDs of species we want 
+     *                          to generate data for. If {@code null} or empty, all species are used.
+     * @param fileTypes         A {@code Set} of {@code ExprFileType}s that are the types of files
+     *                          we want to generate. If {@code null} or empty, all
+     *                          {@code ExprFileType}s are generated.
+     * @param directory         A {@code String} that is the directory where to store files.
+     * @param attributes        A {@code Set} of {@code Attribute}s defining the condition parameters
+     *                          to be used to retrieve {@code ExpressionCall}s.
+     *                          If {@code null} or empty, all parameters will be used. 
+     * @param genesChunk        An {@code Integer} that is the number of genes processed per thread
+     * @param skipExistingFiles A {@code boolean} defining whether the species for which all the
+     *                          requested files already exist in {@code directory} are skipped.
+     * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
+     */
+    public GenerateExprFile2(List<Integer> speciesIds, Set<SingleSpExprFileType2> fileTypes, 
+            String directory, Set<Attribute> attributes, Integer genesChunk,
+            boolean skipExistingFiles) throws IllegalArgumentException {
+        this(null, speciesIds, fileTypes, directory, attributes, ServiceFactory::new, genesChunk,
+                skipExistingFiles);
     }
 
     /**
@@ -337,9 +377,42 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Set<SingleSpExprFileType2> fileTypes, String directory, Set<Attribute> attributes,
         Supplier<ServiceFactory> serviceFactorySupplier, Integer genesChunk)
                 throws IllegalArgumentException {
+        this(manager, speciesIds, fileTypes, directory, attributes, serviceFactorySupplier,
+                genesChunk, false);
+    }
+
+    /**
+     * Constructor providing the {@code MySQLDAOManager} that will be used by this object
+     * to perform queries to the database. This is useful for unit testing.
+     * 
+     * @param manager                   The {@code MySQLDAOManager} to use.
+     * @param speciesIds                A {@code List} of {@code String}s that are the IDs of
+     *                                  species we want to generate data for.
+     *                                  If {@code null} or empty, all species are used.
+     * @param fileTypes                 A {@code Set} of {@code ExprFileType}s that are the types
+     *                                  of files we want to generate. If {@code null} or empty, 
+     *                                  all {@code ExprFileType}s are generated.
+     * @param directory                 A {@code String} that is the directory where to store files.
+     * @param attributes                A {@code Set} of {@code Attribute}s defining the condition 
+     *                                  parameters to be used to retrieve {@code ExpressionCall}s.
+     *                                  If {@code null} or empty, all parameters will be used. 
+     * @param serviceFactorySupplier    A {@code Supplier} of {@code ServiceFactory}s 
+     *                                  to be able to provide one to each thread.
+     * @param genesChunk                An {@code Integer} that is the number of genes processed per
+     *                                  thread
+     * @param skipExistingFiles         A {@code boolean} defining whether the species for which
+     *                                  all the requested files already exist in {@code directory}
+     *                                  are skipped.
+     * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
+     */
+    public GenerateExprFile2(MySQLDAOManager manager, List<Integer> speciesIds,
+        Set<SingleSpExprFileType2> fileTypes, String directory, Set<Attribute> attributes,
+        Supplier<ServiceFactory> serviceFactorySupplier, Integer genesChunk,
+        boolean skipExistingFiles) throws IllegalArgumentException {
         super(manager, speciesIds, fileTypes, directory);
         this.serviceFactorySupplier = serviceFactorySupplier;
         this.genesChunk = genesChunk;
+        this.skipExistingFiles = skipExistingFiles;
         this.params = Collections.unmodifiableSet(attributes == null?
                 new HashSet<>(): new HashSet<>(attributes));
     }
@@ -382,6 +455,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         // Generate expression files, species by species.
         // The generation of files are independent, so we can safely go multi-threading
         for(Integer speciesId: speciesNamesForFilesByIds.keySet()) {
+            if (this.skipExistingFiles
+                    && this.allExprFilesExist(speciesNamesForFilesByIds.get(speciesId))) {
+                log.info("Skip the species {}: all the requested expression files already exist.",
+                        speciesId);
+                continue;
+            }
             log.info("Start generating of expression files for the species {}...", speciesId);
 
             try {
@@ -398,6 +477,42 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
 
         log.traceExit();
+    }
+
+    /**
+     * @param fileNamePrefix    A {@code String} that is the prefix of the names of the files
+     *                          of a species.
+     * @param fileType          The {@code SingleSpExprFileType2} of the file.
+     * @return                  A {@code String} that is the name of the file of type
+     *                          {@code fileType}, for the condition parameters of this object.
+     */
+    private String getExprFileName(String fileNamePrefix, SingleSpExprFileType2 fileType) {
+        log.traceEntry("{}, {}", fileNamePrefix, fileType);
+        String suffix = this.convertAttributeToFileName(this.params);
+        if (StringUtils.isBlank(suffix)) {
+            suffix = "";
+        } else {
+            suffix = "_" + suffix;
+        }
+        return log.traceExit(this.formatString(fileNamePrefix + "_"
+                + fileType.getStringRepresentation() + suffix + EXTENSION));
+    }
+
+    /**
+     * Files are written under a temporary name and renamed when complete: an existing file
+     * is therefore a complete one.
+     *
+     * @param fileNamePrefix    A {@code String} that is the prefix of the names of the files
+     *                          of a species.
+     * @return                  {@code true} if the files of all the requested types already exist
+     *                          in the directory.
+     */
+    private boolean allExprFilesExist(String fileNamePrefix) {
+        log.traceEntry("{}", fileNamePrefix);
+        return log.traceExit(this.fileTypes.stream()
+                .map(fileType -> new File(this.directory,
+                        this.getExprFileName(fileNamePrefix, (SingleSpExprFileType2) fileType)))
+                .allMatch(file -> file.isFile() && file.length() > 0));
     }
 
     /**
@@ -496,14 +611,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 processors.put(currentFileType, fileTypeProcessors);
 
                 // Create file name
-                String suffix = this.convertAttributeToFileName(this.params);
-                if (StringUtils.isBlank(suffix)) {
-                    suffix = "";
-                } else {
-                    suffix = "_" + suffix;
-                }
-                String fileName = this.formatString(fileNamePrefix + "_" +
-                        currentFileType.getStringRepresentation() + suffix + EXTENSION);
+                String fileName = this.getExprFileName(fileNamePrefix, currentFileType);
                 generatedFileNames.put(currentFileType, fileName);
 
                 // write in temp file

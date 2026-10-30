@@ -1,12 +1,10 @@
 package org.bgee.pipeline.easybgee;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -86,10 +84,8 @@ import org.supercsv.cellprocessor.ParseDouble;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.CsvMapWriter;
-import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
 
@@ -368,13 +364,13 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
 
     /**
      * An {@code int} that is the default number of threads inserting the global expression
-     * table in {@link #tsvToEasyBgee(String, int, long)}.
+     * table in {@link #tsvToEasyBgee(String, int)}.
      */
     private final static int DEFAULT_IMPORT_THREAD_COUNT = 1;
 
     /**
      * An {@code int} that is the number of rows inserted together, in one batch and one
-     * transaction, by {@link #tsvToEasyBgee(String, int, long)}. The global expression table has more than
+     * transaction, by {@link #tsvToEasyBgee(String, int)}. The global expression table has more than
      * a billion rows: committing once per file would keep an undo log of hundreds of GB, make a
      * failure roll back the whole file, and hide the progress of the insertion.
      */
@@ -382,7 +378,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
 
     /**
      * A {@code long} that is the number of rows between two progress logs of
-     * {@link #tsvToEasyBgee(String, int, long)}.
+     * {@link #tsvToEasyBgee(String, int)}.
      */
     private final static long LOG_EVERY_N_ROWS = 500000L;
 
@@ -420,16 +416,13 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
      * </li>
      * <li>If the first element in {@code args} is "tsvToEasyBgee", the action
      * will be to import exported TSV files into Easy Bgee database (see
-     * {@link #tsvToEasyBgee(String, int, long)}). Following elements in {@code args} must
+     * {@link #tsvToEasyBgee(String, int)}). Following elements in {@code args} must
      * then be:
      * <ol>
      * <li>path to the input directory containing all TSV files,
      * <li>optional: the number of threads inserting the global expression table, the biggest
      * one. {@link #DEFAULT_IMPORT_THREAD_COUNT} if not provided, or if equal to
-     * {@code CommandRunner.EMPTY_ARG},
-     * <li>optional: the number of rows of the global expression file already inserted, to resume
-     * an interrupted import. If provided and positive, only the global expression table is
-     * imported, starting after these rows.
+     * {@code CommandRunner.EMPTY_ARG}.
      * </ol>
      * </li>
      * <li>If the first element in {@code args} is "emptyDatabaseTables", the
@@ -459,16 +452,14 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                     metaStagesOnly);
         } else if (args[0].equals("tsvToEasyBgee")) {
             int minArgLength = 2;
-            int maxArgLength = 4;
+            int maxArgLength = 3;
             if (args.length < minArgLength || args.length > maxArgLength) {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments provided, expected "
-                        + "between " + minArgLength + " and " + maxArgLength + " arguments, " + args.length
-                        + " provided."));
+                        + minArgLength + " or " + maxArgLength + " arguments, " + args.length + " provided."));
             }
-            Integer threadCount = args.length > 2? CommandRunner.parseArgumentAsInteger(args[2]): null;
-            long skipRows = args.length > 3? Long.parseLong(args[3].trim()): 0;
+            Integer threadCount = args.length == maxArgLength? CommandRunner.parseArgumentAsInteger(args[2]): null;
             bgeeToEasyBgee.tsvToEasyBgee(args[1],
-                    threadCount == null? DEFAULT_IMPORT_THREAD_COUNT: threadCount, skipRows);
+                    threadCount == null? DEFAULT_IMPORT_THREAD_COUNT: threadCount);
         } else if (args[0].equals("emptyDatabaseTables")) {
             int expectedArgLength = 1;
             if (args.length != expectedArgLength) {
@@ -1257,42 +1248,26 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
      * @param importThreadCount
      *            An {@code int} that is the number of threads inserting the global expression
      *            table, the biggest one. Must be positive.
-     * @param skipRows
-     *            A {@code long} that is the number of rows of the global expression file already
-     *            inserted by an interrupted import. If positive, only the global expression table
-     *            is imported, the other ones being supposed complete, and the first
-     *            {@code skipRows} rows of its file are skipped. The file must be the one used by
-     *            the interrupted import, and must not contain any comment line.
-     * @throws IllegalArgumentException If {@code importThreadCount} is not positive, or
-     *                                  {@code skipRows} negative.
+     * @throws IllegalArgumentException If {@code importThreadCount} is not positive.
      */
-    private void tsvToEasyBgee(String directory, int importThreadCount, long skipRows) {
-        log.traceEntry("{}, {}, {}", directory, importThreadCount, skipRows);
+    private void tsvToEasyBgee(String directory, int importThreadCount) {
+        log.traceEntry("{}, {}", directory, importThreadCount);
         if (importThreadCount < 1) {
             throw log.throwing(new IllegalArgumentException(
                     "The number of threads must be positive, but was: " + importThreadCount));
         }
-        if (skipRows < 0) {
-            throw log.throwing(new IllegalArgumentException(
-                    "The number of rows to skip must not be negative, but was: " + skipRows));
-        }
 
         for (TsvFile tsvFile : TsvFile.values()) {
+            log.info("start integration of data from file {}", tsvFile.getFileName());
+            File file = new File(directory, tsvFile.getFileName());
             //only the global expression table is large enough to be worth several threads
             //and relaxed checks
             boolean largeTable = tsvFile == TsvFile.GLOBALEXPRESSION_OUTPUT_FILE;
-            if (skipRows > 0 && !largeTable) {
-                continue;
-            }
-            log.info("start integration of data from file {}", tsvFile.getFileName());
-            File file = new File(directory, tsvFile.getFileName());
             int threadCount = largeTable ? importThreadCount : 1;
 
-            try (BufferedReader reader = new BufferedReader(new FileReader(file), 1 << 20);
-                    ICsvMapReader mapReader = new CsvMapReader(reader, Utils.TSVCOMMENTED)) {
+            try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
                 // the header columns are used as the keys of the Mapping
-                String[] header = skipRows > 0? readHeaderAndSkipRows(reader, skipRows):
-                    mapReader.getHeader(true);
+                String[] header = mapReader.getHeader(true);
                 CellProcessor[] processors = createCellProcessor(tsvFile);
 
                 // create SQL query
@@ -1312,42 +1287,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             }
         }
         log.traceExit();
-    }
-
-    /**
-     * Read the header of a tsv file and skip its first rows, without parsing them: this is much
-     * faster than reading them with a {@code ICsvMapReader}, for a file of billions of rows.
-     * This must be called before anything is read from {@code reader} by a CSV reader.
-     *
-     * @param reader        A {@code BufferedReader} on the tsv file, at its beginning.
-     * @param rowsToSkip    A {@code long} that is the number of rows to skip after the header.
-     * @return              An {@code Array} of {@code String}s that are the columns of the file.
-     * @throws IOException  If the file could not be read.
-     * @throws IllegalArgumentException If the file has less than {@code rowsToSkip} rows.
-     */
-    private static String[] readHeaderAndSkipRows(BufferedReader reader, long rowsToSkip)
-            throws IOException {
-        log.traceEntry("{}, {}", reader, rowsToSkip);
-        String headerLine = reader.readLine();
-        if (headerLine == null) {
-            throw log.throwing(new IOException("The file is empty"));
-        }
-        String[] header;
-        try (ICsvListReader headerReader = new CsvListReader(new StringReader(headerLine),
-                Utils.TSVCOMMENTED)) {
-            header = headerReader.getHeader(true);
-        }
-        log.info("Skip the first {} rows of the file", rowsToSkip);
-        for (long i = 0; i < rowsToSkip; i++) {
-            if (reader.readLine() == null) {
-                throw log.throwing(new IllegalArgumentException("Can not skip " + rowsToSkip
-                        + " rows, the file has only " + i + " rows"));
-            }
-            if ((i + 1) % 50000000L == 0) {
-                log.info("{} rows skipped so far", i + 1);
-            }
-        }
-        return log.traceExit(header);
     }
 
     /**

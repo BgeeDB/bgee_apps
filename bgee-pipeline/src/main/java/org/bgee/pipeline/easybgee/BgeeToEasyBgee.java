@@ -1,10 +1,12 @@
 package org.bgee.pipeline.easybgee;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -22,6 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -51,7 +60,9 @@ import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
+import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -75,8 +86,10 @@ import org.supercsv.cellprocessor.ParseDouble;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.CsvMapWriter;
+import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
 
@@ -354,12 +367,30 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     private final static int LOG_EVERY_N_GENES = 500;
 
     /**
-     * A {@code long} that is the number of rows inserted by
-     * {@link #tsvToEasyBgee(String)} between two commits. The global expression table has
-     * more than a billion rows: committing once per file would keep an undo log of hundreds of
-     * GB, make a failure roll back the whole file, and hide the progress of the insertion.
+     * An {@code int} that is the default number of threads inserting the global expression
+     * table in {@link #tsvToEasyBgee(String, int, long)}.
      */
-    private final static long COMMIT_EVERY_N_ROWS = 500000L;
+    private final static int DEFAULT_IMPORT_THREAD_COUNT = 1;
+
+    /**
+     * An {@code int} that is the number of rows inserted together, in one batch and one
+     * transaction, by {@link #tsvToEasyBgee(String, int, long)}. The global expression table has more than
+     * a billion rows: committing once per file would keep an undo log of hundreds of GB, make a
+     * failure roll back the whole file, and hide the progress of the insertion.
+     */
+    private final static int INSERT_BATCH_SIZE = 10000;
+
+    /**
+     * A {@code long} that is the number of rows between two progress logs of
+     * {@link #tsvToEasyBgee(String, int, long)}.
+     */
+    private final static long LOG_EVERY_N_ROWS = 500000L;
+
+    /**
+     * A {@code List} used as a marker, compared by identity, telling the threads inserting rows
+     * that the end of the file was reached.
+     */
+    private final static List<Map<String, Object>> END_OF_FILE = new ArrayList<>(0);
 
     /**
      * A {@code String} that is the namespace of the meta stages, the developmental stages
@@ -389,10 +420,16 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
      * </li>
      * <li>If the first element in {@code args} is "tsvToEasyBgee", the action
      * will be to import exported TSV files into Easy Bgee database (see
-     * {@link #tsvToEasyBgee(String)}). Following elements in {@code args} must
+     * {@link #tsvToEasyBgee(String, int, long)}). Following elements in {@code args} must
      * then be:
      * <ol>
      * <li>path to the input directory containing all TSV files,
+     * <li>optional: the number of threads inserting the global expression table, the biggest
+     * one. {@link #DEFAULT_IMPORT_THREAD_COUNT} if not provided, or if equal to
+     * {@code CommandRunner.EMPTY_ARG},
+     * <li>optional: the number of rows of the global expression file already inserted, to resume
+     * an interrupted import. If provided and positive, only the global expression table is
+     * imported, starting after these rows.
      * </ol>
      * </li>
      * <li>If the first element in {@code args} is "emptyDatabaseTables", the
@@ -421,12 +458,17 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             bgeeToEasyBgee.extractBgeeDatabase(CommandRunner.parseListArgumentAsInt(args[2]), args[1],
                     metaStagesOnly);
         } else if (args[0].equals("tsvToEasyBgee")) {
-            int expectedArgLength = 2;
-            if (args.length != expectedArgLength) {
+            int minArgLength = 2;
+            int maxArgLength = 4;
+            if (args.length < minArgLength || args.length > maxArgLength) {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments provided, expected "
-                        + expectedArgLength + " arguments, " + args.length + " provided."));
+                        + "between " + minArgLength + " and " + maxArgLength + " arguments, " + args.length
+                        + " provided."));
             }
-            bgeeToEasyBgee.tsvToEasyBgee(args[1]);
+            Integer threadCount = args.length > 2? CommandRunner.parseArgumentAsInteger(args[2]): null;
+            long skipRows = args.length > 3? Long.parseLong(args[3].trim()): 0;
+            bgeeToEasyBgee.tsvToEasyBgee(args[1],
+                    threadCount == null? DEFAULT_IMPORT_THREAD_COUNT: threadCount, skipRows);
         } else if (args[0].equals("emptyDatabaseTables")) {
             int expectedArgLength = 1;
             if (args.length != expectedArgLength) {
@@ -1204,21 +1246,53 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     /**
      * Use all tsv files generated in the previous step of Easy Bgee creation and
      * integrate data in the Easy Bgee relational database
+     * <p>
+     * The rows of a file are inserted by batches of {@link #INSERT_BATCH_SIZE} rows, each batch
+     * being committed on its own. The global expression table is inserted by
+     * {@code importThreadCount} threads.
      *
      * @param directory
      *            A {@code String} corresponding to the directory where tsv
      *            files are stored
+     * @param importThreadCount
+     *            An {@code int} that is the number of threads inserting the global expression
+     *            table, the biggest one. Must be positive.
+     * @param skipRows
+     *            A {@code long} that is the number of rows of the global expression file already
+     *            inserted by an interrupted import. If positive, only the global expression table
+     *            is imported, the other ones being supposed complete, and the first
+     *            {@code skipRows} rows of its file are skipped. The file must be the one used by
+     *            the interrupted import, and must not contain any comment line.
+     * @throws IllegalArgumentException If {@code importThreadCount} is not positive, or
+     *                                  {@code skipRows} negative.
      */
-    private void tsvToEasyBgee(String directory) {
-        log.traceEntry("{}", directory);
+    private void tsvToEasyBgee(String directory, int importThreadCount, long skipRows) {
+        log.traceEntry("{}, {}, {}", directory, importThreadCount, skipRows);
+        if (importThreadCount < 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "The number of threads must be positive, but was: " + importThreadCount));
+        }
+        if (skipRows < 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "The number of rows to skip must not be negative, but was: " + skipRows));
+        }
 
         for (TsvFile tsvFile : TsvFile.values()) {
+            //only the global expression table is large enough to be worth several threads
+            //and relaxed checks
+            boolean largeTable = tsvFile == TsvFile.GLOBALEXPRESSION_OUTPUT_FILE;
+            if (skipRows > 0 && !largeTable) {
+                continue;
+            }
             log.info("start integration of data from file {}", tsvFile.getFileName());
             File file = new File(directory, tsvFile.getFileName());
+            int threadCount = largeTable ? importThreadCount : 1;
 
-            try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(file), 1 << 20);
+                    ICsvMapReader mapReader = new CsvMapReader(reader, Utils.TSVCOMMENTED)) {
                 // the header columns are used as the keys of the Mapping
-                String[] header = mapReader.getHeader(true);
+                String[] header = skipRows > 0? readHeaderAndSkipRows(reader, skipRows):
+                    mapReader.getHeader(true);
                 CellProcessor[] processors = createCellProcessor(tsvFile);
 
                 // create SQL query
@@ -1228,65 +1302,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         .collect(Collectors.joining(", ", "(", ")"));
                 log.info("SQL query : {}", sql);
 
-                try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
-                    // data of a tsv file are committed every COMMIT_EVERY_N_ROWS rows
-                    startTransaction();
-                    long insertedRows = 0;
-                    Map<String, Object> customerMap;
-
-                    // read all lines of the tsv file
-                    while ((customerMap = mapReader.read(header, processors)) != null) {
-                        int columnNumber = 1;
-                        for (String columnId : tsvFile.getColumnName().keySet()) {
-                            Object columnValue = customerMap.get(columnId);
-                            if (columnValue instanceof Integer) {
-                                stmt.setInt(columnNumber, Integer.valueOf(String.valueOf(columnValue)));
-                            } else if (columnValue instanceof Number) {
-                                stmt.setBigDecimal(columnNumber, String.valueOf(columnValue));
-                            } else if (columnValue instanceof String) {
-                                stmt.setString(columnNumber, String.valueOf(columnValue));
-                            } else if (columnValue == null) {
-                                // if isNullable equals to null it means that
-                                // the schema does not allow
-                                // null values but default value of this column
-                                // is an empty String.
-                                if (tsvFile.getIsNullable().get(columnId) == null) {
-                                    stmt.setString(columnNumber, "");
-                                } else if (tsvFile.getIsNullable().get(columnId)) {
-                                    stmt.setNull(columnNumber, tsvFile.getDatatypes().get(columnId));
-                                } else {
-                                    throw log.throwing(new IllegalArgumentException(
-                                            "For the moment we only take into account VARCHAR and TEXT "
-                                                    + "sql data types to transform null column in the TSV file "
-                                                    + "to empty String in the database " + customerMap.toString()
-                                                    + " For column " + tsvFile.getColumnName().get(columnId)
-                                                    + " columnId " + columnId + " header " + header.toString() + " processor "
-                                                    + processors.toString() + " columnNumber " + columnNumber));
-                                }
-                            } else {
-                                throw log.throwing(new IllegalArgumentException(
-                                        "Column "+columnValue+" not taken into account. Each column should be"
-                                                + " an instance of Integer, BigDecimal, String, or null."));
-                            }
-                            columnNumber++;
-                        }
-                        stmt.executeUpdate();
-                        insertedRows++;
-                        if (insertedRows % COMMIT_EVERY_N_ROWS == 0) {
-                            commit();
-                            startTransaction();
-                            log.info("{} rows of table {} committed so far", insertedRows,
-                                    tsvFile.getTableName());
-                        }
-                    }
-                    // commit the rows inserted since the last commit
-                    commit();
-                    log.info("{} rows inserted in table {}", insertedRows, tsvFile.getTableName());
-                } catch (SQLException e) {
-                    throw log.throwing(new IllegalStateException("Can not insert at least one " + tsvFile.getTableName()
-                            + " in the database. Please verify that both the database "
-                            + "and the table exist, and that the table is empty.", e));
-                }
+                this.insertTsvRows(tsvFile, sql, mapReader, header, processors, threadCount, largeTable);
             } catch (FileNotFoundException e) {
                 throw log.throwing(
                         new IllegalStateException("Can not find the file " + directory + tsvFile.getFileName()));
@@ -1296,6 +1312,216 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             }
         }
         log.traceExit();
+    }
+
+    /**
+     * Read the header of a tsv file and skip its first rows, without parsing them: this is much
+     * faster than reading them with a {@code ICsvMapReader}, for a file of billions of rows.
+     * This must be called before anything is read from {@code reader} by a CSV reader.
+     *
+     * @param reader        A {@code BufferedReader} on the tsv file, at its beginning.
+     * @param rowsToSkip    A {@code long} that is the number of rows to skip after the header.
+     * @return              An {@code Array} of {@code String}s that are the columns of the file.
+     * @throws IOException  If the file could not be read.
+     * @throws IllegalArgumentException If the file has less than {@code rowsToSkip} rows.
+     */
+    private static String[] readHeaderAndSkipRows(BufferedReader reader, long rowsToSkip)
+            throws IOException {
+        log.traceEntry("{}, {}", reader, rowsToSkip);
+        String headerLine = reader.readLine();
+        if (headerLine == null) {
+            throw log.throwing(new IOException("The file is empty"));
+        }
+        String[] header;
+        try (ICsvListReader headerReader = new CsvListReader(new StringReader(headerLine),
+                Utils.TSVCOMMENTED)) {
+            header = headerReader.getHeader(true);
+        }
+        log.info("Skip the first {} rows of the file", rowsToSkip);
+        for (long i = 0; i < rowsToSkip; i++) {
+            if (reader.readLine() == null) {
+                throw log.throwing(new IllegalArgumentException("Can not skip " + rowsToSkip
+                        + " rows, the file has only " + i + " rows"));
+            }
+            if ((i + 1) % 50000000L == 0) {
+                log.info("{} rows skipped so far", i + 1);
+            }
+        }
+        return log.traceExit(header);
+    }
+
+    /**
+     * Insert the rows of a tsv file in the Easy Bgee database. The calling thread reads the
+     * file and gives batches of rows to {@code threadCount} threads, each of them using its own
+     * connection and committing every batch it inserts. If an insertion fails, the batches
+     * already committed stay in the table: it has to be emptied before retrying.
+     *
+     * @param tsvFile       The {@code TsvFile} the rows come from.
+     * @param sql           A {@code String} that is the {@code INSERT} query to use.
+     * @param mapReader     The {@code ICsvMapReader} reading {@code tsvFile}, header already read.
+     * @param header        An {@code Array} of {@code String}s that are the columns of the file.
+     * @param processors    An {@code Array} of {@code CellProcessor}s to parse the columns.
+     * @param threadCount   An {@code int} that is the number of threads inserting rows.
+     * @param relaxChecks   A {@code boolean} defining whether foreign key and unique checks
+     *                      are disabled for the connections inserting the rows. Only the
+     *                      primary key is still checked. It saves several index lookups per row,
+     *                      and is safe only for rows referencing tables that were inserted
+     *                      from the same consistent extraction.
+     * @throws IOException  If the file could not be read.
+     */
+    private void insertTsvRows(TsvFile tsvFile, String sql, ICsvMapReader mapReader, String[] header,
+            CellProcessor[] processors, int threadCount, boolean relaxChecks) throws IOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", tsvFile, sql, mapReader, header, processors,
+                threadCount, relaxChecks);
+        log.info("Insert table {} with {} thread(s), {} rows per commit", tsvFile.getTableName(),
+                threadCount, INSERT_BATCH_SIZE);
+
+        BlockingQueue<List<Map<String, Object>>> queue = new ArrayBlockingQueue<>(2 * threadCount);
+        AtomicLong insertedRows = new AtomicLong(0);
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        try {
+            List<Future<Void>> workers = new ArrayList<>();
+            for (int i = 0; i < threadCount; i++) {
+                workers.add(executor.submit(() -> {
+                    this.insertQueuedRows(tsvFile, sql, queue, insertedRows, relaxChecks);
+                    return null;
+                }));
+            }
+
+            List<Map<String, Object>> batch = new ArrayList<>(INSERT_BATCH_SIZE);
+            Map<String, Object> row;
+            while ((row = mapReader.read(header, processors)) != null) {
+                batch.add(row);
+                if (batch.size() == INSERT_BATCH_SIZE) {
+                    putBatch(queue, batch, workers);
+                    batch = new ArrayList<>(INSERT_BATCH_SIZE);
+                }
+            }
+            if (!batch.isEmpty()) {
+                putBatch(queue, batch, workers);
+            }
+            //each thread stops when it gets an end of file marker
+            for (int i = 0; i < threadCount; i++) {
+                putBatch(queue, END_OF_FILE, workers);
+            }
+            for (Future<Void> worker : workers) {
+                worker.get();
+            }
+            log.info("{} rows inserted in table {}", insertedRows.get(), tsvFile.getTableName());
+        } catch (ExecutionException e) {
+            throw log.throwing(new IllegalStateException("Can not insert at least one "
+                    + tsvFile.getTableName() + " in the database. Please verify that both the database "
+                    + "and the table exist, and that the table is empty.", e.getCause()));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw log.throwing(new IllegalStateException("Interrupted while inserting "
+                    + tsvFile.getTableName() + " in the database.", e));
+        } finally {
+            executor.shutdownNow();
+        }
+        log.traceExit();
+    }
+
+    /**
+     * Give a batch of rows to the threads inserting them, waiting if the queue is full.
+     * Fails as soon as one of the threads failed, otherwise the queue would never be consumed
+     * again and this method would wait forever.
+     */
+    private static void putBatch(BlockingQueue<List<Map<String, Object>>> queue,
+            List<Map<String, Object>> batch, List<Future<Void>> workers)
+                    throws InterruptedException, ExecutionException {
+        while (!queue.offer(batch, 1, TimeUnit.SECONDS)) {
+            for (Future<Void> worker : workers) {
+                if (worker.isDone()) {
+                    //a thread ending normally got an end of file marker, get() throws only
+                    //if it ended because of a failure
+                    worker.get();
+                }
+            }
+        }
+    }
+
+    /**
+     * Insert the batches of rows taken from {@code queue} until the end of file marker is
+     * reached. This method is meant to be run by a thread of its own: the {@code DAOManager}
+     * is bound to the thread calling the {@code daoManagerSupplier}, so that this thread uses
+     * its own connection, closed at the end.
+     */
+    private void insertQueuedRows(TsvFile tsvFile, String sql,
+            BlockingQueue<List<Map<String, Object>>> queue, AtomicLong insertedRows,
+            boolean relaxChecks) throws SQLException, InterruptedException {
+        log.traceEntry("{}, {}, {}, {}, {}", tsvFile, sql, queue, insertedRows, relaxChecks);
+
+        MySQLDAOManager threadManager = (MySQLDAOManager) this.daoManagerSupplier.get();
+        try {
+            BgeeConnection connection = threadManager.getConnection();
+            if (relaxChecks) {
+                try (BgeePreparedStatement settings = connection.prepareStatement(
+                        "SET SESSION unique_checks = 0, foreign_key_checks = 0")) {
+                    settings.executeUpdate();
+                }
+            }
+            try (BgeePreparedStatement stmt = connection.prepareStatement(sql)) {
+                List<Map<String, Object>> batch;
+                while ((batch = queue.take()) != END_OF_FILE) {
+                    connection.startTransaction();
+                    for (Map<String, Object> row : batch) {
+                        setInsertParameters(stmt, tsvFile, row);
+                        stmt.getRealPreparedStatement().addBatch();
+                    }
+                    stmt.getRealPreparedStatement().executeBatch();
+                    connection.commit();
+
+                    long total = insertedRows.addAndGet(batch.size());
+                    if (total / LOG_EVERY_N_ROWS != (total - batch.size()) / LOG_EVERY_N_ROWS) {
+                        log.info("{} rows of table {} committed so far", total, tsvFile.getTableName());
+                    }
+                }
+            }
+        } finally {
+            threadManager.close();
+        }
+        log.traceExit();
+    }
+
+    /**
+     * Set the parameters of the {@code INSERT} query of {@code tsvFile} with the values of a row.
+     */
+    private static void setInsertParameters(BgeePreparedStatement stmt, TsvFile tsvFile,
+            Map<String, Object> row) throws SQLException {
+        int columnNumber = 1;
+        for (String columnId : tsvFile.getColumnName().keySet()) {
+            Object columnValue = row.get(columnId);
+            if (columnValue instanceof Integer) {
+                stmt.setInt(columnNumber, Integer.valueOf(String.valueOf(columnValue)));
+            } else if (columnValue instanceof Number) {
+                stmt.setBigDecimal(columnNumber, String.valueOf(columnValue));
+            } else if (columnValue instanceof String) {
+                stmt.setString(columnNumber, String.valueOf(columnValue));
+            } else if (columnValue == null) {
+                // if isNullable equals to null it means that
+                // the schema does not allow
+                // null values but default value of this column
+                // is an empty String.
+                if (tsvFile.getIsNullable().get(columnId) == null) {
+                    stmt.setString(columnNumber, "");
+                } else if (tsvFile.getIsNullable().get(columnId)) {
+                    stmt.setNull(columnNumber, tsvFile.getDatatypes().get(columnId));
+                } else {
+                    throw log.throwing(new IllegalArgumentException(
+                            "For the moment we only take into account VARCHAR and TEXT "
+                                    + "sql data types to transform null column in the TSV file "
+                                    + "to empty String in the database " + row.toString()
+                                    + " For column " + tsvFile.getColumnName().get(columnId)
+                                    + " columnId " + columnId + " columnNumber " + columnNumber));
+                }
+            } else {
+                throw log.throwing(new IllegalArgumentException(
+                        "Column "+columnValue+" not taken into account. Each column should be"
+                                + " an instance of Integer, BigDecimal, String, or null."));
+            }
+            columnNumber++;
+        }
     }
 
     /**

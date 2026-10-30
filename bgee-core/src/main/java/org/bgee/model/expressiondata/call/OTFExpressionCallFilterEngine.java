@@ -327,16 +327,4 @@ public class OTFExpressionCallFilterEngine {
             return accepted;
         };
     }
-
-    /**
-     * Anatomical entity and cell type of {@code call}. A composed value with a single member,
-     * or with none, is resolved by {@link CallServiceUtils#resolveAnatEntityAndCellType}:
-     * the missing member is the root of that parameter, so a call stored with only an
-     * anatomical entity is filtered as being in the cell-type root.
-     */
-    private static CallServiceUtils.AnatEntityAndCellType anatEntityAndCellType(OTFExpressionCall call) {
-        return CallServiceUtils.resolveAnatEntityAndCellType(call.getCondition()
-                .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE));
-    }
-
 }

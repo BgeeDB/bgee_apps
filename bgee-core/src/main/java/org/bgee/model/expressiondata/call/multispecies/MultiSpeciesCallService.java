@@ -1256,10 +1256,10 @@ public class MultiSpeciesCallService extends CommonService {
             LinkedHashMap<MultiSpeciesCondition, List<OTFExpressionCall>> callsPerSimilarity =
                     geneEntry.getValue().stream()
                             .flatMap(c -> {
-                                CallServiceUtils.AnatEntityAndCellType anatAndCell =
-                                        extractAnatEntityAndCellTypeFromCondition2(c.getCondition());
-                                AnatEntity anatEntity = anatAndCell.getAnatEntity();
-                                AnatEntity cellType = anatAndCell.getCellType();
+                                //A global condition always has both, an unused cell type being
+                                //the cell-type root, and a single entity is both
+                                AnatEntity anatEntity = c.getCondition().getAnatEntity();
+                                AnatEntity cellType = c.getCondition().getCellType();
                                 Set<AnatEntitySimilarity> anatSims = similaritiesByAnatEntity
                                         .getOrDefault(anatEntity, Collections.emptySet());
                                 if (anatSims.isEmpty()) {
@@ -1606,18 +1606,6 @@ public class MultiSpeciesCallService extends CommonService {
             return anatEntity.getIsCellType();
         }
         return ConditionDAO.CELL_TYPE_ROOT_ID.equals(anatEntity.getId());
-    }
-
-    /**
-     * Extracts anatomical entity and cell type from a {@code Condition2} for
-     * {@link ConditionParameter#ANAT_ENTITY_CELL_TYPE}. A missing condition, or a composed
-     * value with one member or none, is resolved by
-     * {@link CallServiceUtils#resolveAnatEntityAndCellType}.
-     */
-    private static CallServiceUtils.AnatEntityAndCellType extractAnatEntityAndCellTypeFromCondition2(
-            org.bgee.model.expressiondata.call.Condition2 condition) {
-        return CallServiceUtils.resolveAnatEntityAndCellType(condition == null ? null :
-                condition.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE));
     }
 
     private static AnatEntitySimilarity createFallbackAnatEntitySimilarity(AnatEntity entity,

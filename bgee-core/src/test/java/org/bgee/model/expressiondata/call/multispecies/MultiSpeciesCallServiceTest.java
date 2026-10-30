@@ -598,6 +598,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(mockComposed.size()).thenReturn(2);
         when(mockComposed.getEntity(0)).thenReturn(anatEntity2a);
         when(mockComposed.getEntity(1)).thenReturn(anatEntity1a);
+        //The anat. entity and the cell type are read from the composition stubbed above
+        when(mockCond1.getAnatEntity()).thenCallRealMethod();
+        when(mockCond1.getCellType()).thenCallRealMethod();
 
         when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
         when(exprCallLoader.loadDataOnTheFly()).thenReturn(
@@ -614,6 +617,80 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         assertNotNull(results.get(0).getMultiSpeciesCondition());
         assertEquals(1, results.get(0).getCalls().size());
         assertTrue(results.get(0).getCalls().contains(mockCall1));
+    }
+
+    /**
+     * A condition whose anatomical entity and cell type are the same term, such as "cell"
+     * in "cell", holds a single entity: it is grouped under the similarity of that term both
+     * as anatomical entity and as cell type, as the condition filter and topAnat read it.
+     */
+    @Test
+    public void shouldReadASingleEntityAsBothAnatEntityAndCellType() {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        org.bgee.model.expressiondata.call.ExpressionCallService exprCallService =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallService.class);
+        org.bgee.model.expressiondata.call.ExpressionCallLoader exprCallLoader =
+                mock(org.bgee.model.expressiondata.call.ExpressionCallLoader.class);
+        AnatEntitySimilarityService aeSimService = mock(AnatEntitySimilarityService.class);
+
+        when(serviceFactory.getExpressionCallService()).thenReturn(exprCallService);
+        when(serviceFactory.getAnatEntitySimilarityService()).thenReturn(aeSimService);
+        when(serviceFactory.getSpeciesService()).thenReturn(mock(SpeciesService.class));
+        when(serviceFactory.getCallService()).thenReturn(mock(CallService.class));
+        when(serviceFactory.getDevStageSimilarityService())
+                .thenReturn(mock(org.bgee.model.anatdev.multispemapping.DevStageSimilarityService.class));
+        when(serviceFactory.getOntologyService()).thenReturn(mock(org.bgee.model.ontology.OntologyService.class));
+        when(serviceFactory.getGeneService()).thenReturn(mock(org.bgee.model.gene.GeneService.class));
+
+        int taxonId = 10;
+        Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
+        int speciesId1 = 1;
+        Gene gene1 = new Gene("gene1a", new Species(speciesId1), new GeneBioType("biotype1"));
+        AnatEntity cell = new AnatEntity("CL:0000000", "cell", null, true);
+        AnatEntitySimilarity cellSim = new AnatEntitySimilarity(Arrays.asList(cell), null, taxon,
+                Collections.singleton(new AnatEntitySimilarityTaxonSummary(taxon, true, true)),
+                taxOnt);
+        when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
+                .thenReturn(new HashSet<>(Arrays.asList(cellSim)));
+
+        org.bgee.model.expressiondata.call.OTFExpressionCall mockCall =
+                mock(org.bgee.model.expressiondata.call.OTFExpressionCall.class);
+        org.bgee.model.expressiondata.call.Condition2 mockCond =
+                mock(org.bgee.model.expressiondata.call.Condition2.class);
+        @SuppressWarnings("unchecked")
+        org.bgee.model.ComposedEntity<AnatEntity> mockComposed = mock(org.bgee.model.ComposedEntity.class);
+        when(mockCall.getGene()).thenReturn(gene1);
+        when(mockCall.getCondition()).thenReturn(mockCond);
+        //An OTFExpressionCall carries no summary call type: EXPRESSED GOLD is obtained
+        //with a p-value below the PRESENT HIGH threshold (0.01).
+        when(mockCall.getAllDataTypePValue()).thenReturn(new BigDecimal("0.001"));
+        when(mockCond.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE))
+                .thenReturn(mockComposed);
+        when(mockComposed.isEmpty()).thenReturn(false);
+        when(mockComposed.size()).thenReturn(1);
+        when(mockComposed.getEntity(0)).thenReturn(cell);
+        //The anat. entity and the cell type are read from the composition stubbed above
+        when(mockCond.getAnatEntity()).thenCallRealMethod();
+        when(mockCond.getCellType()).thenCallRealMethod();
+
+        when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
+        when(exprCallLoader.loadDataOnTheFly()).thenReturn(
+                Collections.singletonMap(gene1, Arrays.asList(mockCall)));
+
+        MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
+        List<SimilarityExpressionCall2> results = service.loadSimilarityExpressionCalls2(taxonId,
+                Collections.singleton(new GeneFilter(speciesId1, Collections.singleton(gene1.getGeneId()))),
+                null, true, SummaryQuality.BRONZE)
+                .collect(Collectors.toList());
+
+        assertEquals(1, results.size());
+        MultiSpeciesCondition condition = results.get(0).getMultiSpeciesCondition();
+        assertEquals("The single entity must be read as the anatomical entity",
+                cellSim, condition.getAnatSimilarity());
+        assertEquals("The single entity must also be read as the cell type",
+                cellSim, condition.getCellTypeSimilarity());
     }
 
     /**
@@ -1177,8 +1254,13 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(mockCond.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE))
                 .thenReturn(mockComposed);
         when(mockComposed.isEmpty()).thenReturn(false);
-        when(mockComposed.size()).thenReturn(1);
-        when(mockComposed.getEntity(0)).thenReturn(transformedAe);
+        //An organ-level call: its cell type is the cell-type root
+        when(mockComposed.size()).thenReturn(2);
+        when(mockComposed.getEntity(0)).thenReturn(new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID));
+        when(mockComposed.getEntity(1)).thenReturn(transformedAe);
+        //The anat. entity and the cell type are read from the composition stubbed above
+        when(mockCond.getAnatEntity()).thenCallRealMethod();
+        when(mockCond.getCellType()).thenCallRealMethod();
 
         when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
         when(exprCallLoader.loadDataOnTheFly()).thenReturn(
@@ -1328,6 +1410,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(mockComposed.size()).thenReturn(2);
         when(mockComposed.getEntity(0)).thenReturn(new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID));
         when(mockComposed.getEntity(1)).thenReturn(organ);
+        //The anat. entity and the cell type are read from the composition stubbed above
+        when(mockCond1.getAnatEntity()).thenCallRealMethod();
+        when(mockCond1.getCellType()).thenCallRealMethod();
 
         when(exprCallService.loadCallLoader(any())).thenReturn(exprCallLoader);
         when(exprCallLoader.loadDataOnTheFly()).thenReturn(
@@ -1432,6 +1517,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(mockComposed.size()).thenReturn(2);
         when(mockComposed.getEntity(0)).thenReturn(neuron);
         when(mockComposed.getEntity(1)).thenReturn(childAe);
+        //The anat. entity and the cell type are read from the composition stubbed above
+        when(mockCond1.getAnatEntity()).thenCallRealMethod();
+        when(mockCond1.getCellType()).thenCallRealMethod();
 
         ArgumentCaptor<ExpressionCallFilter2> exprFilterCaptor =
                 ArgumentCaptor.forClass(ExpressionCallFilter2.class);

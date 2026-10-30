@@ -27,14 +27,16 @@ import org.junit.Test;
 /**
  * Unit tests for {@link OTFExpressionCallFilterEngine#compile(Set)}.
  * <p>
- * A condition may carry only an anatomical entity, or only a cell type. The filter has to
- * resolve the missing member to the root of that parameter, which is how an organ-level call
- * satisfies {@code cell_type_id=SUMMARY}. The filter also discards the calls of the sexes
- * and strains retrieved only to be propagated to their root.
+ * A global condition always has an anatomical entity and a cell type, the cell-type root when
+ * it targets no cell type, which is how an organ-level call satisfies
+ * {@code cell_type_id=SUMMARY}. When both are the same term, the composition holds a single
+ * entity, which is both. The filter also discards the calls of the sexes and strains retrieved
+ * only to be propagated to their root.
  */
 public class OTFExpressionCallFilterEngineTest extends TestAncestor {
 
     private static final String BRAIN = "UBERON:0000955";
+    private static final String CELL = "CL:0000000";
     private static final Species SPECIES = new Species(9606);
     private static final Gene GENE = new Gene("ENSG00000170178", SPECIES, new GeneBioType("protein_coding"));
 
@@ -44,24 +46,34 @@ public class OTFExpressionCallFilterEngineTest extends TestAncestor {
      */
     @Test
     public void shouldKeepOrganLevelCallsWhenTheCellTypeIsTheRoot() {
-        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParams = new HashMap<>();
-        condParams.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, new ComposedFilterIds<>(List.of(
-                new FilterIds<>(Set.of(BRAIN), false),
-                new FilterIds<>(Set.of(ConditionDAO.CELL_TYPE_ROOT_ID), false))));
-        ConditionFilter2 filter = new ConditionFilter2(SPECIES.getId(), condParams,
-                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false);
-        Predicate<OTFExpressionCall> keep = OTFExpressionCallFilterEngine.compile(Set.of(filter));
+        Predicate<OTFExpressionCall> keep = OTFExpressionCallFilterEngine.compile(Set.of(
+                anatEntityCellTypeFilter(BRAIN, ConditionDAO.CELL_TYPE_ROOT_ID)));
 
         AnatEntity brain = new AnatEntity(BRAIN, null, null, false);
         AnatEntity cellRoot = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID, null, null, true);
         AnatEntity neuron = new AnatEntity("CL:0000540", null, null, true);
 
-        assertTrue("A call in the organ and the cell-type root must be kept",
+        assertTrue("An organ-level call, stored with the cell-type root, must be kept",
                 keep.test(call(cellRoot, brain)));
-        assertTrue("An organ-level call, stored with no cell type, must be kept",
-                keep.test(call(brain)));
-        assertFalse("A cell type outside the requested organ must be rejected",
-                keep.test(call(neuron)));
+        assertFalse("A call in a cell type of the requested organ must be rejected",
+                keep.test(call(neuron, brain)));
+    }
+
+    /**
+     * A condition whose anatomical entity and cell type are the same term, such as "cell"
+     * in "cell", holds a single entity: it is filtered as both.
+     */
+    @Test
+    public void shouldFilterASingleEntityAsBothAnatEntityAndCellType() {
+        AnatEntity cell = new AnatEntity(CELL, null, null, true);
+
+        assertTrue("\"cell\" in \"cell\" must be kept when requested",
+                OTFExpressionCallFilterEngine.compile(Set.of(anatEntityCellTypeFilter(CELL, CELL)))
+                .test(call(cell)));
+        assertFalse("\"cell\" in \"cell\" is not \"cell\" in the cell-type root",
+                OTFExpressionCallFilterEngine.compile(Set.of(
+                        anatEntityCellTypeFilter(CELL, ConditionDAO.CELL_TYPE_ROOT_ID)))
+                .test(call(cell)));
     }
 
     /**
@@ -88,6 +100,16 @@ public class OTFExpressionCallFilterEngineTest extends TestAncestor {
                 keep.test(call("female", ConditionDAO.STRAIN_ROOT_ID)));
         assertFalse("The call of a strain below the requested root must be rejected",
                 keep.test(call(ConditionDAO.SEX_ROOT_ID, "C57BL/6J")));
+    }
+
+    private static ConditionFilter2 anatEntityCellTypeFilter(String anatEntityId,
+            String cellTypeId) {
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParams = new HashMap<>();
+        condParams.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, new ComposedFilterIds<>(List.of(
+                new FilterIds<>(Set.of(anatEntityId), false),
+                new FilterIds<>(Set.of(cellTypeId), false))));
+        return new ConditionFilter2(SPECIES.getId(), condParams,
+                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), null, false);
     }
 
     private static OTFExpressionCall call(String sexId, String strainId) {

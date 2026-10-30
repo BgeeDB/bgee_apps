@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,6 +18,7 @@ import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
+import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.CallServiceUtils.AnatEntityAndCellType;
@@ -116,6 +118,45 @@ public class CallServiceUtilsTest extends TestAncestor {
                     && daoFilter.getDevStageIds().isEmpty() && daoFilter.getSexIds().isEmpty()
                     && daoFilter.getStrainIds().isEmpty());
         }
+    }
+
+    /**
+     * Sexes and strains have all their values right below their root: requesting the root
+     * requires to retrieve the conditions of all values, for their observations to be propagated
+     * to it, whatever the case used in the request. Another value has no descendants, only its
+     * own conditions are retrieved.
+     */
+    @Test
+    public void shouldRetrieveAllSexesAndStrainsWhenTheirRootIsRequested() {
+        CallServiceUtils utils = new CallServiceUtils();
+        Set<ConditionParameter<?, ?>> combination = Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                ConditionParameter.SEX, ConditionParameter.STRAIN);
+
+        DAOConditionFilter2 daoFilter = utils.convertConditionFiltersToDAOConditionFilters(
+                Set.of(sexAndStrainFilter("ANY", ConditionDAO.STRAIN_ROOT_ID, combination)),
+                null, null, Set.of(9606), combination).iterator().next();
+        assertTrue("All sexes must be retrieved when their root is requested",
+                daoFilter.getSexIds().isEmpty());
+        assertTrue("All strains must be retrieved when their root is requested",
+                daoFilter.getStrainIds().isEmpty());
+
+        daoFilter = utils.convertConditionFiltersToDAOConditionFilters(
+                Set.of(sexAndStrainFilter("female", "C57BL/6J", combination)),
+                null, null, Set.of(9606), combination).iterator().next();
+        assertEquals("Only the requested sex must be retrieved",
+                Set.of("female"), daoFilter.getSexIds());
+        assertEquals("Only the requested strain must be retrieved",
+                Set.of("C57BL/6J"), daoFilter.getStrainIds());
+    }
+
+    private static ConditionFilter2 sexAndStrainFilter(String sexId, String strainId,
+            Set<ConditionParameter<?, ?>> combination) {
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParams = new HashMap<>();
+        condParams.put(ConditionParameter.SEX, new ComposedFilterIds<>(
+                new FilterIds<>(Set.of(sexId), false)));
+        condParams.put(ConditionParameter.STRAIN, new ComposedFilterIds<>(
+                new FilterIds<>(Set.of(strainId), false)));
+        return new ConditionFilter2(9606, condParams, combination, null, false);
     }
 
     //*************************************************************************

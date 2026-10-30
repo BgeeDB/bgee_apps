@@ -2,9 +2,11 @@ package org.bgee.model.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.AbstractMap;
+import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -276,7 +278,54 @@ public class OTFExpressionCallFilterEngine {
             }
         }
 
+        // =========================================================
+        // SEX AND STRAIN
+        // =========================================================
+        p = p.and(compileFlatHierarchy(filter, ConditionParameter.SEX));
+        p = p.and(compileFlatHierarchy(filter, ConditionParameter.STRAIN));
+
         return p;
+    }
+
+    /**
+     * Sexes and strains have no ontology: all their values are right below their root.
+     * Requesting the root retrieves the conditions of all values, for their observations
+     * to be propagated to it (see {@code CallServiceUtils#convertConditionFilters}):
+     * the calls of the values that were not requested are discarded here.
+     *
+     * @param filter    The {@code ConditionFilter2} to compile.
+     * @param condParam The {@code ConditionParameter} to compile, sex or strain.
+     * @return          A {@code Predicate} accepting the calls of the requested values. IDs are
+     *                  compared ignoring case, as the database does when retrieving
+     *                  the conditions.
+     */
+    private static Predicate<OTFExpressionCall> compileFlatHierarchy(ConditionFilter2 filter,
+            ConditionParameter<?, ?> condParam) {
+
+        FilterIds<String> values = filter.getComposedFilterIds(condParam).getFilterIds(0);
+        //When child terms are requested, all the conditions retrieved were requested
+        if (values == null || values.isEmpty() || values.isIncludeChildTerms()) {
+            return call -> true;
+        }
+        Set<String> allowed = values.getIds().stream()
+                .map(id -> id.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+
+        return call -> {
+            String valueId = call.getCondition().getConditionParameterId(condParam);
+            boolean accepted = valueId != null && allowed.contains(valueId.toLowerCase(Locale.ROOT));
+
+            log.debug(
+                    "Gene={} Condition={} {}={} -> {}",
+                    call.getGene().getGeneId(),
+                    call.getCondition(),
+                    condParam,
+                    valueId,
+                    accepted ? "KEEP" : "REJECT"
+            );
+
+            return accepted;
+        };
     }
 
     /**

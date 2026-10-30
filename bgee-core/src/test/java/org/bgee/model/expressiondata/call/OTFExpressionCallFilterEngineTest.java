@@ -13,6 +13,8 @@ import java.util.function.Predicate;
 import org.bgee.model.ComposedEntity;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
@@ -27,7 +29,8 @@ import org.junit.Test;
  * <p>
  * A condition may carry only an anatomical entity, or only a cell type. The filter has to
  * resolve the missing member to the root of that parameter, which is how an organ-level call
- * satisfies {@code cell_type_id=SUMMARY}.
+ * satisfies {@code cell_type_id=SUMMARY}. The filter also discards the calls of the sexes
+ * and strains retrieved only to be propagated to their root.
  */
 public class OTFExpressionCallFilterEngineTest extends TestAncestor {
 
@@ -59,6 +62,44 @@ public class OTFExpressionCallFilterEngineTest extends TestAncestor {
                 keep.test(call(brain)));
         assertFalse("A cell type outside the requested organ must be rejected",
                 keep.test(call(neuron)));
+    }
+
+    /**
+     * Requesting the root of sexes or of strains retrieves the conditions of all their values,
+     * for their observations to be propagated to the root: only the calls of the requested values
+     * must be kept. The request may spell a value with another case, as the database does not
+     * mind it when retrieving the conditions.
+     */
+    @Test
+    public void shouldKeepOnlyTheRequestedSexesAndStrains() {
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParams = new HashMap<>();
+        condParams.put(ConditionParameter.SEX, new ComposedFilterIds<>(
+                new FilterIds<>(Set.of("ANY"), false)));
+        condParams.put(ConditionParameter.STRAIN, new ComposedFilterIds<>(
+                new FilterIds<>(Set.of(ConditionDAO.STRAIN_ROOT_ID), false)));
+        ConditionFilter2 filter = new ConditionFilter2(SPECIES.getId(), condParams,
+                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE, ConditionParameter.SEX,
+                        ConditionParameter.STRAIN), null, false);
+        Predicate<OTFExpressionCall> keep = OTFExpressionCallFilterEngine.compile(Set.of(filter));
+
+        assertTrue("The call of the requested sex and strain must be kept",
+                keep.test(call(ConditionDAO.SEX_ROOT_ID, ConditionDAO.STRAIN_ROOT_ID)));
+        assertFalse("The call of a sex below the requested root must be rejected",
+                keep.test(call("female", ConditionDAO.STRAIN_ROOT_ID)));
+        assertFalse("The call of a strain below the requested root must be rejected",
+                keep.test(call(ConditionDAO.SEX_ROOT_ID, "C57BL/6J")));
+    }
+
+    private static OTFExpressionCall call(String sexId, String strainId) {
+        Map<ConditionParameter<?, ?>, ComposedEntity<?>> params = new HashMap<>();
+        params.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                new ComposedEntity<>(new AnatEntity(BRAIN, null, null, false), AnatEntity.class));
+        params.put(ConditionParameter.SEX, new ComposedEntity<>(new Sex(sexId), Sex.class));
+        params.put(ConditionParameter.STRAIN,
+                new ComposedEntity<>(new Strain(strainId), Strain.class));
+        return new OTFExpressionCall(GENE, new Condition2(params, SPECIES), null,
+                null, null, null, null, 1,
+                null, null, null, null, null, null, null);
     }
 
     private static OTFExpressionCall call(AnatEntity... entities) {

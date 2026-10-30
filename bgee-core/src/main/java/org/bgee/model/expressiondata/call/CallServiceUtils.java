@@ -435,6 +435,28 @@ public class CallServiceUtils {
     }
 
     /**
+     * Sexes and strains have no ontology: all their values are right below their root.
+     * As for the other condition parameters, the conditions of the descendants of a requested
+     * value must be retrieved, for their observations to be propagated to it: requesting the root
+     * requires to retrieve the conditions of all values. The calls of the values not requested
+     * are discarded after the propagation, see {@link OTFExpressionCallFilterEngine}.
+     *
+     * @param ids       A {@code Set} of {@code String}s that are the requested IDs of sexes
+     *                  or of strains. Can be {@code null}.
+     * @param rootId    A {@code String} that is the ID of the root of that condition parameter.
+     *                  It is compared ignoring case, as the database compares the requested IDs.
+     * @return          {@code null}, meaning that the conditions of all values are retrieved,
+     *                  if {@code ids} contains {@code rootId}, {@code ids} otherwise.
+     */
+    private static Set<String> expandFlatHierarchyRoot(Set<String> ids, String rootId) {
+        log.traceEntry("{}, {}", ids, rootId);
+        if (ids != null && ids.stream().anyMatch(rootId::equalsIgnoreCase)) {
+            return log.traceExit((Set<String>) null);
+        }
+        return log.traceExit(ids);
+    }
+
+    /**
      * @param condParamCombination  A {@code Collection} of {@code ConditionParameter}s that is
      *                              the condition parameter combination requested. The condition
      *                              parameters it does not contain are restricted to their root,
@@ -696,10 +718,14 @@ public class CallServiceUtils {
                                 cellTypeIds,
                     !condParamComb.contains(ConditionParameter.SEX)?
                             Collections.singleton(ConditionDAO.SEX_ROOT_ID):
-                                filter.getComposedFilterIds(ConditionParameter.SEX).getIds(0),
+                                expandFlatHierarchyRoot(
+                                        filter.getComposedFilterIds(ConditionParameter.SEX).getIds(0),
+                                        ConditionDAO.SEX_ROOT_ID),
                     !condParamComb.contains(ConditionParameter.STRAIN)?
                             Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
-                                filter.getComposedFilterIds(ConditionParameter.STRAIN).getIds(0),
+                                expandFlatHierarchyRoot(
+                                        filter.getComposedFilterIds(ConditionParameter.STRAIN).getIds(0),
+                                        ConditionDAO.STRAIN_ROOT_ID),
 
                     convertCondParamsToDAOCondParams(filter.getObservedCondForParams()),
 

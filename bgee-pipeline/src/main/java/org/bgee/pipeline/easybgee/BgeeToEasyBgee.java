@@ -39,7 +39,6 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.ComposedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
@@ -1169,45 +1168,23 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     /**
      * See {@link #buildConditionKeyFromConditionTO(ConditionTO)}.
      * <p>
-     * The extraction of the anat. entity and cell type IDs from the composed
-     * {@code ANAT_ENTITY_CELL_TYPE} condition parameter relies on the ordering convention
-     * established in {@code OTFExpressionCallFilterEngine} (index 1 = anat. entity, index 0 =
-     * cell type when both are present). This is confirmed by
-     * {@code CallServiceUtils.loadConditionMapFromResultSet}, which is what builds the
-     * {@code Condition2}s returned by OTF propagation: it always inserts the cell type before
-     * the anat. entity into the underlying {@code LinkedHashSet} (in that order, only when
-     * non-null), so a single-entity composed value only ever contains the anat. entity (a
-     * whole-organ condition, no specific cell type), never a cell type alone.
+     * The anat. entity and the cell type are read with {@link Condition2#getAnatEntity()} and
+     * {@link Condition2#getCellType()}, the single place reading the composed
+     * {@code ANAT_ENTITY_CELL_TYPE} condition parameter: when a cell type is also the anat.
+     * entity, for instance "cell" in "cell", the composition holds a single entity that is both.
+     * It is a condition of its own, distinct from the anat. entity with no specific cell type.
      */
     private static String buildConditionKeyFromCondition2(Condition2 cond) {
         log.traceEntry("{}", cond);
 
-        ComposedEntity<AnatEntity> anatEntityCellType =
-                cond.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
-        String anatEntityId;
-        String cellTypeId;
-        if (anatEntityCellType == null || anatEntityCellType.isEmpty()) {
+        AnatEntity anatEntity = cond.getAnatEntity();
+        if (anatEntity == null) {
             throw log.throwing(new IllegalStateException(
                     "A Condition2 must always have an anat. entity: " + cond));
-        } else if (anatEntityCellType.size() == 1) {
-            //Only one entity present: the anat. entity, no specific cell type
-            //(whole-organ condition) -- see the confirmed convention documented above.
-            anatEntityId = anatEntityCellType.getEntity(0).getId();
-            cellTypeId = null;
-        } else if (anatEntityCellType.size() == 2) {
-            AnatEntity anatEntity = anatEntityCellType.getEntity(1);
-            AnatEntity cellType = anatEntityCellType.getEntity(0);
-            if (anatEntity == null) {
-                throw log.throwing(new IllegalStateException(
-                        "Unexpected composed anat. entity/cell type entity: " + anatEntityCellType));
-            }
-            anatEntityId = anatEntity.getId();
-            cellTypeId = cellType == null? null: cellType.getId();
-        } else {
-            throw log.throwing(new IllegalStateException(
-                    "Unexpected number of entities composing anat. entity/cell type: "
-                    + anatEntityCellType));
         }
+        String anatEntityId = anatEntity.getId();
+        AnatEntity cellType = cond.getCellType();
+        String cellTypeId = cellType == null? null: cellType.getId();
         String stageId = cond.getConditionParameterId(ConditionParameter.DEV_STAGE);
         String sexId = cond.getConditionParameterId(ConditionParameter.SEX);
         String strainId = cond.getConditionParameterId(ConditionParameter.STRAIN);

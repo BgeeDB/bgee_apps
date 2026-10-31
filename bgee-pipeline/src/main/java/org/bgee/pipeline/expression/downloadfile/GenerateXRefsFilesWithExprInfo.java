@@ -30,7 +30,6 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
-import org.bgee.model.ComposedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
@@ -534,18 +533,15 @@ public class GenerateXRefsFilesWithExprInfo {
      */
     private static String getConditionName(Condition2 cond) {
         log.traceEntry("{}", cond);
-        ComposedEntity<AnatEntity> anatEntityCellType = cond
-                .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
-        if (anatEntityCellType == null || anatEntityCellType.isEmpty()) {
+        //Condition2#getAnatEntity() and getCellType() are the single place reading the composed
+        //anat. entity/cell type: when a cell type is also the anat. entity, for instance "cell"
+        //in "cell", the composition holds a single entity that is both.
+        AnatEntity anatEntity = cond.getAnatEntity();
+        if (anatEntity == null) {
             throw log.throwing(new IllegalStateException(
                     "A Condition2 must always have an anat. entity: " + cond));
         }
-        //Only one entity: the anat. entity, without specific cell type (whole-organ condition).
-        //Otherwise, the first entity is the cell type and the second one the anat. entity.
-        AnatEntity anatEntity = anatEntityCellType.size() > 1?
-                anatEntityCellType.getEntity(1): anatEntityCellType.getEntity(0);
-        AnatEntity cellType = anatEntityCellType.size() > 1?
-                anatEntityCellType.getEntity(0): null;
+        AnatEntity cellType = cond.getCellType();
         //A cell type equal to the root of the cell types ("cellular_component") means
         //"no specific cell type": only the anat. entity is written, as on the gene page.
         if (cellType == null || ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
@@ -563,15 +559,12 @@ public class GenerateXRefsFilesWithExprInfo {
      */
     private static String getAnatEntityId(Condition2 cond) {
         log.traceEntry("{}", cond);
-        ComposedEntity<AnatEntity> anatEntityCellType = cond
-                .getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
-        if (anatEntityCellType == null || anatEntityCellType.isEmpty()) {
+        AnatEntity anatEntity = cond.getAnatEntity();
+        if (anatEntity == null) {
             throw log.throwing(new IllegalStateException(
                     "A Condition2 must always have an anat. entity: " + cond));
         }
-        return log.traceExit(anatEntityCellType.size() == 1?
-                anatEntityCellType.getEntity(0).getId():
-                anatEntityCellType.getEntity(1).getId());
+        return log.traceExit(anatEntity.getId());
     }
 
     /**

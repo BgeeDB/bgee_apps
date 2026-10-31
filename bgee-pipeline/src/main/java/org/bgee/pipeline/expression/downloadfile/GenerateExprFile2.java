@@ -1,14 +1,19 @@
 package org.bgee.pipeline.expression.downloadfile;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,9 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -578,10 +584,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         // Now, we write all requested expression files at once. This way, we will generate
         // the data only once, and we will not have to store them in memory
-        // (the memory usage could be huge).
+        // (the memory usage could be huge). The genes are processed by batches, in parallel:
+        // each batch is written, sorted, to a chunk file of its own, and the chunks are
+        // concatenated in the order of the genes at the end. The memory used thus does not depend
+        // on the size of the species, the files are never sorted as a whole.
 
         // OK, first we allow to store file names, writers, etc, associated to a FileType,
-        // for the catch and finally clauses.
+        // for the catch clause.
         Map<FileType, String> generatedFileNames = new HashMap<>();
 
         // We will write results in temporary files that we will rename at the end
@@ -590,15 +599,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         long numberOfRows = 0;
 
-        // In order to close all writers in a finally clause
-        Map<SingleSpExprFileType2, ICsvDozerBeanWriter> writersUsed = new HashMap<>();
-
         Map<SingleSpExprFileType2, CellProcessor[]> processors = new HashMap<>();
         Map<SingleSpExprFileType2, String[]> headers = new HashMap<>();
+        Map<SingleSpExprFileType2, String> headerLines = new HashMap<>();
+        Map<SingleSpExprFileType2, Comparator<String[]>> comparators = new HashMap<>();
+        Map<SingleSpExprFileType2, AtomicLong> rowCounts = new HashMap<>();
 
         try {
             //**************************
-            // OPEN FILES, CREATE WRITERS, WRITE HEADERS
+            // FILE NAMES, HEADERS, PROCESSORS
             //**************************
 
             for (FileType fileType : this.fileTypes) {
@@ -609,33 +618,24 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 CellProcessor[] fileTypeProcessors = this.generateExprFileCellProcessors(
                         currentFileType, fileTypeHeaders);
                 processors.put(currentFileType, fileTypeProcessors);
+                comparators.put(currentFileType,
+                        this.generateComparator(fileTypeHeaders, serviceOrdering));
+                rowCounts.put(currentFileType, new AtomicLong(0));
 
                 // Create file name
                 String fileName = this.getExprFileName(fileNamePrefix, currentFileType);
                 generatedFileNames.put(currentFileType, fileName);
 
-                // write in temp file
-                File file = new File(this.directory, fileName + tmpExtension);
-                // override any existing file
-                if (file.exists()) {
-                    file.delete();
+                // the header line, written at the top of the file when the chunks are concatenated
+                StringWriter headerBuffer = new StringWriter();
+                try (ICsvDozerBeanWriter headerWriter = this.createBeanWriter(headerBuffer,
+                        currentFileType, fileTypeHeaders)) {
+                    headerWriter.writeHeader(fileTypeHeaders);
                 }
-
-                // create writer and write header
-                ICsvDozerBeanWriter beanWriter = new CsvDozerBeanWriter(new FileWriter(file),
-                        Utils.getCsvPreferenceWithQuote(this.generateQuoteMode(fileTypeHeaders)));
-                // configure the mapping from the fields to the CSV columns
-                if (currentFileType.isSimpleFileType()) {
-                    beanWriter.configureBeanMapping(SingleSpeciesSimpleExprFileBean.class, 
-                            this.generateFieldMapping(currentFileType, fileTypeHeaders));
-                } else {
-                    beanWriter.configureBeanMapping(SingleSpeciesCompleteExprFileBean.class, 
-                            this.generateFieldMapping(currentFileType, fileTypeHeaders));
-                }
-
-                beanWriter.writeHeader(fileTypeHeaders);
-                writersUsed.put(currentFileType, beanWriter);
+                headerLines.put(currentFileType, headerBuffer.toString().lines().findFirst().get());
             }
+            // remove the chunks a previous failed generation could have left
+            this.deleteChunkFiles(generatedFileNames, tmpExtension);
 
             // ****************************
             // WRITE ROWS
@@ -661,12 +661,19 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             //by batches, and everything that does not depend on the genes is computed once and
             //reused for all of them - the condition part of the processed filter holds all
             //the conditions of the species, it is by far the most expensive part.
+            //The genes are sorted so that the batches cover consecutive ranges of gene IDs:
+            //the chunks of the batches concatenated in order are then sorted as a whole.
             List<String> geneIds = serviceFactory.getGeneService()
                     .loadGenes(new GeneFilter(speciesId))
                     .map(Gene::getGeneId)
+                    .sorted()
                     .collect(Collectors.toList());
             log.info("Species {}: {} genes to process by batches of at most {}.", speciesId,
                     geneIds.size(), this.genesChunk);
+            List<List<String>> geneBatches = new ArrayList<>();
+            for (int i = 0; i < geneIds.size(); i += this.genesChunk) {
+                geneBatches.add(geneIds.subList(i, Math.min(i + this.genesChunk, geneIds.size())));
+            }
             if (!geneIds.isEmpty()) {
                 ExpressionCallProcessedFilter seedProcessedFilter = serviceFactory
                         .getExpressionCallService().processExpressionCallFilter(
@@ -683,10 +690,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 boolean completeFileRequested = this.fileTypes.stream()
                         .anyMatch(ft -> !((SingleSpExprFileType2) ft).isSimpleFileType());
 
-                AtomicInteger index = new AtomicInteger(0);
-                geneIds.stream()
-                .collect(Collectors.groupingBy(x -> index.getAndIncrement() / this.genesChunk))
-                .values().parallelStream().forEach(geneBatch -> {
+                IntStream.range(0, geneBatches.size()).parallel().forEach(batchIndex -> {
+                    List<String> geneBatch = geneBatches.get(batchIndex);
                     //init thread safe service factory
                     ExpressionCallService callService = serviceFactorySupplier.get()
                             .getExpressionCallService();
@@ -707,27 +712,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         }
                     }
 
-                    for (Entry<Gene, List<OTFExpressionCall>> geneEntry: callsByGene.entrySet()) {
-                        List<OTFExpressionCall> calls = geneEntry.getValue().stream()
-                                .filter(GenerateExprFile2::isMetaStageCall)
-                                .filter(c -> !nonInformativeAnatEntities.contains(
-                                        anatEntityAndCellType(c.getCondition())[0].getId()))
-                                .collect(Collectors.toList());
-                        if (calls.isEmpty()) {
-                            continue;
-                        }
-                        Map<DataType, Map<Condition2, OTFExpressionCall>> dataTypeCallsByCond =
-                                new EnumMap<>(DataType.class);
-                        for (Entry<DataType, Map<Gene, List<OTFExpressionCall>>> dataTypeEntry:
-                                callsByDataType.entrySet()) {
-                            dataTypeCallsByCond.put(dataTypeEntry.getKey(),
-                                    dataTypeEntry.getValue()
-                                    .getOrDefault(geneEntry.getKey(), List.of()).stream()
-                                    .collect(Collectors.toMap(OTFExpressionCall::getCondition,
-                                            c -> c)));
-                        }
-                        this.writeRows(writersUsed, processors, headers, calls,
-                                dataTypeCallsByCond, seedProcessedFilter);
+                    Map<SingleSpExprFileType2, ChunkWriter> chunkWriters = this.openChunkWriters(
+                            generatedFileNames, headers, processors, comparators, rowCounts,
+                            tmpExtension, batchIndex);
+                    try {
+                        this.writeBatchRows(chunkWriters, callsByGene, callsByDataType,
+                                nonInformativeAnatEntities, seedProcessedFilter);
+                    } finally {
+                        closeChunkWriters(chunkWriters);
                     }
                 });
             }
@@ -735,41 +727,30 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             log.trace("Done retrieving expression data for expression files for the species {}.",
                     speciesId);
 
+            //****************************
+            // CONCATENATE THE CHUNKS
+            //****************************
+            for (Entry<FileType, String> generatedFileName: generatedFileNames.entrySet()) {
+                SingleSpExprFileType2 fileType = (SingleSpExprFileType2) generatedFileName.getKey();
+                Path tempFile = Paths.get(this.directory, generatedFileName.getValue() + tmpExtension);
+                try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tempFile))) {
+                    out.write((headerLines.get(fileType) + System.lineSeparator())
+                            .getBytes(StandardCharsets.UTF_8));
+                    for (int batchIndex = 0; batchIndex < geneBatches.size(); batchIndex++) {
+                        Path chunkFile = this.getChunkFile(generatedFileName.getValue(),
+                                tmpExtension, batchIndex);
+                        Files.copy(chunkFile, out);
+                        Files.delete(chunkFile);
+                    }
+                }
+            }
+            //the header and the rows, all the files have the same number of rows
+            numberOfRows = 1 + rowCounts.values().iterator().next().get();
+
         } catch (Exception e) {
+            this.deleteChunkFiles(generatedFileNames, tmpExtension);
             this.deleteTempFiles(generatedFileNames, tmpExtension);
             throw e;
-        } finally {
-            for (ICsvDozerBeanWriter writer : writersUsed.values()) {
-                writer.close();
-            }
-        }
-
-      //as file is written by chunk it is faster to count rows once it was written
-        numberOfRows = Files.lines(Paths.get(this.directory,
-                generatedFileNames.values().iterator().next() + tmpExtension))
-                .count();
-
-        for (Entry<FileType, String> generatedFileName: generatedFileNames.entrySet()) {
-            Path sortedFile = Paths.get(this.directory, generatedFileName.getValue() + ".sorted");
-            Path tempFile = Paths.get(this.directory, generatedFileName.getValue()  + tmpExtension);
-            try {
-                String header =Files.lines(tempFile)
-                        .findFirst().get();
-                Stream<CharSequence> sortedLines =Files.lines(tempFile)
-                        .skip(1)
-                        .map(s ->  s.split("\t"))
-                        .sorted(generateComparator(headers.get(generatedFileName.getKey()),
-                                serviceOrdering))
-                        .map(s -> String.join("\t", s));
-                //write header
-                Files.write(sortedFile, (header + System.lineSeparator()).getBytes(),
-                        StandardOpenOption.CREATE,StandardOpenOption.APPEND);
-                //write sorted content
-                Files.write(sortedFile, sortedLines::iterator, StandardOpenOption.APPEND);
-                Files.move(sortedFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
         }
 
         // now, if everything went fine, we rename or delete the temporary files
@@ -783,6 +764,219 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
 
         log.traceExit();
+    }
+
+    /**
+     * Write the rows of a batch of genes to its chunk files, gene by gene in the order of
+     * their IDs, so that the chunks are sorted.
+     *
+     * @param chunkWriters                  The {@code ChunkWriter}s of the batch, by file type.
+     * @param callsByGene                   The calls of the genes of the batch, propagated over
+     *                                      all the requested data types.
+     * @param callsByDataType               For each {@code DataType}, the calls of the genes of
+     *                                      the batch propagated over that data type alone. Empty
+     *                                      when no complete file is requested.
+     * @param nonInformativeAnatEntities    The IDs of the non-informative anat. entities, whose
+     *                                      calls are discarded.
+     * @param processedFilter               The {@code ExpressionCallProcessedFilter} the calls
+     *                                      were retrieved with.
+     * @throws UncheckedIOException If an error occurred while trying to write a chunk file.
+     */
+    private void writeBatchRows(Map<SingleSpExprFileType2, ChunkWriter> chunkWriters,
+            Map<Gene, List<OTFExpressionCall>> callsByGene,
+            Map<DataType, Map<Gene, List<OTFExpressionCall>>> callsByDataType,
+            Set<String> nonInformativeAnatEntities, ExpressionCallProcessedFilter processedFilter)
+                    throws UncheckedIOException {
+        log.traceEntry("{}, {}, {}, {}, {}", chunkWriters, callsByGene, callsByDataType,
+                nonInformativeAnatEntities, processedFilter);
+
+        List<Entry<Gene, List<OTFExpressionCall>>> geneEntries = callsByGene.entrySet().stream()
+                .sorted(Comparator.comparing(e -> e.getKey().getGeneId()))
+                .collect(Collectors.toList());
+        for (Entry<Gene, List<OTFExpressionCall>> geneEntry: geneEntries) {
+            List<OTFExpressionCall> calls = geneEntry.getValue().stream()
+                    .filter(GenerateExprFile2::isMetaStageCall)
+                    .filter(c -> !nonInformativeAnatEntities.contains(
+                            anatEntityAndCellType(c.getCondition())[0].getId()))
+                    .collect(Collectors.toList());
+            if (calls.isEmpty()) {
+                continue;
+            }
+            Map<DataType, Map<Condition2, OTFExpressionCall>> dataTypeCallsByCond =
+                    new EnumMap<>(DataType.class);
+            for (Entry<DataType, Map<Gene, List<OTFExpressionCall>>> dataTypeEntry:
+                    callsByDataType.entrySet()) {
+                dataTypeCallsByCond.put(dataTypeEntry.getKey(),
+                        dataTypeEntry.getValue()
+                        .getOrDefault(geneEntry.getKey(), List.of()).stream()
+                        .collect(Collectors.toMap(OTFExpressionCall::getCondition,
+                                c -> c)));
+            }
+            this.writeRows(chunkWriters, calls, dataTypeCallsByCond, processedFilter);
+        }
+        log.traceExit();
+    }
+
+    /**
+     * Writes the rows of a batch of genes to a chunk file of one file type, sorted. The rows of
+     * a gene are formatted into a buffer, sorted, then appended to the chunk file: only the rows
+     * of one gene are held in memory. The rows of a batch being written gene by gene in the
+     * order of their IDs, the chunk file is sorted.
+     */
+    private static final class ChunkWriter implements Closeable {
+        private final StringWriter buffer;
+        private final ICsvDozerBeanWriter beanWriter;
+        private final CellProcessor[] processors;
+        private final Comparator<String[]> comparator;
+        private final BufferedWriter chunkWriter;
+        private final AtomicLong rowCount;
+
+        private ChunkWriter(StringWriter buffer, ICsvDozerBeanWriter beanWriter,
+                CellProcessor[] processors, Comparator<String[]> comparator, Path chunkFile,
+                AtomicLong rowCount) throws IOException {
+            this.buffer = buffer;
+            this.beanWriter = beanWriter;
+            this.processors = processors;
+            this.comparator = comparator;
+            this.chunkWriter = Files.newBufferedWriter(chunkFile, StandardCharsets.UTF_8);
+            this.rowCount = rowCount;
+        }
+
+        private void writeGeneRows(List<SingleSpeciesExprFileBean> exprFileBeans)
+                throws IOException {
+            for (SingleSpeciesExprFileBean exprFileBean: exprFileBeans) {
+                this.beanWriter.write(exprFileBean, this.processors);
+            }
+            this.beanWriter.flush();
+            //the limit -1 keeps the trailing empty columns, so that a row is written unchanged
+            List<String[]> rows = this.buffer.toString().lines()
+                    .map(line -> line.split("\t", -1))
+                    .sorted(this.comparator)
+                    .collect(Collectors.toList());
+            this.buffer.getBuffer().setLength(0);
+            for (String[] row: rows) {
+                this.chunkWriter.write(String.join("\t", row));
+                this.chunkWriter.write(System.lineSeparator());
+            }
+            this.rowCount.addAndGet(rows.size());
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                this.beanWriter.close();
+            } finally {
+                this.chunkWriter.close();
+            }
+        }
+    }
+
+    /**
+     * Open the {@code ChunkWriter}s of a batch of genes, one per file type.
+     *
+     * @return  A {@code Map} where keys are {@code SingleSpExprFileType2}s, the associated
+     *          values being the {@code ChunkWriter}s of the batch {@code batchIndex}.
+     * @throws UncheckedIOException If a chunk file could not be opened.
+     */
+    private Map<SingleSpExprFileType2, ChunkWriter> openChunkWriters(
+            Map<FileType, String> generatedFileNames,
+            Map<SingleSpExprFileType2, String[]> headers,
+            Map<SingleSpExprFileType2, CellProcessor[]> processors,
+            Map<SingleSpExprFileType2, Comparator<String[]>> comparators,
+            Map<SingleSpExprFileType2, AtomicLong> rowCounts, String tmpExtension,
+            int batchIndex) throws UncheckedIOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", generatedFileNames, headers, processors,
+                comparators, rowCounts, tmpExtension, batchIndex);
+        Map<SingleSpExprFileType2, ChunkWriter> chunkWriters =
+                new EnumMap<>(SingleSpExprFileType2.class);
+        try {
+            for (SingleSpExprFileType2 fileType: headers.keySet()) {
+                StringWriter buffer = new StringWriter();
+                chunkWriters.put(fileType, new ChunkWriter(buffer,
+                        this.createBeanWriter(buffer, fileType, headers.get(fileType)),
+                        processors.get(fileType), comparators.get(fileType),
+                        this.getChunkFile(generatedFileNames.get(fileType), tmpExtension,
+                                batchIndex),
+                        rowCounts.get(fileType)));
+            }
+        } catch (IOException e) {
+            closeChunkWriters(chunkWriters);
+            throw log.throwing(new UncheckedIOException(e));
+        }
+        return log.traceExit(chunkWriters);
+    }
+
+    /**
+     * Close the {@code ChunkWriter}s of a batch of genes.
+     *
+     * @throws UncheckedIOException If a chunk file could not be closed.
+     */
+    private static void closeChunkWriters(Map<SingleSpExprFileType2, ChunkWriter> chunkWriters)
+            throws UncheckedIOException {
+        log.traceEntry("{}", chunkWriters);
+        IOException toThrow = null;
+        for (ChunkWriter chunkWriter: chunkWriters.values()) {
+            try {
+                chunkWriter.close();
+            } catch (IOException e) {
+                toThrow = e;
+            }
+        }
+        if (toThrow != null) {
+            throw log.throwing(new UncheckedIOException(toThrow));
+        }
+        log.traceExit();
+    }
+
+    /**
+     * @return  The {@code Path} of the chunk file of the batch {@code batchIndex}, for the file
+     *          named {@code fileName}.
+     */
+    private Path getChunkFile(String fileName, String tmpExtension, int batchIndex) {
+        return Paths.get(this.directory, fileName + tmpExtension + "." + batchIndex);
+    }
+
+    /**
+     * Delete the chunk files of the files named in {@code generatedFileNames}, whatever
+     * the batch they belong to.
+     *
+     * @throws UncheckedIOException If a chunk file could not be deleted.
+     */
+    private void deleteChunkFiles(Map<FileType, String> generatedFileNames, String tmpExtension)
+            throws UncheckedIOException {
+        log.traceEntry("{}, {}", generatedFileNames, tmpExtension);
+        for (String fileName: generatedFileNames.values()) {
+            String chunkPrefix = fileName + tmpExtension + ".";
+            try (DirectoryStream<Path> chunkFiles = Files.newDirectoryStream(
+                    Paths.get(this.directory),
+                    path -> path.getFileName().toString().startsWith(chunkPrefix))) {
+                for (Path chunkFile: chunkFiles) {
+                    Files.deleteIfExists(chunkFile);
+                }
+            } catch (IOException e) {
+                throw log.throwing(new UncheckedIOException(e));
+            }
+        }
+        log.traceExit();
+    }
+
+    /**
+     * Create an {@code ICsvDozerBeanWriter} writing the rows of a file type to {@code writer}.
+     */
+    private ICsvDozerBeanWriter createBeanWriter(Writer writer, SingleSpExprFileType2 fileType,
+            String[] fileTypeHeaders) {
+        log.traceEntry("{}, {}, {}", writer, fileType, fileTypeHeaders);
+        ICsvDozerBeanWriter beanWriter = new CsvDozerBeanWriter(writer,
+                Utils.getCsvPreferenceWithQuote(this.generateQuoteMode(fileTypeHeaders)));
+        // configure the mapping from the fields to the CSV columns
+        if (fileType.isSimpleFileType()) {
+            beanWriter.configureBeanMapping(SingleSpeciesSimpleExprFileBean.class,
+                    this.generateFieldMapping(fileType, fileTypeHeaders));
+        } else {
+            beanWriter.configureBeanMapping(SingleSpeciesCompleteExprFileBean.class,
+                    this.generateFieldMapping(fileType, fileTypeHeaders));
+        }
+        return log.traceExit(beanWriter);
     }
 
     private Comparator<String[]> generateComparator(String[] headers,
@@ -1378,18 +1572,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * Generate the rows of the calls of one gene and write them into each requested file,
      * with the columns of its file type.
      *
-     * @param writersUsed       A {@code Map} where keys are {@code SingleSpExprFileType2}s
+     * @param chunkWriters      A {@code Map} where keys are {@code SingleSpExprFileType2}s
      *                          corresponding to which type of file should be generated, the
-     *                          associated values being {@code ICsvDozerBeanWriter}s
-     *                          corresponding to the writers.
-     * @param processors        A {@code Map} where keys are {@code SingleSpExprFileType2}s
-     *                          corresponding to which type of file should be generated, the
-     *                          associated values being an {@code Array} of
-     *                          {@code CellProcessor}s used to process a file.
-     * @param headers           A {@code Map} where keys are {@code SingleSpExprFileType2}s
-     *                          corresponding to which type of file should be generated, the
-     *                          associated values being an {@code Array} of {@code String}s used
-     *                          to produce the header.
+     *                          associated values being the {@code ChunkWriter}s of the batch
+     *                          of genes being written.
      * @param calls             The {@code OTFExpressionCall}s of one gene, in the conditions
      *                          to report, propagated over all the requested data types.
      * @param callsByDataType   For each {@code DataType}, the call propagated over that data type
@@ -1401,16 +1587,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      *                          type and quality with.
      * @throws UncheckedIOException If an error occurred while trying to write the file.
      */
-    private void writeRows(Map<SingleSpExprFileType2, ICsvDozerBeanWriter> writersUsed,
-            Map<SingleSpExprFileType2, CellProcessor[]> processors,
-            Map<SingleSpExprFileType2, String[]> headers,
+    private void writeRows(Map<SingleSpExprFileType2, ChunkWriter> chunkWriters,
             Collection<OTFExpressionCall> calls,
             Map<DataType, Map<Condition2, OTFExpressionCall>> callsByDataType,
             ExpressionCallProcessedFilter processedFilter) throws UncheckedIOException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", writersUsed, processors, headers, calls,
-                callsByDataType, processedFilter);
+        log.traceEntry("{}, {}, {}, {}", chunkWriters, calls, callsByDataType, processedFilter);
 
-        for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
+        for (Entry<SingleSpExprFileType2, ChunkWriter> writerFileType : chunkWriters.entrySet()) {
             List<SingleSpeciesExprFileBean> exprFileBeans = new ArrayList<>();
             for (OTFExpressionCall call: calls) {
                 Condition2 cond = call.getCondition();
@@ -1468,19 +1651,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     exprFileBeans.add(completeBean);
                 }
             }
-            syncWriteRows(exprFileBeans, writerFileType, processors);
+            try {
+                writerFileType.getValue().writeGeneRows(exprFileBeans);
+            } catch (IOException e) {
+                throw log.throwing(new UncheckedIOException(e));
+            }
         }
-    }
-
-    synchronized private void syncWriteRows(List<SingleSpeciesExprFileBean> exprFilebeans,
-            Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType,
-            Map<SingleSpExprFileType2, CellProcessor[]> processors) {
-        try {
-            for(SingleSpeciesExprFileBean exprFileBean : exprFilebeans)
-            writerFileType.getValue().write(exprFileBean, processors.get(writerFileType.getKey()));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        log.traceExit();
     }
 
     /**

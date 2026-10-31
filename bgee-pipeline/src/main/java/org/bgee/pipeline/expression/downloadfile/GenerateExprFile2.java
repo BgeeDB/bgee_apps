@@ -1326,30 +1326,25 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     }
 
     /**
+     * Read with {@link Condition2#getAnatEntity()} and {@link Condition2#getCellType()}, the
+     * single place reading the composed {@code ANAT_ENTITY_CELL_TYPE} condition parameter: when
+     * a cell type is also the anat. entity, for instance "cell" in "cell", the composition holds
+     * a single entity that is both. It is a condition of its own, distinct from the anat. entity
+     * with no specific cell type.
+     *
      * @param cond  A {@code Condition2} to read.
      * @return      An {@code AnatEntity[]} of two elements: the anatomical entity of
-     *              {@code cond} first, then its cell type, {@code null} when the condition
-     *              targets no specific cell type.
+     *              {@code cond} first, then its cell type, the root of the cell types when
+     *              the condition targets no specific cell type.
      */
     private static AnatEntity[] anatEntityAndCellType(Condition2 cond) {
         log.traceEntry("{}", cond);
-        ComposedEntity<AnatEntity> anatEntityCellType =
-                cond.getConditionParameterValue(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
-        if (anatEntityCellType == null || anatEntityCellType.isEmpty()) {
+        AnatEntity anatEntity = cond.getAnatEntity();
+        if (anatEntity == null) {
             throw log.throwing(new IllegalStateException(
                     "A condition must always have an anat. entity: " + cond));
         }
-        if (anatEntityCellType.size() == 1) {
-            //Only one entity: the anat. entity, the condition targets no specific cell type
-            return log.traceExit(new AnatEntity[] {anatEntityCellType.getEntity(0), null});
-        }
-        if (anatEntityCellType.size() == 2) {
-            //The cell type comes first in the composition, the anat. entity second
-            return log.traceExit(new AnatEntity[] {anatEntityCellType.getEntity(1),
-                    anatEntityCellType.getEntity(0)});
-        }
-        throw log.throwing(new IllegalStateException("Unexpected number of entities composing "
-                + "the anat. entity and cell type: " + anatEntityCellType));
+        return log.traceExit(new AnatEntity[] {anatEntity, cond.getCellType()});
     }
 
     /**

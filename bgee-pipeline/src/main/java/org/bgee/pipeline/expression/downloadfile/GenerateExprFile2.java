@@ -695,20 +695,27 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     //init thread safe service factory
                     ExpressionCallService callService = serviceFactorySupplier.get()
                             .getExpressionCallService();
-                    Map<Gene, List<OTFExpressionCall>> callsByGene = loadCalls(callService,
-                            speciesId, geneBatch, condParamCombination,
-                            summaryCallTypeQualityFilter, null, condPart, invariablePart);
+                    Map<Gene, List<OTFExpressionCall>> callsByGene = filterReportedCalls(
+                            loadCalls(callService, speciesId, geneBatch, condParamCombination,
+                                    summaryCallTypeQualityFilter, null, condPart, invariablePart),
+                            nonInformativeAnatEntities);
                     //Per data type, no filter is applied on the summary call type, so that
                     //the call of a data type is reported even when that data type alone would not
                     //produce the call the gene is summarized with, and none on the observed data,
                     //so that the observed data column of a data type says what it did observe.
-                    Map<DataType, Map<Gene, List<OTFExpressionCall>>> callsByDataType =
+                    //A data type is thus propagated to every condition its observations reach,
+                    //far more than the rows of the files: only the calls of the conditions of
+                    //the rows are kept, the batches propagated in parallel would otherwise hold
+                    //them all until they are written.
+                    Map<DataType, Map<Gene, Map<Condition2, OTFExpressionCall>>> callsByDataType =
                             new EnumMap<>(DataType.class);
                     if (completeFileRequested) {
                         for (DataType dataType: DataType.values()) {
-                            callsByDataType.put(dataType, loadCalls(callService, speciesId,
-                                    geneBatch, condParamCombination, null, EnumSet.of(dataType),
-                                    condPart, invariablePart));
+                            callsByDataType.put(dataType, retainReportedConditions(
+                                    loadCalls(callService, speciesId, geneBatch,
+                                            condParamCombination, null, EnumSet.of(dataType),
+                                            condPart, invariablePart),
+                                    callsByGene));
                         }
                     }
 
@@ -717,7 +724,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             tmpExtension, batchIndex);
                     try {
                         this.writeBatchRows(chunkWriters, callsByGene, callsByDataType,
-                                nonInformativeAnatEntities, seedProcessedFilter);
+                                seedProcessedFilter);
                     } finally {
                         closeChunkWriters(chunkWriters);
                     }
@@ -767,52 +774,94 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     }
 
     /**
+     * @param calls                         The calls of a batch of genes, by {@code Gene}.
+     * @param nonInformativeAnatEntities    The IDs of the non-informative anat. entities, whose
+     *                                      calls are discarded.
+     * @return                              The calls written to the files, by {@code Gene}:
+     *                                      those of a meta stage, and not in a non-informative
+     *                                      anat. entity. The genes left without calls are absent.
+     */
+    private static Map<Gene, List<OTFExpressionCall>> filterReportedCalls(
+            Map<Gene, List<OTFExpressionCall>> calls, Set<String> nonInformativeAnatEntities) {
+        log.traceEntry("{}, {}", calls, nonInformativeAnatEntities);
+        Map<Gene, List<OTFExpressionCall>> reportedCalls = new HashMap<>();
+        for (Entry<Gene, List<OTFExpressionCall>> geneEntry: calls.entrySet()) {
+            List<OTFExpressionCall> geneCalls = geneEntry.getValue().stream()
+                    .filter(GenerateExprFile2::isMetaStageCall)
+                    .filter(c -> !nonInformativeAnatEntities.contains(
+                            anatEntityAndCellType(c.getCondition())[0].getId()))
+                    .collect(Collectors.toList());
+            if (!geneCalls.isEmpty()) {
+                reportedCalls.put(geneEntry.getKey(), geneCalls);
+            }
+        }
+        return log.traceExit(reportedCalls);
+    }
+
+    /**
+     * @param dataTypeCalls The calls of a batch of genes propagated over one data type alone,
+     *                      by {@code Gene}.
+     * @param reportedCalls The calls of the same genes written to the files, by {@code Gene},
+     *                      as returned by {@link #filterReportedCalls(Map, Set)}.
+     * @return              The calls of {@code dataTypeCalls} in the conditions of the calls
+     *                      of their gene in {@code reportedCalls}, by {@code Condition2},
+     *                      by {@code Gene}: the only ones the rows read.
+     */
+    private static Map<Gene, Map<Condition2, OTFExpressionCall>> retainReportedConditions(
+            Map<Gene, List<OTFExpressionCall>> dataTypeCalls,
+            Map<Gene, List<OTFExpressionCall>> reportedCalls) {
+        log.traceEntry("{}, {}", dataTypeCalls, reportedCalls);
+        Map<Gene, Map<Condition2, OTFExpressionCall>> retainedCalls = new HashMap<>();
+        for (Entry<Gene, List<OTFExpressionCall>> geneEntry: reportedCalls.entrySet()) {
+            Set<Condition2> reportedConds = geneEntry.getValue().stream()
+                    .map(OTFExpressionCall::getCondition)
+                    .collect(Collectors.toSet());
+            retainedCalls.put(geneEntry.getKey(), dataTypeCalls
+                    .getOrDefault(geneEntry.getKey(), List.of()).stream()
+                    .filter(c -> reportedConds.contains(c.getCondition()))
+                    .collect(Collectors.toMap(OTFExpressionCall::getCondition, c -> c)));
+        }
+        return log.traceExit(retainedCalls);
+    }
+
+    /**
      * Write the rows of a batch of genes to its chunk files, gene by gene in the order of
      * their IDs, so that the chunks are sorted.
      *
      * @param chunkWriters                  The {@code ChunkWriter}s of the batch, by file type.
-     * @param callsByGene                   The calls of the genes of the batch, propagated over
-     *                                      all the requested data types.
+     * @param callsByGene                   The calls of the genes of the batch written to
+     *                                      the files, propagated over all the requested data
+     *                                      types, as returned by {@link #filterReportedCalls(
+     *                                      Map, Set)}.
      * @param callsByDataType               For each {@code DataType}, the calls of the genes of
-     *                                      the batch propagated over that data type alone. Empty
+     *                                      the batch propagated over that data type alone, in
+     *                                      the conditions of {@code callsByGene}, as returned by
+     *                                      {@link #retainReportedConditions(Map, Map)}. Empty
      *                                      when no complete file is requested.
-     * @param nonInformativeAnatEntities    The IDs of the non-informative anat. entities, whose
-     *                                      calls are discarded.
      * @param processedFilter               The {@code ExpressionCallProcessedFilter} the calls
      *                                      were retrieved with.
      * @throws UncheckedIOException If an error occurred while trying to write a chunk file.
      */
     private void writeBatchRows(Map<SingleSpExprFileType2, ChunkWriter> chunkWriters,
             Map<Gene, List<OTFExpressionCall>> callsByGene,
-            Map<DataType, Map<Gene, List<OTFExpressionCall>>> callsByDataType,
-            Set<String> nonInformativeAnatEntities, ExpressionCallProcessedFilter processedFilter)
-                    throws UncheckedIOException {
-        log.traceEntry("{}, {}, {}, {}, {}", chunkWriters, callsByGene, callsByDataType,
-                nonInformativeAnatEntities, processedFilter);
+            Map<DataType, Map<Gene, Map<Condition2, OTFExpressionCall>>> callsByDataType,
+            ExpressionCallProcessedFilter processedFilter) throws UncheckedIOException {
+        log.traceEntry("{}, {}, {}, {}", chunkWriters, callsByGene, callsByDataType,
+                processedFilter);
 
         List<Entry<Gene, List<OTFExpressionCall>>> geneEntries = callsByGene.entrySet().stream()
                 .sorted(Comparator.comparing(e -> e.getKey().getGeneId()))
                 .collect(Collectors.toList());
         for (Entry<Gene, List<OTFExpressionCall>> geneEntry: geneEntries) {
-            List<OTFExpressionCall> calls = geneEntry.getValue().stream()
-                    .filter(GenerateExprFile2::isMetaStageCall)
-                    .filter(c -> !nonInformativeAnatEntities.contains(
-                            anatEntityAndCellType(c.getCondition())[0].getId()))
-                    .collect(Collectors.toList());
-            if (calls.isEmpty()) {
-                continue;
-            }
             Map<DataType, Map<Condition2, OTFExpressionCall>> dataTypeCallsByCond =
                     new EnumMap<>(DataType.class);
-            for (Entry<DataType, Map<Gene, List<OTFExpressionCall>>> dataTypeEntry:
+            for (Entry<DataType, Map<Gene, Map<Condition2, OTFExpressionCall>>> dataTypeEntry:
                     callsByDataType.entrySet()) {
                 dataTypeCallsByCond.put(dataTypeEntry.getKey(),
-                        dataTypeEntry.getValue()
-                        .getOrDefault(geneEntry.getKey(), List.of()).stream()
-                        .collect(Collectors.toMap(OTFExpressionCall::getCondition,
-                                c -> c)));
+                        dataTypeEntry.getValue().getOrDefault(geneEntry.getKey(), Map.of()));
             }
-            this.writeRows(chunkWriters, calls, dataTypeCallsByCond, processedFilter);
+            this.writeRows(chunkWriters, geneEntry.getValue(), dataTypeCallsByCond,
+                    processedFilter);
         }
         log.traceExit();
     }

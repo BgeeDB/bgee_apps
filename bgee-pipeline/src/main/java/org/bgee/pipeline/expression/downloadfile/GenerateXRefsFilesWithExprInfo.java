@@ -66,7 +66,6 @@ import org.supercsv.prefs.CsvPreference;
  * @since Bgee 14 Jul 2017
  * @version Bgee 15 Feb 2022
  */
-// FIXME: Add unit tests
 public class GenerateXRefsFilesWithExprInfo {
 
     private final static Logger log = LogManager.getLogger(GenerateXRefsFilesWithExprInfo.class.getName());
@@ -208,11 +207,6 @@ public class GenerateXRefsFilesWithExprInfo {
                 .loadGenes(geneFiltersToLoadGenes, false, false, true, false)
                 .map(g -> new GeneFilter(g.getSpecies().getId(), g.getGeneId()))
                 .collect(Collectors.toSet());
-
-        // No ConditionGraph is built here anymore: with OTF propagation, the condition graph
-        // of a species is loaded and cached by ConditionGraphCacheService itself, and the
-        // filtering of redundant ancestor calls it was used for is now requested through the
-        // ExpressionCallFilter2 (see generateXrefs).
         serviceFactory.close();
 
         // We are now ready to retrieve expression and generate XRefs
@@ -364,7 +358,9 @@ public class GenerateXRefsFilesWithExprInfo {
                 .append("_").append(minorBgeeVersion).append("/gene/").toString();
 
         //Genes are grouped by species, and the species are processed sequentially, so that the
-        //condition information of a single species is alive at a time.
+        //condition part of the processed filter of a single species is alive at a time.
+        //The condition graph of each species stays cached by ConditionGraphCacheService
+        //until the end of the generation.
         Map<Integer, List<String>> geneIdsBySpeciesId = new TreeMap<>();
         for (GeneFilter gf: geneFilters) {
             if (gf.getGeneIds() == null || gf.getGeneIds().size() != 1) {
@@ -417,10 +413,10 @@ public class GenerateXRefsFilesWithExprInfo {
                 ServiceFactory threadSpeServiceFactory = serviceFactorySupplier.get();
                 ExpressionCallService callService = threadSpeServiceFactory.getExpressionCallService();
 
-                // Same filter as the gene page (see CommandGene#loadExpression): SILVER EXPRESSED
-                // calls, in conditions observed for the requested condition parameters, with the
-                // redundant ancestor calls discarded. As on the gene page, the only condition
-                // parameter requested is the anat. entity/cell type.
+                // Same filter as the gene page (see CommandGene#loadExpression and
+                // buildGenePageCallFilter): SILVER EXPRESSED calls, with the redundant ancestor
+                // calls discarded. As on the gene page, the only condition parameter requested
+                // is the anat. entity/cell type.
                 //XXX If in the future we plan to add more information than just the anat. entity, it will
                 // then be mandatory to keep calls at condition level ordered by anat. entity
                 ExpressionCallFilter2 callFilter = buildGenePageCallFilter(speciesId, geneBatch);
@@ -525,7 +521,7 @@ public class GenerateXRefsFilesWithExprInfo {
                 condParams,
                 true,
                 //discard the calls in ancestor conditions that are redundant with a descendant
-                //condition. This is what the ConditionGraph was used for before OTF propagation.
+                //condition
                 true));
     }
 
@@ -575,7 +571,8 @@ public class GenerateXRefsFilesWithExprInfo {
     /**
      * Log the heap usage after a step of the generation. The used memory includes the objects
      * not garbage collected yet, so a single value means little: what matters is whether it
-     * keeps growing from one species to the next.
+     * keeps growing from one species to the next by more than the condition graph of
+     * the species, which stays cached until the end of the generation.
      *
      * @param afterWhat A {@code String} describing the step that was just completed.
      */

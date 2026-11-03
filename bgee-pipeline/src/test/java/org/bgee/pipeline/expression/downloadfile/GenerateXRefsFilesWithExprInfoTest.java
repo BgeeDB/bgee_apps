@@ -1,41 +1,47 @@
 package org.bgee.pipeline.expression.downloadfile;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Arrays;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.expressiondata.call.Call.ExpressionCall;
-import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
-import org.bgee.model.expressiondata.call.CallService;
-import org.bgee.model.expressiondata.call.Condition;
-import org.bgee.model.expressiondata.call.ConditionGraph;
-import org.bgee.model.expressiondata.call.ConditionGraphService;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.ExpressionCallLoader;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter.ExpressionCallProcessedFilterConditionPart;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
+import org.bgee.model.expressiondata.call.OTFExpressionCall;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.pipeline.TestAncestor;
-import org.bgee.pipeline.expression.downloadfile.GenerateXRefsFilesWithExprInfo.XrefUniprotBean;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -59,38 +65,40 @@ public class GenerateXRefsFilesWithExprInfoTest extends TestAncestor {
     }
     @Rule
     public final TemporaryFolder testFolder = new TemporaryFolder();
-    
-    /**
-    * Test {@link GenerateXRefsFilesWithExprInfo#loadXrefFileWithoutExprInfo}.
-    * Tested separately because the approach used to load Xref could change
-    */
-   @Test
-   public void shouldLoadXRef() {
-       //*** create objects require for test ***
-       Set<XrefUniprotBean> xrefUniprotListWanted = new HashSet<>(Arrays.asList(
-               new XrefUniprotBean("I3L1T2", "ENSG00000141198", 9606),
-               new XrefUniprotBean("I3L367", "ENSG00000141198", 9606),
-               new XrefUniprotBean("Q15615", "ENSG00000141219", 9606),
-               new XrefUniprotBean("H9G367", "ENSACAG00000000004", 28377),
-               new XrefUniprotBean("G1K846", "ENSACAG00000000006", 28377)));
-       
-       Set<Integer> speciesIds = new HashSet<>(9606,28377);
 
-       Map<Integer,Map<String,Set<String>>> xrefUniprotListLoaded = GenerateXRefsFilesWithExprInfo
-               .loadUniprotXrefFileWithoutExprInfo(this.getClass().getResource(XREF_FILE).getFile(), speciesIds);
-       assertTrue(xrefUniprotListLoaded.equals(xrefUniprotListWanted));
+    /**
+     * Test {@link GenerateXRefsFilesWithExprInfo#loadUniprotXrefFileWithoutExprInfo(String, Set)}.
+     * Tested separately because the approach used to load Xref could change
+     */
+    @Test
+    public void shouldLoadXRef() {
+        String file = this.getClass().getResource(XREF_FILE).getFile();
+
+        Map<Integer, Map<String, Set<String>>> expectedXrefs = Map.of(
+                9606, Map.of(
+                        "ENSG00000141198", Set.of("I3L1T2", "I3L367"),
+                        "ENSG00000141219", Set.of("Q15615")),
+                28377, Map.of(
+                        "ENSACAG00000000004", Set.of("H9G367"),
+                        "ENSACAG00000000006", Set.of("G1K846")));
+        assertEquals(expectedXrefs, GenerateXRefsFilesWithExprInfo
+                .loadUniprotXrefFileWithoutExprInfo(file, Set.of(9606, 28377)));
+
+        //Only the XRefs of the requested species are loaded
+        assertEquals(Map.of(9606, expectedXrefs.get(9606)), GenerateXRefsFilesWithExprInfo
+                .loadUniprotXrefFileWithoutExprInfo(file, Set.of(9606)));
     }
 
     /**
-     * Test {@link GenerateXRefsFilesWithExprInfo#generate}.
+     * Test {@link GenerateXRefsFilesWithExprInfo#generate(String, String, Set, List)}
+     * for the UniProt XRef file.
      */
     @Test
     public void shouldGenerateUniprotXRefFile() throws IOException {
-        
-      ///*** create objects require for test ***
+
         Species sp1 = new Species(9606);
         Species sp2 = new Species(28377);
-        
+
         Gene g1 = new Gene("ENSG00000141198", sp1, new GeneBioType("type1"));
         Gene g2 = new Gene("ENSG00000141219", sp1, new GeneBioType("type1"));
         Gene g3 = new Gene("ENSACAG00000000004", sp2, new GeneBioType("type1"));
@@ -101,115 +109,138 @@ public class GenerateXRefsFilesWithExprInfoTest extends TestAncestor {
         AnatEntity ae3 = new AnatEntity("anat3", "anat3Name", "anat3Desc");
         AnatEntity ae4 = new AnatEntity("anat4", "anat4Name", "anat4Desc");
         AnatEntity ae5 = new AnatEntity("anat5", "anat5Name", "anat5Desc");
-        
-        ExpressionCall call1 = new ExpressionCall(null, null, null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
-        ExpressionCall call2 = new ExpressionCall(null, null, null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("4.0")), null);
-        ExpressionCall call3 = new ExpressionCall(null, null, null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("6.0")), null);
+        //A condition with no specific cell type has the root of the cell types
+        AnatEntity cellTypeRoot = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID,
+                "cellular_component", "cellTypeRootDesc");
+        AnatEntity cellType = new AnatEntity("CL:0000540", "neuron", "neuronDesc");
 
-        ExpressionCall aeCall1 = new ExpressionCall(null, 
-                new Condition(ae1, null, null, null, null, sp1), 
-                null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
-        ExpressionCall aeCall2 = new ExpressionCall(null, 
-                new Condition(ae2, null, null, null, null, sp1), 
-                null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
-        ExpressionCall aeCall3 = new ExpressionCall(null, 
-                new Condition(ae3, null, null, null, null, sp1), 
-                null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
-        ExpressionCall aeCall4 = new ExpressionCall(null, 
-                new Condition(ae4, null, null, null, null, sp1), 
-                null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
-        ExpressionCall aeCall5 = new ExpressionCall(null, 
-                new Condition(ae5, null, null, null, null, sp1), 
-                null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
-        
-        List<ExpressionCall> calls1 = Arrays.asList(call1, call2, call3);
-        List<ExpressionCall> calls2 = Arrays.asList(call3, call1);
-        List<ExpressionCall> calls3 = Arrays.asList(call3, call2);
-        List<ExpressionCall> calls4 = Arrays.asList(call2, call1);
-        
-        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene1 = new LinkedHashMap<>();
-        callsGene1.put(aeCall1, calls1);
-        callsGene1.put(aeCall2, calls3);
-        callsGene1.put(aeCall3, calls3);
-        callsGene1.put(aeCall4, calls3);
-        callsGene1.put(aeCall5, calls3);
-        
-        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene2 = new LinkedHashMap<>();
-        callsGene2.put(aeCall5, calls2);
-        callsGene2.put(aeCall2, calls4);
-        callsGene2.put(aeCall3, calls4);
-        callsGene2.put(aeCall4, calls4);
-        
-        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene3 = new LinkedHashMap<>();
-        callsGene3.put(aeCall3, calls4);
-        callsGene3.put(aeCall1, calls1);
-        
-        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene4 = new LinkedHashMap<>();
-        callsGene4.put(aeCall3, calls1);
-        
-        List<String> xrefsFileType = List.of("UNIPROT");
-                      
+        //The loader returns the calls of each gene ordered by expression score
+        Map<Gene, List<OTFExpressionCall>> callsSpe1 = Map.of(
+                g1, List.of(mockCall(ae1, cellTypeRoot), mockCall(ae2, cellTypeRoot),
+                        mockCall(ae3, cellTypeRoot), mockCall(ae4, cellTypeRoot),
+                        mockCall(ae5, cellTypeRoot)),
+                g2, List.of(mockCall(ae5, cellTypeRoot), mockCall(ae2, cellTypeRoot),
+                        mockCall(ae3, cellTypeRoot), mockCall(ae4, cellTypeRoot)));
+        Map<Gene, List<OTFExpressionCall>> callsSpe2 = Map.of(
+                g3, List.of(mockCall(ae3, cellType), mockCall(ae1, cellTypeRoot)),
+                g4, List.of(mockCall(ae3, cellTypeRoot)));
+
         // Mock services
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         SpeciesService speciesService = mock(SpeciesService.class);
         when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
-        CallService callService = mock(CallService.class);
-        when(serviceFactory.getCallService()).thenReturn(callService);
-        ConditionGraphService condGraphService = mock(ConditionGraphService.class);
-        when(serviceFactory.getConditionGraphService()).thenReturn(condGraphService);
+        GeneService geneService = mock(GeneService.class);
+        when(serviceFactory.getGeneService()).thenReturn(geneService);
+        ExpressionCallService callService = mock(ExpressionCallService.class);
+        when(serviceFactory.getExpressionCallService()).thenReturn(callService);
 
         // Mock methods
-        EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
-        ConditionGraph graphSpe1 = mock(ConditionGraph.class);
-        ConditionGraph graphSpe2 = mock(ConditionGraph.class);
-        when(condGraphService.loadConditionGraphFromSpeciesIds(Collections.singleton(sp1.getId()),
-                null, allCondParams)).thenReturn(graphSpe1);
-        when(condGraphService.loadConditionGraphFromSpeciesIds(Collections.singleton(sp2.getId()),
-                null, allCondParams)).thenReturn(graphSpe2);
-        when(speciesService.loadSpeciesByIds(null, false)).thenReturn(new HashSet<>(Arrays.asList(sp1, sp2)));
-        //Following lines disabled because it's not anymore the method
-        //loadCondCallsWithSilverAnatEntityCallsByAnatEntity that is used
-        //(and this method has been removed entirely)
-//        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-//                new GeneFilter(g1.getSpecies().getId(), g1.getGeneId()), graphSpe1)).thenReturn(callsGene1);
-//        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-//                new GeneFilter(g2.getSpecies().getId(), g2.getGeneId()), graphSpe1)).thenReturn(callsGene2);
-//        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-//                new GeneFilter(g3.getSpecies().getId(), g3.getGeneId()), graphSpe2)).thenReturn(callsGene3);
-//        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-//                new GeneFilter(g4.getSpecies().getId(), g4.getGeneId()), graphSpe2)).thenReturn(callsGene4);
-        
-        String outputFile = testFolder.newFile("XRefBgee.tsv").getPath();
+        //The UniProt XRefs are generated for all species
+        when(speciesService.loadSpeciesByIds(Set.of(), false)).thenReturn(Set.of(sp1, sp2));
+        when(geneService.loadGenes(Set.of(new GeneFilter(sp1.getId()), new GeneFilter(sp2.getId())),
+                false, false, true, false)).thenReturn(Stream.of(g1, g2, g3, g4));
+
+        //The condition part of the processed filter is computed once per species
+        ExpressionCallProcessedFilterConditionPart condPart =
+                mock(ExpressionCallProcessedFilterConditionPart.class);
+        ExpressionCallProcessedFilter condPartProcessedFilter = mock(ExpressionCallProcessedFilter.class);
+        when(condPartProcessedFilter.getConditionPart()).thenReturn(condPart);
+        when(callService.processExpressionCallFilter(any(ExpressionCallFilter2.class)))
+                .thenReturn(condPartProcessedFilter);
+
+        //Then the calls of a batch of genes are loaded with a filter reusing it
+        ExpressionCallProcessedFilter processedFilterSpe1 = mock(ExpressionCallProcessedFilter.class);
+        ExpressionCallProcessedFilter processedFilterSpe2 = mock(ExpressionCallProcessedFilter.class);
+        //The batches are processed in parallel
+        List<ExpressionCallFilter2> callFilters = Collections.synchronizedList(new ArrayList<>());
+        when(callService.processExpressionCallFilter(any(ExpressionCallFilter2.class), isNull(),
+                eq(condPart), isNull())).thenAnswer(invocation -> {
+                    ExpressionCallFilter2 callFilter = invocation.getArgument(0);
+                    callFilters.add(callFilter);
+                    return callFilter.getGeneFilter().getSpeciesId() == sp1.getId()?
+                            processedFilterSpe1: processedFilterSpe2;
+                });
+        ExpressionCallLoader callLoaderSpe1 = mock(ExpressionCallLoader.class);
+        when(callLoaderSpe1.loadDataOnTheFly()).thenReturn(callsSpe1);
+        when(callService.getCallLoader(processedFilterSpe1)).thenReturn(callLoaderSpe1);
+        ExpressionCallLoader callLoaderSpe2 = mock(ExpressionCallLoader.class);
+        when(callLoaderSpe2.loadDataOnTheFly()).thenReturn(callsSpe2);
+        when(callService.getCallLoader(processedFilterSpe2)).thenReturn(callLoaderSpe2);
 
         //method to test
-        GenerateXRefsFilesWithExprInfo generateUniproteXrefs = 
-                new GenerateXRefsFilesWithExprInfo(() -> serviceFactory);
-        generateUniproteXrefs.generate(this.getClass().getResource(XREF_FILE).getFile(), outputFile,
-        		new HashSet<>(), xrefsFileType);
+        //The URL of the gene pages requires the Bgee version
+        System.setProperty(BgeeProperties.MAJOR_VERSION_KEY, "16");
+        System.setProperty(BgeeProperties.MINOR_VERSION_KEY, "0");
+        BgeeProperties.removeFromBgeePropertiesPool();
+        try {
+            new GenerateXRefsFilesWithExprInfo(() -> serviceFactory).generate(
+                    this.getClass().getResource(XREF_FILE).getFile(),
+                    testFolder.getRoot().getPath(), new HashSet<>(), List.of("UNIPROT"));
+        } finally {
+            System.clearProperty(BgeeProperties.MAJOR_VERSION_KEY);
+            System.clearProperty(BgeeProperties.MINOR_VERSION_KEY);
+            BgeeProperties.removeFromBgeePropertiesPool();
+        }
+
+        //The calls are those of the gene page: SILVER present calls, in the conditions where
+        //the gene itself was observed, with the redundant calls discarded
+        Set<ConditionParameter<?, ?>> condParams = Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        assertEquals(2, callFilters.size());
+        for (ExpressionCallFilter2 callFilter: callFilters) {
+            assertEquals(Map.of(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER),
+                    callFilter.getSummaryCallTypeQualityFilter());
+            assertEquals(condParams, callFilter.getCondParamCombination());
+            assertEquals(1, callFilter.getConditionFilters().size());
+            assertTrue(callFilter.getConditionFilters().iterator().next()
+                    .getObservedCondForParams().isEmpty());
+            assertEquals(condParams, callFilter.getCallObservedDataCondParams());
+            assertEquals(Boolean.TRUE, callFilter.getCallObservedDataFilter());
+            assertTrue(callFilter.isRedundantAncestorCallsFilter());
+        }
 
         //check file generation
+        Path outputFile = testFolder.getRoot().toPath().resolve("XRefsBgee.txt");
         log.debug("Checking file {}", outputFile);
-        assertTrue("File not created: " + outputFile, new File(outputFile).exists());
-        
-        List <String> fileLinesExpected = Arrays.asList(
-                "H9G367   DR   Bgee; ENSACAG00000000004; Expressed in anat3Name and 1 other tissue.",
-                "G1K846   DR   Bgee; ENSACAG00000000006; Expressed in anat3Name.",
-                "I3L1T2   DR   Bgee; ENSG00000141198; Expressed in anat1Name and 4 other tissues.",
-                "I3L367   DR   Bgee; ENSG00000141198; Expressed in anat1Name and 4 other tissues.",
-                "Q15615   DR   Bgee; ENSG00000141219; Expressed in anat5Name and 3 other tissues.");
-        
-        List <String> fileLines = Files.lines(Paths.get(outputFile)).collect(Collectors.toList());
-        assertTrue("The file does not contains expected lines, expected:" + System.lineSeparator()
-                + fileLinesExpected + ", but was:" + System.lineSeparator() + fileLines,
-                fileLinesExpected.equals(fileLines));
+        assertTrue("File not created: " + outputFile, Files.exists(outputFile));
 
+        List<String> expectedLines = List.of(
+                "H9G367   DR   Bgee; ENSACAG00000000004; Expressed in neuron in anat3Name "
+                + "and 1 other cell type or tissue.",
+                "G1K846   DR   Bgee; ENSACAG00000000006; Expressed in anat3Name.",
+                "I3L1T2   DR   Bgee; ENSG00000141198; Expressed in anat1Name "
+                + "and 4 other cell types or tissues.",
+                "I3L367   DR   Bgee; ENSG00000141198; Expressed in anat1Name "
+                + "and 4 other cell types or tissues.",
+                "Q15615   DR   Bgee; ENSG00000141219; Expressed in anat5Name "
+                + "and 3 other cell types or tissues.");
+        //The lines are sorted by gene ID, then by UniProt ID
+        assertEquals(expectedLines, Files.readAllLines(outputFile));
+    }
+
+    /**
+     * Test that {@link GenerateXRefsFilesWithExprInfo#generate(String, String, Set, List)}
+     * rejects an unknown XRef file type rather than silently skipping it.
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldRejectUnknownXrefFileType() {
+        new GenerateXRefsFilesWithExprInfo(() -> mock(ServiceFactory.class)).generate(
+                this.getClass().getResource(XREF_FILE).getFile(),
+                testFolder.getRoot().getPath(), new HashSet<>(), List.of("UNIPROT", "GENECARDS"));
+    }
+
+    /**
+     * @param anatEntity    The {@code AnatEntity} of the condition of the call.
+     * @param cellType      The {@code AnatEntity} that is the cell type of the condition
+     *                      of the call.
+     * @return              A mock {@code OTFExpressionCall} in a condition with
+     *                      {@code anatEntity} and {@code cellType}.
+     */
+    private static OTFExpressionCall mockCall(AnatEntity anatEntity, AnatEntity cellType) {
+        Condition2 cond = mock(Condition2.class);
+        when(cond.getAnatEntity()).thenReturn(anatEntity);
+        when(cond.getCellType()).thenReturn(cellType);
+        OTFExpressionCall call = mock(OTFExpressionCall.class);
+        when(call.getCondition()).thenReturn(cond);
+        return call;
     }
 }

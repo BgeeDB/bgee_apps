@@ -240,8 +240,13 @@ public class GenerateXRefsFilesWithExprInfo {
 
     private Set<XrefsFileType> getXrefFileType (List<String> wantedXrefsFileTypes) {
         log.traceEntry("{}",wantedXrefsFileTypes);
-        if(!wantedXrefsFileTypes.containsAll(wantedXrefsFileTypes)) {
-            throw log.throwing(new IllegalArgumentException("some xrefs file types does not exist"));
+        Set<String> unknownXrefsFileTypes = wantedXrefsFileTypes.stream()
+                .filter(type -> EnumSet.allOf(XrefsFileType.class).stream()
+                        .noneMatch(x -> x.name().equals(type)))
+                .collect(Collectors.toSet());
+        if (!unknownXrefsFileTypes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Unknown xrefs file types: "
+                    + unknownXrefsFileTypes));
         }
         Set<XrefsFileType> xrefsFileTypes = EnumSet.allOf(XrefsFileType.class)
         .stream()
@@ -658,7 +663,8 @@ public class GenerateXRefsFilesWithExprInfo {
     private Map<String, List<String>> generateXrefLineUniProt(String geneId, 
             List<OTFExpressionCall> callsByCondition, Set<String> uniprotIds) {
 
-        List<String> XRefLines = uniprotIds.stream().map(uid -> {
+        //Sorted so that the lines of a gene are written in the same order at each generation
+        List<String> XRefLines = uniprotIds.stream().sorted().map(uid -> {
             // Create String representation of the XRef with expression information
             StringBuilder sb = new StringBuilder(uid)
                     .append("   DR   Bgee; ")

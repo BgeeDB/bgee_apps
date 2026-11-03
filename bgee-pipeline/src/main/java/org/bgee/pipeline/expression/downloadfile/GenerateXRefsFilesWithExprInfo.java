@@ -471,8 +471,10 @@ public class GenerateXRefsFilesWithExprInfo {
      * Build the {@code ExpressionCallFilter2} used to retrieve the calls of one gene, reproducing
      * exactly the filtering done by the gene page (see {@code CommandGene#loadExpression} and
      * {@code CommandGene#buildConditionFilters}): SILVER EXPRESSED calls, over all data types,
-     * with the anat. entity/cell type as only condition parameter, restricted to conditions
-     * observed for that parameter, and with the redundant ancestor calls discarded.
+     * with the anat. entity/cell type as only condition parameter, restricted to the propagated
+     * conditions whose anat. entity and cell type are found in observed conditions, whether
+     * or not they match an observed condition of the gene, and with the redundant ancestor
+     * calls discarded.
      *
      * @param speciesId     An {@code Integer} that is the ID of the species of the gene.
      * @param geneId        A {@code String} that is the ID of the gene to retrieve calls for.
@@ -499,27 +501,34 @@ public class GenerateXRefsFilesWithExprInfo {
 
         Set<ConditionParameter<?, ?>> condParams = Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
         //As in CommandGene#buildConditionFilters: no term requested for any condition parameter,
-        //the ConditionFilter2 is only used to request the condition parameter combination
-        //for the species.
+        //the ConditionFilter2 requests the condition parameter combination for the species,
+        //and only the propagated conditions where the value of each requested condition
+        //parameter is also found in at least one observed condition, of any gene and any
+        //species (fields condObservedXXX), whether or not they match an observed condition
+        //of the gene: this only discards the propagated conditions with the root
+        //of the anat. entities, found in no observed condition.
+        //The requested conditions are also the limit of the propagation,
+        //which this restriction does not cut: the ancestors of a condition with that root
+        //all have it as well.
         Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds =
                 new HashMap<>();
         for (ConditionParameter<?, ?> condParam: ConditionParameter.allOf()) {
             condParamToComposedFilterIds.put(condParam, new ComposedFilterIds<>());
         }
         ConditionFilter2 condFilter = new ConditionFilter2(speciesId, condParamToComposedFilterIds,
-                condParams, null, false);
+                condParams, condParams, false);
 
         return log.traceExit(new ExpressionCallFilter2(
                 Map.of(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER),
                 new GeneFilter(speciesId, geneIds),
-                condFilter.areAllFiltersExceptSpeciesEmpty()? null: Set.of(condFilter),
+                Set.of(condFilter),
                 //no data type filter: all data types are considered, as on the gene page
                 //when no data type is requested
                 null,
                 condParams,
-                //conditions must have been observed for the requested condition parameters
-                condParams,
-                true,
+                //a condition only reached through its sub-conditions is reported
+                //when its call is not redundant with theirs
+                null, null,
                 //discard the calls in ancestor conditions that are redundant with a descendant
                 //condition
                 true));

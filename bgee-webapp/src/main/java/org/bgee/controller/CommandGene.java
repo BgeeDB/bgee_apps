@@ -614,8 +614,10 @@ public class CommandGene extends CommandExpressionSupport {
                 buildConditionFilters(speciesId, condParams),
                 dataTypes,
                 condParams,
-                condParams,
-                true, true);
+                //A condition only reached through its sub-conditions is displayed
+                //when its call is not redundant with theirs
+                null, null,
+                true);
             ExpressionCallLoader callLoader = this.loadExprCallLoader(exprCallFilter);
             List<OTFExpressionCall> calls = this.loadExprCallResults(
                     callLoader, DEFAULT_LIMIT, LIMIT_MAX);
@@ -709,12 +711,19 @@ public class CommandGene extends CommandExpressionSupport {
         for (ConditionParameter<?, ?> condParam: ConditionParameter.allOf()) {
             condParamToComposedFilterIds.put(condParam, new ComposedFilterIds<>());
         }
+        //Only the propagated conditions where the value of each requested condition parameter
+        //is also found in at least one observed condition, of any gene and any species,
+        //are requested (fields condObservedXXX), whether or not they match an observed
+        //condition of the gene: this only discards the propagated conditions with the root
+        //of the anat. entities, found in no observed condition.
+        //The requested conditions are also the limit of the propagation, which this restriction
+        //does not cut: the ancestors of a condition with that root all have it as well.
         ConditionFilter2 condFilter = new ConditionFilter2(speciesId,
                 condParamToComposedFilterIds,
                 condParams,
-                null,
+                condParams,
                 false);
-        return log.traceExit(condFilter.areAllFiltersExceptSpeciesEmpty()? null: Set.of(condFilter));
+        return log.traceExit(Set.of(condFilter));
     }
 
     /**

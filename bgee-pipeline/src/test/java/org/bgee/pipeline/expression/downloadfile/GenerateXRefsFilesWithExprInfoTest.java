@@ -1,6 +1,7 @@
 package org.bgee.pipeline.expression.downloadfile;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -182,8 +183,9 @@ public class GenerateXRefsFilesWithExprInfoTest extends TestAncestor {
             BgeeProperties.removeFromBgeePropertiesPool();
         }
 
-        //The calls are those of the gene page: SILVER present calls, in the conditions where
-        //the gene itself was observed, with the redundant calls discarded
+        //The calls are those of the gene page: SILVER present calls, in the propagated
+        //conditions whose anat. entity and cell type are found in observed conditions, whether
+        //or not they match an observed condition of the gene, with the redundant calls discarded
         Set<ConditionParameter<?, ?>> condParams = Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
         assertEquals(2, callFilters.size());
         for (ExpressionCallFilter2 callFilter: callFilters) {
@@ -191,10 +193,10 @@ public class GenerateXRefsFilesWithExprInfoTest extends TestAncestor {
                     callFilter.getSummaryCallTypeQualityFilter());
             assertEquals(condParams, callFilter.getCondParamCombination());
             assertEquals(1, callFilter.getConditionFilters().size());
-            assertTrue(callFilter.getConditionFilters().iterator().next()
-                    .getObservedCondForParams().isEmpty());
-            assertEquals(condParams, callFilter.getCallObservedDataCondParams());
-            assertEquals(Boolean.TRUE, callFilter.getCallObservedDataFilter());
+            assertEquals(condParams,
+                    callFilter.getConditionFilters().iterator().next().getObservedCondForParams());
+            assertTrue(callFilter.getCallObservedDataCondParams().isEmpty());
+            assertNull(callFilter.getCallObservedDataFilter());
             assertTrue(callFilter.isRedundantAncestorCallsFilter());
         }
 

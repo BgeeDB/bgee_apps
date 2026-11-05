@@ -190,6 +190,44 @@ public class ExpressionCallLoader extends CommonService {
                 .getCondParamCombination().stream()
                 .filter(p -> !this.propagationCondParams.contains(p))
                 .collect(Collectors.toSet());
+        return log.traceExit(this.conditionGroups(condGraphCache, fixedParams));
+    }
+
+    /**
+     * @param condGraphCache    The {@code ConditionGraphCache} of the species being propagated.
+     * @return                  An {@code int[]} giving, for each condition index, the group of
+     *                          conditions sharing the values of the condition parameters
+     *                          the observed data are requested over: a call is then observed
+     *                          when the gene was observed in any condition of its group, for
+     *                          instance in its anatomical entity at any developmental stage.
+     *                          {@code null} when no filtering on observed data is requested, or
+     *                          when it is requested over the whole combination: the propagation
+     *                          state of a call then tells whether it is observed.
+     */
+    //Package-private rather than private to allow unit testing over synthetic condition graphs
+    //(see ExpressionCallLoaderPropagationTest).
+    int[] observedDataGroups(ConditionGraphCache condGraphCache) {
+        log.traceEntry("{}", condGraphCache);
+        ExpressionCallFilter2 sourceFilter = this.processedFilter.getSourceFilter();
+        Set<ConditionParameter<?, ?>> observedDataCondParams =
+                sourceFilter.getCallObservedDataCondParams();
+        if (sourceFilter.getCallObservedDataFilter() == null || observedDataCondParams.isEmpty() ||
+                observedDataCondParams.equals(sourceFilter.getCondParamCombination())) {
+            return log.traceExit((int[]) null);
+        }
+        return log.traceExit(this.conditionGroups(condGraphCache, observedDataCondParams));
+    }
+
+    /**
+     * @param condGraphCache    The {@code ConditionGraphCache} of the species being propagated.
+     * @param condParams        The condition parameters the conditions are grouped by.
+     * @return                  An {@code int[]} giving, for each condition index, its group:
+     *                          two conditions share a group when every condition parameter of
+     *                          {@code condParams} holds the same value in both.
+     */
+    private int[] conditionGroups(ConditionGraphCache condGraphCache,
+            Set<ConditionParameter<?, ?>> condParams) {
+        log.traceEntry("{}, {}", condGraphCache, condParams);
         int condCount = condGraphCache.getConditionCount();
         int[] groups = new int[condCount];
         Map<String, Integer> groupIds = new HashMap<>();
@@ -201,7 +239,7 @@ public class ExpressionCallLoader extends CommonService {
                 groups[index] = -(index + 1);
                 continue;
             }
-            String key = fixedParams.stream()
+            String key = condParams.stream()
                     .map(p -> String.valueOf(cond.getConditionParameterId(p)))
                     .collect(Collectors.joining("//"));
             groups[index] = groupIds.computeIfAbsent(key, k -> groupIds.size());
@@ -293,19 +331,12 @@ public class ExpressionCallLoader extends CommonService {
         //from sub-conditions, were requested ({@code null} when both are wanted). The propagation
         //state of a call already answers that question, for the requested combination of condition
         //parameters: the conditions the observations are aggregated into are precisely
-        //the conditions of that combination. An observation requested over another combination
-        //is therefore not something the propagation can answer.
+        //the conditions of that combination. When the observation is requested over a part of
+        //the combination only, the conditions sharing the values of that part are grouped,
+        //and a call is observed when the gene was observed in any condition of its group.
         Boolean requestedObservedData = this.processedFilter.getSourceFilter()
                 .getCallObservedDataFilter();
-        if (requestedObservedData != null &&
-                !this.processedFilter.getSourceFilter().getCallObservedDataCondParams().equals(
-                        this.processedFilter.getSourceFilter().getCondParamCombination())) {
-            throw log.throwing(new UnsupportedOperationException("The filtering on observed data "
-                    + "is only supported over the requested combination of condition parameters ("
-                    + this.processedFilter.getSourceFilter().getCondParamCombination()
-                    + "), requested over: "
-                    + this.processedFilter.getSourceFilter().getCallObservedDataCondParams()));
-        }
+        int[] observedDataGroup = this.observedDataGroups(condGraphCache);
 
         //The calls of a gene are returned in a defined order, by decreasing expression score:
         //callers paginate and cache this result (see CommandExpressionSupport
@@ -322,7 +353,7 @@ public class ExpressionCallLoader extends CommonService {
         for (Entry<Gene, Map<Integer, OTFExpressionCall>> geneEntry:
                 propagatedExpressionCalls.entrySet()) {
             sortedCalls.put(geneEntry.getKey(), this.filterPropagatedCalls(geneEntry.getKey(),
-                    geneEntry.getValue(), condFilter, requestedObservedData,
+                    geneEntry.getValue(), condFilter, requestedObservedData, observedDataGroup,
                     specificCallTypeRequested, filterRedundantCalls, condGraphCache,
                     propagationGroup).stream()
                     .sorted(callComparator)
@@ -351,6 +382,10 @@ public class ExpressionCallLoader extends CommonService {
      *                                  the calls observed in their condition itself, {@code false}
      *                                  to keep only the calls propagated from sub-conditions,
      *                                  {@code null} to keep both.
+     * @param observedDataGroup         The groups of conditions a call is observed in when
+     *                                  the gene was observed in any of them, as returned by
+     *                                  {@link #observedDataGroups(ConditionGraphCache)}, {@code null}
+     *                                  when a call is observed in its condition itself only.
      * @param specificCallTypeRequested A {@code boolean} that is {@code true} to keep only
      *                                  the calls matching the requested summary call types.
      * @param filterRedundantCalls      A {@code boolean} that is {@code true} to discard the calls
@@ -362,14 +397,32 @@ public class ExpressionCallLoader extends CommonService {
      * @return                          A {@code Collection} of the {@code OTFExpressionCall}s
      *                                  kept, in no particular order.
      */
-    private Collection<OTFExpressionCall> filterPropagatedCalls(Gene gene,
+    //Package-private rather than private to allow unit testing over synthetic condition graphs
+    //(see ExpressionCallLoaderPropagationTest).
+    Collection<OTFExpressionCall> filterPropagatedCalls(Gene gene,
             Map<Integer, OTFExpressionCall> propagatedCalls,
             Predicate<OTFExpressionCall> condFilter, Boolean requestedObservedData,
-            boolean specificCallTypeRequested, boolean filterRedundantCalls,
-            ConditionGraphCache condGraphCache, int[] propagationGroup) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", gene, propagatedCalls, condFilter,
-                requestedObservedData, specificCallTypeRequested, filterRedundantCalls,
-                condGraphCache, propagationGroup);
+            int[] observedDataGroup, boolean specificCallTypeRequested,
+            boolean filterRedundantCalls, ConditionGraphCache condGraphCache,
+            int[] propagationGroup) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}", gene, propagatedCalls, condFilter,
+                requestedObservedData, observedDataGroup, specificCallTypeRequested,
+                filterRedundantCalls, condGraphCache, propagationGroup);
+
+        //The groups of the conditions the gene was observed in, read from all its propagated
+        //calls, before any of them is discarded: a call discarded for its quality or its
+        //condition still tells that the gene was observed in its group.
+        Set<Integer> observedGroups = null;
+        if (requestedObservedData != null && observedDataGroup != null) {
+            observedGroups = new HashSet<>();
+            for (Entry<Integer, OTFExpressionCall> callEntry: propagatedCalls.entrySet()) {
+                if (Boolean.TRUE.equals(
+                        callEntry.getValue().getDataPropagation().isIncludingObservedData())) {
+                    observedGroups.add(observedDataGroup[
+                            condGraphCache.getIndex(callEntry.getKey())]);
+                }
+            }
+        }
 
         //The summary call type and quality of a call are inferred once and reused: both
         //the filtering on the requested call type and the identification of the redundant calls
@@ -390,7 +443,9 @@ public class ExpressionCallLoader extends CommonService {
             //A call includes observed data when the gene was observed in the condition itself,
             //whatever the observations made in its sub-conditions.
             if (requestedObservedData != null && !requestedObservedData.equals(
-                    call.getDataPropagation().isIncludingObservedData())) {
+                    observedGroups == null? call.getDataPropagation().isIncludingObservedData():
+                    observedGroups.contains(observedDataGroup[
+                            condGraphCache.getIndex(callEntry.getKey())]))) {
                 continue;
             }
             Entry<ExpressionSummary, SummaryQuality> callTypeQuality = !callTypeQualityNeeded?

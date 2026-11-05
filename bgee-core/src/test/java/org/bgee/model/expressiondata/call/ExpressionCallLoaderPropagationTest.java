@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
@@ -625,6 +626,47 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
                 condMap.get(B_PRIME_B), "10", "20");
     }
 
+    /**
+     * Over the same graph as {@link #shouldNotPropagateOutsideTheRequestedConditionParameters()},
+     * with a single observation in {@code A'A} propagated along every condition parameter,
+     * the observed data requested over the anatomical entity only must keep the calls of
+     * {@code A'A} and {@code A'B}: the gene was observed in {@code A'}, at the stage {@code A}.
+     * The calls not observed are then those of {@code B'}. Over the whole combination,
+     * only {@code A'A} is observed.
+     */
+    @Test
+    public void shouldFilterOnObservedDataOverAPartOfTheCombination() {
+        Map<Integer, Condition2> condMap = anatAndStageConditionMap();
+        Gene gene = mock(Gene.class);
+        ConditionGraphCache graph = anatAndStageGraph();
+        Map<Integer, Map<Integer, Set<ObservedExpressionTO>>> observations = Map.of(
+                GENE_ID, Map.of(A_PRIME_A,
+                        Set.of(bulkObservation(A_PRIME_A, "0.01", "80", "10"))));
+
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene),
+                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE), true);
+        Map<Integer, OTFExpressionCall> calls = loader.propagateCalls(observations, graph,
+                Collections.emptySet()).get(gene);
+        int[] observedDataGroup = loader.observedDataGroups(graph);
+        assertEquals("The calls of the observed anat. entity should be observed, at any stage",
+                Set.of(condMap.get(A_PRIME_A), condMap.get(A_PRIME_B)),
+                conditions(loader.filterPropagatedCalls(gene, calls, c -> true, true,
+                        observedDataGroup, false, false, graph, null)));
+        assertEquals("The calls of the other anat. entity should not be observed",
+                Set.of(condMap.get(B_PRIME_A), condMap.get(B_PRIME_B)),
+                conditions(loader.filterPropagatedCalls(gene, calls, c -> true, false,
+                        observedDataGroup, false, false, graph, null)));
+
+        ExpressionCallLoader combinationLoader = mockLoader(condMap, Map.of(GENE_ID, gene),
+                ANAT_AND_STAGE, true);
+        assertNull("Over the whole combination, the propagation state tells whether a call "
+                + "is observed", combinationLoader.observedDataGroups(graph));
+        assertEquals("Over the whole combination, only the observed condition should be observed",
+                Set.of(condMap.get(A_PRIME_A)),
+                conditions(combinationLoader.filterPropagatedCalls(gene, calls, c -> true, true,
+                        null, false, false, graph, null)));
+    }
+
     //*************************************************************************
     // HELPERS
     //*************************************************************************
@@ -749,6 +791,39 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
 
         return new ExpressionCallLoader(processedFilter, serviceFactory,
                 mock(CallServiceUtils.class), propagationCondParams);
+    }
+
+    /**
+     * @param observedDataCondParams    The {@code ConditionParameter}s the observed data are
+     *                                  requested over, the requested combination being the one
+     *                                  they belong to.
+     * @param observedData              A {@code Boolean} that is {@code true} to request
+     *                                  the calls observed over {@code observedDataCondParams},
+     *                                  {@code false} those not observed.
+     * @return                          An {@code ExpressionCallLoader} propagating along every
+     *                                  condition parameter.
+     */
+    private static ExpressionCallLoader mockLoader(Map<Integer, Condition2> condMap,
+            Map<Integer, Gene> geneMap, Set<ConditionParameter<?, ?>> observedDataCondParams,
+            Boolean observedData) {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(mock(DAOManager.class));
+        ExpressionCallProcessedFilter processedFilter = mock(ExpressionCallProcessedFilter.class);
+        when(processedFilter.getRequestedConditionMap()).thenReturn(condMap);
+        when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
+        //The loader propagates over the condition graph of a single species
+        when(processedFilter.getSpeciesMap()).thenReturn(Map.of(1, new Species(1)));
+        //A real filter rather than a mock: the observed data groups are read from it
+        when(processedFilter.getSourceFilter()).thenReturn(new ExpressionCallFilter2(null,
+                new GeneFilter(1, "gene1"), null, null, ANAT_AND_STAGE, observedDataCondParams,
+                observedData, false));
+
+        return new ExpressionCallLoader(processedFilter, serviceFactory,
+                mock(CallServiceUtils.class));
+    }
+
+    private static Set<Condition2> conditions(Collection<OTFExpressionCall> calls) {
+        return calls.stream().map(OTFExpressionCall::getCondition).collect(Collectors.toSet());
     }
 
     /**

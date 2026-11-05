@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
@@ -176,10 +177,16 @@ public class GenerateXRefsFilesWithExprInfo {
      * @param wikidataUberonClasses        A {@code Set} that contains all uberon terms inserted in wikidata.
      * @param xrefsFileType             A {@code List} of {@code String} corresponding to string representation of
      *                                     xrefs files to generate
+     * @throws UncheckedIOException     If {@code outputDir} does not exist and cannot be created.
+     * @throws IllegalArgumentException If {@code outputDir} is not writable.
      */
-    public void generate(String inputFileName, String outputDir, Set<String> wikidataUberonClasses, 
+    public void generate(String inputFileName, String outputDir, Set<String> wikidataUberonClasses,
             List<String> xrefsFileType) {
         log.traceEntry("{}, {}, {}, {}",inputFileName, outputDir, wikidataUberonClasses, xrefsFileType);
+
+        // the files are only written once all species are processed: check the output directory
+        // before, so that a wrong directory does not waste the whole generation
+        checkOutputDir(outputDir);
 
        // detect requested xrefs file types
         Set<XrefsFileType> requestedXrefFileTypes = this.getXrefFileType(xrefsFileType);
@@ -217,6 +224,30 @@ public class GenerateXRefsFilesWithExprInfo {
         // write XRef file
         this.writeXrefWithExpressionInfo(requestedXrefFileTypes, geneIdToXrefLinesbyXrefsFileType, 
                 outputDir);
+        log.traceExit();
+    }
+
+    /**
+     * Create the output directory if it does not exist, and check that it is writable.
+     *
+     * @param outputDir                 A {@code String} that is the path to the directory where XRefs files
+     *                                  will be created.
+     * @throws UncheckedIOException     If {@code outputDir} does not exist and cannot be created.
+     * @throws IllegalArgumentException If {@code outputDir} is not writable.
+     */
+    private static void checkOutputDir(String outputDir) {
+        log.traceEntry("{}", outputDir);
+        Path outputDirPath = Paths.get(outputDir);
+        try {
+            Files.createDirectories(outputDirPath);
+        } catch (IOException e) {
+            throw log.throwing(new UncheckedIOException("Can not create the output directory "
+                    + outputDir, e));
+        }
+        if (!Files.isWritable(outputDirPath)) {
+            throw log.throwing(new IllegalArgumentException("The output directory " + outputDir
+                    + " is not writable"));
+        }
         log.traceExit();
     }
 

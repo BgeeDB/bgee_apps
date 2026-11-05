@@ -1518,10 +1518,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 summaryCallTypeQualityFilter, dataTypes);
         return log.traceExit(new ExpressionCallFilter2(summaryCallTypeQualityFilter,
                 new GeneFilter(speciesId, geneIds), null, dataTypes, condParamCombination,
-                //Only the calls observed in the requested conditions are reported, as they were
-                //by the files generated from the precomputed calls. The observation is assessed
-                //over the very combination of condition parameters the calls are propagated over.
-                summaryCallTypeQualityFilter == null? null: condParamCombination,
+                //Only the calls of a gene in the anat. entities and cell types it was observed in
+                //are reported, whatever the developmental stage, sex and strain it was observed at:
+                //the observed conditions are rarely annotated to a meta stage, the only stages
+                //reported (see isMetaStageCall), so that requiring the observation in the condition
+                //itself would discard most of the calls of the files with a developmental stage.
+                summaryCallTypeQualityFilter == null? null:
+                    Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE),
                 summaryCallTypeQualityFilter == null? null: true,
                 //Redundant ancestor calls are kept: these files are an exhaustive export,
                 //the calls to display are selected by their consumers, not here.
@@ -1675,9 +1678,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     call.getExpressionScore().toPlainString();
                 String pValue = call.getAllDataTypePValue() == null? NA_VALUE:
                     call.getFormattedAllDatatypePValue();
-                //Only the calls observed in the requested conditions are retrieved
-                //(see buildCallFilter), so the propagation of every call of these files
-                //includes observed data.
+                //The calls are retrieved when the gene was observed in their anat. entity and cell
+                //type, not necessarily in their condition itself (see buildCallFilter):
+                //the complete file says whether it was.
                 Boolean includingObservedData = Boolean.TRUE.equals(
                         call.getDataPropagation().isIncludingObservedData());
 

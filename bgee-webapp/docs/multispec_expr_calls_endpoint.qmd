@@ -164,7 +164,8 @@ Each element in `expressionCalls`:
 | `multiSpeciesCondition.anatEntityTaxonScope` | Object | Taxon that scopes this homology group (`AnatEntitySimilarity.getHomologyScopeTaxon()`): `{ id, scientificName, level, lca }`. Distinguishes split homology groups that share the same UBERON term. |
 | `multiSpeciesCondition.cellTypes` | Array | Cell types `[{ id, name }]` |
 | `multiSpeciesCondition.cellTypeTaxonScope` | Object | Same homology-scope semantics as `anatEntityTaxonScope` for the cell-type similarity; `null` when `cellTypes` is empty |
-| `expressionScore` | Object | `{ expressionScore, expressionScoreConfidence }` |
+| `expressionScore` | Object | `{ expressionScore, expressionScoreConfidence, bestDescendantExpressionScore }` |
+| `expressionScore.bestDescendantExpressionScore` | Number or `null` | Highest expression score among descendant conditions: the maximum of `OTFExpressionCall.getBestDescendantExpressionScore()` over the species calls of this similarity. `null` when none of them has a descendant call. |
 | `dataTypesWithData` | Object | Boolean per data type: `{ IN_SITU, RNA_SEQ, SC_RNA_SEQ }` |
 | `expressionState` | String | `"expressed"` or `"not_expressed"` |
 | `expressionQuality` | String | `"gold"`, `"silver"`, or `"bronze"` |
@@ -193,7 +194,8 @@ Each element in `expressionCalls`:
   },
   "expressionScore": {
     "expressionScore": "72.15",
-    "expressionScoreConfidence": "high"
+    "expressionScoreConfidence": "high",
+    "bestDescendantExpressionScore": 81.40
   },
   "dataTypesWithData": {
     "IN_SITU": true, "SC_RNA_SEQ": false, "RNA_SEQ": true
@@ -328,8 +330,11 @@ flowchart TD
 
 `SimilarityExpressionCall2`s are serialized directly by
 `MultispecExprCallResponseTypeAdapter` (no intermediate DTO). For each call, the adapter
-derives the `expressionScore`, `expressionScoreConfidence`, `dataTypesWithData`,
-`expressionState`, and `expressionQuality` fields from the underlying `ExpressionCall2`s.
+derives the `expressionScore`, `expressionScoreConfidence`, `bestDescendantExpressionScore`,
+`dataTypesWithData`, `expressionState`, and `expressionQuality` fields from the underlying
+`OTFExpressionCall`s. `bestDescendantExpressionScore` is the maximum of
+`getBestDescendantExpressionScore()` across those calls, written as a JSON number, or `null`
+when every call has none.
 
 ```{mermaid}
 %%| fig-width: 8
@@ -340,6 +345,7 @@ flowchart TD
 
     CALLS --> LCA["Compute species LCA<br/>from call species IDs"]
     CALLS --> SCORE["Find max expressionScore<br/>across all calls"]
+    CALLS --> DESC["Find max bestDescendantExpressionScore<br/>across all calls"]
     CALLS --> DT["Collect DataTypes with data<br/>(union of supportingDataTypes)"]
     CALLS --> QUAL["Infer SummaryQuality from<br/>the p-values, keep the best"]
 
@@ -351,6 +357,7 @@ flowchart TD
     MSC --> ITEM
     LCA --> ITEM
     SCORE --> ITEM
+    DESC --> ITEM
     HIGH --> ITEM
     LOW --> ITEM
     DT --> ITEM

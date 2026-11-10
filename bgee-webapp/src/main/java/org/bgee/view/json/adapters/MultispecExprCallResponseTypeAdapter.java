@@ -1,6 +1,7 @@
 package org.bgee.view.json.adapters;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -77,6 +78,13 @@ public class MultispecExprCallResponseTypeAdapter extends TypeAdapter<MultispecE
         String formattedScore = maxScoreCall
                 .map(OTFExpressionCall::getFormattedExpressionScore)
                 .orElse("NA");
+        //The highest expression score among descendant conditions, the maximum over the
+        //calls supporting this similarity. Null when none of them has a descendant call.
+        BigDecimal bestDescendantExpressionScore = call.getCalls().stream()
+                .map(OTFExpressionCall::getBestDescendantExpressionScore)
+                .filter(Objects::nonNull)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
         EnumSet<DataType> dataTypesWithData = call.getCalls().stream()
                 .flatMap(c -> c.getSupportingDataTypes().stream())
                 .filter(Objects::nonNull)
@@ -108,6 +116,9 @@ public class MultispecExprCallResponseTypeAdapter extends TypeAdapter<MultispecE
         out.beginObject();
         out.name("expressionScore").value(formattedScore);
         out.name("expressionScoreConfidence").value(confidence);
+        //A number, as the gene page and expr_calls write it. The expressionScore
+        //beside it stays the formatted string of this endpoint.
+        out.name("bestDescendantExpressionScore").value(bestDescendantExpressionScore);
         out.endObject();
 
         out.name("dataTypesWithData");

@@ -78,8 +78,9 @@ public class MultispecExprCallResponseTypeAdapter extends TypeAdapter<MultispecE
         String formattedScore = maxScoreCall
                 .map(OTFExpressionCall::getFormattedExpressionScore)
                 .orElse("NA");
-        //The highest expression score among descendant conditions, the maximum over the
-        //calls supporting this similarity. Null when none of them has a descendant call.
+        //The highest expression score among the present calls of the descendant conditions, the
+        //maximum over the calls supporting this similarity. Null when none of them has a present
+        //descendant call.
         BigDecimal bestDescendantExpressionScore = call.getCalls().stream()
                 .map(OTFExpressionCall::getBestDescendantExpressionScore)
                 .filter(Objects::nonNull)

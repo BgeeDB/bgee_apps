@@ -737,6 +737,114 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         }
     }
 
+    /**
+     * Over the chain {@code L1 -> A -> R}, the best expression score of the descendants of a call
+     * is the score of its present descendants: the present call of {@code L1} is propagated
+     * to {@code A} and {@code R}, and {@code L1} itself, having no descendant, gets none.
+     */
+    @Test
+    public void shouldPropagateTheBestExpressionScoreOfPresentCalls() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, A, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Collection<OTFExpressionCall> calls = loader.propagateCalls(
+                Map.of(GENE_ID, Map.of(L1, Set.of(bulkObservation(L1, "0.01", "80", "10")))),
+                chainGraph(), Collections.emptySet()).get(gene).values();
+
+        assertNull("A condition with no descendant has no best descendant expression score",
+                callForCondition("condition L1", calls, condMap.get(L1))
+                .getBestDescendantExpressionScore());
+        assertBigDecimalEquals("Unexpected best descendant expression score for A", "80",
+                callForCondition("condition A", calls, condMap.get(A))
+                .getBestDescendantExpressionScore());
+        assertBigDecimalEquals("Unexpected best descendant expression score for R", "80",
+                callForCondition("condition R", calls, condMap.get(R))
+                .getBestDescendantExpressionScore());
+    }
+
+    /**
+     * The best expression score of the present descendants is passed on through a call that is
+     * less expressed than them: in the chain {@code L1 -> A -> R}, {@code A} also holds
+     * a large weight of a high p-value and a low score, so its own score is 20.59 while
+     * the one of its present descendant {@code L1} is 80, and {@code R} gets the 80 of {@code L1}.
+     */
+    @Test
+    public void shouldPassTheBestExpressionScoreThroughALessExpressedCall() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, A, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Collection<OTFExpressionCall> calls = loader.propagateCalls(
+                Map.of(GENE_ID, Map.of(
+                        L1, Set.of(bulkObservation(L1, "0.01", "80", "10")),
+                        A, Set.of(bulkObservation(A, "0.9", "20", "1000")))),
+                chainGraph(), Collections.emptySet()).get(gene).values();
+
+        assertBigDecimalEquals("Unexpected score for A", "20.59",
+                callForCondition("condition A", calls, condMap.get(A)).getExpressionScore());
+        assertBigDecimalEquals("Unexpected best descendant expression score for A", "80",
+                callForCondition("condition A", calls, condMap.get(A))
+                .getBestDescendantExpressionScore());
+        OTFExpressionCall rootCall = callForCondition("condition R", calls, condMap.get(R));
+        assertBigDecimalEquals("Unexpected best descendant expression score for R", "80",
+                rootCall.getBestDescendantExpressionScore());
+        assertBigDecimalEquals("Unexpected weight of the best descendant expression score for R",
+                "10", rootCall.getBestDescendantExpressionScoreWeight());
+    }
+
+    /**
+     * Nothing is propagated for absent calls: when the only observation is an absent call in
+     * {@code L1}, none of the calls has a best descendant expression score or weight.
+     */
+    @Test
+    public void shouldNotPropagateTheExpressionScoreOfAbsentCalls() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, A, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Collection<OTFExpressionCall> calls = loader.propagateCalls(
+                Map.of(GENE_ID, Map.of(L1, Set.of(bulkObservation(L1, "0.8", "90", "10")))),
+                chainGraph(), Collections.emptySet()).get(gene).values();
+
+        assertEquals("All the conditions of the chain should have been propagated",
+                3, calls.size());
+        for (OTFExpressionCall call: calls) {
+            assertNull("The score of an absent call must not be propagated, call: " + call,
+                    call.getBestDescendantExpressionScore());
+            assertNull("The weight of the score of an absent call must not be propagated, call: "
+                    + call, call.getBestDescendantExpressionScoreWeight());
+        }
+    }
+
+    /**
+     * Over the diamond graph where {@code L1} is present with a score of 80 and {@code L2}
+     * absent with a higher score of 95, {@code B}, which has both as descendants, is present
+     * and gets the score of {@code L1}: the higher score of the absent call is left out.
+     * {@code L2} itself has no descendant.
+     */
+    @Test
+    public void shouldLeaveOutAnAbsentDescendantMoreExpressedThanAPresentOne() {
+        Map<Integer, Condition2> condMap = mockConditionMap(L1, L2, A, B, R);
+        Gene gene = mock(Gene.class);
+        ExpressionCallLoader loader = mockLoader(condMap, Map.of(GENE_ID, gene));
+
+        Collection<OTFExpressionCall> calls = loader.propagateCalls(
+                Map.of(GENE_ID, Map.of(
+                        L1, Set.of(bulkObservation(L1, "0.01", "80", "10")),
+                        L2, Set.of(bulkObservation(L2, "0.8", "95", "10")))),
+                diamondGraph(), Collections.emptySet()).get(gene).values();
+
+        assertBigDecimalEquals("Unexpected best descendant expression score for B", "80",
+                callForCondition("condition B", calls, condMap.get(B))
+                .getBestDescendantExpressionScore());
+        assertBigDecimalEquals("The weight should be the one of the present descendant",
+                "10", callForCondition("condition B", calls, condMap.get(B))
+                .getBestDescendantExpressionScoreWeight());
+        assertNull("The absent call has no descendant, nor a best descendant score",
+                callForCondition("condition L2", calls, condMap.get(L2))
+                .getBestDescendantExpressionScore());
+    }
 
     /**
      * @return  An {@code ExpressionCallLoader} with its condition and gene maps seeded with
@@ -761,6 +869,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
         //The loader propagates over the condition graph of a single species
         when(processedFilter.getSpeciesMap()).thenReturn(Map.of(1, new Species(1)));
+        when(processedFilter.getPresentLowThreshold())
+                .thenReturn(CallServiceParent.PRESENT_LOW_LESS_THAN_OR_EQUALS_TO);
         //The propagation reads the requested data types from the source filter
         when(processedFilter.getSourceFilter()).thenReturn(new ExpressionCallFilter2(null,
                 new GeneFilter(1, "gene1"), null, dataTypes, null, null, null, false));
@@ -784,6 +894,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
         //The loader propagates over the condition graph of a single species
         when(processedFilter.getSpeciesMap()).thenReturn(Map.of(1, new Species(1)));
+        when(processedFilter.getPresentLowThreshold())
+                .thenReturn(CallServiceParent.PRESENT_LOW_LESS_THAN_OR_EQUALS_TO);
         //A real filter rather than a mock: the propagation reads the requested combination from it
         //to know which condition parameters it may not move along
         when(processedFilter.getSourceFilter()).thenReturn(new ExpressionCallFilter2(null,
@@ -813,6 +925,8 @@ public class ExpressionCallLoaderPropagationTest extends TestAncestor {
         when(processedFilter.getRequestedGeneMap()).thenReturn(geneMap);
         //The loader propagates over the condition graph of a single species
         when(processedFilter.getSpeciesMap()).thenReturn(Map.of(1, new Species(1)));
+        when(processedFilter.getPresentLowThreshold())
+                .thenReturn(CallServiceParent.PRESENT_LOW_LESS_THAN_OR_EQUALS_TO);
         //A real filter rather than a mock: the observed data groups are read from it
         when(processedFilter.getSourceFilter()).thenReturn(new ExpressionCallFilter2(null,
                 new GeneFilter(1, "gene1"), null, null, ANAT_AND_STAGE, observedDataCondParams,

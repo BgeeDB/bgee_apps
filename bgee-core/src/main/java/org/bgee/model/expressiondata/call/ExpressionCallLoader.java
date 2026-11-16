@@ -1225,6 +1225,7 @@ public class ExpressionCallLoader extends CommonService {
         BigDecimal bestDescendantTrustedDataTypePValue = null;
         BigDecimal bestDescendantExpressionScore = null;
         BigDecimal bestDescendantExpressionScoreWeight = null;
+        BigDecimal presentLowThreshold = this.processedFilter.getPresentLowThreshold();
         for (int childIndex: graph.getDirectDescendantIndexes(index)) {
             //A restricted propagation reads the same relations downward as upward: a child that
             //the observations of this condition's group were not propagated through does not
@@ -1247,13 +1248,19 @@ public class ExpressionCallLoader extends CommonService {
                     childCall.getAllDataTypePValue(), childCall.getBestDescendantAllDataTypePValue());
             bestDescendantTrustedDataTypePValue = getBestDescendantValue(bestDescendantTrustedDataTypePValue,
                     childCall.getTrustedDataTypePValue(), childCall.getBestDescendantTrustedDataTypePValue());
-            if (bestDescendantExpressionScore == null ||
-                    childCall.getExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
+            //Only the present calls are propagated as the best expression score of the descendants:
+            //the score of an absent call is not. An absent call still holds the best score of
+            //its own present descendants, if any, and passes it on to its ancestors below.
+            if (isPresent(childCall, presentLowThreshold) &&
+                    (bestDescendantExpressionScore == null ||
+                    childCall.getExpressionScore().compareTo(bestDescendantExpressionScore) > 0)) {
                 bestDescendantExpressionScore = childCall.getExpressionScore();
                 bestDescendantExpressionScoreWeight = childCall.getExpressionScoreWeight();
             }
+            //The child only holds the score of its own present descendants, whatever its own type
             if (childCall.getBestDescendantExpressionScore() != null &&
-                    childCall.getBestDescendantExpressionScore().compareTo(bestDescendantExpressionScore) > 0) {
+                    (bestDescendantExpressionScore == null ||
+                    childCall.getBestDescendantExpressionScore().compareTo(bestDescendantExpressionScore) > 0)) {
                 bestDescendantExpressionScore = childCall.getBestDescendantExpressionScore();
                 bestDescendantExpressionScoreWeight = childCall.getBestDescendantExpressionScoreWeight();
             }
@@ -1293,6 +1300,27 @@ public class ExpressionCallLoader extends CommonService {
               dataPropagation);
 
         return log.traceExit(resultingCall);
+    }
+
+    /**
+     * @param call                  The {@code OTFExpressionCall} to check.
+     * @param presentLowThreshold   A {@code BigDecimal} that is the p-value threshold for present
+     *                              calls.
+     * @return                      {@code true} if {@code call} is a present call, whatever its
+     *                              quality: its p-value, or the best p-value of its descendants,
+     *                              is not greater than {@code presentLowThreshold}. It is
+     *                              the rule of {@link OTFExpressionCallFilterEngine#
+     *                              inferSummaryCallTypeAndQuality(OTFExpressionCall, BigDecimal,
+     *                              BigDecimal, BigDecimal, BigDecimal)}.
+     */
+    private static boolean isPresent(OTFExpressionCall call, BigDecimal presentLowThreshold) {
+        BigDecimal allPValue = call.getAllDataTypePValue();
+        if (allPValue == null) {
+            return false;
+        }
+        BigDecimal bestDescAllPValue = call.getBestDescendantAllDataTypePValue();
+        return allPValue.compareTo(presentLowThreshold) <= 0 ||
+                bestDescAllPValue != null && bestDescAllPValue.compareTo(presentLowThreshold) <= 0;
     }
 
     private static BigDecimal getBestDescendantValue(BigDecimal currentBestDescendantValue,

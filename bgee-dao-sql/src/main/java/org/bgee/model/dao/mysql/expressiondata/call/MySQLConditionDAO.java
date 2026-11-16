@@ -32,6 +32,7 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 
 /**
  * An {@code ConditionDAO} for MySQL. 
@@ -59,6 +60,12 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
 
     public final static String TABLE_NAME = "globalCond";
     private final static String COND_REL_TABLE_NAME = "globalCondRelation";
+    //Tables of the WITH clause retrieving the requested anat. entities and cell types
+    //with their descendants, see generateDescendantWithClause. Their names end
+    //with the position of the filter using them.
+    private final static String ANAT_ENTITY_CELL_TYPE_TERM_TABLE = "anatEntityCellTypeTerm";
+    private final static String ANAT_ENTITY_DESCENDANT_TABLE = "anatEntityWithDescendants";
+    private final static String CELL_TYPE_DESCENDANT_TABLE = "cellTypeWithDescendants";
 
 //    /**
 //     * @param tableName             A {@code String} that is the name of the global condition table
@@ -232,14 +239,18 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
             Collection<ConditionDAO.Attribute> attrs) throws DAOException {
         log.traceEntry("{}, {}", condFilters, attrs);
 
-        final Set<DAOConditionFilter2> clonedCondFilters = Collections.unmodifiableSet(
-                condFilters == null?
-                new LinkedHashSet<>(): new LinkedHashSet<>(condFilters));
-        final Set<ConditionDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attrs == null? 
+        //A List: the position of a filter names the tables of the WITH clause it uses
+        final List<DAOConditionFilter2> clonedCondFilters = Collections.unmodifiableList(
+                condFilters == null? new ArrayList<>():
+                    new ArrayList<>(new LinkedHashSet<>(condFilters)));
+        final Set<ConditionDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attrs == null?
                 EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(attrs));
 
-        // generate SELECT
+        // generate WITH CLAUSE, retrieving the requested terms with their descendants
         StringBuilder sb = new StringBuilder();
+        sb.append(generateDescendantWithClause(clonedCondFilters));
+
+        // generate SELECT
         sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(), true, clonedAttrs))
         .append(" FROM ").append(TABLE_NAME);
 
@@ -248,15 +259,15 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         // FILTER ON CONDITION PARAMETERS
         if (!clonedCondFilters.isEmpty()) {
             sb.append(" WHERE ")
-            .append(clonedCondFilters.stream().map(cf -> {
-                return generateOneConditionFilter(cf);
-            }).collect(Collectors.joining(" OR ")));
+            .append(IntStream.range(0, clonedCondFilters.size())
+                    .mapToObj(i -> generateOneConditionFilter(clonedCondFilters.get(i), i))
+                    .collect(Collectors.joining(" OR ")));
         }
         //parameterize query
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection()
                     .prepareStatement(sb.toString());
-            int paramIndex = 1;
+            int paramIndex = parameterizeDescendantWithClause(stmt, clonedCondFilters, 1);
             configureRawDataConditionFiltersStmt(stmt, clonedCondFilters, paramIndex);
             return log.traceExit(new MySQLConditionTOResultSet(stmt));
         } catch (SQLException e) {
@@ -295,9 +306,17 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         }
     }
 
+    /**
+     * @param condFilter        The {@code DAOConditionFilter2} to generate the WHERE clause of.
+     * @param filterPosition    An {@code int} that is the position of {@code condFilter}
+     *                          in the filters of the query, naming the tables of the WITH clause
+     *                          it uses (see {@link #generateDescendantWithClause(List)}).
+     * @return                  A {@code String} that is the part of the WHERE clause
+     *                          for {@code condFilter}.
+     */
     //TODO: same approach as in MysqlRawDataCondtionDAO. Should refactor
-    private String generateOneConditionFilter(DAOConditionFilter2 condFilter) {
-        log.traceEntry("{}", condFilter);
+    private String generateOneConditionFilter(DAOConditionFilter2 condFilter, int filterPosition) {
+        log.traceEntry("{}, {}", condFilter, filterPosition);
         StringBuilder sb = new StringBuilder();
         if(condFilter == null) {
             throw log.throwing(new IllegalArgumentException("condFilter can not be null"));
@@ -305,11 +324,17 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
 
         boolean previousCond = false;
 
-        String anatEntityCellTypeWhereClause = generateAnatEntityCellTypeWhereFragment(
-                condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
-                condFilter.getExcludedAnatEntityCellTypeIds(),
-                MySQLConditionDAO.TABLE_NAME + "." + ConditionDAO.Attribute.ANAT_ENTITY_ID.getTOFieldName(),
-                MySQLConditionDAO.TABLE_NAME + "." + ConditionDAO.Attribute.CELL_TYPE_ID.getTOFieldName());
+        String anatEntityField = MySQLConditionDAO.TABLE_NAME + "."
+                + ConditionDAO.Attribute.ANAT_ENTITY_ID.getTOFieldName();
+        String cellTypeField = MySQLConditionDAO.TABLE_NAME + "."
+                + ConditionDAO.Attribute.CELL_TYPE_ID.getTOFieldName();
+        String anatEntityCellTypeWhereClause = isWithAnatEntityCellTypeDescendants(condFilter)?
+                generateAnatEntityCellTypeDescendantWhereFragment(condFilter, filterPosition,
+                        anatEntityField, cellTypeField):
+                generateAnatEntityCellTypeWhereFragment(
+                        condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                        condFilter.getExcludedAnatEntityCellTypeIds(),
+                        anatEntityField, cellTypeField);
         if (StringUtils.isNotBlank(anatEntityCellTypeWhereClause)) {
             previousCond = true;
             sb.append(anatEntityCellTypeWhereClause);
@@ -366,6 +391,201 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         return log.traceExit(sb.toString());
     }
 
+    /**
+     * @return  {@code true} if the anatomical entities and cell types of {@code condFilter}
+     *          are retrieved with their descendants, through tables of the WITH clause.
+     */
+    private static boolean isWithAnatEntityCellTypeDescendants(DAOConditionFilter2 condFilter) {
+        return condFilter.isIncludeAnatEntityCellTypeDescendants() &&
+                (!condFilter.getAnatEntityIds().isEmpty() || !condFilter.getCellTypeIds().isEmpty());
+    }
+    /**
+     * Generates the WITH clause retrieving, for the filters requesting the descendants
+     * of their anatomical entities and cell types, the terms used by the conditions
+     * of their species that are these terms or their descendants. The descendants are checked
+     * once per term used, rather than once per condition: the conditions of a species use
+     * a few hundred terms.
+     *
+     * @param condFilters   A {@code List} of {@code DAOConditionFilter2}s, the position
+     *                      of a filter naming the tables it uses.
+     * @return              A {@code String} that is the WITH clause, empty if no filter
+     *                      requests descendants.
+     */
+    private static String generateDescendantWithClause(List<DAOConditionFilter2> condFilters) {
+        log.traceEntry("{}", condFilters);
+        String anatEntityField = TABLE_NAME + "." + ConditionDAO.Attribute.ANAT_ENTITY_ID.getTOFieldName();
+        String cellTypeField = TABLE_NAME + "." + ConditionDAO.Attribute.CELL_TYPE_ID.getTOFieldName();
+
+        List<String> tables = new ArrayList<>();
+        for (int i = 0; i < condFilters.size(); i++) {
+            DAOConditionFilter2 condFilter = condFilters.get(i);
+            int speciesCount = condFilter.getSpeciesIds().size();
+            if (isWithAnatEntityCellTypeDescendants(condFilter)) {
+                //The anat. entities and cell types are searched in both columns,
+                //see generateAnatEntityCellTypeWhereFragment
+                String termWhereClause = generateTermWhereClause(condFilter);
+                tables.add(ANAT_ENTITY_CELL_TYPE_TERM_TABLE + i + " AS (SELECT " + anatEntityField
+                        + " AS id FROM " + TABLE_NAME + termWhereClause + " UNION SELECT "
+                        + cellTypeField + " FROM " + TABLE_NAME + termWhereClause + ")");
+                if (!condFilter.getAnatEntityIds().isEmpty()) {
+                    tables.add(ANAT_ENTITY_DESCENDANT_TABLE + i + " AS ("
+                            + generateDescendantSelect(ANAT_ENTITY_CELL_TYPE_TERM_TABLE + i,
+                                    condFilter.getAnatEntityIds().size(),
+                                    MySQLRelationDAO.getAnatEntityDescendantClause("t.id",
+                                            condFilter.getAnatEntityIds().size(), speciesCount))
+                            + ")");
+                }
+                if (!condFilter.getCellTypeIds().isEmpty()) {
+                    tables.add(CELL_TYPE_DESCENDANT_TABLE + i + " AS ("
+                            + generateDescendantSelect(ANAT_ENTITY_CELL_TYPE_TERM_TABLE + i,
+                                    condFilter.getCellTypeIds().size(),
+                                    MySQLRelationDAO.getAnatEntityDescendantClause("t.id",
+                                            condFilter.getCellTypeIds().size(), speciesCount))
+                            + ")");
+                }
+            }
+        }
+        return log.traceExit(tables.isEmpty()? "": "WITH " + String.join(", ", tables) + " ");
+    }
+    /**
+     * @param termTable         A {@code String} that is the name of the table of terms to check.
+     * @param requestedCount    An {@code int} that is the number of requested terms.
+     * @param descendantClause  A {@code String} that is the SQL condition checking that
+     *                          {@code t.id} is a descendant of the requested terms.
+     * @return                  A {@code String} that is the query selecting the terms
+     *                          of {@code termTable} that are requested terms or their descendants.
+     */
+    private static String generateDescendantSelect(String termTable, int requestedCount,
+            String descendantClause) {
+        log.traceEntry("{}, {}, {}", termTable, requestedCount, descendantClause);
+        //The DISTINCT prevents MySQL from merging this table into the queries using it:
+        //used in OR conditions, the descendants would then be checked for each condition.
+        return log.traceExit("SELECT DISTINCT t.id FROM " + termTable + " AS t WHERE t.id IN ("
+                + BgeePreparedStatement.generateParameterizedQueryString(requestedCount)
+                + ") OR " + descendantClause);
+    }
+    /**
+     * @param condFilter    The {@code DAOConditionFilter2} the terms of which are checked.
+     * @return              A {@code String} that is the WHERE clause, possibly empty, selecting
+     *                      the conditions the terms of which are checked: the conditions
+     *                      of the species, developmental stages, sexes and strains
+     *                      of {@code condFilter}. They include the conditions retrieved.
+     */
+    private static String generateTermWhereClause(DAOConditionFilter2 condFilter) {
+        log.traceEntry("{}", condFilter);
+        List<String> clauses = new ArrayList<>();
+        if (!condFilter.getSpeciesIds().isEmpty()) {
+            clauses.add(TABLE_NAME + "." + ConditionDAO.Attribute.SPECIES_ID.getTOFieldName()
+                    + " IN (" + BgeePreparedStatement.generateParameterizedQueryString(
+                            condFilter.getSpeciesIds().size()) + ")");
+        }
+        if (!condFilter.getDevStageIds().isEmpty()) {
+            clauses.add(TABLE_NAME + "." + ConditionDAO.Attribute.STAGE_ID.getTOFieldName()
+                    + " IN (" + BgeePreparedStatement.generateParameterizedQueryString(
+                            condFilter.getDevStageIds().size()) + ")");
+        }
+        if (!condFilter.getSexIds().isEmpty()) {
+            clauses.add(TABLE_NAME + "." + ConditionDAO.Attribute.SEX_ID.getTOFieldName()
+                    + " IN (" + BgeePreparedStatement.generateParameterizedQueryString(
+                            condFilter.getSexIds().size()) + ")");
+        }
+        if (!condFilter.getStrainIds().isEmpty()) {
+            clauses.add(TABLE_NAME + "." + ConditionDAO.Attribute.STRAIN_ID.getTOFieldName()
+                    + " IN (" + BgeePreparedStatement.generateParameterizedQueryString(
+                            condFilter.getStrainIds().size()) + ")");
+        }
+        return log.traceExit(clauses.isEmpty()? "": " WHERE " + String.join(" AND ", clauses));
+    }
+    private static int parameterizeTermWhereClause(BgeePreparedStatement stmt,
+            DAOConditionFilter2 condFilter, int paramIndex) throws SQLException {
+        log.traceEntry("{}, {}, {}", stmt, condFilter, paramIndex);
+        int offsetParamIndex = paramIndex;
+        if (!condFilter.getSpeciesIds().isEmpty()) {
+            stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);
+            offsetParamIndex += condFilter.getSpeciesIds().size();
+        }
+        if (!condFilter.getDevStageIds().isEmpty()) {
+            stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
+            offsetParamIndex += condFilter.getDevStageIds().size();
+        }
+        if (!condFilter.getSexIds().isEmpty()) {
+            stmt.setStrings(offsetParamIndex, condFilter.getSexIds(), true);
+            offsetParamIndex += condFilter.getSexIds().size();
+        }
+        if (!condFilter.getStrainIds().isEmpty()) {
+            stmt.setStrings(offsetParamIndex, condFilter.getStrainIds(), true);
+            offsetParamIndex += condFilter.getStrainIds().size();
+        }
+        return log.traceExit(offsetParamIndex);
+    }
+    /**
+     * Sets the parameters of the WITH clause generated by {@link #generateDescendantWithClause(List)}.
+     *
+     * @param stmt          The {@code BgeePreparedStatement} to parameterize.
+     * @param condFilters   The {@code List} of {@code DAOConditionFilter2}s used to generate
+     *                      the WITH clause.
+     * @param paramIndex    An {@code int} that is the index of the first parameter to set.
+     * @return              An {@code int} that is the index of the next parameter to set.
+     * @throws SQLException If an error occurred while setting the parameters.
+     */
+    private static int parameterizeDescendantWithClause(BgeePreparedStatement stmt,
+            List<DAOConditionFilter2> condFilters, int paramIndex) throws SQLException {
+        log.traceEntry("{}, {}, {}", stmt, condFilters, paramIndex);
+        int offsetParamIndex = paramIndex;
+        for (DAOConditionFilter2 condFilter: condFilters) {
+            if (isWithAnatEntityCellTypeDescendants(condFilter)) {
+                //The table of terms selects the conditions twice, for both columns
+                for (int i = 0; i < 2; i++) {
+                    offsetParamIndex = parameterizeTermWhereClause(stmt, condFilter,
+                            offsetParamIndex);
+                }
+                for (Set<String> requestedIds: List.of(condFilter.getAnatEntityIds(),
+                        condFilter.getCellTypeIds())) {
+                    if (requestedIds.isEmpty()) {
+                        continue;
+                    }
+                    stmt.setStrings(offsetParamIndex, requestedIds, true);
+                    offsetParamIndex = MySQLRelationDAO.parameterizeAnatEntityDescendantClause(stmt,
+                            offsetParamIndex + requestedIds.size(), requestedIds,
+                            condFilter.getSpeciesIds());
+                }
+            }
+        }
+        return log.traceExit(offsetParamIndex);
+    }
+    /**
+     * Same as {@link #generateAnatEntityCellTypeWhereFragment(Set, Set, Set, String, String)},
+     * the anatomical entities and cell types of {@code condFilter} being retrieved with their
+     * descendants from the tables of the WITH clause (see {@link #generateDescendantWithClause(List)}).
+     */
+    private static String generateAnatEntityCellTypeDescendantWhereFragment(
+            DAOConditionFilter2 condFilter, int filterPosition, String anatEntityField,
+            String cellTypeField) {
+        log.traceEntry("{}, {}, {}, {}", condFilter, filterPosition, anatEntityField, cellTypeField);
+        String anatEntities = "(SELECT id FROM " + ANAT_ENTITY_DESCENDANT_TABLE + filterPosition + ")";
+        String cellTypes = "(SELECT id FROM " + CELL_TYPE_DESCENDANT_TABLE + filterPosition + ")";
+        StringBuilder sb = new StringBuilder();
+        sb.append(" (");
+        if (!condFilter.getAnatEntityIds().isEmpty() && !condFilter.getCellTypeIds().isEmpty()) {
+            sb.append(anatEntityField).append(" IN ").append(anatEntities)
+              .append(" AND ").append(cellTypeField).append(" IN ").append(cellTypes)
+              .append(" OR ").append(cellTypeField).append(" IN ").append(anatEntities)
+              .append(" AND ").append(anatEntityField).append(" IN ").append(cellTypes);
+        } else {
+            String terms = !condFilter.getAnatEntityIds().isEmpty()? anatEntities: cellTypes;
+            sb.append(anatEntityField).append(" IN ").append(terms)
+              .append(" OR ").append(cellTypeField).append(" IN ").append(terms);
+        }
+        sb.append(") ");
+        //The excluded anat. entities and cell types are still lists of IDs
+        String excludedClause = generateAnatEntityCellTypeWhereFragment(Set.of(), Set.of(),
+                condFilter.getExcludedAnatEntityCellTypeIds(), anatEntityField, cellTypeField);
+        if (StringUtils.isNotBlank(excludedClause)) {
+            sb.append(" AND ").append(excludedClause);
+        }
+        return log.traceExit(sb.toString());
+    }
+
     protected static int configureRawDataConditionFiltersStmt(BgeePreparedStatement stmt,
             Collection<DAOConditionFilter2> conditionFilters, int paramIndex)
                     throws SQLException {
@@ -377,10 +597,16 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         int offsetParamIndex = paramIndex;
         for (DAOConditionFilter2 condFilter: conditionFilters) {
 
-            offsetParamIndex = parameterizeAnatEntityCellTypeWhereFragment(
-                    condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
-                    condFilter.getExcludedAnatEntityCellTypeIds(),
-                    stmt, offsetParamIndex);
+            //When retrieved with their descendants, the anat. entities and cell types
+            //are tables of the WITH clause: only the excluded IDs remain parameters
+            offsetParamIndex = isWithAnatEntityCellTypeDescendants(condFilter)?
+                    parameterizeAnatEntityCellTypeWhereFragment(Set.of(), Set.of(),
+                            condFilter.getExcludedAnatEntityCellTypeIds(),
+                            stmt, offsetParamIndex):
+                    parameterizeAnatEntityCellTypeWhereFragment(
+                            condFilter.getAnatEntityIds(), condFilter.getCellTypeIds(),
+                            condFilter.getExcludedAnatEntityCellTypeIds(),
+                            stmt, offsetParamIndex);
 
             if (!condFilter.getSpeciesIds().isEmpty()) {
                 stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);

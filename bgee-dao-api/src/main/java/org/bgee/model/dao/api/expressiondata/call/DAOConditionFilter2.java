@@ -12,6 +12,25 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
     private final static Logger log = LogManager.getLogger(DAOConditionFilter2.class.getName());
     private final Set<Integer> speciesIds;
     /**
+     * @see #isIncludeAnatEntityCellTypeDescendants()
+     */
+    private final boolean includeAnatEntityCellTypeDescendants;
+
+    /**
+     * Same as {@link #DAOConditionFilter2(Collection, Collection, Collection, Collection,
+     * Collection, Collection, Collection, Collection, boolean)}, retrieving
+     * the requested anatomical entities and cell types without their descendants.
+     */
+    public DAOConditionFilter2(Collection<Integer> speciesIds, Collection<String> anatEntitieIds,
+            Collection<String> devStageIds, Collection<String> cellTypeIds,
+            Collection<String> sexIds, Collection<String> strainIds,
+            Collection<ConditionDAO.ConditionParameter> observedCondForParams,
+            Collection<String> excludedAnatEntityCellTypeIds)
+                    throws IllegalArgumentException {
+        this(speciesIds, anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds,
+                observedCondForParams, excludedAnatEntityCellTypeIds, false);
+    }
+    /**
      * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs 
      *                              of the species targeted by this filter.
      * @param anatEntityIds         A {@code Collection} of {@code String}s that are the IDs 
@@ -43,14 +62,19 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
      * @param excludedAnatEntityCellTypeIds A {@code Collection} of {@code String}s that are the IDs
      *                                      of the anatomical entities that this {@code DAOConditionFilter}
      *                                      will specify to discard.
-     * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs 
-     *                                  are provided. 
+     * @param includeAnatEntityCellTypeDescendants  A {@code boolean} that is {@code true} if
+     *                                              the descendants of {@code anatEntitieIds}
+     *                                              and {@code cellTypeIds} must also be used,
+     *                                              see {@link #isIncludeAnatEntityCellTypeDescendants()}.
+     * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs
+     *                                  are provided.
      */
     public DAOConditionFilter2(Collection<Integer> speciesIds, Collection<String> anatEntitieIds,
             Collection<String> devStageIds, Collection<String> cellTypeIds,
-            Collection<String> sexIds, Collection<String> strainIds, 
+            Collection<String> sexIds, Collection<String> strainIds,
             Collection<ConditionDAO.ConditionParameter> observedCondForParams,
-            Collection<String> excludedAnatEntityCellTypeIds)
+            Collection<String> excludedAnatEntityCellTypeIds,
+            boolean includeAnatEntityCellTypeDescendants)
                     throws IllegalArgumentException {
         super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds, observedCondForParams,
                 ConditionDAO.ConditionParameter.class, excludedAnatEntityCellTypeIds);
@@ -70,10 +94,21 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
         }
         //Set.of and Set.copyOf already returns immutable Sets
         this.speciesIds = speciesIds == null? Set.of(): Set.copyOf(speciesIds);
+        this.includeAnatEntityCellTypeDescendants = includeAnatEntityCellTypeDescendants;
     }
 
     public Set<Integer> getSpeciesIds() {
         return speciesIds;
+    }
+    /**
+     * @return  A {@code boolean} that is {@code true} if the conditions of the descendants
+     *          of the anatomical entities and of the cell types of this filter must also be used:
+     *          their descendants by "is_a part_of" relations, direct or indirect, such that
+     *          the relation, the descendant and the requested term are valid in any of
+     *          the species of this filter.
+     */
+    public boolean isIncludeAnatEntityCellTypeDescendants() {
+        return includeAnatEntityCellTypeDescendants;
     }
 
     public boolean areAllFiltersExceptSpeciesEmpty() {
@@ -90,7 +125,7 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(speciesIds);
+        result = prime * result + Objects.hash(speciesIds, includeAnatEntityCellTypeDescendants);
         return result;
     }
 
@@ -103,7 +138,8 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
         if (getClass() != obj.getClass())
             return false;
         DAOConditionFilter2 other = (DAOConditionFilter2) obj;
-        return Objects.equals(speciesIds, other.speciesIds);
+        return Objects.equals(speciesIds, other.speciesIds)
+                && includeAnatEntityCellTypeDescendants == other.includeAnatEntityCellTypeDescendants;
     }
 
     @Override
@@ -118,6 +154,8 @@ public class DAOConditionFilter2 extends DAOConditionFilterBase<ConditionDAO.Con
                .append(", sexIds=").append(getSexIds())
                .append(", strainIds=").append(getStrainIds())
                .append(", observedCondForParams=").append(this.getObservedCondForParams())
+               .append(", includeAnatEntityCellTypeDescendants=")
+               .append(includeAnatEntityCellTypeDescendants)
                .append("]");
         return builder.toString();
     }

@@ -375,9 +375,6 @@ public class ExpressionCallService extends CallServiceParent {
         //Now, we load specific conditions that can be queried. Again, we need to retrieve
         //all of them to configure the DAOCallFilter, even if there is a large number.
         long t0 = System.currentTimeMillis();
-        //FIXME: creation of daoCondFilters does not require to use the ontologies.
-        //       Everything is available in the database to create a DAO that would return values
-        //       of condition parameters with there descendants. It would be way way faster.
         CallServiceUtils.ConvertedConditionFilters convertedCondFilters =
                 this.utils.convertConditionFilters(filter.getConditionFilters(),
                         this.ontService, this.anatEntityService, filter.getSpeciesIdsConsidered(),
@@ -399,10 +396,8 @@ public class ExpressionCallService extends CallServiceParent {
         //The conditions excluded by the condition filters are part of requestedCondMap,
         //for their observations to be propagated to their ancestors: their own calls are
         //discarded after the propagation.
-        Set<Integer> excludedCondIds = requestedCondMap.entrySet().stream()
-                .filter(e -> convertedCondFilters.isExcluded(e.getValue()))
-                .map(e -> e.getKey())
-                .collect(Collectors.toSet());
+        Set<Integer> excludedCondIds = this.utils.loadExcludedConditionIds(convertedCondFilters,
+                requestedCondMap, this.ontService);
         //The raw conditions the observations were made in, mapped to the conditions they are
         //aggregated into for the requested combination of condition parameters: they only depend
         //on these conditions, so they are retrieved once with them.

@@ -2,26 +2,39 @@ package org.bgee.model.expressiondata.call;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.bgee.model.ComposedEntity;
 import org.bgee.model.TestAncestor;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
 import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
+import org.bgee.model.expressiondata.call.CallServiceUtils.ConvertedConditionFilters;
+import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.species.Species;
 import org.junit.Test;
 
 /**
  * Unit tests for {@link CallServiceUtils}: the restriction of the conditions retrieved to the
- * requested condition parameter combination, and the exclude-seed scoping used by
+ * requested condition parameter combination, the descendants retrieved by the DAO,
+ * the exclusions, and the exclude-seed scoping used by
  * ExpressionMatrix {@code discard=SUMMARY} when expanding one SUMMARY organ.
  *
  * @author  Julien Wollbrett
@@ -37,6 +50,8 @@ public class CallServiceUtilsTest extends TestAncestor {
     private static final String DIGESTIVE = "UBERON:0001007";
     private static final String LIVER = "UBERON:0002107";
     private static final String ROOT = "UBERON:0001062";
+    private static final String ADULT = "UBERON:0000113";
+    private static final String PRIME_ADULT = "UBERON:0018241";
 
     /**
      * organism
@@ -142,6 +157,116 @@ public class CallServiceUtilsTest extends TestAncestor {
                 Set.of("female"), daoFilter.getSexIds());
         assertEquals("Only the requested strain must be retrieved",
                 Set.of("C57BL/6J"), daoFilter.getStrainIds());
+    }
+
+    //*************************************************************************
+    // DESCENDANTS AND EXCLUSIONS
+    //*************************************************************************
+
+    /**
+     * The calls are generated on the fly: the conditions of the descendants of a requested term
+     * are needed whether or not its child terms are requested, for the condition parameters
+     * of the combination only: the roots used for the other parameters are retrieved without
+     * their descendants. The DAO retrieves the descendants of the anat. entities, those
+     * of the dev. stages are listed beforehand.
+     */
+    @Test
+    public void shouldRetrieveTheDescendantsOfTheRequestedTerms() {
+        CallServiceUtils utils = new CallServiceUtils();
+        OntologyService ontService = mock(OntologyService.class);
+        when(ontService.getDevStageDescendantIds(eq(Set.of(9606)), eq(Set.of(ADULT)), isNull()))
+                .thenReturn(Map.of(ADULT, Set.of(PRIME_ADULT)));
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParams = new HashMap<>();
+        condParams.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, new ComposedFilterIds<>(
+                new FilterIds<>(Set.of(BRAIN), false)));
+        condParams.put(ConditionParameter.DEV_STAGE, new ComposedFilterIds<>(
+                new FilterIds<>(Set.of(ADULT), false)));
+        Set<ConditionParameter<?, ?>> combination = Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                ConditionParameter.DEV_STAGE);
+
+        DAOConditionFilter2 daoFilter = utils.convertConditionFiltersToDAOConditionFilters(
+                Set.of(new ConditionFilter2(9606, condParams, combination, null, false)),
+                ontService, null, Set.of(9606), combination).iterator().next();
+        assertEquals("The requested anat. entity must be retrieved",
+                Set.of(BRAIN), daoFilter.getAnatEntityIds());
+        assertTrue("The DAO must retrieve the descendants of the requested anat. entity",
+                daoFilter.isIncludeAnatEntityCellTypeDescendants());
+        assertEquals("The requested dev. stage must be retrieved with its descendants",
+                Set.of(ADULT, PRIME_ADULT), daoFilter.getDevStageIds());
+
+        Set<ConditionParameter<?, ?>> anatEntityCombination =
+                Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        daoFilter = utils.convertConditionFiltersToDAOConditionFilters(
+                Set.of(new ConditionFilter2(9606, Map.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                        condParams.get(ConditionParameter.ANAT_ENTITY_CELL_TYPE)),
+                        anatEntityCombination, null, false)),
+                ontService, null, Set.of(9606), anatEntityCombination).iterator().next();
+        assertEquals("The dev. stage is not in the combination, only its root must be retrieved",
+                Set.of(ConditionDAO.DEV_STAGE_ROOT_ID), daoFilter.getDevStageIds());
+    }
+
+    /**
+     * Expanding multicellular organism while discarding the other SUMMARY organs:
+     * the excluded subtrees are still retrieved, to be propagated to their ancestors,
+     * then their conditions are identified to discard their own calls. The descendants
+     * of the excluded terms are only searched among the anat. entities of the conditions
+     * retrieved.
+     */
+    @Test
+    public void shouldIdentifyTheConditionsOfExcludedTermsAmongRetrievedConditions() {
+        CallServiceUtils utils = new CallServiceUtils();
+        OntologyService ontService = mock(OntologyService.class);
+        //The exclude seeds below the requested term are the ones applied
+        when(ontService.getAnatEntityDescendantIds(eq(Set.of(9606)), eq(Set.of(ORGANISM)),
+                eq(Set.of(CNS, DIGESTIVE))))
+                .thenReturn(Map.of(ORGANISM, Set.of(CNS, DIGESTIVE)));
+        when(ontService.getAnatEntityDescendantIds(eq(Set.of(9606)), eq(Set.of(CNS, DIGESTIVE)),
+                any()))
+                .thenReturn(Map.of(CNS, Set.of(BRAIN), DIGESTIVE, Set.of(LIVER)));
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParams = new HashMap<>();
+        condParams.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, new ComposedFilterIds<>(
+                new FilterIds<>(Set.of(ORGANISM), true, Set.of(CNS, DIGESTIVE), null)));
+        Set<ConditionParameter<?, ?>> combination = Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+
+        ConvertedConditionFilters converted = utils.convertConditionFilters(
+                Set.of(new ConditionFilter2(9606, condParams, combination, null, false)),
+                ontService, null, Set.of(9606), combination);
+        assertEquals("The excluded subtrees must be retrieved through the requested term",
+                Set.of(ORGANISM),
+                converted.getDAOConditionFilters().iterator().next().getAnatEntityIds());
+
+        Map<Integer, Condition2> conditions = Map.of(1, condition(BRAIN), 2, condition(LIVER),
+                3, condition(LEFTOVER), 4, condition(CNS), 5, condition(ORGANISM));
+        assertEquals("The conditions of the excluded terms and of their descendants "
+                + "must be identified", Set.of(1, 2, 4),
+                utils.loadExcludedConditionIds(converted, conditions, ontService));
+    }
+
+    /**
+     * When all the requested terms are excluded, and no term is kept from the exclusion,
+     * nothing can be retrieved. No ontology is needed to know it.
+     */
+    @Test
+    public void shouldThrowWhenAllRequestedTermsAreExcluded() {
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParams = new HashMap<>();
+        condParams.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, new ComposedFilterIds<>(
+                new FilterIds<>(Set.of(CNS), true, Set.of(CNS, BRAIN), null)));
+        Set<ConditionParameter<?, ?>> combination = Set.of(ConditionParameter.ANAT_ENTITY_CELL_TYPE);
+        ConditionFilter2 filter = new ConditionFilter2(9606, condParams, combination, null, false);
+
+        assertThrows(IllegalArgumentException.class, () -> new CallServiceUtils()
+                .convertConditionFilters(Set.of(filter), null, null, Set.of(9606), combination));
+    }
+
+    private static Condition2 condition(String anatEntityId) {
+        //A global condition targeting no cell type holds the cell-type root
+        LinkedHashSet<AnatEntity> anatEntityCellType = new LinkedHashSet<>();
+        anatEntityCellType.add(new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID));
+        anatEntityCellType.add(new AnatEntity(anatEntityId));
+        Map<ConditionParameter<?, ?>, ComposedEntity<?>> params = new HashMap<>();
+        params.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                new ComposedEntity<>(anatEntityCellType, AnatEntity.class));
+        return new Condition2(params, new Species(9606));
     }
 
     private static ConditionFilter2 sexAndStrainFilter(String sexId, String strainId,

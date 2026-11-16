@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -344,6 +345,71 @@ public class OntologyService extends CommonService {
         log.traceEntry("{}, {}", speciesIds, anatEntityIds);
         return log.traceExit(this.getAnatEntityOntology(speciesIds, anatEntityIds,
                 EnumSet.of(RelationType.ISA_PARTOF), false, false));
+    }
+
+    /**
+     * Retrieve the descendants of anatomical entities, as
+     * {@link MultiSpeciesOntology#getDescendantIds(Object, boolean, Collection)} returns them
+     * in the "is_a part_of" ontology of {@code speciesIds}, without building that ontology:
+     * the descendants by relations, direct or indirect, such that the relation, the descendant
+     * and the anatomical entity are each valid in any of {@code speciesIds}.
+     *
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs
+     *                              of the species. If {@code null} or empty, the descendants
+     *                              are not filtered on species.
+     * @param anatEntityIds         A {@code Collection} of {@code String}s that are the IDs
+     *                              of the anatomical entities to retrieve the descendants of.
+     * @param descendantIdFilter    A {@code Collection} of {@code String}s that are the IDs
+     *                              to retrieve the descendants among. If {@code null} or empty,
+     *                              all the descendants are retrieved.
+     * @return                      A {@code Map} where keys are the IDs of {@code anatEntityIds}
+     *                              having descendants, the associated value being the IDs
+     *                              of their descendants.
+     */
+    public Map<String, Set<String>> getAnatEntityDescendantIds(Collection<Integer> speciesIds,
+            Collection<String> anatEntityIds, Collection<String> descendantIdFilter) {
+        log.traceEntry("{}, {}, {}", speciesIds, anatEntityIds, descendantIdFilter);
+        if (anatEntityIds == null || anatEntityIds.isEmpty()) {
+            return log.traceExit(new HashMap<>());
+        }
+        return log.traceExit(this.getDaoManager().getRelationDAO()
+                .getAnatEntityDescendantRelations(speciesIds, descendantIdFilter, anatEntityIds)
+                .stream()
+                .collect(Collectors.groupingBy(RelationTO::getTargetId,
+                        Collectors.mapping(RelationTO::getSourceId, Collectors.toSet()))));
+    }
+    /**
+     * Retrieve the descendants of developmental stages, as
+     * {@link MultiSpeciesOntology#getDescendantIds(Object, boolean, Collection)} returns them
+     * in the ontology of {@code speciesIds}, without building that ontology.
+     *
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs
+     *                              of the species. If {@code null} or empty, the descendants
+     *                              are not filtered on species.
+     * @param devStageIds           A {@code Collection} of {@code String}s that are the IDs
+     *                              of the developmental stages to retrieve the descendants of.
+     * @param descendantIdFilter    A {@code Collection} of {@code String}s that are the IDs
+     *                              to retrieve the descendants among. If {@code null} or empty,
+     *                              all the descendants are retrieved.
+     * @return                      A {@code Map} where keys are the IDs of {@code devStageIds}
+     *                              having descendants, the associated value being the IDs
+     *                              of their descendants.
+     */
+    public Map<String, Set<String>> getDevStageDescendantIds(Collection<Integer> speciesIds,
+            Collection<String> devStageIds, Collection<String> descendantIdFilter) {
+        log.traceEntry("{}, {}, {}", speciesIds, devStageIds, descendantIdFilter);
+        if (devStageIds == null || devStageIds.isEmpty()) {
+            return log.traceExit(new HashMap<>());
+        }
+        return log.traceExit(this.getDaoManager().getRelationDAO()
+                .getStageRelations(speciesIds, true,
+                        descendantIdFilter == null || descendantIdFilter.isEmpty()? null:
+                            descendantIdFilter,
+                        devStageIds, false, EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT),
+                        EnumSet.of(RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID))
+                .stream()
+                .collect(Collectors.groupingBy(RelationTO::getTargetId,
+                        Collectors.mapping(RelationTO::getSourceId, Collectors.toSet()))));
     }
 
     /**

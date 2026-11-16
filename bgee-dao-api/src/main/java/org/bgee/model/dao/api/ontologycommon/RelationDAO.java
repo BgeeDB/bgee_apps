@@ -100,8 +100,35 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      */
     public RelationTOResultSet<String> getAnatEntityRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceAnatEntityIds, Collection<String> targetAnatEntityIds, Boolean sourceOrTarget, 
-            Collection<RelationType> relationTypes, Collection<RelationStatus> relationStatus, 
+            Collection<RelationType> relationTypes, Collection<RelationStatus> relationStatus,
             Collection<RelationDAO.Attribute> attributes) throws DAOException;
+
+    /**
+     * Retrieve the relations to the anatomical entities {@code targetAnatEntityIds} from their
+     * descendants, as they are used to retrieve these descendants in the ontology of
+     * {@code speciesIds}: "is_a part_of" relations, direct or indirect, such that the relation,
+     * its source and its target are each valid in any of {@code speciesIds}.
+     * <p>
+     * The relations are retrieved and returned as a {@code RelationTOResultSet}, only their source
+     * and target IDs are populated. It is the responsibility of the caller to close
+     * this {@code DAOResultSet} once results are retrieved.
+     *
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs
+     *                              of the species the relations must be valid in. If {@code null}
+     *                              or empty, the relations are not filtered on species.
+     * @param sourceAnatEntityIds   A {@code Collection} of {@code String}s that are the IDs
+     *                              of the descendants to retrieve the relations of. If {@code null}
+     *                              or empty, the relations from all the descendants are retrieved.
+     * @param targetAnatEntityIds   A {@code Collection} of {@code String}s that are the IDs
+     *                              of the anatomical entities to retrieve the descendants of.
+     * @return                      A {@code RelationTOResultSet} allowing to retrieve
+     *                              the relations from data source.
+     * @throws DAOException             If an error occurred when accessing the data source.
+     * @throws IllegalArgumentException If {@code targetAnatEntityIds} is {@code null} or empty.
+     */
+    public RelationTOResultSet<String> getAnatEntityDescendantRelations(
+            Collection<Integer> speciesIds, Collection<String> sourceAnatEntityIds,
+            Collection<String> targetAnatEntityIds) throws DAOException, IllegalArgumentException;
 
     /**
      * Retrieve all relations between stages from data source. The relations 

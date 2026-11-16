@@ -385,8 +385,7 @@ public class GenerateXRefsFilesWithExprInfo {
             throw log.throwing(new IllegalArgumentException("majorVersion and minorVersion can not be null. Add"
                     + " VM arguments -Dorg.bgee.core.version.minor and -Dorg.bgee.core.version.major"));
         }
-        String bgeeURL = new StringBuilder("https://www.bgee.org/bgee").append(majorBgeeVersion)
-                .append("_").append(minorBgeeVersion).append("/gene/").toString();
+        String bgeeURL = new StringBuilder("https://www.bgee.org/gene/").toString();
 
         //Genes are grouped by species, and the species are processed sequentially, so that the
         //condition part of the processed filter of a single species is alive at a time.

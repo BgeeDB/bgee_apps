@@ -30,7 +30,6 @@ import org.bgee.model.SearchResult;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
@@ -63,9 +62,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -880,14 +879,10 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         GeneFilter geneFilter1 = new GeneFilter(speciesId1, Collections.singleton(gene1.getGeneId()));
 
         @SuppressWarnings("unchecked")
-        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
-        when(anatOnt.getDescendantIds(parentId, false)).thenReturn(Set.of(childId, grandchildId));
-        when(anatOnt.getDescendantIds(childId, false)).thenReturn(Set.of(grandchildId));
-        when(anatOnt.getDescendantIds(grandchildId, false)).thenReturn(Collections.emptySet());
-        @SuppressWarnings("unchecked")
         ArgumentCaptor<Collection<String>> seedCaptor = ArgumentCaptor.forClass(Collection.class);
-        when(ontService.getAnatEntityOntology(anyCollection(), seedCaptor.capture(), any(),
-                eq(false), eq(true))).thenReturn(anatOnt);
+        when(ontService.getAnatEntityDescendantIds(anyCollection(), seedCaptor.capture(), isNull()))
+                .thenReturn(Map.of(parentId, Set.of(childId, grandchildId),
+                        childId, Set.of(grandchildId)));
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
@@ -918,7 +913,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                 Collections.singleton(condFilter), true, SummaryQuality.BRONZE)
                 .collect(Collectors.toList());
 
-        assertTrue("Ontology must be seeded with include and exclude IDs",
+        assertTrue("The descendants of the include and exclude IDs must be retrieved",
                 seedCaptor.getValue().containsAll(Set.of(parentId, childId)));
 
         Set<String> loadedAnatIds = exprFilterCaptor.getAllValues().stream()
@@ -961,12 +956,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         String parentId = "anatParent";
         String childId = "anatChild";
 
-        @SuppressWarnings("unchecked")
-        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
-        when(anatOnt.getDescendantIds(parentId, false)).thenReturn(Set.of(childId));
-        when(anatOnt.getDescendantIds(childId, false)).thenReturn(Collections.emptySet());
-        when(ontService.getAnatEntityOntology(anyCollection(), any(), any(), eq(false), eq(true)))
-                .thenReturn(anatOnt);
+        when(ontService.getAnatEntityDescendantIds(anyCollection(), any(), isNull()))
+                .thenReturn(Map.of(parentId, Set.of(childId)));
 
         when(aeSimService.loadAnatEntitySimilaritiesRespectingNegations(taxonId, true))
                 .thenReturn(Collections.emptySet());
@@ -1027,13 +1018,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         AnatEntity cnsAe = new AnatEntity(cnsId);
         AnatEntity brainAe = new AnatEntity(brainId);
 
-        @SuppressWarnings("unchecked")
-        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
-        when(anatOnt.getDescendantIds(organismId, false)).thenReturn(Set.of(cnsId, brainId));
-        when(anatOnt.getDescendantIds(cnsId, false)).thenReturn(Set.of(brainId));
-        when(anatOnt.getDescendantIds(brainId, false)).thenReturn(Collections.emptySet());
-        when(ontService.getAnatEntityOntology(anyCollection(), any(), any(), eq(false), eq(true)))
-                .thenReturn(anatOnt);
+        when(ontService.getAnatEntityDescendantIds(anyCollection(), any(), isNull()))
+                .thenReturn(Map.of(organismId, Set.of(cnsId, brainId), cnsId, Set.of(brainId)));
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
@@ -1114,15 +1100,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         AnatEntity organismAe = new AnatEntity(organismId);
         AnatEntity leftoverAe = new AnatEntity(leftoverId);
 
-        @SuppressWarnings("unchecked")
-        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
-        when(anatOnt.getDescendantIds(organismId, false))
-                .thenReturn(Set.of(cnsId, brainId, leftoverId));
-        when(anatOnt.getDescendantIds(cnsId, false)).thenReturn(Set.of(brainId));
-        when(anatOnt.getDescendantIds(brainId, false)).thenReturn(Collections.emptySet());
-        when(anatOnt.getDescendantIds(leftoverId, false)).thenReturn(Collections.emptySet());
-        when(ontService.getAnatEntityOntology(anyCollection(), any(), any(), eq(false), eq(true)))
-                .thenReturn(anatOnt);
+        when(ontService.getAnatEntityDescendantIds(anyCollection(), any(), isNull()))
+                .thenReturn(Map.of(organismId, Set.of(cnsId, brainId, leftoverId),
+                        cnsId, Set.of(brainId)));
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
@@ -1212,16 +1192,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         AnatEntity leftoverAe = new AnatEntity(leftoverId);
         Gene gene1 = new Gene("gene1a", species1, new GeneBioType("biotype1"));
 
-        @SuppressWarnings("unchecked")
-        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
-        when(anatOnt.getDescendantIds(organismId, false))
-                .thenReturn(Set.of(cnsId, brainId, transformedId, leftoverId));
-        when(anatOnt.getDescendantIds(cnsId, false)).thenReturn(Set.of(brainId));
-        when(anatOnt.getDescendantIds(brainId, false)).thenReturn(Collections.emptySet());
-        when(anatOnt.getDescendantIds(transformedId, false)).thenReturn(Collections.emptySet());
-        when(anatOnt.getDescendantIds(leftoverId, false)).thenReturn(Collections.emptySet());
-        when(ontService.getAnatEntityOntology(anyCollection(), any(), any(), eq(false), eq(true)))
-                .thenReturn(anatOnt);
+        when(ontService.getAnatEntityDescendantIds(anyCollection(), any(), isNull()))
+                .thenReturn(Map.of(organismId, Set.of(cnsId, brainId, transformedId, leftoverId),
+                        cnsId, Set.of(brainId)));
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
@@ -1282,11 +1255,12 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
     }
 
     /**
-     * Ontology expansion is shared across species: one {@code getAnatEntityOntology} call
-     * even when the webapp provides one {@code ConditionFilter2} per species.
+     * The expansion is shared across species: one {@code getAnatEntityDescendantIds} call
+     * even when the webapp provides one {@code ConditionFilter2} per species, and no ontology
+     * is built.
      */
     @Test
-    public void shouldLoadAnatOntologyOnceForMultipleSpecies() {
+    public void shouldLoadAnatEntityDescendantsOnceForMultipleSpecies() {
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         org.bgee.model.expressiondata.call.ExpressionCallService exprCallService =
                 mock(org.bgee.model.expressiondata.call.ExpressionCallService.class);
@@ -1313,11 +1287,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         String parentId = "anatParent";
         AnatEntity parentAe = new AnatEntity(parentId);
 
-        @SuppressWarnings("unchecked")
-        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
-        when(anatOnt.getDescendantIds(parentId, false)).thenReturn(Collections.emptySet());
-        when(ontService.getAnatEntityOntology(anyCollection(), any(), any(), eq(false), eq(true)))
-                .thenReturn(anatOnt);
+        when(ontService.getAnatEntityDescendantIds(anyCollection(), any(), isNull()))
+                .thenReturn(Map.of());
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
@@ -1346,10 +1317,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         service.loadSimilarityExpressionCalls2(taxonId, geneFilters, condFilters, true,
                 SummaryQuality.BRONZE).collect(Collectors.toList());
 
-        verify(ontService, times(1)).getAnatEntityOntology(anyCollection(), any(), any(),
+        verify(ontService, times(1)).getAnatEntityDescendantIds(anyCollection(), any(), isNull());
+        verify(ontService, never()).getAnatEntityOntology(anyCollection(), any(), any(),
                 eq(false), eq(true));
-        verify(ontService, never()).getAnatEntityOntology(anyInt(), any(), any(), eq(false),
-                eq(true));
         verify(exprCallService, times(2)).loadCallLoader(any());
     }
 
@@ -1478,15 +1448,10 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         GeneFilter geneFilter1 = new GeneFilter(speciesId1, Collections.singleton(gene1.getGeneId()));
 
         @SuppressWarnings("unchecked")
-        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
-        when(anatOnt.getDescendantIds(parentId, false)).thenReturn(Set.of(childId));
-        when(anatOnt.getDescendantIds(childId, false)).thenReturn(Collections.emptySet());
-        when(anatOnt.getDescendantIds(ConditionDAO.CELL_TYPE_ROOT_ID, false))
-                .thenReturn(Set.of(neuron.getId()));
-        @SuppressWarnings("unchecked")
         ArgumentCaptor<Collection<String>> seedCaptor = ArgumentCaptor.forClass(Collection.class);
-        when(ontService.getAnatEntityOntology(anyCollection(), seedCaptor.capture(), any(),
-                eq(false), eq(true))).thenReturn(anatOnt);
+        when(ontService.getAnatEntityDescendantIds(anyCollection(), seedCaptor.capture(), isNull()))
+                .thenReturn(Map.of(parentId, Set.of(childId),
+                        ConditionDAO.CELL_TYPE_ROOT_ID, Set.of(neuron.getId())));
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
@@ -1542,11 +1507,11 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                 true, SummaryQuality.BRONZE)
                 .collect(Collectors.toList());
 
-        assertTrue("Ontology must be seeded with the expanded organ only",
+        assertTrue("The descendants of the expanded organ only must be retrieved",
                 seedCaptor.getValue().contains(parentId));
-        assertFalse("Cell-type root must not be an ontology seed when expanding an organ",
+        assertFalse("The descendants of the cell-type root must not be retrieved when expanding an organ",
                 seedCaptor.getValue().contains(ConditionDAO.CELL_TYPE_ROOT_ID));
-        assertFalse("Unrelated cell-type terms must not be ontology seeds",
+        assertFalse("The descendants of unrelated cell-type terms must not be retrieved",
                 seedCaptor.getValue().contains(neuron.getId()));
 
         List<FilterIds<String>> loadedCellFilters = exprFilterCaptor.getAllValues().stream()
@@ -1614,12 +1579,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         AnatEntity otherAe = new AnatEntity(otherId);
 
         @SuppressWarnings("unchecked")
-        MultiSpeciesOntology<AnatEntity, String> anatOnt = mock(MultiSpeciesOntology.class);
-        when(anatOnt.getDescendantIds(discardedId, false)).thenReturn(Set.of(discardedChildId));
-        @SuppressWarnings("unchecked")
         ArgumentCaptor<Collection<String>> seedCaptor = ArgumentCaptor.forClass(Collection.class);
-        when(ontService.getAnatEntityOntology(anyCollection(), seedCaptor.capture(), any(),
-                eq(false), eq(true))).thenReturn(anatOnt);
+        when(ontService.getAnatEntityDescendantIds(anyCollection(), seedCaptor.capture(), isNull()))
+                .thenReturn(Map.of(discardedId, Set.of(discardedChildId)));
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
@@ -1649,9 +1611,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                 Collections.singleton(condFilter), true, SummaryQuality.BRONZE)
                 .collect(Collectors.toList());
 
-        assertFalse("Anatomy root must not be an ontology seed when discard already covers non-root includes",
+        assertFalse("The descendants of the anatomy root must not be retrieved when discard already covers non-root includes",
                 seedCaptor.getValue().contains(rootId));
-        assertTrue("Discarded term must still be seeded so its descendants can be excluded",
+        assertTrue("The descendants of the discarded term must still be retrieved, to be excluded",
                 seedCaptor.getValue().contains(discardedId));
 
         Set<String> loadedAnatIds = exprFilterCaptor.getAllValues().stream()

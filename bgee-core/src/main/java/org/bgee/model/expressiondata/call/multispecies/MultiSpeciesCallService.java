@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -58,9 +59,7 @@ import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.gene.OrthologousGeneGroup;
 import org.bgee.model.ontology.Ontology;
-import org.bgee.model.ontology.OntologyBase;
 import org.bgee.model.ontology.OntologyService;
-import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.Taxon;
@@ -1429,16 +1428,13 @@ public class MultiSpeciesCallService extends CommonService {
             }
         }
 
-        OntologyBase<AnatEntity, String> anatOntology = null;
+        Function<String, Set<String>> descendantIds = null;
         if (needsExpansion && !ontologySeedIds.isEmpty()) {
             long ontStartMs = System.currentTimeMillis();
-            anatOntology = this.ontologyService.getAnatEntityOntology(
-                    speciesIds,
-                    ontologySeedIds,
-                    EnumSet.of(RelationType.ISA_PARTOF),
-                    false,
-                    true);
-            log.info("expandFilterIds: ontology {} ms, seedIds={}, speciesIds={}",
+            Map<String, Set<String>> descendantIdsBySeedId = this.ontologyService
+                    .getAnatEntityDescendantIds(speciesIds, ontologySeedIds, null);
+            descendantIds = id -> descendantIdsBySeedId.getOrDefault(id, Set.of());
+            log.info("expandFilterIds: descendants {} ms, seedIds={}, speciesIds={}",
                     System.currentTimeMillis() - ontStartMs, ontologySeedIds.size(),
                     speciesIds.size());
         }
@@ -1449,12 +1445,12 @@ public class MultiSpeciesCallService extends CommonService {
             FilterIds<String> anatIds = composed.getFilterIds(0);
             FilterIds<String> cellIds = composed.getFilterIds(1);
             if (canInvertAnatRootExpansion(anatIds)) {
-                filterAnatEntityIdsToReject.addAll(expandExcludedIds(anatIds, anatOntology));
+                filterAnatEntityIdsToReject.addAll(expandExcludedIds(anatIds, descendantIds));
             } else {
-                filterAnatEntityIds.addAll(expandFilterIds(anatIds, anatOntology));
+                filterAnatEntityIds.addAll(expandFilterIds(anatIds, descendantIds));
             }
             if (!unrestrictedCellTypes) {
-                filterCellTypeIds.addAll(expandFilterIds(cellIds, anatOntology));
+                filterCellTypeIds.addAll(expandFilterIds(cellIds, descendantIds));
             }
         }
         log.info("extractAnatAndCellTypeFilterIds: expandedAnatIds={}, anatRejectIds={}, expandedCellIds={}, unrestrictedCellTypes={}",
@@ -1471,22 +1467,23 @@ public class MultiSpeciesCallService extends CommonService {
      * {@link FilterIds#getNotToExcludeIds()}). Only exclude seeds that are descendants
      * of a protected include term are applied; see
      * {@link CallServiceUtils#expandApplicableExcludeIds(FilterIds, java.util.function.Function)}.
+     * {@code descendantIds} returns the descendants of a term, it is {@code null}
+     * when no expansion is needed.
      */
     private static Set<String> expandFilterIds(FilterIds<String> filterIds,
-            OntologyBase<AnatEntity, String> anatOntology) {
+            Function<String, Set<String>> descendantIds) {
         if (filterIds == null) {
             return Collections.emptySet();
         }
         Set<String> expanded = new HashSet<>(filterIds.getIds());
-        if (filterIds.isIncludeChildTerms() && !filterIds.getIds().isEmpty() && anatOntology != null) {
+        if (filterIds.isIncludeChildTerms() && !filterIds.getIds().isEmpty() && descendantIds != null) {
             expanded.addAll(filterIds.getIds().stream()
-                    .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
+                    .flatMap(id -> descendantIds.apply(id).stream())
                     .collect(Collectors.toSet()));
         }
         if (!filterIds.getExcludeTermsAndChildrenIds().isEmpty()) {
             Set<String> idsToExclude = CallServiceUtils.expandApplicableExcludeIds(
-                    filterIds,
-                    anatOntology == null ? null : id -> anatOntology.getDescendantIds(id, false));
+                    filterIds, descendantIds);
             if (expanded.removeAll(idsToExclude) && expanded.isEmpty()) {
                 throw log.throwing(new IllegalArgumentException(
                         "No result should be retrieved because of anat. entity exclusion"));
@@ -1538,11 +1535,11 @@ public class MultiSpeciesCallService extends CommonService {
     }
 
     private static Set<String> expandExcludedIds(FilterIds<String> filterIds,
-            OntologyBase<AnatEntity, String> anatOntology) {
+            Function<String, Set<String>> descendantIds) {
         Set<String> idsToExclude = new HashSet<>(filterIds.getExcludeTermsAndChildrenIds());
-        if (anatOntology != null) {
+        if (descendantIds != null) {
             idsToExclude.addAll(filterIds.getExcludeTermsAndChildrenIds().stream()
-                    .flatMap(id -> anatOntology.getDescendantIds(id, false).stream())
+                    .flatMap(id -> descendantIds.apply(id).stream())
                     .collect(Collectors.toSet()));
         }
         idsToExclude.removeAll(filterIds.getNotToExcludeIds());

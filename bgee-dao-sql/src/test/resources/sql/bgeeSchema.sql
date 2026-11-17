@@ -961,7 +961,7 @@ create table downloadFile (
    'affy_annot','rnaseq_annot','affy_data','rnaseq_data', 'full_length_annot', 'full_length_data', 'droplet_based_annot',
    'droplet_based_data', 'droplet_based_h5ad', 'full_length_h5ad'),
   speciesDataGroupId mediumint unsigned not null,
-  downloadFileSize int unsigned not null,
+  downloadFileSize bigint unsigned not null,
   downloadFileConditionParameters set('anatomicalEntity', 'developmentalStage', 'sex', 'strain')
 ) engine = innodb;
 

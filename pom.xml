@@ -322,6 +322,18 @@
                 <version>2.20.0</version>
                 <scope>compile</scope>
             </dependency>
+            <!-- Libraries used by other libraries (Dozer, Commons Text), their versions are
+                 managed here to use releases without known vulnerability. -->
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>1.11.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.18.0</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.commons</groupId>

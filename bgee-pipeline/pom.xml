@@ -72,7 +72,7 @@
     </dependencies>
 
     <build>
-        <finalName>bgee-pipeline-${project.version}</finalName>
+        <finalName>bgee-pipeline-${project.version}.${bgee.minor.version}</finalName>
 
         <plugins>
         
@@ -111,8 +111,11 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>with-dependencies</shadedClassifierName>
+                            <!-- The shade plugin names its attached artifact after the version of the
+                                project only, without the minor version. We set the file name ourselves,
+                                the jar is then not attached to the project: it is only meant to be
+                                copied from the target directory. -->
+                            <outputFile>${project.build.directory}/${project.build.finalName}-with-dependencies.jar</outputFile>
                             <transformers>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">

@@ -48,6 +48,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <!-- Minor version of the release (the major version is the version of this project).
+            It is used to name the pipeline jar, and it is the value of the property
+            org.bgee.core.version.minor of bgee.properties. -->
+        <bgee.minor.version>0</bgee.minor.version>
+
         <!-- We create the property skip.surefire.tests to override the property
             skipTests of the surefire plugin. This is because using skipTests=true also
             skips integration tests, while we would like to be able to run integration

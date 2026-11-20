@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
@@ -76,10 +77,11 @@ public class CommandParentTest extends TestAncestor {
         
         RequestParameters params = new RequestParameters();
         log.info("Generated query URL: " + params.getRequestURL());
-        //no data type parameter, should retrieve no data types
+        //no data type parameter, should retrieve all data types
         FakeCommand command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
                 null, null, null, null, context, null);
-        assertEquals("No data types should have been retrieved", null, command.checkAndGetDataTypes());
+        assertEquals("All data types should have been retrieved without data type requested",
+                EnumSet.allOf(DataType.class), command.checkAndGetDataTypes());
         
         //all parameters, should retrieve all data types
         params = new RequestParameters();
@@ -128,6 +130,24 @@ public class CommandParentTest extends TestAncestor {
             //test passed
         }
     }
+
+    /**
+     * The frontend may send several data types as one comma-separated {@code data_type} value.
+     */
+    @Test
+    public void shouldCheckAndGetCommaSeparatedDataTypes() throws Exception {
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        ServletContext context = mock(ServletContext.class);
+        RequestParameters params = new RequestParameters(new BgeeHttpServletRequest(
+                //AFFYMETRIX and EST were dropped from DataType along with the OTF propagation
+                "data_type=RNA_SEQ,SC_RNA_SEQ,IN_SITU", "UTF-8"),
+                new URLParameters(), BgeeProperties.getBgeeProperties(), true, "&");
+        FakeCommand command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(),
+                null, null, null, null, context, null);
+        assertEquals("Comma-separated data types should have been retrieved",
+                EnumSet.allOf(DataType.class), command.checkAndGetDataTypes());
+    }
+
     /**
      * Test method {@link CommandParent#checkAndGetDataQuality()}
      */

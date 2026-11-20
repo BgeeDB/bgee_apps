@@ -23,6 +23,9 @@ import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.topanat.TopAnatService;
+import org.bgee.model.topanat.TopAnatService.Background;
+import org.bgee.model.topanat.TopAnatService.CallFileType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 
@@ -251,6 +254,13 @@ public class URLParameters {
      */
     private static final Parameter<Boolean> GENE_INFO = new Parameter<Boolean>("gene_info",
             false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} defining whether the results of a TopAnat analysis keep
+     * the conditions redundant with a more precise one, left out by default.
+     * Corresponds to the URL parameter "keep_redundant".
+     */
+    private static final Parameter<Boolean> KEEP_REDUNDANT = new Parameter<Boolean>("keep_redundant",
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
    
     /**
      * A {@code Parameter<String>} that contains the foreground gene IDs to be used 
@@ -332,18 +342,54 @@ public class URLParameters {
             + ")", 
             String.class);
     /**
+     * A {@code Parameter<String>} that contains the kind of generated call file the expression
+     * calls must be read from. Corresponds to the URL parameter "call_file_type".
+     *
+     * @see TopAnatService.CallFileType
+     */
+    private static final Parameter<String> CALL_FILE_TYPE = new Parameter<String>("call_file_type",
+            false, false, null, true, DEFAULT_IS_SECURE,
+            EnumSet.allOf(CallFileType.class).stream()
+                .map(e -> e.getStringRepresentation().length())
+                .max(Comparator.naturalOrder()).get(),
+            "(?i:" + EnumSet.allOf(CallFileType.class).stream()
+                    .map(e -> e.getStringRepresentation())
+                    .collect(Collectors.joining("|"))
+            + ")",
+            String.class);
+    /**
+     * A {@code Parameter<String>} that contains the background of topAnat whose genes are
+     * requested. Corresponds to the URL parameter "background_type".
+     *
+     * @see TopAnatService.Background
+     */
+    private static final Parameter<String> BACKGROUND_TYPE = new Parameter<String>("background_type",
+            false, false, null, true, DEFAULT_IS_SECURE,
+            EnumSet.allOf(Background.class).stream()
+                .map(e -> e.getStringRepresentation().length())
+                .max(Comparator.naturalOrder()).get(),
+            "(?i:" + EnumSet.allOf(Background.class).stream()
+                    .map(e -> e.getStringRepresentation())
+                    .collect(Collectors.joining("|"))
+            + ")",
+            String.class);
+    /**
      * A {@code Parameter<String>} that contains the data quality to be used 
      * for TopAnat analysis.
      * Corresponds to the URL parameter "data_type".
      */
     private static final Parameter<String> DATA_TYPE = new Parameter<String>("data_type",
-            true, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DataType.class).stream()
-                    .map(e -> e.name().length())
-                    .max(Comparator.naturalOrder()).get()), 
+            true, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
+            //Several data types can be provided in one query parameter (comma-separated).
+            255,
             "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DataType.class).stream()
                 .map(e -> e.name())
-                .collect(Collectors.joining("|")) + ")", 
+                .collect(Collectors.joining("|"))
+                + "|"
+                + DEFAULT_SEPARATORS.stream()
+                    .map(Pattern::quote)
+                    .collect(Collectors.joining("|"))
+                + ")*",
             String.class);
     /**
      * A {@code Parameter<String>} that contains the developmental stages to be used.
@@ -814,8 +860,9 @@ public class URLParameters {
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DECORRELATION_TYPE,
+            CALL_FILE_TYPE, BACKGROUND_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
-            GENE_INFO, 
+            GENE_INFO, KEEP_REDUNDANT,
             //ID to identify a specific analysis
             ANALYSIS_ID, 
             //DAO as webservice
@@ -1058,6 +1105,20 @@ public class URLParameters {
         return SUMMARY_QUALITY;
     }
     /**
+     * @return  A {@code Parameter<String>} defining the kind of generated call file the expression
+     *          calls must be read from. Corresponds to the URL parameter "call_file_type".
+     */
+    public Parameter<String> getParamCallFileType() {
+        return CALL_FILE_TYPE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining the background of topAnat whose genes
+     *          are requested. Corresponds to the URL parameter "background_type".
+     */
+    public Parameter<String> getParamBackgroundType() {
+        return BACKGROUND_TYPE;
+    }
+    /**
      * @return  A {@code Parameter<String>} defining a data type.
      *          Corresponds to the URL parameter "data_type".
      */
@@ -1295,6 +1356,13 @@ public class URLParameters {
      */
     public Parameter<Boolean> getParamGeneInfo() {
         return GENE_INFO;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} defining whether the results of a TopAnat analysis
+     *          keep the conditions redundant with a more precise one, left out by default.
+     */
+    public Parameter<Boolean> getParamKeepRedundant() {
+        return KEEP_REDUNDANT;
     }
     
     /**

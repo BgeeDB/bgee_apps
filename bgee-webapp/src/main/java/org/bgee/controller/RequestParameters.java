@@ -472,6 +472,14 @@ public class RequestParameters {
      */
     public static final String ACTION_EXPR_CALLS = "expr_calls";
     /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when multi-species expression calls
+     * are requested. Value of the parameter page should be {@link #PAGE_DATA}.
+     * Uses {@code gene_list} and same filtering parameters as {@link #ACTION_EXPR_CALLS}
+     * (minus {@code species_id}).
+     */
+    public static final String ACTION_MULTISPEC_EXPR_CALLS = "multispec_expr_calls";
+    /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
      */
@@ -2431,6 +2439,26 @@ public class RequestParameters {
         return this.getFirstValue(this.getUrlParametersInstance().getParamDataQuality());
     }
     /**
+     * Convenient method to retrieve the value of the parameter returned by
+     * {@link URLParameters#getParamCallFileType()}.
+     *
+     * @return  A {@code String} that is the requested kind of generated call file, {@code null}
+     *          when the request does not specify one.
+     */
+    public String getCallFileType() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamCallFileType());
+    }
+    /**
+     * Convenient method to retrieve the value of the parameter returned by
+     * {@link URLParameters#getParamBackgroundType()}.
+     *
+     * @return  A {@code String} that is the requested background of topAnat, {@code null}
+     *          when the request does not specify one.
+     */
+    public String getBackgroundType() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamBackgroundType());
+    }
+    /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamDataType()}. Equivalent to calling 
      * {@link #getValues(URLParameters.Parameter)} for this parameter.
@@ -2778,6 +2806,17 @@ public class RequestParameters {
      */
     public Boolean getGeneInfo() {
         return this.getFirstValue(this.getUrlParametersInstance().getParamGeneInfo());
+    }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamKeepRedundant()}. Equivalent to calling 
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
+     * 
+     * @return  A {@code Boolean} that is the value of the {@code keep_redundant} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public Boolean getKeepRedundant() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamKeepRedundant());
     }
     /**
      * Convenient method to retrieve value of the parameter returned by 

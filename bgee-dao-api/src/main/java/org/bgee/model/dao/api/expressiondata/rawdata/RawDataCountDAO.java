@@ -40,33 +40,6 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
     }
 
     /**
-     * Retrieve affymetrix count of experiment, assay and calls based on a {@code Collection} of 
-     * {@code DAORawDataFilter}. 
-     *
-     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
-     *                          affymetrix data for which count are queried.
-     * @param experimentCount   A boolean defining rather experiment count has to be retrieved.
-     * @param assayCount        A boolean defining rather assay count has to be retrieved
-     * @param callCount         A boolean defining rather calls count has to be retrieved
-     * @return                  A {@code RawDataConditionTO} containing requested counts.
-     */
-    public RawDataCountContainerTO getAffymetrixCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean experimentCount, boolean assayCount, boolean callCount);
-
-    /**
-     * Retrieve EST count of assay and calls based on a {@code Collection} of 
-     * {@code DAORawDataFilter}. 
-     *
-     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
-     *                          EST data for which count are queried.
-     * @param assayCount        A boolean defining rather assay count has to be retrieved
-     * @param callCount         A boolean defining rather calls count has to be retrieved
-     * @return                  A {@code RawDataConditionTO} containing requested counts.
-     */
-    public RawDataCountContainerTO getESTCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean assayCount, boolean callCount);
-
-    /**
      * Retrieve insitu count of experiment, assay and calls based on a {@code Collection} of 
      * {@code DAORawDataFilter}. 
      *

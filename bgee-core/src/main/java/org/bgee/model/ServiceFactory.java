@@ -13,6 +13,7 @@ import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.ConditionGraphCacheService;
 import org.bgee.model.expressiondata.call.ConditionGraphService;
 import org.bgee.model.expressiondata.call.ConditionService;
 import org.bgee.model.expressiondata.call.ExpressionCallService;
@@ -28,6 +29,7 @@ import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.TaxonService;
+import org.bgee.model.species.TaxonTreeService;
 
 /**
  * Factory allowing to obtain {@link Service}s. 
@@ -295,6 +297,14 @@ public class ServiceFactory implements AutoCloseable {
         log.traceEntry();
         return log.traceExit(new TaxonService(this));
     }
+
+    /**
+     * @return  A newly instantiated {@code TaxonTreeService}
+     */
+    public TaxonTreeService getTaxonTreeService() {
+        log.traceEntry();
+        return log.traceExit(new TaxonTreeService(this));
+    }
     
     /**
      * @return A newly instantiated {@code ConditionService}
@@ -302,6 +312,14 @@ public class ServiceFactory implements AutoCloseable {
     public ConditionService getConditionService() {
         log.traceEntry();
         return log.traceExit(new ConditionService(this));
+    }
+
+    /**
+     * @return A newly instantiated {@code ConditionGraphCacheService}
+     */
+    public ConditionGraphCacheService getConditionGraphCacheService() {
+        log.traceEntry();
+        return log.traceExit(new ConditionGraphCacheService(this));
     }
 
     /**

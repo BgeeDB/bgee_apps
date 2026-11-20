@@ -52,7 +52,7 @@ public class TaxonConstraintServiceTest extends TestAncestor {
 
         TaxonConstraintTOResultSet mockRs1 = 
                 getMockResultSet(TaxonConstraintTOResultSet.class, taxonConstraintTOs);
-        when(dao.getAnatEntityTaxonConstraints(speciesIds, null)).thenReturn(mockRs1);
+        when(dao.getAnatEntityTaxonConstraints(speciesIds, null, null)).thenReturn(mockRs1);
         
         List<TaxonConstraint> expectedTCs = Arrays.asList(
                 new TaxonConstraint("UBERON:0001853", 11), 

@@ -7,13 +7,13 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandData.ExpressionCallResponse;
+import org.bgee.controller.CommandData.MultispecExprCallResponse;
+import org.bgee.model.species.TaxonWithSpecies;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.SpeciesGeneListResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
 import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.ontology.Ontology;
@@ -115,19 +115,19 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
             TypeAdapter<T> result = (TypeAdapter<T>) new AnatEntitySimilarityAnalysisTypeAdapter(gson, this.utils);
             return log.traceExit(result);
         }
-        if (AffymetrixChip.class.isAssignableFrom(rawClass)) {
-            @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new AffymetrixChipTypeAdapter(gson, this.utils);
-            return log.traceExit(result);
-        }
-        if (AffymetrixProbeset.class.isAssignableFrom(rawClass)) {
-            @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new AffymetrixProbesetTypeAdapter(gson);
-            return log.traceExit(result);
-        }
         if (ExpressionCallResponse.class.isAssignableFrom(rawClass)) {
             @SuppressWarnings("unchecked")
             TypeAdapter<T> result = (TypeAdapter<T>) new ExpressionCallResponseTypeAdapter(gson, this.utils);
+            return log.traceExit(result);
+        }
+        if (MultispecExprCallResponse.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new MultispecExprCallResponseTypeAdapter(this.utils);
+            return log.traceExit(result);
+        }
+        if (TaxonWithSpecies.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new TaxonWithSpeciesTypeAdapter(gson, this.utils);
             return log.traceExit(result);
         }
 

@@ -548,25 +548,12 @@ var download = {
             var bgeeFullLengthDataRootURL = getUrlForFileCategory(files, "full_length_root");
             var bgeeFullLengthDataFileSize = getSizeForFileCategory(files, "full_length_data");
             var bgeeFullLengthAnnotFileSize = getSizeForFileCategory(files, "full_length_annot");
-
-            // Affymetrix processed expression values
-            var bgeeAffyDataFileUrl = getUrlForFileCategory(files, "affy_data");
-            var bgeeAffyAnnotFileUrl = getUrlForFileCategory(files, "affy_annot");
-            var bgeeAffyDataRootURL = getUrlForFileCategory(files, "affy_root");
-            var bgeeAffyDataFileSize = getSizeForFileCategory(files, "affy_data");
-            var bgeeAffyAnnotFileSize = getSizeForFileCategory(files, "affy_annot");
             
             // In situ processed expression values
             var bgeeInSituDataFileUrl = $currentSpecies.data( "bgeeinsitudatafileurl" );
             var bgeeInSituAnnotFileUrl = $currentSpecies.data( "bgeeinsituannotfileurl" );
             var bgeeInSituDataFileSize = $currentSpecies.data( "bgeeinsitudatafilesize" );
             var bgeeInSituAnnotFileSize = $currentSpecies.data( "bgeeinsituannotfilesize" );
-
-            // EST processed expression values
-            var bgeeEstDataFileUrl = $currentSpecies.data( "bgeeestdatafileurl" );
-            var bgeeEstAnnotFileUrl = $currentSpecies.data( "bgeeestannotfileurl" );
-            var bgeeEstDataFileSize = $currentSpecies.data( "bgeeestdatafilesize" );
-            var bgeeEstAnnotFileSize = $currentSpecies.data( "bgeeestannotfilesize" );
 
             // Proceed to the update
             var numberOfSpecies = groupData.members.length;

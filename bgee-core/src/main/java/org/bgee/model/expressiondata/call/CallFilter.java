@@ -157,20 +157,14 @@ V> extends DataFilter<V> {
          *                                      in several {@code GeneFilter}s, or if {@code geneFilters}
          *                                      contains a {@code null} element, an
          *                                      {@code IllegalArgumentException} is thrown.
-         *                                      At least one {@code GeneFilter} or one
-         *                                      {@code CoditionFilter} must be provided,
-         *                                      otherwise an {@code IllegalArgumentException} is thrown.
+         *                                      Can be {@code null} or empty.
          * @param conditionFilters              A {@code Collection} of {@code ConditionFilter}s
          *                                      allowing to specify the requested parameters regarding
          *                                      conditions related to the expression calls. If several
          *                                      {@code ConditionFilter}s are provided, they are seen
-         *                                      as "OR" conditions. Can be {@code null} or empty
-         *                                      if some {@code GeneFilter}s are provided.
+         *                                      as "OR" conditions. Can be {@code null} or empty.
          *                                      if contains a {@code null} element, an
          *                                      {@code IllegalArgumentException} is thrown.
-         *                                      At least one {@code GeneFilter} or one
-         *                                      {@code CoditionFilter} must be provided,
-         *                                      otherwise an {@code IllegalArgumentException} is thrown.
          * @param dataTypeFilter                A {@code Collection} of {@code DataType}s
          *                                      allowing to specify the data types to consider
          *                                      to retrieve expression calls. If {@code null}
@@ -187,9 +181,7 @@ V> extends DataFilter<V> {
          *                                      only from propagation on the related condition parameters).
          *                                      If a key is {@code null} or empty, or a value is {@code null},
          *                                      an {@code IllegalArgumentException} is thrown.
-         * @throws IllegalArgumentException     If no {@code GeneFilter} is provided in {@code geneFilters}
-         *                                      and no {@code ConditionFilter} in {@code conditionFilters}.
-         *                                      Or if a same species ID is present
+         * @throws IllegalArgumentException     If a same species ID is present
          *                                      in several {@code GeneFilter}s. Or if {@code geneFilters}
          *                                      or {@code conditionFilters} contains a {@code null} element.
          *                                      In {@code callObservedDataFilter} if a key is
@@ -423,9 +415,10 @@ V> extends DataFilter<V> {
         private final Set<ConditionParameter<?, ?>> callObservedDataCondParams;
         private final Boolean callObservedDataFilter;
         private final boolean emptyFilter;
+        private final boolean redundantAncestorCallsFilter;
 
         public ExpressionCallFilter2() {
-            this(null, null, null, null, null, null, null);
+            this(null, null, null, null, null, null, null, false);
         }
         /**
          * Either this filter can be totally empty without any parameter,
@@ -512,6 +505,15 @@ V> extends DataFilter<V> {
          *                                      condition parameters, {@code false} to select calls
          *                                      not observed in the selected condition parameters
          *                                      (propagation only).
+         * @param redundantAncestorCallsFilter  A {@code boolean} defining whether to discard the calls
+         *                                      redundant with a more precise call: the call of a condition
+         *                                      is redundant when one of its sub-conditions carries a call
+         *                                      of the same type at least as strong, with an expression score
+         *                                      at least as high for a present call, at most as high for
+         *                                      an absent call. Removing such calls removes redundant
+         *                                      information, but can also make conditions missing when
+         *                                      the goal is to compare the expression of several genes
+         *                                      in a same condition.
          * @throws IllegalArgumentException
          * @throws {@code NullPointerException} If {@code callObservedDataCondParams} is not null
          *                                      and contains a null value.
@@ -521,7 +523,8 @@ V> extends DataFilter<V> {
                 Collection<DataType> dataTypeFilter,
                 Collection<ConditionParameter<?, ?>> condParamCombination,
                 Collection<ConditionParameter<?, ?>> callObservedDataCondParams,
-                Boolean callObservedDataFilter)
+                Boolean callObservedDataFilter,
+                boolean redundantAncestorCallsFilter)
                 throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilter == null? Set.of(): Set.of(geneFilter),
                     //For conditionFilters, if a geneFilter is provided, we recreate the condition filters
@@ -543,6 +546,7 @@ V> extends DataFilter<V> {
             this.callObservedDataCondParams = callObservedDataCondParams == null?
                     ConditionParameter.noneOf(): ConditionParameter.copyOf(callObservedDataCondParams);
             this.callObservedDataFilter = callObservedDataFilter;
+            this.redundantAncestorCallsFilter = redundantAncestorCallsFilter;
 
             if (!this.callObservedDataCondParams.isEmpty() && this.callObservedDataFilter == null) {
                 throw log.throwing(new IllegalArgumentException(
@@ -597,6 +601,9 @@ V> extends DataFilter<V> {
         public Boolean getCallObservedDataFilter() {
             return callObservedDataFilter;
         }
+        public boolean isRedundantAncestorCallsFilter() {
+            return redundantAncestorCallsFilter;
+        }
         /**
          * Note that no more than 1 {@code GeneFilter} can be present in the returned {@code Set}.
          * This signature is conserved for compatibility with other classes,
@@ -624,7 +631,8 @@ V> extends DataFilter<V> {
             final int prime = 31;
             int result = super.hashCode();
             result = prime * result + Objects.hash(condParamCombination,
-                    callObservedDataCondParams, callObservedDataFilter);
+                    callObservedDataCondParams, callObservedDataFilter,
+                    redundantAncestorCallsFilter);
             return result;
         }
         @Override
@@ -638,7 +646,8 @@ V> extends DataFilter<V> {
             ExpressionCallFilter2 other = (ExpressionCallFilter2) obj;
             return Objects.equals(condParamCombination, other.condParamCombination)
                     && Objects.equals(callObservedDataCondParams, other.callObservedDataCondParams)
-                    && Objects.equals(callObservedDataFilter, other.callObservedDataFilter);
+                    && Objects.equals(callObservedDataFilter, other.callObservedDataFilter)
+                    && Objects.equals(redundantAncestorCallsFilter, other.redundantAncestorCallsFilter);
         }
 
         @Override
@@ -653,6 +662,7 @@ V> extends DataFilter<V> {
                    .append(", condParamCombination=").append(condParamCombination)
                    .append(", callObservedDataCondParams=").append(callObservedDataCondParams)
                    .append(", callObservedDataFilter=").append(callObservedDataFilter)
+                   .append(", redundantAncestorCallsFilter=").append(isRedundantAncestorCallsFilter())
                    .append("]");
             return builder.toString();
         }

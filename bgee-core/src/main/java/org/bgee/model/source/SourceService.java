@@ -184,10 +184,6 @@ public class SourceService extends CommonService {
                 return log.traceExit(SourceCategory.PROTEOMICS);
             case IN_SITU: 
                 return log.traceExit(SourceCategory.IN_SITU);
-            case AFFYMETRIX: 
-                return log.traceExit(SourceCategory.AFFYMETRIX);
-            case EST: 
-                return log.traceExit(SourceCategory.EST);
             case RNA_SEQ: 
                 return log.traceExit(SourceCategory.RNA_SEQ);
             case SC_RNA_SEQ:

@@ -1,0 +1,545 @@
+---
+title: "Homology Resolution for Multi-Species Comparisons"
+author: "Bgee development team"
+date: "2026-05-31"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    self-contained: true
+    theme: readable
+    mermaid:
+      theme: default
+---
+
+# Purpose
+
+When Bgee compares gene expression **across species**, it must decide which anatomical
+structures (and cell types) can be treated as **homologous** — i.e. as valid targets
+for a single multi-species comparison group.
+
+Biocurators annotate these decisions in the Bgee **similarity annotation** dataset.
+There are two kinds of statement:
+
+| Kind | Meaning | Typical use |
+|------|---------|-------------|
+| **Positive** | The listed UBERON term(s) designate **one** homologous structure (or one homologous *relation* between structures) for all species in the annotated taxon lineage. | "Lung and swim bladder are homologous in Gnathostomata." |
+| **Negative** (`negated = true`) | The listed UBERON term(s) do **not** designate a single homologous structure across the annotated taxon — even though the same ontology label may apply in different lineages. | "Eye is **not** homologous across Bilateria" (vertebrate camera eye vs arthropod compound eye). |
+
+**Homology resolution** is the process of turning these curator annotations into
+`AnatEntitySimilarity` objects: the comparison units used by
+`MultiSpeciesCallService` (including the
+[`multispec_expr_calls` API](multispec_expr_calls_endpoint.qmd)).
+
+This document explains the data model, the resolution algorithm (including negative
+annotations), the different outcome paths, and worked examples.
+
+---
+
+# Core concepts
+
+## Anatomical entity vs similarity group
+
+```{mermaid}
+%%| fig-width: 9
+flowchart LR
+    UBERON["UBERON term<br/>(e.g. UBERON:0002101 limb)"]
+    AE["AnatEntity<br/>(Java wrapper, id = UBERON ID)"]
+    AES["AnatEntitySimilarity<br/>(comparison unit)"]
+    MSC["MultiSpeciesCondition<br/>(used in API output)"]
+
+    UBERON --> AE
+    AE --> AES
+    AES --> MSC
+
+    style UBERON fill:#fff3e0,stroke:#e65100
+    style AES fill:#e3f2fd,stroke:#1565c0
+    style MSC fill:#e8f5e9,stroke:#2e7d32
+```
+
+- An **`AnatEntity`** is a one-to-one wrapper around a UBERON (or CL) identifier.
+  The same UBERON ID always maps to the same `AnatEntity` object identity in code
+  (`Entity.equals` is based on ID only).
+- An **`AnatEntitySimilarity`** is a **comparison unit**: a set of one or more
+  `AnatEntity` objects that Bgee will pool for cross-species expression analysis,
+  together with supporting annotation metadata.
+- We **never** create duplicate `AnatEntity` instances for the same UBERON term with
+  different taxa. When a term must be split because of non-homology, we emit **several
+  `AnatEntitySimilarity` objects** that share the same `AnatEntity` but are scoped
+  to different sub-clades via their annotation summaries.
+
+## Taxon-scoped annotations
+
+Every summary similarity annotation is attached to an NCBI **taxon**. An annotation
+at taxon *T* is considered valid for a requested taxon *R* if it is annotated to *R*
+or to an **ancestor** of *R* (when loading positives for the baseline), or to *R* or
+an ancestor (when loading negatives that block a group at *R*).
+
+```{mermaid}
+%%| fig-width: 8
+flowchart TB
+    subgraph ancestors["Valid blocking negatives for requested taxon R"]
+        A1["Annotation at R"]
+        A2["Annotation at ancestor of R"]
+    end
+    R["Requested taxon R<br/>(e.g. Bilateria)"]
+    D1["Strict descendant<br/>(e.g. Gnathostomata)"]
+    D2["Strict descendant<br/>(e.g. Arthropoda)"]
+
+    A1 --> R
+    A2 --> R
+    R --> D1
+    R --> D2
+
+    style R fill:#e3f2fd,stroke:#1565c0
+```
+
+For **sub-clade splitting**, only **strict descendants** of *R* (taxa strictly below
+*R* in the taxonomy) can supply replacement positive annotations.
+
+## Single-entity vs multi-entity annotations
+
+Most annotations involve a **single** UBERON term (e.g. `{lung}`).
+Some involve **several** terms that are declared homologous **with each other**
+(e.g. `{lung, swim bladder}` at Gnathostomata).
+
+Matching between a blocking negative and descendant positives is always on the
+**exact set of UBERON IDs**:
+
+| Negative annotation | Matching descendant positive | Does **not** match |
+|--------------------|------------------------------|--------------------|
+| `{UBERON:0002048 lung}` | `{lung}` at Gnathostomata | `{lung, swim bladder}` |
+| `{lung, swim bladder}` | `{lung, swim bladder}` at Gnathostomata | `{lung}` alone |
+
+## Annotation summaries on each similarity
+
+Each `AnatEntitySimilarity` carries one or more
+`AnatEntitySimilarityTaxonSummary` records:
+
+| Field | Meaning |
+|-------|---------|
+| `taxon` | Taxon at which the supporting annotation was made |
+| `trusted` | Whether the CIO confidence statement is trusted |
+| `positive` | `true` = positive homology support; `false` = negative (non-homology) documentation |
+
+After negative-aware resolution, a sub-clade similarity typically carries **positive**
+summaries from descendant taxa **plus** the **negative** summary that explains why
+the term was split at the requested level.
+
+---
+
+# Data storage and programming interfaces
+
+## Database layer (summary annotations)
+
+| Component | Role |
+|-----------|------|
+| `SummarySimilarityAnnotationDAO` | Summary annotations with `negated`, `taxonId`, `CIOId` |
+| `SummarySimilarityAnnotationTO.isNegated()` | `true` = negative (NOT homologous) |
+| `getSummarySimilarityAnnotations(..., positiveAnnots, ...)` | Filter: `true` = positives only, `false` = negatives only, `null` = both |
+| `getSimAnnotToAnatEntity(...)` | Links annotation ID → UBERON entity ID(s) |
+| `RawSimilarityAnnotationDAO` | Individual evidence lines (ECO, reference, curator, supporting text) |
+
+## Service layer
+
+| Method | Behaviour | Used by |
+|--------|-----------|---------|
+| `loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted)` | Positive annotations only; applies multi-entity vs single-entity selection logic | Legacy callers, `loadSimilarityExpressionCalls` (v1) |
+| `loadAnatEntitySimilaritiesRespectingNegations(taxonId, onlyTrusted)` | Baseline positives **plus** negative-aware blocking and sub-clade splitting | `loadSimilarityExpressionCalls2`, **`multispec_expr_calls` API** |
+
+---
+
+# Resolution algorithm
+
+Entry point:
+`AnatEntitySimilarityService.loadAnatEntitySimilaritiesRespectingNegations`.
+
+## High-level flow
+
+```{mermaid}
+%%| fig-width: 11
+flowchart TD
+    START(["Input: requested taxon R,<br/>onlyTrusted flag"]) --> BASELINE["① Baseline<br/>loadPositiveAnatEntitySimilarities(R)"]
+    BASELINE --> NEG["② Load negative annotations<br/>at R or ancestors<br/>(grouped by UBERON ID set)"]
+    NEG --> EMPTY{"Any blocking<br/>negatives?"}
+    EMPTY -->|No| FAST["**Fast path**<br/>Return baseline unchanged"]
+    EMPTY -->|Yes| DROP["③ Remove from baseline any similarity<br/>whose UBERON ID set is blocked"]
+    DROP --> DESC["④ Load positive annotations<br/>at strict descendants of R<br/>(same UBERON ID sets as blocked groups)"]
+    DESC --> SUB{"Any descendant<br/>positives for<br/>blocked sets?"}
+    SUB -->|No| DROPONLY["**Block-and-drop path**<br/>Return filtered baseline<br/>(blocked terms absent)"]
+    SUB -->|Yes| SPLIT["⑤ For each blocked set:<br/>group descendant positives<br/>by *maximal* taxon"]
+    SPLIT --> EMIT["⑥ Emit sub-clade<br/>AnatEntitySimilarity objects<br/>(+ attach negative summaries)"]
+    EMIT --> MERGE["⑦ Merge: filtered baseline<br/>+ sub-clade similarities"]
+    MERGE --> OUT(["Output: Set of AnatEntitySimilarity"])
+
+    style FAST fill:#e8f5e9,stroke:#2e7d32
+    style DROPONLY fill:#fff3e0,stroke:#e65100
+    style EMIT fill:#e3f2fd,stroke:#1565c0
+```
+
+## Step-by-step
+
+### ① Baseline (positive-only logic)
+
+The baseline is exactly what `loadPositiveAnatEntitySimilarities` would return.
+That method already implements substantial curation logic:
+
+- Selects **multiple-entity** vs **single-entity** annotations (e.g. keep
+  `lung–swim bladder` at Gnathostomata but separate `mouth` and `anus` at Bilateria).
+- Adds `transformation_of`-linked developmental terms where appropriate.
+- Filters by trusted/untrusted CIO statements when requested.
+
+The baseline represents "what we would compare **if** no negative annotation blocked
+a group at *R* or above."
+
+### ② Identify blocked groups
+
+A **blocked group** is a set of UBERON IDs *G* for which there exists at least one
+**negative** summary annotation on *G*, annotated to taxon *R* or any **ancestor** of *R*.
+
+### ③ Remove blocked groups from baseline
+
+Any baseline `AnatEntitySimilarity` whose `sourceAnatEntities` ID set equals a
+blocked *G* is **discarded**. A negative at *R* (or an ancestor) overrides an
+implicit positive inherited from higher in the tree.
+
+### ④–⑥ Sub-clade splitting (slow path)
+
+If blocked groups exist **and** there are **positive** annotations on the **same**
+UBERON ID set *G* at **strict descendants** of *R*:
+
+1. Collect all such descendant positive annotations for *G*.
+2. Determine **maximal** annotation taxa among them: taxon *M* is maximal if no
+   other annotation taxon in the set is an **ancestor** of *M*.
+3. For each maximal taxon *M*, emit one `AnatEntitySimilarity`:
+   - `sourceAnatEntities` = entities in *G* (same UBERON terms as before),
+   - `requestedTaxon` = *R* (the taxon the user queried),
+   - `annotTaxonSummaries` = all descendant **positive** summaries in *M*'s subtree,
+     **plus** the blocking **negative** summaries (`positive = false`).
+
+**Maximal-taxong grouping** avoids duplicate similarities when annotations nest
+(e.g. `lung` positive at Gnathostomata **and** at Sarcopterygii → one merged group),
+while still producing **separate** similarities for **disjoint** sub-clades (e.g.
+`eye` positive at Vertebrata **and** at Arthropoda → two groups).
+
+```{mermaid}
+%%| fig-width: 10
+flowchart TB
+    subgraph nested["Nested descendants → ONE similarity"]
+        B1["Negative: lung @ Bilateria"]
+        P1["Positive: lung @ Gnathostomata"]
+        P2["Positive: lung @ Sarcopterygii"]
+        B1 -.->|blocks| ALL["Single sub-clade similarity<br/>summaries: Gnathostomata + Sarcopterygii + neg@Bilateria"]
+        P1 --> ALL
+        P2 --> ALL
+    end
+
+    subgraph disjoint["Disjoint descendants → TWO similarities"]
+        B2["Negative: eye @ Bilateria"]
+        PV["Positive: eye @ Vertebrata"]
+        PA["Positive: eye @ Arthropoda"]
+        B2 -.->|blocks| S1["Similarity 1<br/>eye, Vertebrata subtree"]
+        B2 -.->|blocks| S2["Similarity 2<br/>eye, Arthropoda subtree"]
+        PV --> S1
+        PA --> S2
+    end
+```
+
+### ⑦ Block-and-drop (no replacement)
+
+If a group is blocked but **no** positive annotation exists for the same UBERON ID
+set at any strict descendant of *R*, the term is **omitted entirely** from the result.
+A negative alone does not define a usable comparison unit — curators must provide
+sub-clade positives for the term to reappear in output.
+
+---
+
+# The three outcome paths (summary)
+
+| Path | Condition | Result for blocked UBERON set *G* |
+|------|-----------|-----------------------------------|
+| **Fast path** | No negative for *G* at *R* or ancestors | Baseline similarity for *G* is kept |
+| **Block-and-drop** | Negative exists; no positive for *G* at strict descendants | *G* absent from output |
+| **Block-and-split** | Negative exists; positives for *G* at ≥1 strict descendant | One or more sub-clade similarities for *G* |
+
+---
+
+# Worked examples
+
+The examples below use simplified taxon names. NCBI taxon IDs are shown where they
+match the unit-test fixture in `AnatEntitySimilarityServiceTest`.
+
+## Example A — Fast path (no negative)
+
+**Query:** Actinopterygii (`7898`)
+
+**Annotations (positive only relevant here):**
+
+| Term | Taxon | Polarity |
+|------|-------|----------|
+| mouth | Eumetazoa | + |
+| anus | Bilateria | + |
+| swim bladder | Actinopterygii | + |
+| lung | Gnathostomata | + (inherited) |
+
+**No** negative annotation applies to Actinopterygii or its ancestors for these terms.
+
+**Outcome:** Identical to `loadPositiveAnatEntitySimilarities` — four similarities
+(mouth, anus, swim bladder, lung-with-ancestor-support).
+
+```{mermaid}
+%%| fig-width: 7
+flowchart LR
+    Q["Query: Actinopterygii"] --> B["Baseline"]
+    B --> R["Return baseline<br/>(no changes)"]
+```
+
+---
+
+## Example B — Block-and-drop
+
+**Query:** Cnidaria (`6073`)
+
+**Annotations:**
+
+| Term | Taxon | Polarity |
+|------|-------|----------|
+| mouth | Eumetazoa | + |
+| mouth | Cnidaria | **−** (NOT homologous at this level) |
+
+Cnidaria is a **leaf** in the test taxonomy (no strict descendants).
+
+**Outcome:**
+
+1. Baseline would include `mouth` (positive at Eumetazoa).
+2. Negative at Cnidaria **blocks** `{mouth}`.
+3. No descendant positive exists to substitute.
+4. **Result:** empty set for `mouth`; no comparison group for mouth at Cnidaria.
+
+This models the case "we know the Eumetazoa-level mouth annotation does not apply as
+a single homology class within Cnidaria, and curators have not (yet) defined finer
+sub-clade positives."
+
+---
+
+## Example C — Block-and-split (single sub-clade)
+
+**Query:** Bilateria (`33213`)
+
+**Annotations:**
+
+| Term | Taxon | Polarity |
+|------|-------|----------|
+| swim bladder | Bilateria | **−** |
+| swim bladder | Actinopterygii | + |
+| mouth | Eumetazoa | + |
+| anus | Bilateria | + |
+
+**Outcome:**
+
+| Term | Path | Result |
+|------|------|--------|
+| mouth | Fast (unblocked) | Kept from baseline |
+| anus | Fast (unblocked) | Kept from baseline |
+| swim bladder | Block-and-split | Baseline entry removed; **new** sub-clade similarity with summaries: positive @ Actinopterygii, negative @ Bilateria |
+
+Expression data for swim bladder in ray-finned fishes can still be compared
+multi-species **within the Actinopterygii homology class**, but data from other
+bilaterian lineages that also use the label "swim bladder" (or related structures)
+will **not** be pooled under a single Bilateria-wide group.
+
+```{mermaid}
+%%| fig-width: 9
+flowchart TB
+    SB["UBERON: swim bladder"]
+    N["NOT homologous @ Bilateria"]
+    P["Homologous @ Actinopterygii"]
+    SIM["AnatEntitySimilarity<br/>requestedTaxon = Bilateria<br/>summaries: +Actinopterygii, −Bilateria"]
+
+    SB --> N
+    SB --> P
+    N --> SIM
+    P --> SIM
+```
+
+---
+
+## Example D — Block-and-split (nested descendants merged)
+
+**Query:** Bilateria (`33213`)
+
+**Annotations:**
+
+| Term | Taxon | Polarity |
+|------|-------|----------|
+| lung | Bilateria | **−** |
+| lung | Gnathostomata | + |
+| lung | Sarcopterygii | + |
+
+Sarcopterygii is a **strict descendant** of Gnathostomata.
+
+**Maximal taxon** among `{Gnathostomata, Sarcopterygii}` = **Gnathostomata**.
+
+**Outcome:** One sub-clade similarity for `{lung}` with summaries:
+
+- positive @ Gnathostomata
+- positive @ Sarcopterygii (nested, merged into same group)
+- negative @ Bilateria (documentation)
+
+Not two separate lung similarities — nested positives collapse to the highest
+(maximal) sub-clade root.
+
+---
+
+## Example E — Block-and-split (disjoint sub-clades) — conceptual
+
+**Query:** Bilateria
+
+**Annotations (typical eye case):**
+
+| Term | Taxon | Polarity |
+|------|-------|----------|
+| eye (`UBERON:0000970`) | Bilateria | **−** |
+| eye | Vertebrata | + |
+| eye | Arthropoda | + |
+
+Vertebrata and Arthropoda are **not** nested — both are maximal.
+
+**Outcome:** **Two** `AnatEntitySimilarity` objects, both using the same
+`AnatEntity` for `UBERON:0000970`, but:
+
+| Similarity | Positive summaries | Species pooled |
+|------------|-------------------|----------------|
+| Eye / vertebrate clade | Vertebrata + neg @ Bilateria | Species under Vertebrata with eye data |
+| Eye / arthropod clade | Arthropoda + neg @ Bilateria | Species under Arthropoda with eye data |
+
+Human camera-eye expression is never grouped with fly compound-eye expression under
+one "eye @ Bilateria" similarity.
+
+```{mermaid}
+%%| fig-width: 10
+flowchart TB
+    EYE["AnatEntity: eye<br/>(UBERON:0000970)"]
+    NEG["Negative @ Bilateria"]
+    V["Positive @ Vertebrata"]
+    A["Positive @ Arthropoda"]
+
+    EYE --> SIM1["AnatEntitySimilarity #1<br/>(vertebrate eye clade)"]
+    EYE --> SIM2["AnatEntitySimilarity #2<br/>(arthropod eye clade)"]
+    NEG --> SIM1
+    NEG --> SIM2
+    V --> SIM1
+    A --> SIM2
+```
+
+---
+
+## Example F — Multi-entity homology (positive baseline logic)
+
+**Query:** Gnathostomata (`7776`), trusted annotations only
+
+**Annotations:**
+
+| Terms | Taxon | Polarity |
+|-------|-------|----------|
+| lung, swim bladder | Gnathostomata | + (multi-entity) |
+| lung | Gnathostomata | + (single) |
+| swim bladder | Actinopterygii | + (single) |
+
+Because lung exists in sarcopterygians and swim bladder in actinopterygians (different
+sub-clades), the **multi-entity** annotation `lung–swim bladder` is kept and the
+corresponding single-entity annotations are suppressed.
+
+**Negative annotations** on `{lung, swim bladder}` would block the **entire**
+multi-entity set — not `{lung}` or `{swim bladder}` alone — unless matching
+negatives exist for those exact sets separately.
+
+---
+
+# Downstream use in expression calls
+
+`MultiSpeciesCallService.loadSimilarityExpressionCalls2` loads similarities via
+`loadAnatEntitySimilaritiesRespectingNegations`, then groups per-species
+`ExpressionCall2` records by `MultiSpeciesCondition` (anatomical + cell-type
+similarity pairs).
+
+```{mermaid}
+%%| fig-width: 10
+flowchart LR
+    GENES["Gene filters<br/>(one species each)"] --> LCA["LCA taxon R"]
+    LCA --> RES["loadAnatEntitySimilarities<br/>RespectingNegations(R)"]
+    RES --> SIMS["Set of AnatEntitySimilarity"]
+    SIMS --> LOAD["Load ExpressionCall2<br/>per species"]
+    LOAD --> GROUP["Group by MultiSpeciesCondition"]
+    GROUP --> OUT["SimilarityExpressionCall2 stream"]
+
+    style RES fill:#e3f2fd,stroke:#1565c0
+    style OUT fill:#e8f5e9,stroke:#2e7d32
+```
+
+**Practical consequence:** if eye is split into vertebrate and arthropod similarities,
+a query spanning human and fruit fly returns **separate** expression call rows for
+each homology class — never a single row that incorrectly merges both.
+
+Each row's `multiSpeciesCondition.anatEntityTaxonScope` is the **least common ancestor**
+of the species whose expression calls appear in that row. For a single species, that is the
+species taxon itself (e.g. *Homo sapiens* for a human-only row); for several species, it is
+the shared LCA taxon node from `TaxonService.loadLeastCommonAncestor` (e.g. Euarchontoglires
+for human + mouse). This lets the frontend distinguish split homology groups that share the
+same UBERON term but differ in species coverage.
+
+---
+
+# Limitations and non-goals
+
+The current implementation **does not**:
+
+1. **Infer sub-clades from negatives alone.** A negative without descendant positives
+   drops the term (block-and-drop).
+2. **Match partial UBERON sets.** A negative on `{A, B}` does not block or split
+   `{A}` alone.
+3. **Re-run multi-entity selection on descendant positives.** Sub-clade similarities
+   are built directly from descendant summary annotations grouped by maximal taxon;
+   the full `getValidMultipleEntityAnnotations` pipeline applies only to the baseline.
+4. **Shadow negatives with intermediate positives.** A negative at Eumetazoa is not
+   automatically cancelled by a positive at Bilateria when querying Gnathostomata;
+   the blocked set remains blocked unless future curation rules add that logic.
+
+Raw evidence lines (`RawSimilarityAnnotationDAO`) are not yet attached to
+`AnatEntitySimilarityTaxonSummary` (noted as TODO on the model class).
+
+---
+
+# Related code and tests
+
+| Location | Content |
+|----------|---------|
+| `AnatEntitySimilarityService.loadAnatEntitySimilaritiesRespectingNegations` | Main algorithm |
+| `AnatEntitySimilarityService.loadPositiveAnatEntitySimilarities` | Baseline positive logic |
+| `SummarySimilarityAnnotationDAO` | DB access; `positiveAnnots = false` for negatives |
+| `MultiSpeciesCallService.loadSimilarityExpressionCalls2` | Consumer (multispec API) |
+| `AnatEntitySimilarityServiceTest` | Unit tests: fast path, drop, single split, nested merge |
+| [multispec_expr_calls_endpoint.qmd](multispec_expr_calls_endpoint.qmd) | HTTP API documentation |
+
+### Unit test scenarios (`AnatEntitySimilarityServiceTest`)
+
+| Test method | Path exercised |
+|-------------|----------------|
+| `shouldLoadAnatEntitySimilaritiesRespectingNegationsNoNegativeEqualsBaseline` | Fast path @ Actinopterygii |
+| `shouldLoadAnatEntitySimilaritiesRespectingNegationsBlockAndDrop` | Block-and-drop @ Cnidaria / mouth |
+| `shouldLoadAnatEntitySimilaritiesRespectingNegationsBlockAndSplitSingleSubClade` | Split @ Bilateria / swim bladder → Actinopterygii |
+| `shouldLoadAnatEntitySimilaritiesRespectingNegationsBlockAndSplitNestedDescendantsMerge` | Nested merge @ Bilateria / lung |
+
+---
+
+# Glossary
+
+| Term | Definition |
+|------|------------|
+| **Summary annotation** | Curated rollup of raw evidence; stored with `negated` flag |
+| **Blocked group** | UBERON ID set with a negative annotation at *R* or an ancestor |
+| **Strict descendant** | Taxon below *R* in the NCBI hierarchy (not *R* itself) |
+| **Maximal annotation taxon** | Among a set of annotation taxa, one that is not a descendant of any other in the set |
+| **Sub-clade similarity** | `AnatEntitySimilarity` emitted by the slow path after block-and-split |
+| **Baseline** | Output of positive-only logic before negative filtering |

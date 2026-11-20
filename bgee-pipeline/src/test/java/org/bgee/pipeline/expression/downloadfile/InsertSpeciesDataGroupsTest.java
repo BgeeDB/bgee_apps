@@ -159,7 +159,7 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
 //        groupToCategories.put("groupOneSpecies1", new HashSet<String>(Arrays.asList(
 //                CategoryEnum.DIFF_EXPR_ANAT_COMPLETE.getStringRepresentation(),
 //                CategoryEnum.DIFF_EXPR_ANAT_SIMPLE.getStringRepresentation(),
-//                CategoryEnum.AFFY_ANNOT.getStringRepresentation())));
+//                CategoryEnum.RNASEQ_ANNOT.getStringRepresentation())));
 //        groupToCategories.put("groupOneSpecies2", new HashSet<String>(Arrays.asList(
 //                CategoryEnum.EXPR_CALLS_COMPLETE.getStringRepresentation(),
 //                CategoryEnum.RNASEQ_DATA.getStringRepresentation())));
@@ -186,7 +186,7 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
 //        singleSpCategoryToFilePathPattern.put(CategoryEnum.DIFF_EXPR_ANAT_SIMPLE.getStringRepresentation(),
 //                tmpPath.relativize(file2.toPath()).toString()
 //                .replaceAll("sp1", InsertSpeciesDataGroups.STRING_TO_REPLACE));
-//        singleSpCategoryToFilePathPattern.put(CategoryEnum.AFFY_ANNOT.getStringRepresentation(),
+//        singleSpCategoryToFilePathPattern.put(CategoryEnum.RNASEQ_ANNOT.getStringRepresentation(),
 //                tmpPath.relativize(file3.toPath()).toString()
 //                .replaceAll("sp1", InsertSpeciesDataGroups.STRING_TO_REPLACE));
 //        singleSpCategoryToFilePathPattern.put(CategoryEnum.EXPR_CALLS_COMPLETE.getStringRepresentation(),
@@ -263,7 +263,7 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
 ////                                file2.length(), CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, "1"),
 //                        new DownloadFileTO("3", file3.getName(), null, 
 //                                tmpPath.relativize(file3.toPath()).toString(), 
-//                                file3.length(), CategoryEnum.AFFY_ANNOT, "1"),
+//                                file3.length(), CategoryEnum.RNASEQ_ANNOT, "1"),
 //                        new DownloadFileTO("4", file4.getName(), null, 
 //                                tmpPath.relativize(file4.toPath()).toString(),  
 //                                file4.length(), CategoryEnum.EXPR_CALLS_COMPLETE, "2"),

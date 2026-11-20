@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Quieter logging configuration for database integration test runs.
+     The default test config (log4j2.xml) logs org.bgee at DEBUG, which produces
+     huge log statements (e.g. full ontology dumps) that bloat both output and heap.
+     Activate with: -Dlog4j2.configurationFile=<path-to-this-file> in the surefire argLine. -->
+<configuration status="OFF">
+  <appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %level %class{36} %L %M - %m%ex%n"/>
+    </Console>
+  </appenders>
+  <loggers>
+    <root level="off">
+      <appender-ref ref="Console"/>
+    </root>
+    <logger name="org.bgee" level="info" additivity="false">
+      <appender-ref ref="Console"/>
+    </logger>
+  </loggers>
+</configuration>

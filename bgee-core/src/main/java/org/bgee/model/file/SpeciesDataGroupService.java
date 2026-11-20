@@ -191,8 +191,6 @@ public class SpeciesDataGroupService extends Service {
     private static SpeciesDataGroup newSpeciesDataGroup(Integer id, String name, String description, 
             List<Species> species, Set<SpeciesDownloadFile> files) {
         log.traceEntry("{}, {}, {}, {}, {}", id, name, description, species, files);
-//        files = new HashSet<DownloadFile>();
-//        files.add(new DownloadFile("path", "my_name", DownloadFile.Category.AFFY_ANNOT, 100L, id));
         return log.traceExit(new SpeciesDataGroup(id, name, description, species, files));
     }
 

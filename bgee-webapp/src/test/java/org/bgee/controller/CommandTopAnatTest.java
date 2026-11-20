@@ -1,10 +1,16 @@
 package org.bgee.controller;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -21,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
 import org.bgee.controller.CommandTopAnat.GeneListResponse;
 import org.bgee.controller.CommandTopAnat.JobResponse;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
@@ -34,6 +41,9 @@ import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
+import org.bgee.model.topanat.TopAnatParams;
+import org.bgee.model.topanat.TopAnatService.Background;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 import org.junit.Test;
@@ -178,12 +188,10 @@ public class CommandTopAnatTest extends TestAncestor {
         data.put(params.getUrlParametersInstance().getParamBackgroundList().getName(),
                 response2);
         
+        //The message only tells the genes of the species selected, the data holding the details
         verify(display).sendGeneListReponse(data, 
-                "1 IDs provided: 1 unique genes found in Bgee, 1 in mouse for " +
-                        params.getUrlParametersInstance().getParamForegroundList().getName() + "\n" +
-                "4 IDs provided: 2 unique genes found in Bgee, 2 in human, 1 in mouse, " +
-                        "and 1 IDs not found for " +
-                        params.getUrlParametersInstance().getParamBackgroundList().getName());
+                "1 IDs provided: 1 unique gene found in mouse\n" +
+                "4 IDs provided: 2 unique genes found in human");
     }
     
     /**
@@ -249,5 +257,97 @@ public class CommandTopAnatTest extends TestAncestor {
         data.put("jobResponse", response);
         
         verify(display).sendTrackingJobResponse(data, "Job is RUNNING");
+    }
+
+    /**
+     * Test {@link CommandTopAnat#checkAndGetBackground(boolean)}: the background gene IDs
+     * submitted are a custom background, unless a background of Bgee is requested.
+     */
+    @Test
+    public void shouldCheckAndGetBackground() throws Exception {
+        assertNull("With no background requested and no background gene IDs, the default one",
+                this.topAnatCommand(null).checkAndGetBackground(false));
+        assertEquals("Background gene IDs with no background requested are a custom background",
+                Background.CUSTOM, this.topAnatCommand(null).checkAndGetBackground(true));
+        assertEquals("Incorrect custom background", Background.CUSTOM,
+                this.topAnatCommand(Background.CUSTOM).checkAndGetBackground(true));
+        assertEquals("The background gene IDs are ignored with a background of Bgee",
+                Background.POLY_A, this.topAnatCommand(Background.POLY_A).checkAndGetBackground(true));
+        assertThrows("A custom background requires background gene IDs",
+                InvalidRequestException.class,
+                () -> this.topAnatCommand(Background.CUSTOM).checkAndGetBackground(false));
+    }
+    /**
+     * @param background    The {@code Background} requested, {@code null} for none.
+     * @return              A {@code CommandTopAnat} processing a request for {@code background}.
+     */
+    private CommandTopAnat topAnatCommand(Background background) throws Exception {
+        RequestParameters params = new RequestParameters();
+        params.setPage(RequestParameters.PAGE_TOP_ANAT);
+        if (background != null) {
+            params.addValue(params.getUrlParametersInstance().getParamBackgroundType(),
+                    background.getStringRepresentation());
+        }
+        return new CommandTopAnat(mock(HttpServletResponse.class), params,
+                mock(BgeeProperties.class), mock(ViewFactory.class), mock(ServiceFactory.class),
+                mock(JobService.class), mock(User.class), null, mock(MailSender.class));
+    }
+
+    /**
+     * Test {@link CommandTopAnat#loadTopAnatParams()} with no decorrelation type and no node size
+     * requested: the analyses get the default ones, and the background gene IDs submitted are
+     * compared with the default node size.
+     */
+    @Test
+    public void shouldLoadTopAnatParamsWithTheDefaults() throws Exception {
+        List<TopAnatParams> params = this.topAnatCommand(List.of("ID1", "ID2"), null)
+                .loadTopAnatParams();
+        assertEquals("A single analysis should be requested", 1, params.size());
+        assertEquals("Incorrect default decorrelation type", DecorrelationType.NONE,
+                params.get(0).getDecorrelationType());
+        assertEquals("Incorrect default node size",
+                TopAnatParams.NODE_SIZE_DEFAULT, (int) params.get(0).getNodeSize());
+
+        //Fewer background genes than the default node size: no result can be obtained
+        assertThrows("A background smaller than the default node size should be rejected",
+                InvalidRequestException.class,
+                () -> this.topAnatCommand(List.of("ID1", "ID2"), List.of("ID1", "ID2", "ID3"))
+                .loadTopAnatParams());
+    }
+    /**
+     * @param fgGeneIds The IDs of the genes of interest submitted.
+     * @param bgGeneIds The background gene IDs submitted, {@code null} for none.
+     * @return          A {@code CommandTopAnat} processing a request submitting them, with
+     *                  no other parameter, all the genes belonging to the human species.
+     */
+    private CommandTopAnat topAnatCommand(List<String> fgGeneIds, List<String> bgGeneIds)
+            throws Exception {
+        Species species = new Species(9606, "human", "", "Homo", "sapiens", "genome9606",
+                "assembly9606", new Source(1), null, null, null, null, null);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        GeneService geneService = mock(GeneService.class);
+        when(serviceFactory.getGeneService()).thenReturn(geneService);
+        //A new stream at each call: the same genes are loaded several times
+        when(geneService.loadGenesByAnyId(any(), eq(false))).thenAnswer(invocation ->
+                invocation.<Collection<String>>getArgument(0).stream().map(id -> Map.entry(id,
+                        Set.of(new Gene(id, species, new GeneBioType("type1"))))));
+        SpeciesService speciesService = mock(SpeciesService.class);
+        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
+        when(speciesService.loadSpeciesByIds(any(), eq(false))).thenReturn(Set.of(species));
+        DevStageService devStageService = mock(DevStageService.class);
+        when(serviceFactory.getDevStageService()).thenReturn(devStageService);
+        when(devStageService.loadGroupingDevStages(any(), eq(2))).thenReturn(Set.of(
+                new DevStage("25", "embryo", "embryo desc", 2, 3, 2, false, true)));
+
+        RequestParameters params = new RequestParameters();
+        params.setPage(RequestParameters.PAGE_TOP_ANAT);
+        params.setAction(RequestParameters.ACTION_TOP_ANAT_SUBMIT_JOB);
+        params.addValues(params.getUrlParametersInstance().getParamForegroundList(), fgGeneIds);
+        if (bgGeneIds != null) {
+            params.addValues(params.getUrlParametersInstance().getParamBackgroundList(), bgGeneIds);
+        }
+        return new CommandTopAnat(mock(HttpServletResponse.class), params,
+                mock(BgeeProperties.class), mock(ViewFactory.class), serviceFactory,
+                mock(JobService.class), mock(User.class), null, mock(MailSender.class));
     }
 }

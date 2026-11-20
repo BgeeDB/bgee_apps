@@ -27,15 +27,9 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO.RawDataCountContainerTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTOResultSet;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO.InSituEvidenceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO.InSituEvidenceTOResultSet;
@@ -44,14 +38,6 @@ import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO.InSituSpotTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO.InSituSpotTOResultSet;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTOResultSet;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTOResultSet;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO.RNASeqExperimentTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
@@ -69,32 +55,23 @@ import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.CellCompartment;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall.ExclusionReason;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAuthorAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithExperiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawCall.ExclusionReason;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 import org.bgee.model.expressiondata.rawdata.baseelements.SequencedTranscriptPart;
 import org.bgee.model.expressiondata.rawdata.baseelements.Strand;
-import org.bgee.model.expressiondata.rawdata.est.EST;
-import org.bgee.model.expressiondata.rawdata.est.ESTContainer;
-import org.bgee.model.expressiondata.rawdata.est.ESTCountContainer;
-import org.bgee.model.expressiondata.rawdata.est.ESTDataType;
-import org.bgee.model.expressiondata.rawdata.est.ESTLibrary;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituContainer;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituCountContainer;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituDataType;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituEvidence;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituExperiment;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituSpot;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChipPipelineSummary;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqContainer;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqCountContainer;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqDataType;
@@ -104,12 +81,9 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSamplePipelineSummary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryPipelineSummary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample.AbundanceUnit;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqTechnology;
 import org.bgee.model.file.DownloadFileService;
-import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample.AbundanceUnit;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixContainer;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixCountContainer;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixDataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
@@ -226,15 +200,10 @@ public class RawDataLoader extends CommonService {
     private final RawDataProcessedFilter rawDataProcessedFilter;
 
     //DAOs and Services used by this class
-    private final MicroarrayExperimentDAO microarrayExperimentDAO;
-    private final AffymetrixChipDAO affymetrixChipDAO;
-    private final AffymetrixProbesetDAO affymetrixProbesetDAO;
     private final RNASeqExperimentDAO rnaSeqExperimentDAO;
     private final RNASeqLibraryDAO rnaSeqLibraryDAO;
     private final RNASeqLibraryAnnotatedSampleDAO rnaSeqAssayDAO;
     private final RNASeqResultAnnotatedSampleDAO rnaSeqCallDAO;
-    private final ESTLibraryDAO estLibraryDAO;
-    private final ESTDAO estDAO;
     private final InSituExperimentDAO inSituExperimentDAO;
     private final InSituEvidenceDAO inSituEvidenceDAO;
     private final InSituSpotDAO inSituSpotDAO;
@@ -283,15 +252,10 @@ public class RawDataLoader extends CommonService {
         }
         this.rawDataProcessedFilter = rawDataProcessedFilter;
 
-        this.microarrayExperimentDAO = this.getDaoManager().getMicroarrayExperimentDAO();
-        this.affymetrixChipDAO       = this.getDaoManager().getAffymetrixChipDAO();
-        this.affymetrixProbesetDAO   = this.getDaoManager().getAffymetrixProbesetDAO();
         this.rnaSeqExperimentDAO     = this.getDaoManager().getRnaSeqExperimentDAO();
         this.rnaSeqLibraryDAO        = this.getDaoManager().getRnaSeqLibraryDAO();
         this.rnaSeqAssayDAO          = this.getDaoManager().getRnaSeqLibraryAnnotatedSampleDAO();
         this.rnaSeqCallDAO           = this.getDaoManager().getRnaSeqResultAnnotatedSampleDAO();
-        this.estLibraryDAO           = this.getDaoManager().getESTLibraryDAO();
-        this.estDAO                  = this.getDaoManager().getESTDAO();
         this.inSituExperimentDAO     = this.getDaoManager().getInSituExperimentDAO();
         this.inSituEvidenceDAO       = this.getDaoManager().getInSituEvidenceDAO();
         this.inSituSpotDAO           = this.getDaoManager().getInSituSpotDAO();
@@ -388,20 +352,12 @@ public class RawDataLoader extends CommonService {
         Class<T> rawDataContainerClass = rawDataDataType.getRawDataContainerClass();
         T rawDataContainer = null;
         switch (requestedDataType) {
-        case AFFYMETRIX:
-            rawDataContainer = rawDataContainerClass.cast(
-                    this.loadAffymetrixData(infoType, offset, limit, partialInfo));
-            break;
         case RNA_SEQ:
         case SC_RNA_SEQ:
             rawDataContainer = rawDataContainerClass.cast(
                     this.loadRnaSeqData(infoType,
                             requestedDataType.equals(DataType.SC_RNA_SEQ)? true: false,
                                     offset, limit, partialInfo));
-            break;
-        case EST:
-            rawDataContainer = rawDataContainerClass.cast(
-                    this.loadESTData(infoType, offset, limit, partialInfo));
             break;
         case IN_SITU:
             rawDataContainer = rawDataContainerClass.cast(
@@ -434,20 +390,12 @@ public class RawDataLoader extends CommonService {
         T rawDataCountContainer = null;
 
         switch (requestedDataType) {
-        case AFFYMETRIX:
-            rawDataCountContainer = rawDataCountContainerClass.cast(
-                    this.loadAffymetrixCount(withExperiment, withAssay, withCall));
-            break;
         case RNA_SEQ:
         case SC_RNA_SEQ:
             rawDataCountContainer = rawDataCountContainerClass.cast(
                     this.loadRnaSeqCount(
                             requestedDataType.equals(DataType.SC_RNA_SEQ)? true: false,
                             withExperiment, withAssay, withCall));
-            break;
-        case EST:
-            rawDataCountContainer = rawDataCountContainerClass.cast(
-                    this.loadESTCount(withExperiment, withAssay, withCall));
             break;
         case IN_SITU:
             rawDataCountContainer = rawDataCountContainerClass.cast(
@@ -540,225 +488,6 @@ public class RawDataLoader extends CommonService {
 
         //Merge the experiment/assay filter and condition filter
         return log.traceExit(RawDataPostFilter.merge(expAssayFilter, condFilter));
-    }
-
-//*****************************************************************************************
-//                       METHODS LOADING AFFYMETRIX RAW DATA
-//*****************************************************************************************
-
-    //Long and Integer instead of long and int because used internally to retrieve all results for filtering
-    private AffymetrixContainer loadAffymetrixData(InformationType infoType, Long offset, Integer limit,
-            boolean partialInfo) {
-        log.traceEntry("{}, {}, {}, {}", infoType, offset, limit, partialInfo);
-
-        //If the DaoRawDataFilters are null it means there was no matching conds
-        //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
-            return log.traceExit(this.getNoResultAffymetrixContainer(infoType));
-        }
-
-        //************************************************************
-        // First, we retrieve all necessary TransferObjects
-        //************************************************************
-        LinkedHashSet<AffymetrixProbesetTO> affyProbesetTOs = new LinkedHashSet<>();
-        LinkedHashSet<AffymetrixChipTO> affyChipTOs = new LinkedHashSet<>();
-        Set<Integer> bgeeChipIds = new HashSet<>();
-        Set<Integer> bgeeGeneIds = new HashSet<>();
-        Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
-                .getDaoFilters();
-
-        //*********** Calls ***********
-        if (infoType == InformationType.CALL) {
-            AffymetrixProbesetTOResultSet probesetTORS = this.affymetrixProbesetDAO.getAffymetrixProbesets(
-                    daoRawDataFilters, offset, limit, null);
-            while (probesetTORS.next()) {
-                AffymetrixProbesetTO probesetTO = probesetTORS.getTO();
-                bgeeChipIds.add(probesetTO.getAssayId());
-                bgeeGeneIds.add(probesetTO.getBgeeGeneId());
-                affyProbesetTOs.add(probesetTO);
-            }
-        }
-
-        //*********** Assays ***********
-        AffymetrixChipTOResultSet chipTORS = null;
-        Set<String> affyExpIds = new HashSet<>();
-        Set<Integer> rawDataCondIds = new HashSet<>();
-        //We need to write the test in this way, in case CALLs were requested, but there was
-        //no result retrieved
-        if (!bgeeChipIds.isEmpty()) {
-            assert !partialInfo;
-            chipTORS = this.affymetrixChipDAO.getAffymetrixChipsFromBgeeChipIds(bgeeChipIds,
-                    null);
-        } else if (infoType == InformationType.ASSAY) {
-            chipTORS = this.affymetrixChipDAO.getAffymetrixChips(daoRawDataFilters, offset, limit,
-                    !partialInfo? null:
-                        Set.of(AffymetrixChipDAO.Attribute.EXPERIMENT_ID,
-                               AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID,
-                               AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID));
-        }
-        //We need to identify the species for providing download links for experiments.
-        //If no gene and no conditions were retrieved, we have to make a special query for it.
-        else if (infoType == InformationType.EXPERIMENT && !partialInfo) {
-            chipTORS = this.affymetrixChipDAO.getAffymetrixChips(daoRawDataFilters, 0L, 1,
-                    Set.of(AffymetrixChipDAO.Attribute.CONDITION_ID));
-        }
-        if (chipTORS != null) {
-            while (chipTORS.next()) {
-                AffymetrixChipTO chipTO = chipTORS.getTO();
-                if (chipTO.getExperimentId() != null) {
-                    affyExpIds.add(chipTO.getExperimentId());
-                }
-                if (chipTO.getConditionId() != null) {
-                    rawDataCondIds.add(chipTO.getConditionId());
-                }
-                if (infoType != InformationType.EXPERIMENT) {
-                    affyChipTOs.add(chipTO);
-                }
-            }
-        }
-
-
-        //************************************************************
-        // Now, we load missing Genes and RawDataConditions
-        //************************************************************
-        this.updateRawDataConditionMap(rawDataCondIds);
-        this.updateGeneMap(bgeeGeneIds);
-
-
-        //*********** Experiments ***********
-        MicroarrayExperimentTOResultSet expTORS = null;
-        //Experiments should always be retrieved at this point if there is any result,
-        //but we need this check in case there was no result returned when requesting
-        //CALLs or ASSAYs.
-        if (!affyExpIds.isEmpty()) {
-            //we can use a new DAORawDataFilter to retrieve the requested experiments
-            expTORS = this.microarrayExperimentDAO.getExperiments(
-                    Set.of(new DAORawDataFilter(affyExpIds, null, null, null)), null, null,
-                    !partialInfo? null:
-                        Set.of(MicroarrayExperimentDAO.Attribute.ID,
-                               MicroarrayExperimentDAO.Attribute.NAME));
-        } else if (infoType == InformationType.EXPERIMENT) {
-            //otherwise, it was the information requested originally
-            expTORS = this.microarrayExperimentDAO.getExperiments(daoRawDataFilters, offset, limit,
-                    !partialInfo? null:
-                        Set.of(MicroarrayExperimentDAO.Attribute.ID,
-                               MicroarrayExperimentDAO.Attribute.NAME));
-        }
-        LinkedHashMap<String, AffymetrixExperiment> expIdToAffyExp =
-                expTORS == null? new LinkedHashMap<>():
-                    expTORS.stream()
-                    .collect(Collectors.toMap(
-                            to -> to.getId(),
-                            to -> new AffymetrixExperiment(to.getId(), to.getName(),
-                                    to.getDescription(),
-                                    to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
-                                    this.downloadFileService.loadExperimentDownloadFiles(to.getId(), DataType.AFFYMETRIX),
-                                    0),
-                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
-                            LinkedHashMap::new));
-
-
-        //************************************************************
-        // Finally, we instantiate all bgee-core objects necessary
-        //************************************************************
-        //Experiments are always needed
-        LinkedHashSet<AffymetrixExperiment> affymetrixExperiments =
-                new LinkedHashSet<>(expIdToAffyExp.values());
-
-        //Now we load the LinkedHashSets only if needed, to distinguish between
-        //null value = info not requested, and empty Collection = no result
-        LinkedHashSet<AffymetrixChip> affymetrixAssays = null;
-        LinkedHashSet<AffymetrixProbeset> affymetrixCalls = null;
-        if (infoType == InformationType.ASSAY || infoType == InformationType.CALL) {
-            //We create a Map bgeeChipId -> AffymetrixChip for easier instantiation
-            //of AffymetrixProbesets
-            LinkedHashMap<Integer, AffymetrixChip> affyChipMap = affyChipTOs
-                    .stream()
-                    .collect(Collectors.toMap(
-                            to -> to.getId(),
-
-                            to -> new AffymetrixChip(
-                                    to.getAffymetrixChipId(),
-                                    Optional.ofNullable(expIdToAffyExp.get(to.getExperimentId()))
-                                    .orElseThrow(() -> new IllegalStateException(
-                                            "Missing experiment ID " + to.getExperimentId()
-                                            + " for chip ID " + to.getAffymetrixChipId())), 
-                                    to.getConditionId() == null? null: new RawDataAnnotation(
-                                            Optional.ofNullable(
-                                                    this.rawDataConditionMap.get(to.getConditionId()))
-                                            .orElseThrow(() -> new IllegalStateException(
-                                                    "Missing RawDataCondition ID "
-                                                    + to.getConditionId()
-                                                    + " for chip ID " + to.getAffymetrixChipId())),
-                                            null, null, null, null, null),
-                                    null,
-                                    to.getDistinctRankCount() == null? null: new AffymetrixChipPipelineSummary(
-                                            to.getDistinctRankCount(), to.getMaxRank(), to.getScanDate(),
-                                            to.getNormalizationType().getStringRepresentation(),
-                                            to.getQualityScore(), to.getPercentPresent())),
-
-                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
-                            LinkedHashMap::new));
-            affymetrixAssays = new LinkedHashSet<>(affyChipMap.values());
-
-            if (infoType == InformationType.CALL) {
-                affymetrixCalls = affyProbesetTOs
-                        .stream()
-                        .map(to -> new AffymetrixProbeset(
-                                to.getId(),
-                                Optional.ofNullable(affyChipMap.get(to.getAssayId()))
-                                .orElseThrow(() -> new IllegalStateException(
-                                        "Missing chip ID " + to.getAssayId()
-                                        + " for probeset ID " + to.getId())),
-                                new RawCall(
-                                        Optional.ofNullable(geneMap.get(to.getBgeeGeneId()))
-                                        .orElseThrow(() -> new IllegalStateException(
-                                                "Missing gene ID " + to.getBgeeGeneId()
-                                                + " for probeset ID " + to.getId())),
-                                        to.getPValue(),
-                                        to.getExpressionConfidence(),
-                                        ExclusionReason.convertToExclusionReason(
-                                                to.getExclusionReason().name())),
-                                to.getNormalizedSignalIntensity(), to.getqValue(), to.getRank()))
-                        .collect(Collectors.toCollection(LinkedHashSet::new));
-            }
-        }
-
-        return log.traceExit(new AffymetrixContainer(
-                affymetrixExperiments, affymetrixAssays, affymetrixCalls));
-    }
-    private AffymetrixContainer getNoResultAffymetrixContainer(InformationType infoType) {
-        log.traceEntry("{}", infoType);
-
-        return log.traceExit(new AffymetrixContainer(
-                //Experiments always end up being requested
-                Set.of(),
-                //We also get the chips when we request the probesets
-                infoType == InformationType.CALL || infoType == InformationType.ASSAY? Set.of(): null,
-                infoType == InformationType.CALL? Set.of(): null));
-    }
-
-    private AffymetrixCountContainer loadAffymetrixCount(boolean withExperiment,
-            boolean withAssay, boolean withCall) {
-        log.traceEntry("{}, {}, {}", withExperiment, withAssay, withCall);
-
-        //If the DaoRawDataFilters are null it means there was no matching conds
-        //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
-            return log.traceExit(new AffymetrixCountContainer(
-                    withExperiment? 0: null,
-                    withAssay? 0: null,
-                    withCall? 0: null));
-        }
-
-        RawDataCountContainerTO countTO = this.rawDataCountDAO.getAffymetrixCount(
-                this.getRawDataProcessedFilter().getDaoFilters(),
-                withExperiment, withAssay, withCall);
-
-        return log.traceExit(new AffymetrixCountContainer(
-                countTO.getExperimentCount(),
-                countTO.getAssayCount(),
-                countTO.getCallCount()));
     }
 
 //*****************************************************************************************
@@ -1049,162 +778,6 @@ public class RawDataLoader extends CommonService {
         return log.traceExit(new RnaSeqCountContainer(
                 countTO.getExperimentCount(),
                 countTO.getRnaSeqLibraryCount(),
-                countTO.getAssayCount(),
-                countTO.getCallCount()));
-    }
-
-//*****************************************************************************************
-//                           METHODS LOADING EST RAW DATA
-//*****************************************************************************************
-
-    //Long and Integer instead of long and int because used internally to retrieve all results for filtering
-    private ESTContainer loadESTData(InformationType infoType, Long offset, Integer limit,
-            boolean partialInfo) {
-        log.traceEntry("{}, {}, {}, {}", infoType, offset, limit, partialInfo);
-
-        //If the DaoRawDataFilters are null it means there was no matching conds
-        //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
-            return log.traceExit(this.getNoResultESTContainer(infoType));
-        }
-
-        //************************************************************
-        // First, we retrieve all necessary TransferObjects
-        //************************************************************
-        LinkedHashSet<ESTTO> callTOs = new LinkedHashSet<>();
-        LinkedHashSet<ESTLibraryTO> assayTOs = new LinkedHashSet<>();
-        Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
-                .getDaoFilters();
-
-        //*********** Calls ***********
-        Set<String> estLibraryIds = new HashSet<>();
-        Set<Integer> bgeeGeneIds = new HashSet<>();
-        if (infoType == InformationType.CALL) {
-            ESTTOResultSet callTORS = this.estDAO.getESTs(daoRawDataFilters, offset, limit, null);
-            while (callTORS.next()) {
-                ESTTO callTO = callTORS.getTO();
-                estLibraryIds.add(callTO.getAssayId());
-                bgeeGeneIds.add(callTO.getBgeeGeneId());
-                callTOs.add(callTO);
-            }
-        }
-
-        //*********** Assays ***********
-        ESTLibraryTOResultSet assayTORS = null;
-        //We need to write the test in this way, in case CALLs were requested, but there was
-        //no result retrieved
-        if (!estLibraryIds.isEmpty()) {
-            assert !partialInfo;
-            //Create a new DAORawDataFilter for retrieving libraries based on their ID
-            DAORawDataFilter daoFilter = new DAORawDataFilter(null, estLibraryIds, null, null);
-            assayTORS = this.estLibraryDAO.getESTLibraries(Set.of(daoFilter), null, null,
-                    null);
-
-        // For EST, it is equivalent to request for assays or for experiments,
-        //since there are no experiments
-        } else if (infoType == InformationType.ASSAY || infoType == InformationType.EXPERIMENT) {
-            assayTORS = this.estLibraryDAO.getESTLibraries(daoRawDataFilters, offset, limit,
-                    !partialInfo? null: Set.of(
-                            ESTLibraryDAO.Attribute.ID,
-                            ESTLibraryDAO.Attribute.NAME));
-        }
-        Set<Integer> rawDataCondIds = new HashSet<>();
-        if (assayTORS != null) {
-            while (assayTORS.next()) {
-                ESTLibraryTO assayTO = assayTORS.getTO();
-                if (assayTO.getConditionId() != null) {
-                    rawDataCondIds.add(assayTO.getConditionId());
-                }
-                assayTOs.add(assayTO);
-            }
-        }
-
-        //************************************************************
-        // Now, we load missing Genes and RawDataConditions
-        //************************************************************
-        this.updateRawDataConditionMap(rawDataCondIds);
-        this.updateGeneMap(bgeeGeneIds);
-
-        //************************************************************
-        // Finally, we instantiate all bgee-core objects necessary
-        //************************************************************
-
-        LinkedHashMap<String, ESTLibrary> libIdToLib = assayTOs.stream()
-                .collect(Collectors.toMap(
-                        to -> to.getId(),
-
-                        to -> new ESTLibrary(
-                                to.getId(), to.getName(), to.getDescription(),
-                                to.getConditionId() == null? null: new RawDataAnnotation(
-                                        Optional.ofNullable(
-                                                this.rawDataConditionMap.get(
-                                                        to.getConditionId()))
-                                        .orElseThrow(() -> new IllegalStateException(
-                                                "Missing RawDataCondition ID "
-                                                + to.getConditionId()
-                                                + " for annotated sample ID " + to.getId())),
-                                        null, null, null, null, null),
-                                to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId())),
-
-                        (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
-                        LinkedHashMap::new));
-
-
-        //Libraries are always needed
-        LinkedHashSet<ESTLibrary> estLibraries =
-                new LinkedHashSet<>(libIdToLib.values());
-
-        //Now we load the LinkedHashSets only if needed, to distinguish between
-        //null value = info not requested, and empty Collection = no result
-        LinkedHashSet<EST> calls = null;
-        if (infoType == InformationType.CALL) {
-            calls = callTOs.stream()
-                    .map(to -> new EST(
-                            to.getId(),
-                            Optional.ofNullable(libIdToLib.get(to.getAssayId()))
-                            .orElseThrow(() -> new IllegalStateException(
-                                    "Missing assay ID " + to.getAssayId()
-                                    + " for Bgee gene ID " + to.getBgeeGeneId())),
-                            new RawCall(
-                                    Optional.ofNullable(this.geneMap.get(to.getBgeeGeneId()))
-                                    .orElseThrow(() -> new IllegalStateException(
-                                            "Missing gene ID " + to.getBgeeGeneId()
-                                            + " for assay ID " + to.getAssayId())),
-                                    to.getPValue(),
-                                    to.getExpressionConfidence(),
-                                    ExclusionReason.convertToExclusionReason(
-                                            to.getExclusionReason().name()))))
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-        }
-
-        return log.traceExit(new ESTContainer(estLibraries, calls));
-    }
-    private ESTContainer getNoResultESTContainer(InformationType infoType) {
-        log.traceEntry("{}", infoType);
-
-        return log.traceExit(new ESTContainer(
-                //Libraries always end up being requested
-                Set.of(),
-                infoType == InformationType.CALL? Set.of(): null));
-    }
-
-    private ESTCountContainer loadESTCount(boolean withExperiment, boolean withAssay,
-            boolean withCall) {
-        log.traceEntry("{}, {}, {}", withExperiment, withAssay, withCall);
-
-        //If the DaoRawDataFilters are null it means there was no matching conds
-        //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
-            return log.traceExit(new ESTCountContainer(
-                    withExperiment || withAssay? 0: null,
-                    withCall? 0: null));
-        }
-
-        RawDataCountContainerTO countTO = rawDataCountDAO.getESTCount(
-                this.getRawDataProcessedFilter().getDaoFilters(),
-                withExperiment || withAssay, withCall);
-
-        return log.traceExit(new ESTCountContainer(
                 countTO.getAssayCount(),
                 countTO.getCallCount()));
     }
@@ -1604,12 +1177,8 @@ public class RawDataLoader extends CommonService {
         if (dt == null) {
             return log.traceExit((DAODataType) null);
         }
-        if (dt instanceof AffymetrixDataType) {
-            return log.traceExit(DAODataType.AFFYMETRIX);
-        } else if (dt instanceof RnaSeqDataType) {
+        if (dt instanceof RnaSeqDataType) {
             return log.traceExit(DAODataType.RNA_SEQ);
-        } else if (dt instanceof ESTDataType) {
-            return log.traceExit(DAODataType.EST);
         } else if (dt instanceof InSituDataType) {
             return log.traceExit(DAODataType.IN_SITU);
         }

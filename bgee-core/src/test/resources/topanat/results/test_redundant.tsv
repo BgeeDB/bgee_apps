@@ -1,0 +1,4 @@
+OrganId	OrganName	Annotated	Significant	Expected	foldEnrichment	p	fdr	redundant
+CL:0002609-UBERON:0000956	neuron of cerebral cortex in cerebral cortex	8871	93	46.2	2.01	9.58e-23	3.68e-20	FALSE
+CL:0002609-UBERON:0000955	neuron of cerebral cortex in brain	8871	93	46.2	2.01	9.58e-23	3.68e-20	TRUE
+UBERON:0003499	brain blood vessel	7202	83	37.5	2.21	2.78e-20	3.79e-18	FALSE

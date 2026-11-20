@@ -170,7 +170,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
         private Integer speciesId;
 
         /**
-         * A {@code DataType} that is the data type (for instance, affymetrix).
+         * A {@code DataType} that is the data type (for instance, rna-seq).
          */
         private DAODataType dataType;
 

@@ -66,6 +66,7 @@ public class TestURLParameters extends URLParameters {
 	            TEST_INTEGER,
 	            TEST_BOOLEAN,
 	            super.getParamPage(),
+	            super.getParamAction(),
 	            super.getParamDisplayType(),
 	            super.getParamData());
 	}

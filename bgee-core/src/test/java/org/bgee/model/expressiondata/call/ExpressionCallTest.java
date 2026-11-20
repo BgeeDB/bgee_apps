@@ -288,68 +288,6 @@ public class ExpressionCallTest extends TestAncestor {
     }
     
     /**
-     * Test for {@link ExpressionCall#identifyRedundantCalls(Collection, ConditionGraph)}.
-     */
-    @Test
-    public void shouldIdentifyRedundantCalls() {
-      //These calls and conditions allow a regression test for management of equal ranks
-        //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other
-        Species spe1 = new Species(1);
-        Condition cond1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), null, null, null, spe1);
-        Condition cond2 = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), null, null, null, spe1);
-        Condition cond3 = new Condition(new AnatEntity("Anat3"), new DevStage("stage1"), null, null, null, spe1);
-        //we mock the ConditionGraph used to compare Conditions
-        ConditionGraph condGraph = mock(ConditionGraph.class);
-        Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
-        when(condGraph.getConditions()).thenReturn(allConds);
-        when(condGraph.isConditionMorePrecise(cond1, cond1)).thenReturn(false);
-        when(condGraph.isConditionMorePrecise(cond2, cond2)).thenReturn(false);
-        when(condGraph.isConditionMorePrecise(cond3, cond3)).thenReturn(false);
-        when(condGraph.isConditionMorePrecise(cond1, cond2)).thenReturn(true);//1
-        when(condGraph.isConditionMorePrecise(cond2, cond1)).thenReturn(false);//-1
-        when(condGraph.isConditionMorePrecise(cond1, cond3)).thenReturn(true);//1
-        when(condGraph.isConditionMorePrecise(cond3, cond1)).thenReturn(false);//-1
-        when(condGraph.isConditionMorePrecise(cond2, cond3)).thenReturn(false);
-        when(condGraph.isConditionMorePrecise(cond3, cond2)).thenReturn(false);
-        when(condGraph.getDescendantConditions(cond1)).thenReturn(new HashSet<>(Arrays.asList(cond2, cond3)));
-        when(condGraph.getDescendantConditions(cond2)).thenReturn(new HashSet<>());
-        when(condGraph.getDescendantConditions(cond3)).thenReturn(new HashSet<>());
-        
-        
-        //Nothing too complicated with gene ID1, c3 is redundant
-        GeneBioType biotype = new GeneBioType("b");
-        ExpressionCall c1 = new ExpressionCall(new Gene("ID1", new Species(1), biotype), cond3, null, null,
-                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25000")));
-        ExpressionCall c2 = new ExpressionCall(new Gene("ID1", new Species(1), biotype), cond2, null, null,
-                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall c3 = new ExpressionCall(new Gene("ID1", new Species(1), biotype), cond1, null, null,
-                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("3.00")));
-        //for gene ID2 we test identification with equal ranks and relations between conditions. 
-        //c4 is redundant because less precise condition
-        //Note: ranks with different scales are not considered equals
-        ExpressionCall c4 = new ExpressionCall(new Gene("ID2", new Species(1), biotype), cond1, null, null,
-                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
-        ExpressionCall c5 = new ExpressionCall(new Gene("ID2", new Species(1), biotype), cond3, null, null,
-                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
-        ExpressionCall c6 = new ExpressionCall(new Gene("ID2", new Species(1), biotype), cond2, null, null,
-                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
-        //for gene ID3 we test identification with equal ranks and relations between conditions. 
-        //nothing redundant
-        //Note: ranks with different scales are not considered equals
-        ExpressionCall c7 = new ExpressionCall(new Gene("ID3", new Species(1), biotype), cond1, null, null,
-                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1")));
-        ExpressionCall c8 = new ExpressionCall(new Gene("ID3", new Species(1), biotype), cond3, null, null,
-                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
-        ExpressionCall c9 = new ExpressionCall(new Gene("ID3", new Species(1), biotype), cond2, null, null,
-                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
-        
-        Set<ExpressionCall> withRedundancy = new HashSet<>(Arrays.asList(c1, c2, c3, c4, c5, c6, c7, c8, c9));
-        Set<ExpressionCall> expectedRedundants = new HashSet<>(Arrays.asList(c3, c4));
-        assertEquals("Incorrect redundant calls identified", 
-                expectedRedundants, ExpressionCall.identifyRedundantCalls(withRedundancy, condGraph));
-    }
-    
-    /**
      * Test {@link ExpressionCall#getFormattedMeanRank()}
      */
     @Test

@@ -75,8 +75,8 @@ public class BgeeEnumTest extends TestAncestor {
         assertEquals("Incorrect decorrelation types",
                 qualities, BgeeEnum.convertStringSetToEnumSet(DataQuality.class, strings));
 
+        //An EnumSet holds no null: a null representation is left out
         strings.add(null);
-        qualities.add(null);
         assertEquals("Incorrect decorrelation types",
                 qualities, BgeeEnum.convertStringSetToEnumSet(DataQuality.class, strings));
         

@@ -48,7 +48,8 @@
       <filter.org.bgee.search.experiments>bgee_experiment_auto_${project.version}</filter.org.bgee.search.experiments>
       <filter.org.bgee.search.assays>bgee_assay_auto_${project.version}</filter.org.bgee.search.assays>
       <!-- Properties for running TopAnat -->
-      <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
+      <filter.org.bgee.core.bioconductorReleaseNumber>3.24</filter.org.bgee.core.bioconductorReleaseNumber>
+      <filter.org.bgee.core.bgeeDBMinimumVersion>2.39.6</filter.org.bgee.core.bgeeDBMinimumVersion>
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
       <filter.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</filter.org.bgee.core.topAnatRScriptExecutable>
@@ -70,6 +71,7 @@
       <filter.org.bgee.webapp.sparqlStableGraph>http://test.com/rdf_v14</filter.org.bgee.webapp.sparqlStableGraph>
       <filter.org.bgee.webapp.archive>false</filter.org.bgee.webapp.archive>
       <filter.org.bgee.webapp.initializeCommandDataCaches>false</filter.org.bgee.webapp.initializeCommandDataCaches>
+      <filter.org.bgee.webapp.generateTopAnatCallFiles>false</filter.org.bgee.webapp.generateTopAnatCallFiles>
     </properties>
   </profile>
   <!-- Profile used to configure bgee-webapp, defining the properties to be used for a normal build of the WAR file, 
@@ -98,7 +100,8 @@
       <filter.org.bgee.search.experiments>bgee_experiment_auto_${project.version}</filter.org.bgee.search.experiments>
       <filter.org.bgee.search.assays>bgee_assay_auto_${project.version}</filter.org.bgee.search.assays>
       <!-- Properties for running TopAnat -->
-      <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
+      <filter.org.bgee.core.bioconductorReleaseNumber>3.24</filter.org.bgee.core.bioconductorReleaseNumber>
+      <filter.org.bgee.core.bgeeDBMinimumVersion>2.39.6</filter.org.bgee.core.bgeeDBMinimumVersion>
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
       <filter.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</filter.org.bgee.core.topAnatRScriptExecutable>
@@ -119,6 +122,7 @@
       <filter.org.bgee.webapp.sparqlStableGraph>http://production.com/rdf_v14</filter.org.bgee.webapp.sparqlStableGraph>
       <filter.org.bgee.webapp.archive>false</filter.org.bgee.webapp.archive>
       <filter.org.bgee.webapp.initializeCommandDataCaches>true</filter.org.bgee.webapp.initializeCommandDataCaches>
+      <filter.org.bgee.webapp.generateTopAnatCallFiles>true</filter.org.bgee.webapp.generateTopAnatCallFiles>
     </properties>
   </profile>
   <!-- Profile used for Bgee integration tests-->

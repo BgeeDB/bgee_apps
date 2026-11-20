@@ -133,7 +133,7 @@ $( document ).ready( function(){
            { responsivePriority: 6, targets: 3 }, // Sex(es)
            { responsivePriority: 6, targets: 4 }, // Strain(s)
            { responsivePriority: 3, targets: 5 }, // Expression score
-           { responsivePriority: 4, targets: 6 }, // FDR
+           { responsivePriority: 4, targets: 6 }, // pValue
            { responsivePriority: 5, targets: 7 }  // Datatypes
         ],
         columns: [ // sorting definition
@@ -143,7 +143,7 @@ $( document ).ready( function(){
            { "orderable": false }, // Sex(es) - ordering disabled
            { "orderable": false }, // Strain(s) - ordering disabled
            { "orderable": false }, //expression score - ordering disabled
-           { "orderable": false }, //FDR - ordering disabled
+           { "orderable": false }, //pValue - ordering disabled
            //score ordering disabled, otherwise, use: 
            //{ "orderDataType": "dom-text", "type": "score" }, // Score - custom function
            { "orderable": false } // Quality - ordering disabled

@@ -1,5 +1,6 @@
 package org.bgee.model;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -91,9 +92,11 @@ public class ComposedEntity<T extends NamedEntity<?>> extends Entity<String> {
 
     //We reimplement hashCode(equals even though this class is also an Entity,
     //I don't like the idea of making the comparisons on a generated String ID.
+    //The comparisons are made on Lists: the order of the entities is meaningful
+    //("cell type in anat. entity"), while Set.equals ignores it.
     @Override
     public int hashCode() {
-        return Objects.hash(entities);
+        return Objects.hash(new ArrayList<>(entities));
     }
     @Override
     public boolean equals(Object obj) {
@@ -104,7 +107,7 @@ public class ComposedEntity<T extends NamedEntity<?>> extends Entity<String> {
         if (getClass() != obj.getClass())
             return false;
         ComposedEntity<?> other = (ComposedEntity<?>) obj;
-        return Objects.equals(entities, other.entities);
+        return Objects.equals(new ArrayList<>(entities), new ArrayList<>(other.entities));
     }
 
     @Override

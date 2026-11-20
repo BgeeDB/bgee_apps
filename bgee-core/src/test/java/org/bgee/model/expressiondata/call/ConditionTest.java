@@ -79,85 +79,85 @@ public class ConditionTest extends TestAncestor {
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), null, null, null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), null, null, null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage2"), null, null, null, new Species(1));
         c2 = new Condition(null, new DevStage("stage2"), null, null, null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
 
         // different stage IDs
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), null, null, null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage2"), null, null, null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), null, null, null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), null, null, null, null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
      // different cell type IDs
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), null, null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), null, null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), null, null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), null, null, null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
-        // different sexes
-        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.MALE.getStringRepresentation()), null, new Species(1));
-        c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.FEMALE.getStringRepresentation()), null, new Species(1));
+        // different sexes, ordered by their IDs
+        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.FEMALE.getStringRepresentation()), null, new Species(1));
+        c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.MALE.getStringRepresentation()), null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), new Sex(SexEnum.MALE.getStringRepresentation()), null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), null, null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
      // different strains
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.MALE.getStringRepresentation()), new Strain("wt"), new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.MALE.getStringRepresentation()), new Strain("xo"), new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), new Sex(SexEnum.MALE.getStringRepresentation()), new Strain("xo"), new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), new Sex(SexEnum.MALE.getStringRepresentation()), null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
         // different species IDs
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage2"), null, null, null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage2"), null, null, null, new Species(2));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), null, null, null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), null, null, null, new Species(2));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
         
         // different IDs
         c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage2"), null, null, null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), null, null, null, new Species(2));
         assertFalse("Incorrect equals", c1.equals(c2));
-        assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
-        assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
+        assertEquals("Incorrect compareTo", -1, Integer.signum(c1.compareTo(c2)));
+        assertEquals("Incorrect compareTo", 1, Integer.signum(c2.compareTo(c1)));
     }
 }

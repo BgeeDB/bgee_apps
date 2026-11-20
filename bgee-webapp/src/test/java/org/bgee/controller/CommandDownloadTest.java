@@ -65,7 +65,9 @@ public class CommandDownloadTest extends TestAncestor {
         
         //mock data returned by Services
         List<SpeciesDataGroup> groups = getTestGroups();
-        when(groupService.loadAllSpeciesDataGroup()).thenReturn(groups);
+        //The groups with call files, and the groups with processed expression value files
+        when(groupService.loadSpeciesDataGroup(true, false)).thenReturn(groups);
+        when(groupService.loadSpeciesDataGroup(false, true)).thenReturn(groups);
         when(keywordService.getKeywordForAllSpecies()).thenReturn(getTestSpeToKeywords());
 
         //mock view
@@ -139,9 +141,9 @@ public class CommandDownloadTest extends TestAncestor {
                 new SpeciesDownloadFile("my/path/fileg3_2.tsv.zip", "fileg3_2.tsv.zip", 
                         null, 5000L, Category.DIFF_EXPR_ANAT_COMPLETE, 33), 
                 new SpeciesDownloadFile("my/path/fileg3_3.tsv.zip", "fileg3_3.tsv.zip", 
-                        null, 5000L, Category.AFFY_DATA, 33), 
+                        null, 5000L, Category.RNASEQ_DATA, 33), 
                 new SpeciesDownloadFile("my/path/fileg3_4.tsv.zip", "fileg3_4.tsv.zip", 
-                        null, 5000L, Category.AFFY_ANNOT, 33)
+                        null, 5000L, Category.RNASEQ_ANNOT, 33)
                 ));
         Set<SpeciesDownloadFile> dlFileGroup4 = new HashSet<>(Arrays.asList(
                 new SpeciesDownloadFile("my/path/fileg4_1.tsv.zip", "fileg4_1.tsv.zip", 
@@ -149,9 +151,9 @@ public class CommandDownloadTest extends TestAncestor {
                 new SpeciesDownloadFile("my/path/fileg4_2.tsv.zip", "fileg4_2.tsv.zip", 
                         null, 55000L, Category.DIFF_EXPR_ANAT_COMPLETE, 44), 
                 new SpeciesDownloadFile("my/path/fileg4_3.tsv.zip", "fileg4_3.tsv.zip", 
-                        null, 55000L, Category.AFFY_DATA, 44), 
+                        null, 55000L, Category.RNASEQ_DATA, 44), 
                 new SpeciesDownloadFile("my/path/fileg4_4.tsv.zip", "fileg4_4.tsv.zip", 
-                        null, 55000L, Category.AFFY_ANNOT, 44), 
+                        null, 55000L, Category.RNASEQ_ANNOT, 44), 
                 new SpeciesDownloadFile("my/path/fileg4_5.tsv.zip", "fileg4_5.tsv.zip", 
                         null, 55000L, Category.RNASEQ_ANNOT, 44), 
                 new SpeciesDownloadFile("my/path/fileg4_6.tsv.zip", "fileg4_6.tsv.zip", 

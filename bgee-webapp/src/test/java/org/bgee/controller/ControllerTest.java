@@ -24,6 +24,8 @@ import org.bgee.TestAncestor;
 import org.bgee.controller.user.UserService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.keyword.KeywordService;
+import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.job.JobService;
 import org.bgee.view.FakeFactoryProvider;
 import org.bgee.view.ViewFactoryProvider;
@@ -102,7 +104,9 @@ public class ControllerTest extends TestAncestor {
         // The mock HttpServletRequest provides values for three URL parameters
         Map<String, String[]> parameterMap = new HashMap<>();
         parameterMap.put(params.getParamDisplayType().getName(), new String[]{"xml"});
-        parameterMap.put(params.getParamPage().getName(), new String[]{"about"});
+        parameterMap.put(params.getParamPage().getName(), new String[]{RequestParameters.PAGE_DOWNLOAD});
+        parameterMap.put(params.getParamAction().getName(),
+                new String[]{RequestParameters.ACTION_DOWLOAD_CALL_FILES});
         parameterMap.put(params.getParamTestString().getName(), new String[]{"test"});
         when(this.mockHttpServletRequest.getParameterMap()).thenReturn(parameterMap);
         when(this.mockHttpServletRequest.getRemoteAddr()).thenReturn("127.0.0.1");
@@ -128,19 +132,23 @@ public class ControllerTest extends TestAncestor {
         FrontController front = new FrontController(this.testProperties, new TestURLParameters(), 
                 new JobService(this.testProperties), null, new UserService(),
                 () -> {
+                    //The services of the download page, returning no data
                     ServiceFactory mockFactory = mock(ServiceFactory.class); 
+                    when(mockFactory.getSpeciesDataGroupService())
+                            .thenReturn(mock(SpeciesDataGroupService.class));
+                    when(mockFactory.getKeywordService()).thenReturn(mock(KeywordService.class));
                     mockFactories.add(mockFactory);
                     return mockFactory;
                 }, 
                 this.testFactoryProvider, mailSender);
         
         front.doRequest(mockHttpServletRequest, mockHttpServletResponse, false);
-        verify(this.mockPrintWriter, times(1)).println(eq("Test page displayAboutPage() is good !"));
+        verify(this.mockPrintWriter, times(1)).println(eq("TestC"));
         assertEquals("Incorrect use of ServiceFactory supplier", 1, mockFactories.size());
         verify(mockFactories.get(0)).close();
         
         front.doRequest(mockHttpServletRequest, mockHttpServletResponse, false);
-        verify(this.mockPrintWriter, times(2)).println(eq("Test page displayAboutPage() is good !"));
+        verify(this.mockPrintWriter, times(2)).println(eq("TestC"));
         assertEquals("Incorrect use of ServiceFactory supplier", 2, mockFactories.size());
         verify(mockFactories.get(0)).close();
         verify(mockFactories.get(1)).close();

@@ -9,6 +9,18 @@
     <root level="off">
       <appender-ref ref="Console"/>
     </root>  
+    <logger name="org.bgee.model.ontology.OntologyService" level="INFO" additivity="false">
+      <appender-ref ref="Console"/>
+    </logger>
+    <logger name="org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService" level="INFO" additivity="false">
+      <appender-ref ref="Console"/>
+    </logger>
+    <logger name="org.bgee.controller.CommandData" level="INFO" additivity="false">
+      <appender-ref ref="Console"/>
+    </logger>
+    <logger name="org.bgee.model.expressiondata.call.multispecies" level="INFO" additivity="false">
+      <appender-ref ref="Console"/>
+    </logger>
     <logger name="org.bgee" level="ERROR" additivity="false">
       <Filters>
         <MarkerFilter marker="THROWING" onMatch="DENY" onMismatch="NEUTRAL"/>

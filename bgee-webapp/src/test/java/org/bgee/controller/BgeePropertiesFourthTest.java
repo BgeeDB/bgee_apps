@@ -57,7 +57,7 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY);
         // Test a superclass property
-        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
+        System.clearProperty(BgeeProperties.BGEEDB_MINIMUM_VERSION_KEY);
         // Also, set the properties file to an non-existing file, 
         // so that no property file is used (otherwise, property files in src/test/resources/ 
         // or src/main/resources/ would be used).
@@ -137,7 +137,7 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
                 bgeeProp.getTopAnatResultsUrlDirectory());
         // Test a superclass property
         assertEquals("Wrong property value retrieved", 
-                BgeeProperties.TOP_ANAT_FUNCTION_FILE_DEFAULT, bgeeProp.getTopAnatFunctionFile());
+                BgeeProperties.BGEEDB_MINIMUM_VERSION_DEFAULT, bgeeProp.getBgeeDBMinimumVersion());
         
     }
 }

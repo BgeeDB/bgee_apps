@@ -4,10 +4,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,6 +50,101 @@ import org.bgee.model.species.Taxon;
 public class OntologyService extends CommonService {
 //TODO: add a method to get cellTypeOntology managing to only retrieve terms part of the subgraph "cell component"
     private static final Logger log = LogManager.getLogger(OntologyService.class.getName());
+
+    /**
+     * Maximum number of anatomical-entity ontologies kept in {@link #ANAT_ENTITY_ONTOLOGY_CACHE}.
+     * Entries are shared across {@code OntologyService} instances (and thus HTTP requests)
+     * in the same JVM.
+     */
+    private static final int ANAT_ENTITY_ONTOLOGY_CACHE_MAX_SIZE = 16;
+    private static final Object ANAT_ENTITY_ONTOLOGY_CACHE_LOCK = new Object();
+    /**
+     * LRU cache of {@code MultiSpeciesOntology}s keyed by species, seed IDs, and relation
+     * parameters. A later request whose seeds are already present in a cached subgraph
+     * (same species and relation flags) reuses that ontology instead of hitting the DAO.
+     */
+    private static final LinkedHashMap<AnatEntityOntologyCacheKey, MultiSpeciesOntology<AnatEntity, String>>
+            ANAT_ENTITY_ONTOLOGY_CACHE = new LinkedHashMap<AnatEntityOntologyCacheKey, MultiSpeciesOntology<AnatEntity, String>>(
+                    32, 0.75f, true) {
+                private static final long serialVersionUID = 1L;
+                @Override
+                protected boolean removeEldestEntry(
+                        Map.Entry<AnatEntityOntologyCacheKey, MultiSpeciesOntology<AnatEntity, String>> eldest) {
+                    return size() > ANAT_ENTITY_ONTOLOGY_CACHE_MAX_SIZE;
+                }
+            };
+
+    private static final class AnatEntityOntologyCacheKey {
+        private final Set<Integer> speciesIds;
+        private final Set<String> anatEntityIds;
+        private final Set<RelationType> relationTypes;
+        private final boolean getAncestors;
+        private final boolean getDescendants;
+        private final Set<String> subGraphRootIds;
+
+        private AnatEntityOntologyCacheKey(Collection<Integer> speciesIds, Collection<String> anatEntityIds,
+                Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants,
+                Collection<String> subGraphRootIds) {
+            this.speciesIds = toSortedIntSet(speciesIds);
+            this.anatEntityIds = toSortedStringSet(anatEntityIds);
+            this.relationTypes = relationTypes == null || relationTypes.isEmpty() ?
+                    Collections.emptySet() : EnumSet.copyOf(relationTypes);
+            this.getAncestors = getAncestors;
+            this.getDescendants = getDescendants;
+            this.subGraphRootIds = toSortedStringSet(subGraphRootIds);
+        }
+
+        private boolean sameScope(AnatEntityOntologyCacheKey other) {
+            return speciesIds.equals(other.speciesIds)
+                    && relationTypes.equals(other.relationTypes)
+                    && getAncestors == other.getAncestors
+                    && getDescendants == other.getDescendants
+                    && subGraphRootIds.equals(other.subGraphRootIds);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(speciesIds, anatEntityIds, relationTypes, getAncestors,
+                    getDescendants, subGraphRootIds);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            AnatEntityOntologyCacheKey other = (AnatEntityOntologyCacheKey) obj;
+            return getAncestors == other.getAncestors
+                    && getDescendants == other.getDescendants
+                    && speciesIds.equals(other.speciesIds)
+                    && anatEntityIds.equals(other.anatEntityIds)
+                    && relationTypes.equals(other.relationTypes)
+                    && subGraphRootIds.equals(other.subGraphRootIds);
+        }
+    }
+
+    private static Set<Integer> toSortedIntSet(Collection<Integer> values) {
+        if (values == null || values.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return values.stream().filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    private static Set<String> toSortedStringSet(Collection<String> values) {
+        if (values == null || values.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return values.stream().filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    static void clearAnatEntityOntologyCache() {
+        synchronized (ANAT_ENTITY_ONTOLOGY_CACHE_LOCK) {
+            ANAT_ENTITY_ONTOLOGY_CACHE.clear();
+        }
+    }
     
     /**
      * The only purpose of this class is to provide an implementation of equals/hashCode
@@ -249,6 +348,71 @@ public class OntologyService extends CommonService {
     }
 
     /**
+     * Retrieve the descendants of anatomical entities, as
+     * {@link MultiSpeciesOntology#getDescendantIds(Object, boolean, Collection)} returns them
+     * in the "is_a part_of" ontology of {@code speciesIds}, without building that ontology:
+     * the descendants by relations, direct or indirect, such that the relation, the descendant
+     * and the anatomical entity are each valid in any of {@code speciesIds}.
+     *
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs
+     *                              of the species. If {@code null} or empty, the descendants
+     *                              are not filtered on species.
+     * @param anatEntityIds         A {@code Collection} of {@code String}s that are the IDs
+     *                              of the anatomical entities to retrieve the descendants of.
+     * @param descendantIdFilter    A {@code Collection} of {@code String}s that are the IDs
+     *                              to retrieve the descendants among. If {@code null} or empty,
+     *                              all the descendants are retrieved.
+     * @return                      A {@code Map} where keys are the IDs of {@code anatEntityIds}
+     *                              having descendants, the associated value being the IDs
+     *                              of their descendants.
+     */
+    public Map<String, Set<String>> getAnatEntityDescendantIds(Collection<Integer> speciesIds,
+            Collection<String> anatEntityIds, Collection<String> descendantIdFilter) {
+        log.traceEntry("{}, {}, {}", speciesIds, anatEntityIds, descendantIdFilter);
+        if (anatEntityIds == null || anatEntityIds.isEmpty()) {
+            return log.traceExit(new HashMap<>());
+        }
+        return log.traceExit(this.getDaoManager().getRelationDAO()
+                .getAnatEntityDescendantRelations(speciesIds, descendantIdFilter, anatEntityIds)
+                .stream()
+                .collect(Collectors.groupingBy(RelationTO::getTargetId,
+                        Collectors.mapping(RelationTO::getSourceId, Collectors.toSet()))));
+    }
+    /**
+     * Retrieve the descendants of developmental stages, as
+     * {@link MultiSpeciesOntology#getDescendantIds(Object, boolean, Collection)} returns them
+     * in the ontology of {@code speciesIds}, without building that ontology.
+     *
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs
+     *                              of the species. If {@code null} or empty, the descendants
+     *                              are not filtered on species.
+     * @param devStageIds           A {@code Collection} of {@code String}s that are the IDs
+     *                              of the developmental stages to retrieve the descendants of.
+     * @param descendantIdFilter    A {@code Collection} of {@code String}s that are the IDs
+     *                              to retrieve the descendants among. If {@code null} or empty,
+     *                              all the descendants are retrieved.
+     * @return                      A {@code Map} where keys are the IDs of {@code devStageIds}
+     *                              having descendants, the associated value being the IDs
+     *                              of their descendants.
+     */
+    public Map<String, Set<String>> getDevStageDescendantIds(Collection<Integer> speciesIds,
+            Collection<String> devStageIds, Collection<String> descendantIdFilter) {
+        log.traceEntry("{}, {}, {}", speciesIds, devStageIds, descendantIdFilter);
+        if (devStageIds == null || devStageIds.isEmpty()) {
+            return log.traceExit(new HashMap<>());
+        }
+        return log.traceExit(this.getDaoManager().getRelationDAO()
+                .getStageRelations(speciesIds, true,
+                        descendantIdFilter == null || descendantIdFilter.isEmpty()? null:
+                            descendantIdFilter,
+                        devStageIds, false, EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT),
+                        EnumSet.of(RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID))
+                .stream()
+                .collect(Collectors.groupingBy(RelationTO::getTargetId,
+                        Collectors.mapping(RelationTO::getSourceId, Collectors.toSet()))));
+    }
+
+    /**
      * Retrieve the {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species, 
      * anatomical entities, relations types, and relation status. 
      * <p>
@@ -272,6 +436,9 @@ public class OntologyService extends CommonService {
      *                          anat. entities, and the relations leading to them, should be retrieved.
      * @return                  The {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
+     *                          Requests with a non-empty seed set are cached in the JVM and
+     *                          reused when a later call uses the same species and relation
+     *                          flags and seeds already present in a cached subgraph.
      */
     public MultiSpeciesOntology<AnatEntity, String> getAnatEntityOntology(Collection<Integer> speciesIds, 
             Collection<String> anatEntityIds, Collection<RelationType> relationTypes, 
@@ -288,6 +455,21 @@ public class OntologyService extends CommonService {
             Collection<String> subGraphRootIds) {
         log.traceEntry("{}, {}, {}, {}, {}, {}", speciesIds, anatEntityIds, getAncestors,
                 getDescendants, relationTypes, subGraphRootIds);
+
+        Set<String> seedIds = anatEntityIds == null || anatEntityIds.isEmpty() ?
+                Collections.emptySet() : Collections.unmodifiableSet(new HashSet<String>(anatEntityIds));
+        AnatEntityOntologyCacheKey cacheKey = seedIds.isEmpty() ? null
+                : new AnatEntityOntologyCacheKey(speciesIds, seedIds, relationTypes,
+                        getAncestors, getDescendants, subGraphRootIds);
+        if (cacheKey != null) {
+            MultiSpeciesOntology<AnatEntity, String> cached =
+                    getCachedAnatEntityOntology(cacheKey, seedIds);
+            if (cached != null) {
+                log.info("AnatEntityOntology cache hit for {} seed IDs / {} species",
+                        seedIds.size(), cacheKey.speciesIds.size());
+                return log.traceExit(cached);
+            }
+        }
 
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of AnatEntityOntology");
@@ -375,7 +557,52 @@ public class OntologyService extends CommonService {
                 relationTaxonConstraints, relationTypes, AnatEntity.class);
 
         log.debug("AnatEntityOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
+        if (cacheKey != null) {
+            synchronized (ANAT_ENTITY_ONTOLOGY_CACHE_LOCK) {
+                ANAT_ENTITY_ONTOLOGY_CACHE.putIfAbsent(cacheKey, ont);
+            }
+        }
         return log.traceExit(ont);
+    }
+
+    private static MultiSpeciesOntology<AnatEntity, String> getCachedAnatEntityOntology(
+            AnatEntityOntologyCacheKey cacheKey, Set<String> seedIds) {
+        synchronized (ANAT_ENTITY_ONTOLOGY_CACHE_LOCK) {
+            MultiSpeciesOntology<AnatEntity, String> exact = ANAT_ENTITY_ONTOLOGY_CACHE.get(cacheKey);
+            if (exact != null) {
+                return exact;
+            }
+            MultiSpeciesOntology<AnatEntity, String> covering = null;
+            AnatEntityOntologyCacheKey coveringKey = null;
+            for (Map.Entry<AnatEntityOntologyCacheKey, MultiSpeciesOntology<AnatEntity, String>> entry
+                    : ANAT_ENTITY_ONTOLOGY_CACHE.entrySet()) {
+                if (!entry.getKey().sameScope(cacheKey)) {
+                    continue;
+                }
+                MultiSpeciesOntology<AnatEntity, String> candidate = entry.getValue();
+                if (ontologyContainsAllSeedIds(candidate, seedIds)) {
+                    covering = candidate;
+                    coveringKey = entry.getKey();
+                    break;
+                }
+            }
+            if (covering != null) {
+                ANAT_ENTITY_ONTOLOGY_CACHE.get(coveringKey);
+                ANAT_ENTITY_ONTOLOGY_CACHE.put(cacheKey, covering);
+                return covering;
+            }
+            return null;
+        }
+    }
+
+    private static boolean ontologyContainsAllSeedIds(MultiSpeciesOntology<AnatEntity, String> ont,
+            Set<String> seedIds) {
+        for (String seedId : seedIds) {
+            if (ont.getElement(seedId) == null) {
+                return false;
+            }
+        }
+        return true;
     }
     
     /**

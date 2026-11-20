@@ -86,10 +86,11 @@ public class JsonParentDisplayTest extends TestAncestor {
                 "{\n  \"code\": 200,\n  \"status\": \"SUCCESS\",\n  \"message\": \"My msg.\",\n"
                 + "  \"requestParameters\": {\n    \"" + params.getParamPage().getName() 
                 + "\": \"mypage\",\n    " + "\"" + params.getParamAction().getName() 
-                + "\": \"myaction\"\n  },\n  \"data\": {\n    \"speciesList\": [\n"
-                + "      {\n        \"name\": \"SpeciesName\",\n        "
+                + "\": \"myaction\",\n    \"nonStorableParameters\": [\n      \"" + params.getParamPage().getName()
+                + "\",\n      \"" + params.getParamAction().getName() + "\"\n    ]\n  },\n  \"data\": {\n    \"speciesList\": [\n"
+                + "      {\n        \"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n        "
-                + "\"id\": 12\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
+                + "\"id\": 12\n      },\n      {\n        \"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        \"name\": \"SpeciesName\",\n"
                 + "        \"description\": \"A string description of that species\",\n"
                 + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 sw.toString());
@@ -113,9 +114,9 @@ public class JsonParentDisplayTest extends TestAncestor {
         assertEquals("Incorrect Json generated from writer", 
                 "{\n  \"code\": 200,\n  \"status\": \"SUCCESS\",\n  \"message\": \"My msg.\",\n"
                 + "  \"data\": {\n    \"speciesList\": [\n"
-                + "      {\n        \"name\": \"SpeciesName\",\n        "
+                + "      {\n        \"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n        "
-                + "\"id\": 12\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
+                + "\"id\": 12\n      },\n      {\n        \"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        \"name\": \"SpeciesName\",\n"
                 + "        \"description\": \"A string description of that species\",\n"
                 + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 sw.toString());
@@ -169,10 +170,11 @@ public class JsonParentDisplayTest extends TestAncestor {
                 +",\n  \"status\": \"ERROR\",\n  \"message\": \"My msg.\",\n"
                 + "  \"requestParameters\": {\n    \"" + params.getParamPage().getName() 
                 + "\": \"mypage\",\n    " + "\"" + params.getParamAction().getName() 
-                + "\": \"myaction\"\n  },\n  \"data\": {\n    \"speciesList\": [\n"
-                + "      {\n        \"name\": \"SpeciesName\",\n        "
+                + "\": \"myaction\",\n    \"nonStorableParameters\": [\n      \"" + params.getParamPage().getName()
+                + "\",\n      \"" + params.getParamAction().getName() + "\"\n    ]\n  },\n  \"data\": {\n    \"speciesList\": [\n"
+                + "      {\n        \"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n        "
-                + "\"id\": 12\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
+                + "\"id\": 12\n      },\n      {\n        \"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        \"name\": \"SpeciesName\",\n"
                 + "        \"description\": \"A string description of that species\",\n"
                 + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 sw.toString());
@@ -197,9 +199,9 @@ public class JsonParentDisplayTest extends TestAncestor {
                 "{\n  \"code\": " + HttpServletResponse.SC_INTERNAL_SERVER_ERROR 
                 + ",\n  \"status\": \"FAIL\",\n  \"message\": \"My msg.\",\n"
                 + "  \"data\": {\n    \"speciesList\": [\n"
-                + "      {\n        \"name\": \"SpeciesName\",\n        "
+                + "      {\n        \"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n        "
-                + "\"id\": 12\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
+                + "\"id\": 12\n      },\n      {\n        \"dataSourcesForDataByDataTypes\": {},\n        \"dataSourcesForAnnotationByDataTypes\": {},\n        \"name\": \"SpeciesName\",\n"
                 + "        \"description\": \"A string description of that species\",\n"
                 + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 sw.toString());

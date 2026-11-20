@@ -6,15 +6,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.controller.URLParameters;
 import org.bgee.model.XRef;
-import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
-import org.bgee.model.expressiondata.rawdata.est.ESTCountContainer;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.Condition2;
 import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
+import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.file.SpeciesDownloadFile;
 import org.bgee.model.job.Job;
 import org.bgee.model.species.Species;
@@ -22,18 +22,17 @@ import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.json.adapters.BgeeTypeAdapterFactory;
 import org.bgee.view.json.adapters.Condition2TypeAdapter;
 import org.bgee.view.json.adapters.ConditionParameterTypeAdapter;
-import org.bgee.view.json.adapters.SpeciesDownloadFileTypeAdapter;
-import org.bgee.view.json.adapters.ESTCountContainerTypeAdapter;
 import org.bgee.view.json.adapters.ExperimentAssayTypeAdapter;
 import org.bgee.view.json.adapters.ExpressionCallPostFilterTypeAdapter;
-import org.bgee.view.json.adapters.XRefTypeAdapter;
 import org.bgee.view.json.adapters.JobTypeAdapter;
 import org.bgee.view.json.adapters.RawCallTypeAdapter;
 import org.bgee.view.json.adapters.RawDataAnnotationTypeAdapter;
 import org.bgee.view.json.adapters.RawDataPostFilterTypeAdapter;
 import org.bgee.view.json.adapters.RequestParameterTypeAdapter;
+import org.bgee.view.json.adapters.SpeciesDownloadFileTypeAdapter;
 import org.bgee.view.json.adapters.TopAnatResultsTypeAdapter;
 import org.bgee.view.json.adapters.TypeAdaptersUtils;
+import org.bgee.view.json.adapters.XRefTypeAdapter;
 
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
@@ -145,6 +144,9 @@ public class JsonHelper {
         } else {
             this.utils = utils;
         }
+        //The names of the URL parameters, known without any request as well
+        URLParameters urlParameters = this.requestParameters == null? new URLParameters():
+            this.requestParameters.getUrlParametersInstance();
         
         //we do not allow the Gson object to be injected, so that signatures of this class 
         //are not dependent of a specific JSON library. 
@@ -159,12 +161,11 @@ public class JsonHelper {
                 .registerTypeAdapter(RawDataAnnotation.class, new RawDataAnnotationTypeAdapter(this.utils))
                 .registerTypeAdapter(RawCall.class, new RawCallTypeAdapter(this.utils))
                 .registerTypeAdapter(RawDataPostFilter.class, new RawDataPostFilterTypeAdapter(
-                        this.utils, this.requestParameters.getUrlParametersInstance()))
+                        this.utils, urlParameters))
                 .registerTypeAdapter(ExpressionCallPostFilter.class, new ExpressionCallPostFilterTypeAdapter(
-                        this.utils, this.requestParameters.getUrlParametersInstance()))
+                        this.utils, urlParameters))
                 .registerTypeAdapter(ExperimentAssay.class, new ExperimentAssayTypeAdapter(
                         this.utils))
-                .registerTypeAdapter(ESTCountContainer.class, new ESTCountContainerTypeAdapter())
                 .registerTypeAdapter(Condition2.class, new Condition2TypeAdapter(this.utils))
                 .registerTypeAdapter(ConditionParameter.class, new ConditionParameterTypeAdapter())
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),

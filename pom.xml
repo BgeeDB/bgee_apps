@@ -6,7 +6,7 @@
     <groupId>org.bgee</groupId>
     <artifactId>bgee-applications</artifactId>
     <packaging>pom</packaging>
-    <version>15</version>
+    <version>16</version>
     <name>Bgee</name>
     <url>https://www.bgee.org/</url>
     <description>Bgee allows to automatically compare gene expression patterns between species, by referencing expression data on anatomical ontologies, and designing homology relationships between them.</description>
@@ -47,6 +47,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Minor version of the release (the major version is the version of this project).
+            It is used to name the pipeline jar, and it is the value of the property
+            org.bgee.core.version.minor of bgee.properties. -->
+        <bgee.minor.version>0</bgee.minor.version>
 
         <!-- We create the property skip.surefire.tests to override the property
             skipTests of the surefire plugin. This is because using skipTests=true also
@@ -346,7 +351,7 @@
             <!-- End for the dao-api layer -->
 
             <!-- Needed for the dao-sql layer -->
-            <!-- JDBC logging library -->
+            <!-- JDBC logging library (1.17-SNAPSHOT: see m2_local_repository/README.txt). -->
             <dependency>
                 <groupId>org.bgee.log4jdbc-log4j2</groupId>
                 <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>

@@ -1,9 +1,13 @@
 package org.bgee.model.topanat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,8 +17,8 @@ import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.CallFilter;
-import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.topanat.TopAnatService.Background;
+import org.bgee.model.topanat.TopAnatService.CallFileType;
 import org.bgee.model.topanat.exception.MissingParameterException;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +26,7 @@ import org.junit.Test;
 /**
  * Unit tests for {@link TopAnatParams}.
  * - Get a hash key according to the parameter values
- * - Get {@link CallFilter} corresponding to the parameter values
+ * - Get the subset of the generated call files and the background corresponding to the parameter values
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
@@ -55,7 +59,7 @@ public class TopAnatParamsTest extends TestAncestor {
                 new HashSet<String>(Arrays.asList("G1","G2","G3","G4")), 999,
                 SummaryCallType.ExpressionSummary.EXPRESSED);
         topAnatParamsBuilder.summaryQuality(SummaryQuality.GOLD);
-        topAnatParamsBuilder.dataTypes(new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        topAnatParamsBuilder.dataTypes(new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         topAnatParamsBuilder.decorrelationType(DecorrelationType.ELIM);
         topAnatParamsBuilder.devStageId("a");
         topAnatParamsBuilder.fdrThreshold(1d);
@@ -72,23 +76,63 @@ public class TopAnatParamsTest extends TestAncestor {
     @Test
 //    @Ignore("to reactivate")
     public void testGetKey(){
-        // Value used to generate the key should be [G1, G2][G1, G2, G3, G4]999EXPRESSEDGOLD[AFFYMETRIX]aELIMFISHER101.01.05
-        // The corresponding sha-1 should be 957bffc28bde2338dcb4e7102a1cbc85562bccb5
-        assertEquals("957bffc28bde2338dcb4e7102a1cbc85562bccb5",this.topAnatParams.getKey());
+        // Value used to generate the key should be [G1, G2][G1, G2, G3, G4]999EXPRESSEDGOLD[RNA_SEQ]aELIMFISHER101.01.05
+        // The corresponding sha-1 should be ba8f92c9686a8025da37bf8513a64d43b8d9cff5
+        assertEquals("ba8f92c9686a8025da37bf8513a64d43b8d9cff5",this.topAnatParams.getKey());
     }
 
     /**
-     * Test that the generated CallFilter fits the provided parameters
+     * Test the subset of the generated call files that the analysis reads, and its background.
      */
     @Test
-    public void testConvertRawParametersToCallFilter(){
-        CallFilter<?, ?, ConditionFilter> callFilter = this.topAnatParams.convertRawParametersToCallFilter();
-        assertEquals("ExpressionCallFilter [callObservedData={}, anatEntityObservedData=true,"
-                + " devStageObservedData=null, geneFilters=[GeneFilter [speciesId=999,"
-                + " geneIds=[G1, G2, G3, G4]]], conditionFilters=[ConditionFilter"
-                + " [anatEntityIds=[], devStageIds=[a], observedConditions=null]],"
-                + " dataTypeFilters=[AFFYMETRIX], summaryCallTypeQualityFilter={EXPRESSED=GOLD}]",
-                callFilter.toString());
+    public void shouldGiveCallFileSubsetAndBackground() {
+        //A decorrelation reads the observed calls
+        assertEquals(CallFileType.OBSERVED, this.topAnatParams.getCallFileType());
+        assertEquals(EnumSet.of(DataType.RNA_SEQ), this.topAnatParams.getDataTypeCombination());
+        //Background gene IDs submitted: a custom background
+        assertEquals(Background.CUSTOM, this.topAnatParams.getBackground());
+    }
+
+    /**
+     * Test the default values of the subset of the generated call files and of the background.
+     */
+    @Test
+    public void shouldDefaultToPropagatedCallsAndProteinCodingGenes() throws MissingParameterException {
+        TopAnatParams params = new TopAnatParams.Builder(Set.of("G1"), 999,
+                SummaryCallType.ExpressionSummary.EXPRESSED).build();
+        assertEquals(CallFileType.PROPAGATED, params.getCallFileType());
+        assertEquals(EnumSet.allOf(DataType.class), params.getDataTypeCombination());
+        assertEquals(Background.PROTEIN_CODING, params.getBackground());
+        //Another background is another analysis
+        assertNotEquals(params.getKey(), new TopAnatParams.Builder(Set.of("G1"), 999,
+                SummaryCallType.ExpressionSummary.EXPRESSED).background(Background.POLY_A).build()
+                .getKey());
+    }
+
+    /**
+     * Test that background gene IDs and a background of Bgee cannot be both provided.
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldRefuseBackgroundIdsWithBackground() throws MissingParameterException {
+        new TopAnatParams.Builder(Set.of("G1"), Set.of("G1", "G2"), 999,
+                SummaryCallType.ExpressionSummary.EXPRESSED).background(Background.POLY_A).build();
+    }
+
+    /**
+     * Test that a custom background requires background gene IDs, which identify it.
+     */
+    @Test
+    public void shouldRequireBackgroundIdsForCustomBackground() throws MissingParameterException {
+        assertThrows("A custom background requires background gene IDs",
+                IllegalArgumentException.class,
+                () -> new TopAnatParams.Builder(Set.of("G1"), 999,
+                        SummaryCallType.ExpressionSummary.EXPRESSED)
+                        .background(Background.CUSTOM).build());
+        //Requested or not, the custom background is the one of the background gene IDs
+        assertEquals(new TopAnatParams.Builder(Set.of("G1"), Set.of("G1", "G2"), 999,
+                        SummaryCallType.ExpressionSummary.EXPRESSED).build().getKey(),
+                new TopAnatParams.Builder(Set.of("G1"), Set.of("G1", "G2"), 999,
+                        SummaryCallType.ExpressionSummary.EXPRESSED)
+                        .background(Background.CUSTOM).build().getKey());
     }
 }
-

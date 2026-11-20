@@ -2,6 +2,9 @@ package org.bgee.model.dao.api.expressiondata.call;
 
 import java.util.Collection;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * A filter to parameterize queries using expression data conditions. 
  * 
@@ -10,7 +13,9 @@ import java.util.Collection;
  * @since Bgee 13 Oct. 2015
  */
 public class DAOConditionFilter extends DAOConditionFilterBase<ConditionDAO.Attribute> {
-    
+
+    private final static Logger log = LogManager.getLogger(DAOConditionFilter.class.getName());
+
     /**
      * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities that this {@code DAOConditionFilter} 
@@ -49,6 +54,16 @@ public class DAOConditionFilter extends DAOConditionFilterBase<ConditionDAO.Attr
             Collection<ConditionDAO.Attribute> observedCondForParams) throws IllegalArgumentException {
         super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds, observedCondForParams,
                 ConditionDAO.Attribute.class, null);
+        if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
+                (devStageIds == null || devStageIds.isEmpty()) &&
+                (cellTypeIds == null || cellTypeIds.isEmpty()) &&
+                (sexIds == null || sexIds.isEmpty()) &&
+                (strainIds == null || strainIds.isEmpty()) &&
+                (observedCondForParams == null || observedCondForParams.isEmpty())) {
+            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs, "
+                    + "developmental stage IDs, cell type IDs, sex IDs, strain IDs or observed "
+                    + "data status must be provided."));
+        }
         if (this.getObservedCondForParams().stream().anyMatch(a -> !a.isConditionParameter())) {
             throw new IllegalArgumentException(
                     "A ConditionDAO.Attribute that is not a condition parameter was provided");

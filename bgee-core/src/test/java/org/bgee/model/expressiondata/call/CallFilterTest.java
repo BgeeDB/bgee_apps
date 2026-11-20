@@ -79,21 +79,20 @@ public class CallFilterTest extends TestAncestor {
     @SuppressWarnings("unused")
     @Test
     public void testSanityChecks() {
+        //No GeneFilter nor ConditionFilter is required, but none can be null
+        new ExpressionCallFilter(null, null, null, null, null);
+        new ExpressionCallFilter(null, null, new HashSet<>(), null, null);
         try {
-            new ExpressionCallFilter(null, null, null, null, null);
-            fail("An exception should be thrown when no CallData Set is provided.");
+            new ExpressionCallFilter(null, Collections.<GeneFilter>singleton(null), null, null, null);
+            fail("An exception should be thrown when a GeneFilter is null.");
         } catch (IllegalArgumentException e) {
             //test passed
         }
+        //A species can be in only one GeneFilter
         try {
-            new ExpressionCallFilter(null, null, new HashSet<>(), null, null);
-            fail("An exception should be thrown when the CallData Set is empty.");
-        } catch (IllegalArgumentException e) {
-            //test passed
-        }
-        try {
-            new DiffExpressionCallFilter(null, null, new HashSet<>(), null);
-            fail("An exception should be thrown when the CallData Set is empty.");
+            new ExpressionCallFilter(null, Arrays.asList(new GeneFilter(9606),
+                    new GeneFilter(9606, "gene1")), null, null, null);
+            fail("An exception should be thrown when a species is in several GeneFilters.");
         } catch (IllegalArgumentException e) {
             //test passed
         }

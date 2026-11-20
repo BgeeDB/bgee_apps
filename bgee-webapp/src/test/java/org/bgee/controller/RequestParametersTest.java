@@ -101,7 +101,7 @@ public class RequestParametersTest extends TestAncestor {
                 BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,
                 System.getProperty("java.io.tmpdir"));
         System.getProperties().setProperty(
-                BgeeProperties.URL_MAX_LENGTH_KEY, "120");
+                BgeeProperties.URL_MAX_LENGTH_KEY, "100");
 
         testURLParameters = new TestURLParameters();    
 
@@ -135,7 +135,9 @@ public class RequestParametersTest extends TestAncestor {
         Properties props = new Properties();
         props.setProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,
                 System.getProperty("java.io.tmpdir"));
-        props.setProperty(BgeeProperties.URL_MAX_LENGTH_KEY, "120");
+        //Only the storable parameters are considered: 72 characters at first, 118 once
+        //addParamsToExceedThreshold added its values
+        props.setProperty(BgeeProperties.URL_MAX_LENGTH_KEY, "100");
         //in order to test that generated URLs include the Bgee root directory
         props.setProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, TEST_ROOT_DIR);
         props.setProperty(BgeeProperties.BGEE_STABLE_ROOT_DIRECTORY_KEY, TEST_STABLE_ROOT_DIR);
@@ -188,10 +190,8 @@ public class RequestParametersTest extends TestAncestor {
         Map<String, String[]> parameterMap3 = new HashMap<>();
         parameterMap3.put("test_string", new String[]{"string1"});
         parameterMap3.put("test_list", new String[]{"s1", "s2"});
-        parameterMap3.put("test_boolean", new String[]{"false","true"}); //false values on purpose 
-                                                                         //they will be read thx to the key
-        parameterMap3.put("test_integer", new String[]{"9999","9999"});  //false values on purpose 
-                                                                         //they will be read thx to the key
+        //The storable parameters are read from the key: values provided in the URL would
+        //override them (see shouldOverrideTheStoredParametersWithThoseOfTheURL)
         parameterMap3.put("data", new String[]{this.generatedKey});
         when(mockHttpServletRequest.getParameterMap())
         .thenReturn(parameterMap3);
@@ -202,6 +202,28 @@ public class RequestParametersTest extends TestAncestor {
         log.info("provided key generated: {}", this.requestParametersHavingAKey.getDataKey());
     }
     
+    /**
+     * Test that the values of the parameters provided in the URL override those stored
+     * with the key, the other stored parameters being still read from the key.
+     */
+    @Test
+    public void shouldOverrideTheStoredParametersWithThoseOfTheURL()
+            throws RequestParametersNotFoundException, MultipleValuesNotAllowedException,
+            InvalidFormatException {
+        BgeeHttpServletRequest request = mock(BgeeHttpServletRequest.class);
+        Map<String, String[]> parameterMap = new HashMap<>();
+        parameterMap.put("test_integer", new String[]{"9999"});
+        parameterMap.put("data", new String[]{this.generatedKey});
+        when(request.getParameterMap()).thenReturn(parameterMap);
+        RequestParameters rp = new RequestParameters(request, testURLParameters,
+                BgeeProperties.getBgeeProperties(), true, "&");
+
+        assertEquals("The value of the URL should override the stored ones", Arrays.asList(9999),
+                rp.getValues(testURLParameters.getParamTestInteger()));
+        assertEquals("The values absent from the URL should be read from the key",
+                Arrays.asList(true, false), rp.getValues(testURLParameters.getParamTestBoolean()));
+    }
+
     /**
      * Add some parameters to a {@code RequestParameters} object instantiated from 
      * {@link #mockHttpServletRequest} in order to exceed the URL length threshold, 
@@ -263,7 +285,7 @@ public class RequestParametersTest extends TestAncestor {
                 + "false",this.requestParametersWithNoKey.getRequestURL("+"));
 
         // Add a parameter value to exceed the threshold over which a key is used
-        // (120 for this test, see method loadMockRequest()),
+        // (100 for this test, see method loadMockRequest()),
         // and check that indeed, a key is present after a new call of 
         // getRequestURL(), with still test_string written because
         // it is non storable
@@ -345,7 +367,7 @@ public class RequestParametersTest extends TestAncestor {
                         + "&test_integer=1234&test_integer=2345" + RequestParameters.JS_HASH_SEPARATOR
                         + "test_string=string1&test_boolean=true&test_boolean=false",
                 this.requestParametersWithNoKey.getRequestURL(
-                        params, false));
+                        "&", params, false, true));
 
 
         //if we provide an empty Collection, we should be able to get either 
@@ -416,7 +438,7 @@ public class RequestParametersTest extends TestAncestor {
         
 
         // Add a parameter value to exceed the threshold over which a key is used
-        // (120 for this test, see method loadMockRequest()),
+        // (100 for this test, see method loadMockRequest()),
         // and check that indeed, a key is present after a new call of 
         // getRequestURL(), with still test_string written because
         // it is non storable, and with parameters attributed to search or hash part
@@ -481,7 +503,7 @@ public class RequestParametersTest extends TestAncestor {
                 this.requestParametersWithNoKey.getRequestURL("+"));
         
        // Add a parameter value to exceed the threshold over which a key is used
-        // (120 for this test, see method loadMockRequest()),
+        // (100 for this test, see method loadMockRequest()),
         // and check that indeed, a key is present after a new call of 
         // getRequestURL(), with still test_string written because
         // it is non storable
@@ -868,8 +890,10 @@ public class RequestParametersTest extends TestAncestor {
     @Test
     public void testTooLongRequest() {
 
+        //"action=add_12_chars" fits in the 30 characters allowed,
+        //"page=request_too_long_throw&action=add_12_chars" does not
         RequestParameters rq = new RequestParameters(testURLParameters, mock(BgeeProperties.class),
-                true, "&", "UTF-8", 15);
+                true, "&", "UTF-8", 30);
 
         rq.addValue(testURLParameters.getParamAction(), "add_12_chars");
         try {

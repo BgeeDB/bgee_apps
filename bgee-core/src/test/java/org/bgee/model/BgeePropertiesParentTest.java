@@ -63,7 +63,7 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
+        System.clearProperty(BgeeProperties.BGEEDB_MINIMUM_VERSION_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.MAX_JOB_COUNT_PER_USER_KEY);
     }

@@ -68,7 +68,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cache");
         prop.put(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY, "/injectedurldir");
         // Test a superclass property
-        prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
+        prop.put(BgeeProperties.BGEEDB_MINIMUM_VERSION_KEY, "injectedbgeedb");
 
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
@@ -116,7 +116,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 "/injectedurldir", bgeeProp.getTopAnatResultsUrlDirectory());
         // Test a superclass property
         assertEquals("Wrong property value retrieved", 
-                "/injectedfunctionfile", bgeeProp.getTopAnatFunctionFile());
+                "injectedbgeedb", bgeeProp.getBgeeDBMinimumVersion());
     }
 
     /**

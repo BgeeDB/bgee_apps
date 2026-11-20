@@ -33,6 +33,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * <li>{@code SPECIES_ID}: corresponds to {@link GeneTO#getSpeciesId()}.
      * <li>{@code GENE_BIO_TYPE_ID}: corresponds to {@link GeneTO#getGeneBioTypeId()}.
      * <li>{@code ENSEMBL_GENE}: corresponds to {@link GeneTO#isEnsemblGene()}.
+     * <li>{@code SEQ_REGION_NAME}: corresponds to {@link GeneTO#getSeqRegionName()}
+     * <li>{@code GENE_LENGTH}: corresponds to {@link GeneTO#getGeneLength()}.
      * <li>{@code GENE_MAPPED_TO_SAME_GENE_ID_COUNT}: corresponds to {@link GeneTO#getGeneMappedToGeneIdCount()}.
      * <li>{@code EXPRESSION_SUMMARY}: corresponds to {@link GeneTO#getExpressionSummary()}.
      * </ul>
@@ -42,7 +44,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         ID("bgeeGeneId"), GENE_ID("geneId"), NAME("geneName"), DESCRIPTION("geneDescription"),
-        SPECIES_ID("speciesId"), GENE_BIO_TYPE_ID("geneBiotypeId"),ENSEMBL_GENE("ensemblGene"),
+        SPECIES_ID("speciesId"), GENE_BIO_TYPE_ID("geneBioTypeId"),ENSEMBL_GENE("ensemblGene"),
+        SEQ_REGION_NAME("seqRegionName"), GENE_LENGTH("geneLength"),
         GENE_MAPPED_TO_SAME_GENE_ID_COUNT("geneMappedToGeneIdCount"),
         EXPRESSION_SUMMARY("expressionSummary");
 
@@ -177,6 +180,23 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @throws DAOException If an error occurred while accessing the data source. 
      */
     public GeneBioTypeTOResultSet getGeneBioTypes();
+    /**
+     * Retrieves the gene biotypes that the requested RNA-Seq population captures target: the genes
+     * of these biotypes can be observed in the libraries of these population captures, the others
+     * are excluded from them.
+     * <p>
+     * The biotypes are retrieved and returned as a {@code GeneBioTypeTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rnaSeqPopulationCaptureIds    A {@code Collection} of {@code String}s that are the IDs
+     *                                      of RNA-Seq population captures, such as "polyA".
+     *                                      Can be neither {@code null} nor empty.
+     * @return              A {@code GeneBioTypeTOResultSet} containing the biotypes targeted by
+     *                      at least one of the requested population captures.
+     * @throws DAOException If an error occurred while accessing the data source.
+     */
+    public GeneBioTypeTOResultSet getGeneBioTypesByPopulationCaptureIds(
+            Collection<String> rnaSeqPopulationCaptureIds) throws DAOException;
 
     /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 
@@ -233,17 +253,22 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         private final Integer geneBioTypeId;
        
         /**
-         * An {@code Integer} that is unique ID for each node inside an OMA Hierarchical Orthologous 
-         * Group. It can be {@code null} if the gene does not belong to a hierarchical group. A gene 
-         * can belong to one and only one group.
-         */
-        private final Integer OMAParentNodeId;
-        
-        /**
          * A {@code Boolean} defining whether this gene is present in Ensembl. For some species, 
          * they are not (for instance, we generate our own custom IDs for some species)
          */
         private final Boolean ensemblGene;
+
+        /**
+         * A {@code String} that is the region where this gene comes from.
+         */
+        private final String seqRegionName;
+
+        /**
+         * An {@code Integer} that is the median of the lengths of the isoforms of this gene,
+         * an isoform length being the summed length of its exons. {@code null} for species
+         * inserted from a non-Ensembl source.
+         */
+        private final Integer geneLength;
         
         /**
          * @see #getGeneMappedToGeneIdCount() 
@@ -268,7 +293,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param speciesId An {@code Integer} of the species which this gene belongs to.
          */
         public GeneTO(Integer bgeeGeneId, String geneId, String geneName, Integer speciesId) {
-            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null, null, null);
+            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null, null, null, null);
         }
 
         /**
@@ -290,20 +315,24 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          *                                  Orthologous Group.
          * @param ensemblGene               A {code Boolean} defining whether this gene is present 
          *                                  in Ensembl.
+         * @param seqRegionName             A {@code String} that is the region where this gene comes from.
+         * @param geneLength                An {@code Integer} that is the median of the lengths
+         *                                  of the isoforms of this gene.
          * @param geneMappedToGeneIdCount   An {@code Integer} that is the number of genes
          *                                  in the Bgee database with the samegene ID.
          * @param expressionSummary         A {@code String} that summarize the expression of the gene
          *                                  for anat. entities and celltypes.
          */
         public GeneTO(Integer bgeeGeneId, String geneId, String geneName, String geneDescription, 
-                Integer speciesId, Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene,
-                Integer geneMappedToGeneIdCount, String expressionSummary) {
+                Integer speciesId, Integer geneBioTypeId, Boolean ensemblGene, String seqRegionName,
+                Integer geneLength, Integer geneMappedToGeneIdCount, String expressionSummary) {
             super(bgeeGeneId, geneName, geneDescription);
             this.geneId = geneId;
             this.speciesId = speciesId;
             this.geneBioTypeId = geneBioTypeId;
-            this.OMAParentNodeId = OMAParentNodeId;
             this.ensemblGene = ensemblGene;
+            this.seqRegionName = seqRegionName;
+            this.geneLength = geneLength;
             this.geneMappedToGeneIdCount = geneMappedToGeneIdCount;
             this.expressionSummary = expressionSummary;
         }
@@ -326,12 +355,20 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         public Integer getGeneBioTypeId() {
             return this.geneBioTypeId;
         }
-        /**
-         * @return  The OMA Hierarchical Orthologous Group ID that this gene belongs to.
-         */
-        public Integer getOMAParentNodeId() {
-            return this.OMAParentNodeId;
+
+        public String getSeqRegionName() {
+            return seqRegionName;
         }
+
+        /**
+         * @return  An {@code Integer} that is the median of the lengths of the isoforms
+         *          of this gene, an isoform length being the summed length of its exons.
+         *          {@code null} for species inserted from a non-Ensembl source.
+         */
+        public Integer getGeneLength() {
+            return geneLength;
+        }
+
         /**
          * @return  The {@code Boolean} defining whether this gene is present in Ensembl.
          */
@@ -357,9 +394,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         @Override
         public String toString() {
             return "GeneTO [geneId=" + geneId + ", speciesId=" + speciesId + ", geneBioTypeId=" + geneBioTypeId
-                    + ", OMAParentNodeId=" + OMAParentNodeId + ", ensemblGene=" + ensemblGene
-                    + ", geneMappedToGeneIdCount=" + geneMappedToGeneIdCount + ", expressionSummary="
-                    + expressionSummary + "]";
+                    + ", ensemblGene=" + ensemblGene + ", seqRegionName=" + seqRegionName + ", geneLength=" + geneLength
+                    + ", geneMappedToGeneIdCount="
+                    + geneMappedToGeneIdCount + ", expressionSummary=" + expressionSummary + "]";
         }
 
     }

@@ -1,8 +1,10 @@
 package org.bgee.controller;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -26,7 +28,9 @@ import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.topanat.TopAnatService;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.expressiondata.call.ConditionGraphCacheService;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.TooManyJobsException;
@@ -268,7 +272,7 @@ public class FrontController extends HttpServlet {
                 
             } else if (requestParameters.isAGenePageCategory()){
                 controller = new CommandGene(response, requestParameters, this.prop, factory,
-                        serviceFactory);
+                        serviceFactory, cacheService);
 
             } else if (requestParameters.isAExprComparisonPageCategory()){
                 controller = new CommandExpressionComparison(response, requestParameters, this.prop, factory, serviceFactory);
@@ -422,6 +426,42 @@ public class FrontController extends HttpServlet {
 
         CommandData commandData = this.getPartialCommandData();
         commandData.initializeCaches(sleepBetweenComputeMs);
+        
+     // --- Add condition graph cache initialization here ---
+        ConditionGraphCacheService cacheManager = new ConditionGraphCacheService(serviceFactoryProvider.get());
+
+        // Fetch all species IDs from DB
+        List<Integer> speciesIds = this.serviceFactoryProvider.get().getSpeciesService()
+                .loadSpeciesByIds(null, false).stream()
+                .map(s -> s.getId()).collect(Collectors.toList());
+
+        log.info("Loading condition graph cache for {} species...", speciesIds.size());
+        cacheManager.loadAllSpeciesGraphs(speciesIds);
+        log.info("ConditionGraphCache successfully initialized.");
+
+        //Generated once the condition graph cache is loaded, as the propagation relies on it.
+        //This is long, but it runs in the initialization thread started by the context listener,
+        //so the server itself does not wait for it. A failure here must not be seen as a failure
+        //of the cache initialization above: only topAnat is affected.
+        //Only when requested by the property org.bgee.webapp.generateTopAnatCallFiles:
+        //the files are normally produced by the pipeline.
+        log.info("Generating the missing topAnat call files: {}",
+                this.prop.isGenerateTopAnatCallFilesOnStartup());
+        if (this.prop.isGenerateTopAnatCallFilesOnStartup()) {
+            try {
+                new TopAnatService(this.serviceFactoryProvider.get(),
+                        this.serviceFactoryProvider)
+                .generateFilesIfMissing(speciesIds, this.prop.getTopAnatResultsWritingDirectory(),
+                        //One gene batch at a time: the files are normally produced by the pipeline,
+                        //this only fills a gap and must not take every core of the server. The
+                        //propagation of a batch would otherwise run in the ForkJoinPool common to
+                        //the whole JVM, for hours.
+                        1);
+            } catch (Exception e) {
+                log.error("Could not generate the topAnat call files, topAnat analyses will not run");
+                log.catching(e);
+            }
+        }
 
         log.traceExit();
     }

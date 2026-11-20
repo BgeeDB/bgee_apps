@@ -42,7 +42,7 @@ public class PValue {
         log.traceEntry();
         NumberFormat formatter = NumberFormat.getInstance(Locale.US);
         formatter.setRoundingMode(RoundingMode.HALF_UP);
-        // do not use scientific notation when FDR pValue is bigger than 0.001 or equal
+        // do not use scientific notation when the pValue is bigger than 0.001 or equal
         // to 0
         if(pValue.compareTo(new BigDecimal(0.001)) >= 0 || 
                 pValue.compareTo(new BigDecimal(0)) == 0) {

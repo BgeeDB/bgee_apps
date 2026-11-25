@@ -1429,7 +1429,7 @@ public class CommandData extends CommandExpressionSupport {
             }
             return condFilters;
         } catch (IllegalArgumentException e) {
-            log.catching(e);
+            log.catching(Level.DEBUG, e);
             throw log.throwing(new InvalidRequestException(e.getMessage()));
         }
     }
@@ -1786,7 +1786,7 @@ public class CommandData extends CommandExpressionSupport {
         } catch (IllegalArgumentException e) {
             //nothing to do, we just did not have the appropriate parameters to create
             //a condition filter
-            log.catching(e);
+            log.catching(Level.TRACE, e);
         }
 
 

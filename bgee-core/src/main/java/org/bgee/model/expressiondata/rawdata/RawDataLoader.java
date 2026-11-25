@@ -768,7 +768,7 @@ public class RawDataLoader extends CommonService {
                     withExperiment? 0: null,
                     withAssay? 0: null,
                     withAssay? 0: null,
-                    withCall? 0: null));
+                    withCall? 0L: null));
         }
 
         RawDataCountContainerTO countTO = rawDataCountDAO.getRnaSeqCount(
@@ -1004,7 +1004,7 @@ public class RawDataLoader extends CommonService {
             return log.traceExit(new InSituCountContainer(
                     withExperiment? 0: null,
                     withAssay? 0: null,
-                    withCall? 0: null));
+                    withCall? 0L: null));
         }
 
         RawDataCountContainerTO countTO = rawDataCountDAO.getInSituCount(

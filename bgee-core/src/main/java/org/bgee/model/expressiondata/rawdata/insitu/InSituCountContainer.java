@@ -11,7 +11,7 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainerW
  */
 public class InSituCountContainer extends RawDataCountContainerWithExperiment {
 
-    public InSituCountContainer(Integer experimentCount, Integer assayCount, Integer callCount) {
+    public InSituCountContainer(Integer experimentCount, Integer assayCount, Long callCount) {
         super(experimentCount, assayCount, callCount);
     }
 }

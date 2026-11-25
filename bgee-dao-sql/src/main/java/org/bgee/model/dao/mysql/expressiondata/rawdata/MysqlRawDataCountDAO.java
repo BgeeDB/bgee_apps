@@ -210,7 +210,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                 return log.traceExit(new RawDataCountContainerTO(
                         experimentCount? 0: null,
                         assayCount? 0: null,
-                        newCallCount? 0: null,
+                        newCallCount? 0L: null,
                         libraryCount? 0: null,
                         null));
             }
@@ -355,8 +355,9 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         @Override
         protected RawDataCountContainerTO getNewTO() {
             log.traceEntry();
-            Integer expCount = null, assayCount= null, callsCount = null,
+            Integer expCount = null, assayCount= null,
                     rnaSeqLibraryCount = null, insituAssayConditionCount = null;
+            Long callsCount = null;
             // Get results
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                 try {
@@ -370,7 +371,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
                     } else if (column.getValue().equals(RawDataCountDAO.Attribute.CALLS_COUNT
                             .getTOFieldName())) {
-                        callsCount = this.getCurrentResultSet().getInt(column.getKey());
+                        callsCount = this.getCurrentResultSet().getLong(column.getKey());
 
                     } else if (column.getValue().equals(RawDataCountDAO.Attribute.RNA_SEQ_LIBRARY_COUNT
                             .getTOFieldName())) {

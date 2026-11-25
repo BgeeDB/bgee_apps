@@ -13,13 +13,13 @@ import java.util.Objects;
  */
 public abstract class RawDataCountContainer extends DataContainerTemp {
     private final Integer assayCount;
-    private final Integer callCount;
+    private final Long callCount;
 
-    protected RawDataCountContainer(Integer assayCount, Integer callCount) {
+    protected RawDataCountContainer(Integer assayCount, Long callCount) {
         this(assayCount, callCount, false);
     }
     // null if not queried and 0 if no results
-    protected RawDataCountContainer(Integer assayCount, Integer callCount, boolean resultAlreadyFound) {
+    protected RawDataCountContainer(Integer assayCount, Long callCount, boolean resultAlreadyFound) {
         super(resultAlreadyFound || assayCount != null && assayCount > 0 ||
                 callCount != null && callCount > 0);
         if (assayCount != null && assayCount < 0) {
@@ -41,11 +41,11 @@ public abstract class RawDataCountContainer extends DataContainerTemp {
         return assayCount;
     }
     /**
-     * @return  An {@code Integer} that is the number of {@code RawCallSource}s that were found.
+     * @return  A {@code Long} that is the number of {@code RawCallSource}s that were found.
      *          If {@code null}, it means that this information was not requested.
      *          If equals to 0, it means that there was no result based on query parameters.
      */
-    public Integer getCallCount() {
+    public Long getCallCount() {
         return callCount;
     }
 

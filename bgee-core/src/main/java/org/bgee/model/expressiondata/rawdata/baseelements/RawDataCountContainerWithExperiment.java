@@ -15,11 +15,11 @@ public class RawDataCountContainerWithExperiment extends RawDataCountContainer {
     private final Integer experimentCount;
 
     protected RawDataCountContainerWithExperiment(Integer experimentCount, Integer assayCount,
-            Integer callCount) {
+            Long callCount) {
         this(experimentCount, assayCount, callCount, false);
     }
     protected RawDataCountContainerWithExperiment(Integer experimentCount, Integer assayCount,
-            Integer callCount, boolean resultAlreadyFound) {
+            Long callCount, boolean resultAlreadyFound) {
         super(assayCount, callCount,
                 resultAlreadyFound || experimentCount != null && experimentCount > 0);
 

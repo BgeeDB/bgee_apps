@@ -106,17 +106,17 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
         private final Integer experimentCount;
         //For RNA-Seq, corresponds to AnnotatedSample
         private final Integer assayCount;
-        private final Integer callCount;
+        private final Long callCount;
         private final Integer rnaSeqLibraryCount;
         private final Integer insituAssayConditionCount;
         
         public RawDataCountContainerTO(Integer experimentCount, Integer assayCount,
-                Integer callCount) {
+                Long callCount) {
             this(experimentCount, assayCount, callCount, null, null);
         }
 
         public RawDataCountContainerTO(Integer experimentCount, Integer assayCount,
-                Integer callCount, Integer rnaSeqLibraryCount,
+                Long callCount, Integer rnaSeqLibraryCount,
                 Integer insituAssayConditionCount) {
             this.experimentCount = experimentCount;
             this.assayCount = assayCount;
@@ -131,7 +131,7 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
         public Integer getAssayCount() {
             return assayCount;
         }
-        public Integer getCallCount() {
+        public Long getCallCount() {
             return callCount;
         }
         /**

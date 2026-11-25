@@ -16,7 +16,7 @@ public class RnaSeqCountContainer extends RawDataCountContainerWithExperiment {
     private final Integer libraryCount;
 
     public RnaSeqCountContainer(Integer experimentCount, Integer libraryCount,
-            Integer assayCount, Integer callCount) {
+            Integer assayCount, Long callCount) {
         super(experimentCount, assayCount, callCount, libraryCount != null && libraryCount > 0);
 
         if (libraryCount != null && libraryCount < 0) {

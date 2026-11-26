@@ -514,7 +514,8 @@ public class FrontController extends HttpServlet {
             } else {
                 return log.traceExit(DisplayType.JSON);
             }
-        } catch (MultipleValuesNotAllowedException | RequestParametersNotFoundException e) {
+        } catch (MultipleValuesNotAllowedException | RequestParametersNotFoundException |
+                PageNotFoundException e) {
             throw log.throwing(new AssertionError("Error, code block supposed to be unreachable", e));
         }
     }

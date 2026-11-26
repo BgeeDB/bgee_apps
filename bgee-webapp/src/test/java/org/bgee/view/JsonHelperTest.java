@@ -18,6 +18,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
+import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.model.ManageReadWriteLocks;
@@ -108,7 +109,8 @@ public class JsonHelperTest extends TestAncestor {
      */
     @Test
     public void testRequestParametersToJson() throws UnsupportedEncodingException, 
-        MultipleValuesNotAllowedException, InvalidFormatException, RequestParametersNotFoundException {
+        MultipleValuesNotAllowedException, InvalidFormatException, RequestParametersNotFoundException,
+        PageNotFoundException {
         
         //use a BgeeHttpServletRequest object to be able to set parameters simply by providing 
         //a query string, and to create a RequestParameters object. 

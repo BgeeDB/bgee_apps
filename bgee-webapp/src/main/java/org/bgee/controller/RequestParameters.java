@@ -10,7 +10,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -30,6 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.URLParameters.Parameter;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
+import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
@@ -104,6 +107,16 @@ public class RequestParameters {
      */
     private static final ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks = 
             new ConcurrentHashMap<>();
+
+    /**
+     * A {@code Set} of {@code String}s that are the names, in upper case, of the data types
+     * removed from Bgee. A request can still hold them, notably a request stored under
+     * a data key: they are removed from the requested data types.
+     *
+     * @see #removeRemovedDataTypes(URLParameters.Parameter, String[])
+     */
+    private static final Set<String> REMOVED_DATA_TYPES = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList("AFFYMETRIX", "EST")));
     
     /**
      * A {@code String} that is the default value of character encoding for encoding and 
@@ -753,7 +766,7 @@ public class RequestParameters {
         try {
             this.constructor(request);
         } catch (RequestParametersNotFoundException | MultipleValuesNotAllowedException | 
-                InvalidFormatException e) {
+                InvalidFormatException | PageNotFoundException e) {
             //here we do nothing, 
             //because we provide a "blank" HttpServletRequest, so none of the declared exception
             //is expected
@@ -796,11 +809,14 @@ public class RequestParameters {
      * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
+     * @throws PageNotFoundException                    If data types are requested,
+     *                                                  all of them removed from Bgee.
      */
     public RequestParameters(HttpServletRequest request, URLParameters urlParametersInstance,
             BgeeProperties prop,  boolean encodeUrl, String parametersSeparator)
                     throws RequestParametersNotFoundException, 
-                    MultipleValuesNotAllowedException, InvalidFormatException {
+                    MultipleValuesNotAllowedException, InvalidFormatException,
+                    PageNotFoundException {
         this(request, urlParametersInstance, prop, encodeUrl, parametersSeparator, CHAR_ENCODING, 
                 SECURE_MAX_URL_LENGTH);
     }
@@ -842,11 +858,14 @@ public class RequestParameters {
      * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
+     * @throws PageNotFoundException                    If data types are requested,
+     *                                                  all of them removed from Bgee.
      */
     public RequestParameters(HttpServletRequest request, URLParameters urlParametersInstance,
             BgeeProperties prop,  boolean encodeUrl, String parametersSeparator, String charEncoding, 
             int urlMaxLength) throws RequestParametersNotFoundException, 
-                    MultipleValuesNotAllowedException, InvalidFormatException {
+                    MultipleValuesNotAllowedException, InvalidFormatException,
+                    PageNotFoundException {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}", request, urlParametersInstance, prop,
                 encodeUrl, parametersSeparator, charEncoding, urlMaxLength);
         
@@ -888,12 +907,14 @@ public class RequestParameters {
      * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
+     * @throws PageNotFoundException                    If data types are requested,
+     *                                                  all of them removed from Bgee.
      *                                                  
      * @see #RequestParameters(URLParameters, BgeeProperties, boolean, String)
      * @see #RequestParameters(HttpServletRequest, URLParameters, BgeeProperties, boolean, String)
      */
     private void constructor(HttpServletRequest request) throws RequestParametersNotFoundException,
-    MultipleValuesNotAllowedException, InvalidFormatException{
+    MultipleValuesNotAllowedException, InvalidFormatException, PageNotFoundException {
         log.traceEntry("{}", request);
 
         this.loadParameters(request.getParameterMap());
@@ -931,13 +952,15 @@ public class RequestParameters {
      * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
+     * @throws PageNotFoundException                    If data types are requested,
+     *                                                  all of them removed from Bgee.
      * 
      * @see #loadParametersFromRequest
      * @see #loadStorableParametersFromKey
      */
     private void loadParameters(Map<String, String[]> paramValues) 
             throws RequestParametersNotFoundException, 
-            MultipleValuesNotAllowedException, InvalidFormatException{
+            MultipleValuesNotAllowedException, InvalidFormatException, PageNotFoundException {
         log.traceEntry("{}", paramValues);
 
         //Get the key
@@ -989,13 +1012,15 @@ public class RequestParameters {
      * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
+     * @throws PageNotFoundException                    If data types are requested,
+     *                                                  all of them removed from Bgee.
      * 
      * @see #loadStorableParametersFromKey
      * @see #loadParameters
      */
     private void loadParametersFromRequest(Map<String, String[]> paramValues, boolean loadStorable,
             boolean overrideExistingValues) 
-            throws MultipleValuesNotAllowedException, InvalidFormatException {
+            throws MultipleValuesNotAllowedException, InvalidFormatException, PageNotFoundException {
         log.traceEntry("{}, {}, {}", paramValues, loadStorable, overrideExistingValues);
 
         // Browse all available parameters
@@ -1021,6 +1046,10 @@ public class RequestParameters {
                                 return v;
                             })
                             .toArray(String[]::new);
+                }
+                if (originalValuesFromUrl != null &&
+                        parameter.equals(this.urlParametersInstance.getParamDataType())) {
+                    valuesFromUrl = this.removeRemovedDataTypes(parameter, originalValuesFromUrl);
                 }
 
                 if (log.isTraceEnabled()) {
@@ -1085,6 +1114,58 @@ public class RequestParameters {
     }
 
     /**
+     * Removes the data types removed from Bgee (see {@link #REMOVED_DATA_TYPES}) from the values
+     * of the data type parameter. The other data types requested are kept, so that a request
+     * holding both is answered with the data types still in Bgee. The stored query strings
+     * are not modified: a request loaded from a data key leads to a new key.
+     *
+     * @param parameter The {@code URLParameters.Parameter} defining the data types.
+     * @param values    An {@code Array} of {@code String}s that are the values of {@code parameter}
+     *                  retrieved from the request, each of them possibly holding several data types
+     *                  separated by one of the separators of {@code parameter}.
+     * @return          An {@code Array} of {@code String}s that are the values without
+     *                  the data types removed from Bgee. {@code values} itself when no data type
+     *                  is requested.
+     * @throws PageNotFoundException    If data types are requested, all of them removed from Bgee.
+     */
+    private String[] removeRemovedDataTypes(URLParameters.Parameter<?> parameter, String[] values)
+            throws PageNotFoundException {
+        log.traceEntry("{}, {}", parameter, values);
+
+        String splitPattern = parameter.getSeparators().stream()
+                .map(Pattern::quote)
+                .collect(Collectors.joining("|"));
+        boolean dataTypeRequested = false;
+        List<String> keptValues = new ArrayList<>();
+        for (String value: values) {
+            if (value == null) {
+                continue;
+            }
+            List<String> keptDataTypes = new ArrayList<>();
+            for (String dataType: value.split(splitPattern)) {
+                if (StringUtils.isBlank(dataType)) {
+                    continue;
+                }
+                dataTypeRequested = true;
+                if (!REMOVED_DATA_TYPES.contains(dataType.trim().toUpperCase(Locale.ROOT))) {
+                    keptDataTypes.add(dataType.trim());
+                }
+            }
+            if (!keptDataTypes.isEmpty()) {
+                keptValues.add(String.join(parameter.getSeparators().get(0), keptDataTypes));
+            }
+        }
+        if (!dataTypeRequested) {
+            return log.traceExit(values);
+        }
+        if (keptValues.isEmpty()) {
+            throw log.throwing(new PageNotFoundException("The requested data types "
+                    + Arrays.toString(values) + " are no longer in Bgee."));
+        }
+        return log.traceExit(keptValues.toArray(new String[0]));
+    }
+
+    /**
      * Load the storable parameters from the file corresponding to the provided key.
      * If a key is provided, but no stored query string is found corresponding to this key, 
      * a IOException is thrown.
@@ -1100,13 +1181,15 @@ public class RequestParameters {
      * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
+     * @throws PageNotFoundException                    If data types are requested,
+     *                                                  all of them removed from Bgee.
      * 
      * @see #loadParameters
      * @see #loadParametersFromRequest
      * 
      */
     private void loadStorableParametersFromKey(String key) throws IOException, 
-    MultipleValuesNotAllowedException, InvalidFormatException {
+    MultipleValuesNotAllowedException, InvalidFormatException, PageNotFoundException {
         log.traceEntry("{}", key);
 
         ReentrantReadWriteLock lock = this.getReadWriteLock(key);
@@ -2124,8 +2207,9 @@ public class RequestParameters {
             }
             log.trace("Cloned RequestParameters generated: {}", clonedRequestParameters);
         } catch ( RequestParametersNotFoundException | MultipleValuesNotAllowedException |
-                InvalidFormatException e) {
-            // In this particular case, should never be thrown.
+                InvalidFormatException | PageNotFoundException e) {
+            // In this particular case, should never be thrown: the cloned parameters
+            // were already loaded, the data types removed from Bgee among them.
             throw log.throwing(new AssertionError("Code supposed to be unreachable", e));
         } catch (InstantiationException | IllegalAccessException |
                 NoSuchMethodException | InvocationTargetException e) {

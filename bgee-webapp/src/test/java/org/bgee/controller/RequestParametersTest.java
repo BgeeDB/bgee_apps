@@ -8,19 +8,26 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
+import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
@@ -128,7 +135,8 @@ public class RequestParametersTest extends TestAncestor {
      */
     @Before
     public void loadMockRequest() throws RequestParametersNotFoundException,
-    RequestParametersNotStorableException, MultipleValuesNotAllowedException, InvalidFormatException{
+    RequestParametersNotStorableException, MultipleValuesNotAllowedException, InvalidFormatException,
+    PageNotFoundException {
 
         BgeeHttpServletRequest mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
         
@@ -209,7 +217,7 @@ public class RequestParametersTest extends TestAncestor {
     @Test
     public void shouldOverrideTheStoredParametersWithThoseOfTheURL()
             throws RequestParametersNotFoundException, MultipleValuesNotAllowedException,
-            InvalidFormatException {
+            InvalidFormatException, PageNotFoundException {
         BgeeHttpServletRequest request = mock(BgeeHttpServletRequest.class);
         Map<String, String[]> parameterMap = new HashMap<>();
         parameterMap.put("test_integer", new String[]{"9999"});
@@ -776,7 +784,7 @@ public class RequestParametersTest extends TestAncestor {
     @SuppressWarnings("unused")
     @Test (expected=MultipleValuesNotAllowedException.class)
     public void testLoadTooMuchValue() throws RequestParametersNotFoundException,
-    MultipleValuesNotAllowedException, InvalidFormatException{
+    MultipleValuesNotAllowedException, InvalidFormatException, PageNotFoundException {
 
         BgeeHttpServletRequest mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
         //for testLoadTooMuchValue
@@ -800,7 +808,7 @@ public class RequestParametersTest extends TestAncestor {
     @SuppressWarnings("unused")
     @Test
     public void testLoadWrongFormatValue() throws MultipleValuesNotAllowedException, 
-    RequestParametersNotFoundException {
+    RequestParametersNotFoundException, PageNotFoundException {
 
         BgeeHttpServletRequest mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
         //for testLoadWrongFormatValue
@@ -844,7 +852,7 @@ public class RequestParametersTest extends TestAncestor {
     @SuppressWarnings("unused")
     @Test
     public void testLoadCorrectFormatValue() throws MultipleValuesNotAllowedException, 
-    RequestParametersNotFoundException {
+    RequestParametersNotFoundException, PageNotFoundException {
 
         BgeeHttpServletRequest mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
         Map<String, String[]> parameterMap5 = new HashMap<>();
@@ -951,4 +959,89 @@ public class RequestParametersTest extends TestAncestor {
         }
     }
 
+    /**
+     * Test that the data types removed from Bgee are removed from the requested data types,
+     * provided as several values or as separated values, whatever their case, the other
+     * data types being kept.
+     */
+    @Test
+    public void shouldRemoveTheDataTypesRemovedFromBgee() throws Exception {
+        URLParameters urlParameters = new URLParameters();
+
+        RequestParameters rp = new RequestParameters(new BgeeHttpServletRequest(
+                "data_type=RNA_SEQ&data_type=SC_RNA_SEQ&data_type=AFFYMETRIX"
+                + "&data_type=IN_SITU&data_type=EST", "UTF-8"),
+                urlParameters, BgeeProperties.getBgeeProperties(), true, "&");
+        assertEquals("The data types removed from Bgee should have been removed",
+                Arrays.asList("RNA_SEQ", "SC_RNA_SEQ", "IN_SITU"),
+                rp.getValues(urlParameters.getParamDataType()));
+
+        rp = new RequestParameters(new BgeeHttpServletRequest(
+                "data_type=affymetrix,RNA_SEQ", "UTF-8"),
+                urlParameters, BgeeProperties.getBgeeProperties(), true, "&");
+        assertEquals("The separated data types removed from Bgee should have been removed",
+                Arrays.asList("RNA_SEQ"), rp.getValues(urlParameters.getParamDataType()));
+
+        rp = new RequestParameters(new BgeeHttpServletRequest("data_type=all", "UTF-8"),
+                urlParameters, BgeeProperties.getBgeeProperties(), true, "&");
+        assertEquals("The value requesting all data types should have been kept",
+                Arrays.asList("all"), rp.getValues(urlParameters.getParamDataType()));
+    }
+
+    /**
+     * Test that a {@code PageNotFoundException} is thrown when only data types removed
+     * from Bgee are requested.
+     */
+    @Test
+    public void shouldNotFindPageWhenOnlyRemovedDataTypesRequested() throws Exception {
+        for (String queryString: Arrays.asList("data_type=AFFYMETRIX",
+                "data_type=AFFYMETRIX&data_type=est", "data_type=EST,AFFYMETRIX")) {
+            try {
+                new RequestParameters(new BgeeHttpServletRequest(queryString, "UTF-8"),
+                        new URLParameters(), BgeeProperties.getBgeeProperties(), true, "&");
+                fail("A PageNotFoundException should have been thrown for " + queryString);
+            } catch (PageNotFoundException e) {
+                //test passed
+            }
+        }
+    }
+
+    /**
+     * Test that the data types removed from Bgee are removed from parameters stored
+     * under a data key, the stored parameters being left untouched, and the remaining
+     * parameters leading to the key of a request for the remaining data types.
+     */
+    @Test
+    public void shouldRemoveTheRemovedDataTypesOfStoredParameters() throws Exception {
+        URLParameters urlParameters = new URLParameters();
+        String storageDir = BgeeProperties.getBgeeProperties().getRequestParametersStorageDirectory();
+        String storedQuery = "data_type=RNA_SEQ&data_type=AFFYMETRIX&data_type=EST";
+        String storedKey = DigestUtils.sha1Hex(storedQuery.toLowerCase(Locale.ENGLISH));
+        Path storedFile = Paths.get(storageDir + storedKey);
+        Files.write(storedFile, storedQuery.getBytes(StandardCharsets.UTF_8));
+        String newKey = null;
+        try {
+            RequestParameters rp = new RequestParameters(new BgeeHttpServletRequest(
+                    "data=" + storedKey, "UTF-8"),
+                    urlParameters, BgeeProperties.getBgeeProperties(), true, "&");
+            assertEquals("The data types removed from Bgee should have been removed",
+                    Arrays.asList("RNA_SEQ"), rp.getValues(urlParameters.getParamDataType()));
+
+            rp.getRequestURL();
+            newKey = rp.getDataKey();
+            RequestParameters expectedRp = new RequestParameters(new BgeeHttpServletRequest(
+                    "data_type=RNA_SEQ", "UTF-8"),
+                    urlParameters, BgeeProperties.getBgeeProperties(), true, "&");
+            expectedRp.generateKeyAndStore();
+            assertEquals("The stored parameters should lead to the key of the remaining data types",
+                    expectedRp.getDataKey(), newKey);
+            assertEquals("The stored parameters should have been left untouched", storedQuery,
+                    new String(Files.readAllBytes(storedFile), StandardCharsets.UTF_8));
+        } finally {
+            Files.deleteIfExists(storedFile);
+            if (newKey != null) {
+                Files.deleteIfExists(Paths.get(storageDir + newKey));
+            }
+        }
+    }
 }

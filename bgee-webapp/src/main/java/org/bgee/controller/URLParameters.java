@@ -379,17 +379,13 @@ public class URLParameters {
      * Corresponds to the URL parameter "data_type".
      */
     private static final Parameter<String> DATA_TYPE = new Parameter<String>("data_type",
-            true, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
-            //Several data types can be provided in one query parameter (comma-separated).
-            255,
+            true, false, null, true, DEFAULT_IS_SECURE, 
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DataType.class).stream()
+                    .map(e -> e.name().length())
+                    .max(Comparator.naturalOrder()).get()), 
             "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DataType.class).stream()
                 .map(e -> e.name())
-                .collect(Collectors.joining("|"))
-                + "|"
-                + DEFAULT_SEPARATORS.stream()
-                    .map(Pattern::quote)
-                    .collect(Collectors.joining("|"))
-                + ")*",
+                .collect(Collectors.joining("|")) + ")", 
             String.class);
     /**
      * A {@code Parameter<String>} that contains the developmental stages to be used.

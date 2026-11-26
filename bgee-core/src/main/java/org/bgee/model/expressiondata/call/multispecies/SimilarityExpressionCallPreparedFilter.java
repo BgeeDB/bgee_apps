@@ -30,6 +30,17 @@ final class SimilarityExpressionCallPreparedFilter {
     private final Set<String> userAnatEntityIds;
     private final Set<String> userCellTypeIds;
     /**
+     * Anatomy roots of an inverted root-plus-discard request. Empty otherwise.
+     * The expression loader requests these roots with their children, instead of
+     * the homology-group members alone.
+     */
+    private final Set<String> anatRootIds;
+    /**
+     * Discard seeds of an inverted root-plus-discard request, not yet expanded.
+     * Empty otherwise. The expression loader excludes each seed and its descendants.
+     */
+    private final Set<String> anatExcludeSeeds;
+    /**
      * When {@code true}, expression loading does not restrict cell types (any cell type
      * in the selected anatomical tree). Used when expanding an anat. term and its children.
      */
@@ -45,6 +56,7 @@ final class SimilarityExpressionCallPreparedFilter {
             List<AnatEntitySimilarity> orderedSimilarities, Set<AnatEntitySimilarity> positiveSimilarities,
             Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntity,
             Set<String> userAnatEntityIds, Set<String> userCellTypeIds,
+            Set<String> anatRootIds, Set<String> anatExcludeSeeds,
             boolean unrestrictedCellTypes,
             List<GeneFilter> orderedGeneFilters,
             Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
@@ -56,6 +68,8 @@ final class SimilarityExpressionCallPreparedFilter {
         this.similaritiesByAnatEntity = Collections.unmodifiableMap(similaritiesByAnatEntity);
         this.userAnatEntityIds = Collections.unmodifiableSet(userAnatEntityIds);
         this.userCellTypeIds = Collections.unmodifiableSet(userCellTypeIds);
+        this.anatRootIds = Collections.unmodifiableSet(anatRootIds);
+        this.anatExcludeSeeds = Collections.unmodifiableSet(anatExcludeSeeds);
         this.unrestrictedCellTypes = unrestrictedCellTypes;
         this.orderedGeneFilters = Collections.unmodifiableList(orderedGeneFilters);
         this.summaryCallTypeQualityFilter = Collections.unmodifiableMap(summaryCallTypeQualityFilter);
@@ -87,6 +101,14 @@ final class SimilarityExpressionCallPreparedFilter {
 
     Set<String> getUserCellTypeIds() {
         return userCellTypeIds;
+    }
+
+    Set<String> getAnatRootIds() {
+        return anatRootIds;
+    }
+
+    Set<String> getAnatExcludeSeeds() {
+        return anatExcludeSeeds;
     }
 
     boolean isUnrestrictedCellTypes() {

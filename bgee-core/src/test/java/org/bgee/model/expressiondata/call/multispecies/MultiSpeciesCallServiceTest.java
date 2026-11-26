@@ -1544,8 +1544,10 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
     }
 
     /**
-     * SUMMARY + discard SUMMARY is "all organs except discarded subtrees". Expanding
-     * descendants of the anatomy root is unnecessary; only discard IDs are seeded.
+     * SUMMARY + discard SUMMARY is "all organs except discarded subtrees". Homology
+     * selection seeds only the discard IDs. The expression loader still requests the
+     * anatomy root with its children and excludes those discard seeds, so an organ
+     * with no homology group is part of the load.
      */
     @Test
     public void shouldNotExpandAnatRootWhenDiscardCoversNonRootIncludes() {
@@ -1616,17 +1618,27 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         assertTrue("The descendants of the discarded term must still be retrieved, to be excluded",
                 seedCaptor.getValue().contains(discardedId));
 
-        Set<String> loadedAnatIds = exprFilterCaptor.getAllValues().stream()
+        FilterIds<String> loadedAnat = exprFilterCaptor.getAllValues().stream()
                 .flatMap(f -> f.getConditionFilters().stream())
                 .map(cf -> cf.getComposedFilterIds(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
                         .getFilterIds(0))
                 .filter(ids -> ids != null)
-                .flatMap(ids -> ids.getIds().stream())
-                .collect(Collectors.toSet());
-        assertTrue("Non-discarded organ group must be loaded", loadedAnatIds.contains(otherId));
-        assertFalse("Discarded organ group must not be loaded", loadedAnatIds.contains(discardedId));
-        assertFalse("Descendants of discarded organs must not be loaded",
-                loadedAnatIds.contains(discardedChildId));
+                .findFirst()
+                .orElseThrow();
+        assertTrue("The anatomy root is loaded with its children, so an organ that has no "
+                + "homology group is still retrieved",
+                loadedAnat.isIncludeChildTerms());
+        assertTrue(loadedAnat.getIds().contains(rootId));
+        assertFalse("Homology-group membership must not be the include list",
+                loadedAnat.getIds().contains(otherId));
+        assertTrue("Discard seeds are excluded with their descendants by the call loader",
+                loadedAnat.getExcludeTermsAndChildrenIds().contains(discardedId));
+        assertFalse(loadedAnat.getIds().contains(discardedId));
+        assertFalse(loadedAnat.getIds().contains(discardedChildId));
+        assertTrue("Cell types come from the loaded calls, not from a homology catalog",
+                exprFilterCaptor.getValue().getConditionFilters().stream()
+                        .allMatch(cf -> cf.getComposedFilterIds(ConditionParameter.ANAT_ENTITY_CELL_TYPE)
+                                .getFilterIds(1) == null));
     }
 
     /**

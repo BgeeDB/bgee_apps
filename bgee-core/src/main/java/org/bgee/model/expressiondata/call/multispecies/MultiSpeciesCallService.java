@@ -1128,6 +1128,7 @@ public class MultiSpeciesCallService extends CommonService {
         return new SimilarityExpressionCallPreparedFilter(filter, orderedSimilarities,
                 anatEntitySimilarities, similaritiesByAnatEntity,
                 userFilterIds.anatEntityIds, userFilterIds.cellTypeIds,
+                userFilterIds.anatRootIds, userFilterIds.anatExcludeSeeds,
                 userFilterIds.unrestrictedCellTypes,
                 orderedGeneFilters, filter.getSummaryCallTypeQualityFilter(),
                 requestedTaxon, taxonOntology, globalAnatEntityIds, globalCellTypeIds);
@@ -1145,7 +1146,8 @@ public class MultiSpeciesCallService extends CommonService {
         Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter =
                 buildAnatEntityCellTypeCondParamToFilter(
                         new AnatCellTypeFilterIds(ctx.getUserAnatEntityIds(),
-                                ctx.getUserCellTypeIds(), ctx.isUnrestrictedCellTypes()),
+                                ctx.getUserCellTypeIds(), ctx.isUnrestrictedCellTypes(),
+                                ctx.getAnatRootIds(), ctx.getAnatExcludeSeeds()),
                         ctx.getGlobalAnatEntityIds(), ctx.getGlobalCellTypeIds(), true);
         Map<Gene, List<OTFExpressionCall>> allCalls = loadExpressionCalls(ctx, condParamToFilter);
         List<SimilarityExpressionCall2> secs = buildSimilarityExpressionCallsFromExpressionCalls(
@@ -1337,9 +1339,11 @@ public class MultiSpeciesCallService extends CommonService {
 
     /**
      * Anatomy-root IDs whose descendant closure is the whole anatomical ontology.
-     * Expanding them with {@code includeChildTerms} is very expensive; when they are
+     * Expanding them while choosing homology groups is expensive; when they are
      * requested together with a discard list that already covers every non-root include ID,
-     * we invert the filter instead (keep organs that are not in the discarded subtrees).
+     * homology groups are selected by rejecting the discarded subtrees.
+     * The expression loader still requests the roots with their children and excludes
+     * those subtrees, so an organ with no homology group is returned as its own row.
      */
     private static final Set<String> ANAT_ENTITY_ROOT_IDS = Set.of(
             ConditionDAO.ANAT_ENTITY_ROOT_ID,
@@ -1348,6 +1352,16 @@ public class MultiSpeciesCallService extends CommonService {
         private final Set<String> anatEntityIds;
         /** When non-empty and {@link #anatEntityIds} is empty, keep organs whose IDs are not in this set. */
         private final Set<String> anatEntityIdsToReject;
+        /**
+         * Roots to load with their children when {@link #anatEntityIds} is empty.
+         * Empty when the request is not an inverted root-plus-discard filter.
+         */
+        private final Set<String> anatRootIds;
+        /**
+         * Discard seeds, not expanded, paired with {@link #anatRootIds}.
+         * The expression loader excludes each seed and its descendants.
+         */
+        private final Set<String> anatExcludeSeeds;
         private final Set<String> cellTypeIds;
         /**
          * {@code true} when expanding an anatomical term and its children: do not restrict
@@ -1365,6 +1379,12 @@ public class MultiSpeciesCallService extends CommonService {
             this(anatEntityIds, Set.of(), cellTypeIds, unrestrictedCellTypes);
         }
 
+        private AnatCellTypeFilterIds(Set<String> anatEntityIds, Set<String> cellTypeIds,
+                boolean unrestrictedCellTypes, Set<String> anatRootIds, Set<String> anatExcludeSeeds) {
+            this(anatEntityIds, Set.of(), cellTypeIds, unrestrictedCellTypes,
+                    anatRootIds, anatExcludeSeeds);
+        }
+
         private AnatCellTypeFilterIds(Set<String> anatEntityIds, Set<String> anatEntityIdsToReject,
                 Set<String> cellTypeIds) {
             this(anatEntityIds, anatEntityIdsToReject, cellTypeIds, false);
@@ -1372,10 +1392,19 @@ public class MultiSpeciesCallService extends CommonService {
 
         private AnatCellTypeFilterIds(Set<String> anatEntityIds, Set<String> anatEntityIdsToReject,
                 Set<String> cellTypeIds, boolean unrestrictedCellTypes) {
+            this(anatEntityIds, anatEntityIdsToReject, cellTypeIds, unrestrictedCellTypes,
+                    Set.of(), Set.of());
+        }
+
+        private AnatCellTypeFilterIds(Set<String> anatEntityIds, Set<String> anatEntityIdsToReject,
+                Set<String> cellTypeIds, boolean unrestrictedCellTypes,
+                Set<String> anatRootIds, Set<String> anatExcludeSeeds) {
             this.anatEntityIds = anatEntityIds;
             this.anatEntityIdsToReject = anatEntityIdsToReject;
             this.cellTypeIds = cellTypeIds;
             this.unrestrictedCellTypes = unrestrictedCellTypes;
+            this.anatRootIds = anatRootIds;
+            this.anatExcludeSeeds = anatExcludeSeeds;
         }
     }
 
@@ -1384,6 +1413,8 @@ public class MultiSpeciesCallService extends CommonService {
         log.traceEntry("{}", conditionFilters);
         Set<String> filterAnatEntityIds = new HashSet<>();
         Set<String> filterAnatEntityIdsToReject = new HashSet<>();
+        Set<String> filterAnatRootIds = new HashSet<>();
+        Set<String> filterAnatExcludeSeeds = new HashSet<>();
         Set<String> filterCellTypeIds = new HashSet<>();
         if (conditionFilters == null || conditionFilters.isEmpty()) {
             log.info("extractAnatAndCellTypeFilterIds: expandedAnatIds=0, expandedCellIds=0");
@@ -1411,6 +1442,9 @@ public class MultiSpeciesCallService extends CommonService {
                 if (canInvertAnatRootExpansion(anatIds)) {
                     ontologySeedIds.addAll(anatIds.getExcludeTermsAndChildrenIds());
                     needsExpansion |= !anatIds.getExcludeTermsAndChildrenIds().isEmpty();
+                    // Same as expanding one organ: cell types come from the calls, not from
+                    // a second homology axis. Set before the cell-type seed below.
+                    unrestrictedCellTypes = true;
                 } else {
                     ontologySeedIds.addAll(anatIds.getIds());
                     ontologySeedIds.addAll(anatIds.getExcludeTermsAndChildrenIds());
@@ -1445,6 +1479,10 @@ public class MultiSpeciesCallService extends CommonService {
             FilterIds<String> anatIds = composed.getFilterIds(0);
             FilterIds<String> cellIds = composed.getFilterIds(1);
             if (canInvertAnatRootExpansion(anatIds)) {
+                filterAnatRootIds.addAll(anatIds.getIds().stream()
+                        .filter(MultiSpeciesCallService::isAnatEntityRootId)
+                        .collect(Collectors.toSet()));
+                filterAnatExcludeSeeds.addAll(anatIds.getExcludeTermsAndChildrenIds());
                 filterAnatEntityIdsToReject.addAll(expandExcludedIds(anatIds, descendantIds));
             } else {
                 filterAnatEntityIds.addAll(expandFilterIds(anatIds, descendantIds));
@@ -1457,7 +1495,8 @@ public class MultiSpeciesCallService extends CommonService {
                 filterAnatEntityIds.size(), filterAnatEntityIdsToReject.size(),
                 filterCellTypeIds.size(), unrestrictedCellTypes);
         return log.traceExit(new AnatCellTypeFilterIds(filterAnatEntityIds,
-                filterAnatEntityIdsToReject, filterCellTypeIds, unrestrictedCellTypes));
+                filterAnatEntityIdsToReject, filterCellTypeIds, unrestrictedCellTypes,
+                filterAnatRootIds, filterAnatExcludeSeeds));
     }
 
     /**
@@ -1564,9 +1603,21 @@ public class MultiSpeciesCallService extends CommonService {
     buildAnatEntityCellTypeCondParamToFilter(AnatCellTypeFilterIds userFilterIds,
             Set<String> similarityAnatEntityIds, Set<String> similarityCellTypeIds,
             boolean preferUserWhenPresent) {
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
+        // Inverted root-plus-discard: an empty include list used to fall through to the
+        // homology-group catalog, so an organ with no similarity annotation was dropped
+        // after its score had been propagated. Request the roots and their children, and
+        // exclude the discard seeds. CallServiceUtils expands both, then drops the
+        // discarded calls after propagation. A loaded organ with no homology group becomes
+        // its own row.
+        if (!userFilterIds.anatRootIds.isEmpty()) {
+            condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
+                    new ComposedFilterIds<>(List.of(new FilterIds<>(
+                            userFilterIds.anatRootIds, true, userFilterIds.anatExcludeSeeds, null))));
+            return condParamToFilter;
+        }
         Set<String> anatIdsForLoad = resolveIdsForLoad(userFilterIds.anatEntityIds,
                 similarityAnatEntityIds, preferUserWhenPresent);
-        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToFilter = new HashMap<>();
         if (userFilterIds.unrestrictedCellTypes) {
             condParamToFilter.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,
                     new ComposedFilterIds<>(List.of(new FilterIds<>(anatIdsForLoad, false))));
